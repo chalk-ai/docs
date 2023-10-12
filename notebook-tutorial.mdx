@@ -1,6 +1,6 @@
 ---
 title: Tutorial
-description: Work through a fraud scoring example using Chalk in a Jupyter notebook
+description: Work through an example using Chalk in a Jupyter notebook
 published: true
 ---
 
@@ -14,7 +14,7 @@ For datascience workflows, Chalk can be used in entirely in a notebook
 to iteratively build features and generate training data.
 
 In this tutorial, we will use Chalk in a Jupyter notebook to explore
-a dataset of credit card authorizations and build a fraud scoring model.
+a dataset of credit card authorizations and build out some features and resolvers.
 
 ---
 
@@ -437,13 +437,10 @@ Note that we specified the [`recompute_features`](/api-docs#ChalkClient.offline_
 parameter to `True` to ensure that the features are recomputed by the resolvers.
 When set to `False`, output features are sampled from the offline store.
 
-[//]: # (TODO: Add more content on what recompute_features means)
 
 ### Feature Definitions
 
 Let's expand on the feature sets we have defined and add the following computed features:
-
-Specifically, we will define the following features to our `Authorization` and `Card` feature sets:
 
 ```diff-py notebook.ipynb
 @features
@@ -456,18 +453,6 @@ class Authorization:
     status: str
     authorized_at: FeatureTime
 
-+   # The authorization amount (in cents) of the previous transaction
-+   previous_auth_amount_in_cents: int
-+
-+   # The average transaction amount in the last day
-+   avg_transaction_amount_1d: float
-+
-+   # The average transaction amount in the last 7 days
-+   avg_transaction_amount_7d: float
-+
-+   # The average transaction amount in the last 30 days
-+   avg_transaction_amount_30d: float
-
     # Relationships
     card: "Card"
 
@@ -479,9 +464,6 @@ class Card:
 
 +   # The total number of transactions
 +   count_transactions_total: int
-+
-+   # The total number of transactions in the last day
-+   count_transactions_1d: int
 +
 +   # The total number of transactions in the last 7 days
 +   count_transactions_7d: int
@@ -503,76 +485,6 @@ class Card:
 
 Next, we will define resolvers for these features.
 
-### Authorization
-
-```python notebook.ipynb
-from chalk.features import offline
-
-
-@offline
-def get_previous_auth_amount(
-    card_id: Authorization.card_id,
-    authorized_at: Authorization.created_at
-) -> Authorization.previous_auth_amount_in_cents:
-    query = """
-        SELECT amount_in_cents as prev_auth_amount
-        FROM authorizations
-        WHERE card_id = :card_id
-        AND created_at < :authorization_time
-        ORDER BY created_at DESC
-        LIMIT 1
-    """
-    prev_amount = snowflake.query_string(
-        query=query,
-
-        # Mapping of the args specified in the SQL query string
-        args={"card_id": card_id, "authorization_time": authorized_at},
-
-        # Mapping from column names selected to features
-        fields={"prev_auth_amount": Authorization.previous_auth_amount_in_cents},
-    ).one_or_none()
-
-    return prev_amount or 0
-```
-
-Note that we use `args` to pass in the arguments to the SQL query string
-and `fields` to specify the mapping from the column names selected to the
-features we defined.
-
-```python notebook.ipynb
-@offline
-def get_avg_transaction_amounts(
-    card_id: Authorization.card_id, authorization_time: Authorization.created_at
-) -> DataFrame[
-    Authorization.avg_transaction_amount_1d,
-    Authorization.avg_transaction_amount_7d,
-    Authorization.avg_transaction_amount_30d,
-]:
-    query = """
-        SELECT
-            AVG(CASE WHEN timestamp BETWEEN :authorization_ts - INTERVAL '1 DAY' AND :authorization_ts THEN amount 0 NULL END) AS avg_1d,
-            AVG(CASE WHEN timestamp BETWEEN :authorization_ts - INTERVAL '7 DAY' AND :authorization_ts THEN amount 0 NULL END) AS avg_7d,
-            AVG(CASE WHEN timestamp BETWEEN :authorization_ts - INTERVAL '30 DAY' AND :authorization_ts THEN amount 0 NULL END) AS avg_30d
-        FROM authorizations
-        WHERE timestamp >= :authorization_ts - INTERVAL '30 DAY' AND timestamp < :authorization_ts
-        AND card_id = :card_id
-    """
-
-    avg_txn_amounts = snowflake.query_string(
-        query=query,
-        args={"card_id": card_id, "authorization_ts": authorization_time},
-        fields={
-            "avg_1d": Authorization.avg_transaction_amount_1d,
-            "avg_7d": Authorization.avg_transaction_amount_7d,
-            "avg_30d": Authorization.avg_transaction_amount_30d,
-        },
-    ).one()
-
-    return avg_txn_amounts
-```
-
-### Card
-
 ```python notebook.ipynb
 from chalk.features import after
 
@@ -582,11 +494,6 @@ def get_count_all_txns(
 ) -> Card.count_transactions_total:
     return txns.count()
 
-@offline
-def get_count_1d_txns(
-    txns: Card.authorizations[Authorization.id, after(days_ago=1)]
-) -> Card.count_transactions_1d:
-    return txns.count()
 
 @offline
 def get_count_7d_txns(
@@ -646,6 +553,44 @@ def get_days_since_first_last_txn(
         days_since_last_transaction=(now - last_txn_date).days,
     )
 ```
+
+#### Time-dependent resolvers
+
+In the resolvers above, we made use of the Chalk feature `Now` which
+allows us to express time-dependency in our resolvers.
+This is useful for performing backfills which compute values that depend
+on values that are semantically similar to `datetime.now()`.
+
+In online queries, `Now` represents `datetime.now()`. In offline queries,
+we can use the [`input_times`](/api-docs#ChalkClient.offline_query.input_times) parameter
+to specify the times `Now` should resolve to allowing us to run backfills for many different
+historical points in time.
+
+
+```python notebook.ipynb
+# Example of running an offline query for multiple historical points in time
+client.offline_query(
+    input={Card.id: [1, 1, 1]},
+    output=[Card.get_days_since_card_created],
+    input_times=[
+        datetime.now(),
+        datetime.now() - timedelta(days=10),
+        datetime.now() - timedelta(days=50),
+    ],
+)
+
+
+# Output:
+# ┌─────────┬──────────────────────────────┐
+# │ card.id ┆ card.days_since_card_created │
+# │ ---     ┆ ---                          │
+# ╞═════════╪══════════════════════════════╡
+# │ 1       ┆ 90                           │
+# │ 1       ┆ 80                           │
+# │ 1       ┆ 40                           │
+# └─────────┴──────────────────────────────┘
+```
+
 
 ## Troubleshooting
 
