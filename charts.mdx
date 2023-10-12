@@ -100,6 +100,12 @@ Chart(name="my_chart_1", window_period="30m").with_trigger(
     trigger_name=f"High latency alert",
     severity="error",
     channel_name="myemail@chalk.ai",
+    description="""
+        *Debugging*
+        When this alert is triggered, we're parsing null values from
+        a lot of our FICO reports. It's likely that Experian is
+        having an outage. Check the <dashboard|https://internal.dashboard.com>.
+    """
 ).with_resolver_link(get_fraud_profile)
 ```
 
