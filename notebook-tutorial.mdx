@@ -534,7 +534,7 @@ def get_count_7d_txns(
 
 Chalk has support for [time windowed aggregations](/docs/window-functions)
 using the `before` and `after` functions.
-In the resolvers above, we use the [`after`](/docs/after) operator to
+In the resolvers above, we use the [`after`](/docs/window-functions#after) operator to
 filter the transactions by the `created_at` field.
 
 Additionally, since we don't need to resolve all the features on `Authorization`
