@@ -3,8 +3,8 @@ title: Tutorial
 description: Work through a fraud scoring example using Chalk in a Jupyter notebook
 published: true
 ---
+
 import {TipBad, TipGood} from '@/components/Tip'
-import {AddSnowflakeIntegration} from '@/components/shared/snowflake'
 
 ---
 
@@ -29,7 +29,7 @@ a dataset of credit card authorizations and build a fraud scoring model.
 
 ---
 
-## Configure Datasources
+## Configure data sources
 
 The dataset we will be using for this tutorial is stored in tables in
 our Snowflake warehouse.
@@ -44,9 +44,10 @@ a [SQL Source](/docs/sql).
 
 Before we can start ingesting data, we will initialize
 a [`SnowflakeSource`](/api-docs#SnowflakeSource).
+If you're working on an existing project, it's likely that this
+step has already been done for you.
 
-
-```python notebook.ipynb
+```python
 from chalk.sql import SnowflakeSource
 
 snowflake = SnowflakeSource()
@@ -273,32 +274,28 @@ We will use the [`%%resolver`](/docs/notebook-magics#resolver) magic to define S
 
 ```python notebook.ipynb
 %%resolver get_merchant_features
--- type: offline
 -- resolves: Merchant
 -- source: snowflake
 SELECT id,
        name,
        category,
        country_code
-FROM merchant;
+FROM merchant
 ```
-
 
 ```python notebook.ipynb
 %%resolver get_cardholder_features
--- type: offline
 -- resolves: CardHolder
 -- source: snowflake
 SELECT id,
        name,
        address,
        created_at
-FROM cardholder;
+FROM cardholder
 ```
 
 ```python notebook.ipynb
 %%resolver get_authorization_features
--- type: offline
 -- resolves: Authorization
 -- source: snowflake
  SELECT id,
@@ -308,92 +305,22 @@ FROM cardholder;
        status,
        country_code,
        created_at as authorized_at,
-FROM authorization;
+FROM authorization
 ```
 
 ```python notebook.ipynb
 %%resolver get_card_features
--- type: offline
 -- resolves: Card
 -- source: snowflake
 SELECT id,
        cardholder_id,
        issued_at
-FROM card;
+FROM card
 ```
-
 
 ### Python resolvers
 
 Alternatively, you can define resolvers using Python functions using the `@offline` decorator
-
-```python notebook.ipynb
-from chalk.features import offline, online, Features, FeatureTime
-
-@offline
-def get_merchant_features() -> (
-    Features[Merchant.id, Merchant.name, Merchant.category, Merchant.country_code]
-):
-    return snowflake.query_string(
-        """
-        SELECT id,
-               name,
-               category,
-               country_code
-        FROM merchant;
-        """
-    ).all()
-
-@offline
-def get_card_holder_features() -> (
-    Features[CardHolder.id, CardHolder.name, CardHolder.address, CardHolder.created_at]
-):
-    return snowflake.query_string(
-        """
-        SELECT id,
-               name,
-               address,
-               created_at
-        FROM cardholder;
-    """
-    ).all()
-
-@offline
-def get_authorization_features() -> (
-    Features[
-        Authorization.id,
-        Authorization.amount_in_cents,
-        Authorization.card_id,
-        Authorization.merchant_id,
-        Authorization.status,
-        Authorization.country_code,
-        Authorization.created_at,
-    ]
-):
-    return snowflake.query_string(
-        """
-        SELECT id,
-               amount_in_cents,
-               card_id,
-               merchant_id,
-               status,
-               country_code,
-               created_at,
-        FROM authorization;
-    """
-    ).all()
-
-@offline
-def get_card_features() -> Features[Card.id, Card.cardholder_id, Card.issued_at]:
-    return snowflake.query_string(
-        """
-        SELECT id,
-               cardholder_id,
-               issued_at
-        FROM card;
-    """
-    ).all()
-```
 
 **A note on namespaces**
 

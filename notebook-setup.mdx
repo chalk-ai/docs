@@ -10,7 +10,6 @@ published: true
 
 ### Dependencies
 
-
 ```python notebook.ipynb
 !pip install chalkpy[all]
 ```
@@ -22,10 +21,10 @@ To use Chalk in a notebook, we will need to generate an access token.
 To generate an access token, in the Chalk Dashboard, under the **Settings > Access Tokens**
 Generate an access token by clicking on **New Token** and select all necessary permissions.
 
-We will need the `CLIENT_ID` and `SECRET_KEY` of the access token we generated to initialize a Chalk client in our notebook.
+We will need the `CLIENT_ID` and `SECRET_KEY` of the access token we generated to initialize
+a Chalk client in our notebook.
 
 ---
-
 
 ## Environment Setup
 ### Local
@@ -46,10 +45,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client= ChalkClient(
-    client_id=os.getenv("CHALK_CLIENT_ID"),
-    client_secret=os.getenv("CHALK_SECRET_KEY"),
-)
+client = ChalkClient()
 ```
 
 ### Deepnote
@@ -66,10 +62,7 @@ You can then initialize Chalk by running the following code in a cell:
 import os
 from chalk import ChalkClient
 
-client = ChalkClient(
-    client_id=os.environ.get("CHALK_CLIENT_ID"),
-    client_secret=os.environ.get("CHALK_CLIENT_SECRET"),
-)
+client = ChalkClient()
 ```
 
 ### Hex
@@ -83,10 +76,7 @@ The Chalk client can then be initialized referencing the variables directly
 ```python notebook.ipynb
 from chalk import ChalkClient
 
-client = ChalkClient(
-    client_id=CHALK_CLIENT_ID,
-    client_secret=CHALK_CLIENT_SECRET,
-)
+client = ChalkClient()
 ```
 
 ## Creating a branch
@@ -102,7 +92,5 @@ Once you've got your client setup, you can create a branch calling [`create_bran
 Setting `switch=True` will point your client to the newly created branch.
 
 ```python notebook.ipynb
-BRANCH_NAME = "my-branch"
-
-client.create_branch(BRANCH_NAME, switch=True)
+client.create_branch("my-branch", switch=True)
 ```
