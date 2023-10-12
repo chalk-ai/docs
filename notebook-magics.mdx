@@ -21,16 +21,21 @@ and upload your resolver to your current working branch.
 
 Refer to the section on [SQL Resolvers](/docs/sql#sql-file-resolvers) to learn more about how to define resolvers.
 
-```sql
+```sql notebook.ipynb
 %%resolver root_authorization_resolver
--- type: offline
 -- resolves: Authorization
--- source: Snowflake
+-- source: snowflake
 SELECT
-    id
-    amount_in_cents
-    card_id
-    merchant_id
+    id,
+    amount_in_cents,
+    card_id,
+    merchant_id,
     created_at as authorized_at
-FROM authorizations;
+FROM authorizations
 ```
+
+Chalk lines up the names of your target SQL columns with the names of your features.
+In this case, we have an `Authorization` feature class that contains a features called `authorized_at`.
+However, our Snowflake table has a column called `created_at` that we want to use to populate the `authorized_at` feature.
+So, we use the `as` keyword to rename the column in our resolver.
+
