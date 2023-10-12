@@ -20,7 +20,7 @@ a dataset of credit card authorizations and build out some features and resolver
 
 ## Table of Contents
 
-1. [Configure Datasources](#configure-datasources)
+1. [Configure Datasources](#configure-data-sources)
 2. [Defining Features](#defining-features)
 3. [Defining Resolvers](#defining-resolvers)
 4. [Computed Features](#computed-features)
@@ -534,7 +534,7 @@ def get_count_7d_txns(
 
 Chalk has support for [time windowed aggregations](/docs/window-functions)
 using the `before` and `after` functions.
-In the resolvers above, we use the [`after`](/docs/after) operator to
+In the resolvers above, we use the [`after`](/docs/window-functions#after) operator to
 filter the transactions by the `created_at` field.
 
 Additionally, since we don't need to resolve all the features on `Authorization`
