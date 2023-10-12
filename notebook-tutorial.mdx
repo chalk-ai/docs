@@ -616,19 +616,24 @@ for more details.
 
 ```python notebook.ipynb
 from datetime import datetime
+from chalk import Now
 
 @offline
 def get_days_since_card_created(
     card_id: Card.id,
-    issued_at: Card.issued_at
+    issued_at: Card.issued_at,
+    now: Now,
 ) -> Card.days_since_card_created:
-    delta = datetime.now() - issued_at
-    return delta.days
+    return (now - issued_at).days
 
 @offline
 def get_days_since_first_last_txn(
-    txns: Card.authorizations,
-) -> DataFrame[Card.days_since_first_transaction, Card.days_since_last_transaction,]:
+    txns: Card.authorizations[Authorization.created_at],
+    now: Now,
+) -> Features[
+    Card.days_since_first_transaction,
+    Card.days_since_last_transaction,
+]:
     # Sort transactions by created_at
     sorted_txns = txns.sort(by=Authorization.created_at, descending=False)
 
@@ -636,16 +641,9 @@ def get_days_since_first_last_txn(
     first_txn_date = sorted_txns.first(col=Authorization.created_at)
     last_txn_date = sorted_txns.last(col=Authorization.created_at)
 
-    # Compute days since first and last transaction
-    now = datetime.now()
-    days_since_first_txn = (now - first_txn_date).days
-    days_since_last_txn = (now - last_txn_date).days
-
-    return DataFrame(
-        {
-            "Card.days_since_first_transaction": [days_since_first_txn],
-            "Card.days_since_last_transaction": [days_since_last_txn],
-        }
+    return Card(
+        days_since_first_transaction=(now - first_txn_date).days,
+        days_since_last_transaction=(now - last_txn_date).days,
     )
 ```
 
