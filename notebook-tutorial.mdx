@@ -1,0 +1,686 @@
+---
+title: Tutorial
+description: Work through a fraud scoring example using Chalk in a Jupyter notebook
+published: true
+---
+
+import {TipBad, TipGood} from '@/components/Tip'
+
+---
+
+Chalk enables data science and machine learning teams to build and
+deploy feature pipelines for machine learning.
+For datascience workflows, Chalk can be used in entirely in a notebook
+to iteratively build features and generate training data.
+
+In this tutorial, we will use Chalk in a Jupyter notebook to explore
+a dataset of credit card authorizations and build a fraud scoring model.
+
+---
+
+## Table of Contents
+
+1. [Configure Datasources](#configure-datasources)
+2. [Defining Features](#defining-features)
+3. [Defining Resolvers](#defining-resolvers)
+4. [Offline Queries](#offline-queries)
+5. [Troubleshooting](#troubleshooting)
+6. [Summary](#summary)
+
+---
+
+## Configure data sources
+
+The dataset we will be using for this tutorial is stored in tables in
+our Snowflake warehouse.
+
+Chalk has [built-in support](/docs/sql) for a number of SQL-like sources
+and can ingest data using SQL strings.
+
+### Adding a Snowflake source
+
+Chalk provides a native integration with [Snowflake](/docs/snowflake) as
+a [SQL Source](/docs/sql).
+
+Before we can start ingesting data, we will initialize
+a [`SnowflakeSource`](/api-docs#SnowflakeSource).
+If you're working on an existing project, it's likely that this
+step has already been done for you.
+
+```python
+from chalk.sql import SnowflakeSource
+
+snowflake = SnowflakeSource()
+```
+
+If you have multiple sources, you can initialize a
+`SnowflakeSource` by passing in the name of your Snowflake integration which can be
+defined in the Chalk Dashboard.
+
+```python notebook.ipynb
+from chalk.sql import SnowflakeSource
+
+snowflake = SnowflakeSource(name="snowflake-integration")
+```
+
+---
+
+## Defining Features
+
+Once we have our datasource setup, we can start defining features.
+We will start by defining the features we will ingest from our datasource.
+In further sections, we will define derived features that we will
+use to train a fraud classification model.
+
+Our dataset consists of the following tables:
+- `cards`
+- `merchants`
+- `authorizations`
+- `cardholders`
+
+Chalk lets you define your features in Python by decorating classes
+with the `@feature` decorator.
+
+Chalk lets you define features directly in Python. To create a new `FeatureSet`,
+apply the `@features` decorator to a Python class with typed attributes.
+
+In our notebook, we will now define the following feature sets:
+
+```python notebook.ipynb
+from datetime import datetime
+
+from chalk.features import features, has_many, DataFrame, FeatureTime
+
+@features
+class Merchant:
+    id: int
+    name: str
+    category: str
+    country_code: str
+
+@features
+class Authorization:
+    id: int
+    amount_in_cents: int
+    card_id: int
+    merchant_id: int
+    country_code: str
+    status: str
+    authorized_at: FeatureTime
+
+    # Relationships
+    card: "Card"
+
+@features
+class Card:
+    id: int
+    cardholder_id: int
+    issued_at: datetime
+
+    # Relationships
+    authorizations: DataFrame[Authorization] = has_many(
+        lambda: Authorization.card_id == Card.id
+    )
+
+@features
+class CardHolder:
+    id: int
+    name: str
+    address: str
+    created_at: datetime
+
+    # Relationships
+    cards: DataFrame[Card] = has_many(lambda: CardHolder.id == Card.cardholder_id)
+```
+
+Here we have defined four feature sets: `Merchant`, `Authorization`, `Card`,
+and `CardHolder`.
+In the features sets, we have defined the root features which are the
+features that are directly fetched from the datasource as well as derived features.
+In the next section, we will look at how to resolve these features.
+
+### Primary Keys
+Feature classes in Chalk need to have a unique `id` field. By default,
+Chalk will use the `id` field as the primary key for the feature set.
+However, if you want to use a different field as the primary key, you can
+specify it using the [`Primary`](/api-docs#Primary) argument as shown below.
+
+```diff-py notebook.ipynb
+from chalk.features import Primary
+
+@features
+class Merchant:
+-   id: int
++   merchant_id: Primary[int]
+    name: str
+    category: str
+    country_code: str
+```
+
+### Namespacing
+
+Features are namespaced by their containing `FeatureSet` and by the
+name of the variable.
+
+For example, as defined above `Authorization` would be the containing
+`FeatureSet` and it's corresponding features would be named as follows:
+
+| Feature Name                    | Type                                                                                                          |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| authorization.id                | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Integer </code>     |
+| authorization.amount_in_cents   | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Integer </code>     |
+| authorization.card_id           | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Integer </code>     |
+| authorization.merchant_id       | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Integer </code>     |
+| authorization.country_code      | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> String </code>      |
+| authorization.status            | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> String </code>      |
+| authorization.authorized_at     | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> FeatureTime </code> |
+
+
+### Relationships
+
+We can also define relationships between features using the [`has_one`](/docs/has-one)
+or [`has_many`](/docs/has-many) functions, where the first argument specifies a function
+returning how to join the tables.
+
+In the feature definitions above, we have defined a one-to-many relationship between `Card`
+and `Authorization` using the [`has_many`](/docs/has-many#one-to-many) function.
+
+```diff-py notebook.ipynb
+@features
+class Authorization:
+    id: int
+    amount_in_cents: int
+    card_id: int
+    merchant_id: int
+    country_code: str
+    status: str
+    authorized_at: FeatureTime
+
+    # Relationships
++   # We defined the join condition between `Card` and `Authorization` below,
++   # we don't need to repeat it here
++   card: "Card"
+
+@features
+class Card:
+    id: int
+    cardholder_id: int
+    issued_at: datetime
+
+    # Relationships
++   # The has-many relationship between `Card` and `Authorization`
++   # specifying the join condition
++   authorizations: DataFrame[Authorization] = has_many(
++       lambda: Authorization.card_id == Card.id
++   )
+```
+
+### Feature Types
+
+Chalk supports a number of different feature types including scalars,
+collections, dataclasses, Pydantic models and custom types.
+For a complete list of features, refer to [Feature Types](/docs/feature-types).
+
+
+### Using feature time
+
+By default, our features are timestamped with the execution time of their resolvers.
+Since we want to be able to run point-in-time correct backfills, we will need
+to use the `FeatureTime` type to override the default behavior and explicitly
+specify the `created_at` field.
+
+To learn more about how to use `FeatureTime`, refer to the section on [Time](/docs/time).
+
+```diff-py notebook.ipynb
+from chalk.features import FeatureTime
+
+@features
+class Authorization:
+    # Root features
+    id: int
+    amount_in_cents: int
+    card_id: int
+-   authorized_at: datetime
++   authorized_at: FeatureTime
+
+    # Relationships
+    card: "Card"
+
+```
+
+---
+
+## Defining Resolvers
+
+Next we will define the resolvers for the features we have defined above.
+A [resolver](/docs/resolver-overview) is a function that defines how features
+are fetched or derived.
+
+
+To ingest data from Snowflake for the features we defined above, we will define
+resolvers using SQL strings.
+Specifically we will use the [`query_string`](/api-docs#BaseSQLSourceProtocol.query_string)
+function on our Snowflake source defined above.
+
+It is important to make sure the names of the features we are resolving match the
+names of the features we defined above.
+For example, in the resolver definition below,
+we alias `created_at` to `authorized_at` for `Authorization`
+
+
+### SQL Resolvers
+
+We will use the [`%%resolver`](/docs/notebook-magics#resolver) magic to define SQL resolvers in our notebook.
+
+```python notebook.ipynb
+%%resolver get_merchant_features
+-- resolves: Merchant
+-- source: snowflake
+SELECT id,
+       name,
+       category,
+       country_code
+FROM merchant
+```
+
+```python notebook.ipynb
+%%resolver get_cardholder_features
+-- resolves: CardHolder
+-- source: snowflake
+SELECT id,
+       name,
+       address,
+       created_at
+FROM cardholder
+```
+
+```python notebook.ipynb
+%%resolver get_authorization_features
+-- resolves: Authorization
+-- source: snowflake
+SELECT id,
+       amount_in_cents,
+       card_id,
+       merchant_id,
+       status,
+       country_code,
+       created_at as authorized_at
+FROM authorization
+```
+
+```python notebook.ipynb
+%%resolver get_card_features
+-- resolves: Card
+-- source: snowflake
+SELECT id,
+       cardholder_id,
+       issued_at
+FROM card
+```
+
+### Python resolvers
+
+Alternatively, you can define resolvers using Python functions using the `@offline` decorator
+
+**A note on namespaces**
+
+Resolvers can take in multiple features as input, however, all feature dependencies in a
+single resolver must be from the same namespace.
+
+<TipGood>Requiring features from the same root namespace</TipGood>
+
+```py
+@pffline
+def fn(
+    authorization_amount: Authorization.amount_in_cents,
+    card_id: Authorization.card_id,
+) -> Authorization.some_feature:
+    return ...
+```
+
+Here, we incorrectly request features from the root namespaces
+of `Authorization` and `Card`:
+
+<TipBad>Requiring features from different root namespaces</TipBad>
+
+```py
+@online
+def fn(
+    authorization_amount: Authorization.amount_in_cents,
+    card_id: Card.id
+) -> Authorization.some_feature:
+    return ...
+```
+
+[//]: # (NOTE: incremental is really useful for incremental ingests, but not as much datascience in a notebook)
+[//]: # (**Using `incremental&#40;&#41;` vs `all&#40;&#41;`**)
+[//]: # ()
+[//]: # (Incremental queries are useful for ingesting immutable tables or queries, like)
+[//]: # (event tables or logs. This type of data is frequently found in the offline context,)
+[//]: # (as it represents logs of real-time events.)
+[//]: # ()
+[//]: # (Let's refactor the `get_root_authorization_features` resolver to use an incremental)
+[//]: # (query. When using incremental queries with SQL strings, we must specify the)
+[//]: # (`incremental_column` parameter.)
+[//]: # ()
+[//]: # (```diff-py notebook.ipynb)
+[//]: # (@offline)
+[//]: # (def get_root_authorization_features&#40;&#41; -> DataFrame[)
+[//]: # (    Authorization.id,)
+[//]: # (    Authorization.amount_in_cents,)
+[//]: # (    Authorization.card_id,)
+[//]: # (    Authorization.merchant_id,)
+[//]: # (    Authorization.country_code,)
+[//]: # (    Authorization.authorized_at,)
+[//]: # (]:)
+[//]: # (    return snowflake.query_string&#40;""")
+[//]: # (        SELECT id,)
+[//]: # (               amount_in_cents,)
+[//]: # (               card_id,)
+[//]: # (               merchant_id,)
+[//]: # (               country_code)
+[//]: # (               created_at as authorized_at,)
+[//]: # (        FROM authorizations;)
+[//]: # (    """)
+[//]: # (-   &#41;.all&#40;&#41;)
+[//]: # (+   &#41;.incremental&#40;incremental_column="authorized_at"&#41;)
+[//]: # (```)
+[//]: # ()
+[//]: # (---)
+[//]: # ()
+
+---
+
+## Computed Features
+
+The `ChalkClient` provides the [`offline_query`](/api-docs#ChalkClient.offline_query)
+method to compute features from the offline store.
+
+To validate that we are able to resolve features from our offline store, we can run an
+offline query to resolve the features defined on `Merchant`.
+
+If inputs are given, the query will return rows corresponding to those inputs, otherwise it
+will return a random sample according to the [`max_samples`](/api-docs#ChalkClient.offline_query.max_samples) parameter.
+
+Offline queries return a [`Dataset`](/docs/datasets) instance which can be converted to a
+Pandas DataFrame using the [`get_data_as_pandas`](/api-docs#Dataset.get_data_as_pandas) method.
+
+```python notebook.ipynb
+dataset = client.offline_query(
+    input={
+        Merchant.id: [1, 2, 3]
+    },
+    output=[
+        Merchant.id,
+        Merchant.name,
+        Merchant.category
+    ],
+    recompute_features=True,
+).get_data_as_dataframe()
+```
+
+We get back the following `DataFrame`, validating that our resolvers are working as expected
+
+```
+┌───────────────────────┬───────────────────────────┬─────────────────┐
+│ merchant.category     ┆ merchant.name             ┆ merchant.id     │
+│ ---                   ┆ ---                       ┆ ---             │
+│ str                   ┆ str                       ┆ i64             │
+╞═══════════════════════╪═══════════════════════════╪═════════════════╡
+│ Gas Station           ┆ Tucker, Hull and Gallegos ┆ 1               │
+│ E-commerce            ┆ Silva-Odonnell            ┆ 2               │
+│ Grocery               ┆ Taylor-Davis              ┆ 3               │
+└───────────────────────┴───────────────────────────┴─────────────────┘
+```
+
+Note that we specified the [`recompute_features`](/api-docs#ChalkClient.offline_query.recompute_features)
+parameter to `True` to ensure that the features are recomputed by the resolvers.
+When set to `False`, output features are sampled from the offline store.
+
+[//]: # (TODO: Add more content on what recompute_features means)
+
+### Feature Definitions
+
+Let's expand on the feature sets we have defined and add the following computed features:
+
+Specifically, we will define the following features to our `Authorization` and `Card` feature sets:
+
+```diff-py notebook.ipynb
+@features
+class Authorization:
+    id: int
+    amount_in_cents: int
+    card_id: int
+    merchant_id: int
+    country_code: str
+    status: str
+    authorized_at: FeatureTime
+
++   # The authorization amount (in cents) of the previous transaction
++   previous_auth_amount_in_cents: int
++
++   # The average transaction amount in the last day
++   avg_transaction_amount_1d: float
++
++   # The average transaction amount in the last 7 days
++   avg_transaction_amount_7d: float
++
++   # The average transaction amount in the last 30 days
++   avg_transaction_amount_30d: float
+
+    # Relationships
+    card: "Card"
+
+@features
+class Card:
+    id: int
+    cardholder_id: int
+    issued_at: datetime
+
++   # The total number of transactions
++   count_transactions_total: int
++
++   # The total number of transactions in the last day
++   count_transactions_1d: int
++
++   # The total number of transactions in the last 7 days
++   count_transactions_7d: int
++
++   # The number of days since the card was created
++   days_since_card_created: int
++
++   # Days since first transaction
++   days_since_first_transaction: int
++
++   # Days since last transaction
++   days_since_last_transaction: int
+
+    # Relationships
+    authorizations: DataFrame[Authorization] = has_many(
+        lambda: Authorization.card_id == Card.id
+    )
+```
+
+Next, we will define resolvers for these features.
+
+### Authorization
+
+```python notebook.ipynb
+from chalk.features import offline
+
+
+@offline
+def get_previous_auth_amount(
+    card_id: Authorization.card_id,
+    authorized_at: Authorization.created_at
+) -> Authorization.previous_auth_amount_in_cents:
+    query = """
+        SELECT amount_in_cents as prev_auth_amount
+        FROM authorizations
+        WHERE card_id = :card_id
+        AND created_at < :authorization_time
+        ORDER BY created_at DESC
+        LIMIT 1
+    """
+    prev_amount = snowflake.query_string(
+        query=query,
+
+        # Mapping of the args specified in the SQL query string
+        args={"card_id": card_id, "authorization_time": authorized_at},
+
+        # Mapping from column names selected to features
+        fields={"prev_auth_amount": Authorization.previous_auth_amount_in_cents},
+    ).one_or_none()
+
+    return prev_amount or 0
+```
+
+Note that we use `args` to pass in the arguments to the SQL query string
+and `fields` to specify the mapping from the column names selected to the
+features we defined.
+
+```python notebook.ipynb
+@offline
+def get_avg_transaction_amounts(
+    card_id: Authorization.card_id, authorization_time: Authorization.created_at
+) -> DataFrame[
+    Authorization.avg_transaction_amount_1d,
+    Authorization.avg_transaction_amount_7d,
+    Authorization.avg_transaction_amount_30d,
+]:
+    query = """
+        SELECT
+            AVG(CASE WHEN timestamp BETWEEN :authorization_ts - INTERVAL '1 DAY' AND :authorization_ts THEN amount 0 NULL END) AS avg_1d,
+            AVG(CASE WHEN timestamp BETWEEN :authorization_ts - INTERVAL '7 DAY' AND :authorization_ts THEN amount 0 NULL END) AS avg_7d,
+            AVG(CASE WHEN timestamp BETWEEN :authorization_ts - INTERVAL '30 DAY' AND :authorization_ts THEN amount 0 NULL END) AS avg_30d
+        FROM authorizations
+        WHERE timestamp >= :authorization_ts - INTERVAL '30 DAY' AND timestamp < :authorization_ts
+        AND card_id = :card_id
+    """
+
+    avg_txn_amounts = snowflake.query_string(
+        query=query,
+        args={"card_id": card_id, "authorization_ts": authorization_time},
+        fields={
+            "avg_1d": Authorization.avg_transaction_amount_1d,
+            "avg_7d": Authorization.avg_transaction_amount_7d,
+            "avg_30d": Authorization.avg_transaction_amount_30d,
+        },
+    ).one()
+
+    return avg_txn_amounts
+```
+
+### Card
+
+```python notebook.ipynb
+from chalk.features import after
+
+@offline
+def get_count_all_txns(
+    txns: Card.authorizations[Authorization.id],
+) -> Card.count_transactions_total:
+    return txns.count()
+
+@offline
+def get_count_1d_txns(
+    txns: Card.authorizations[Authorization.id, after(days_ago=1)]
+) -> Card.count_transactions_1d:
+    return txns.count()
+
+@offline
+def get_count_7d_txns(
+    txns: Card.authorizations[Authorization.id, after(days_ago=7)]
+) -> Card.count_transactions_7d:
+    return txns.count()
+```
+
+#### Projections & Filters
+
+Chalk has support for [time windowed aggregations](/docs/window-functions)
+using the `before` and `after` functions.
+In the resolvers above, we use the [`after`](/docs/after) operator to
+filter the transactions by the `created_at` field.
+
+Additionally, since we don't need to resolve all the features on `Authorization`
+to compute the counts, we can specify the features we need for this resolver using a projection.
+[Projections](/docs/dataframe#projections) allow us to scope down a `DataFrame`
+to only include the features we need.
+In this instance, we are using projections to only fetch the `id` field from `Authorization`.
+
+In the resolvers above, we have combined filtering with a projection on the authorizations `DataFrame`.
+Refer to the section on
+[composing projections and filters](/docs/dataframe#composing-projections-and-filters)
+for more details.
+
+
+```python notebook.ipynb
+from datetime import datetime
+from chalk import Now
+
+@offline
+def get_days_since_card_created(
+    card_id: Card.id,
+    issued_at: Card.issued_at,
+    now: Now,
+) -> Card.days_since_card_created:
+    return (now - issued_at).days
+
+@offline
+def get_days_since_first_last_txn(
+    txns: Card.authorizations[Authorization.created_at],
+    now: Now,
+) -> Features[
+    Card.days_since_first_transaction,
+    Card.days_since_last_transaction,
+]:
+    # Sort transactions by created_at
+    sorted_txns = txns.sort(by=Authorization.created_at, descending=False)
+
+    # Get first and last transaction dates
+    first_txn_date = sorted_txns.first(col=Authorization.created_at)
+    last_txn_date = sorted_txns.last(col=Authorization.created_at)
+
+    return Card(
+        days_since_first_transaction=(now - first_txn_date).days,
+        days_since_last_transaction=(now - last_txn_date).days,
+    )
+```
+
+## Troubleshooting
+
+Some queries that involve multiple operations might need additional tracking.
+Users can supply [`store_plan_stages=True`](/api-docs#ChalkClient.offline_query.store_plan_stages) to store
+intermediate outputs at all operations of the query.
+This will dramatically slow things down, so use wisely!
+These results are visible in the dashboard under the **"Queries"** page as shown below.
+
+### Query Plan
+
+The Query Plan shows the operations that were executed to compute the query as well as the
+intermediate results at each stage.
+The numbers on the edges represent the number of rows of data that
+were passed from one stage to the next.
+
+![Chalk Query Plan](/img/QueryPlanExample.png)
+
+### Intermediate Results
+You can examine the intermediate results at each stage of the query plan by clicking on
+a specific stage and download the results as a parquet file.
+
+![Chalk Query Intermediate Results](/img/QueryPlanIntermediateResults.png)
+
+---
+
+## Summary
+
+In this tutorial, we learned how to use Chalk in a notebook to define features, resolvers and
+run offline queries.
+
+To dive deeper into Chalk, check out our documentation on the topics listed below
+
+- [`DataFrame`](/docs/dataframe)
+- [Offline Queries](/docs/training-client)
+- [SQL Integrations](/docs/sql)
+- [Backfills](/docs/backfilling-data)
+- [Temporal Consistency](/docs/temporal-consistency)
