@@ -352,38 +352,42 @@ def fn(
     return ...
 ```
 
-**Using `incremental()` vs `all()`**
-
-Incremental queries are useful for ingesting immutable tables or queries, like
-event tables or logs. This type of data is frequently found in the offline context,
-as it represents logs of real-time events.
-
-Let's refactor the `get_root_authorization_features` resolver to use an incremental
-query. When using incremental queries with SQL strings, we must specify the
-`incremental_column` parameter.
-
-```diff-py notebook.ipynb
-@offline
-def get_root_authorization_features() -> DataFrame[
-    Authorization.id,
-    Authorization.amount_in_cents,
-    Authorization.card_id,
-    Authorization.merchant_id,
-    Authorization.country_code,
-    Authorization.authorized_at,
-]:
-    return snowflake.query_string("""
-        SELECT id,
-               amount_in_cents,
-               card_id,
-               merchant_id,
-               country_code
-               created_at as authorized_at,
-        FROM authorizations;
-    """
--   ).all()
-+   ).incremental(incremental_column="authorized_at")
-```
+[//]: # (NOTE: incremental is really useful for incremental ingests, but not as much datascience in a notebook)
+[//]: # (**Using `incremental&#40;&#41;` vs `all&#40;&#41;`**)
+[//]: # ()
+[//]: # (Incremental queries are useful for ingesting immutable tables or queries, like)
+[//]: # (event tables or logs. This type of data is frequently found in the offline context,)
+[//]: # (as it represents logs of real-time events.)
+[//]: # ()
+[//]: # (Let's refactor the `get_root_authorization_features` resolver to use an incremental)
+[//]: # (query. When using incremental queries with SQL strings, we must specify the)
+[//]: # (`incremental_column` parameter.)
+[//]: # ()
+[//]: # (```diff-py notebook.ipynb)
+[//]: # (@offline)
+[//]: # (def get_root_authorization_features&#40;&#41; -> DataFrame[)
+[//]: # (    Authorization.id,)
+[//]: # (    Authorization.amount_in_cents,)
+[//]: # (    Authorization.card_id,)
+[//]: # (    Authorization.merchant_id,)
+[//]: # (    Authorization.country_code,)
+[//]: # (    Authorization.authorized_at,)
+[//]: # (]:)
+[//]: # (    return snowflake.query_string&#40;""")
+[//]: # (        SELECT id,)
+[//]: # (               amount_in_cents,)
+[//]: # (               card_id,)
+[//]: # (               merchant_id,)
+[//]: # (               country_code)
+[//]: # (               created_at as authorized_at,)
+[//]: # (        FROM authorizations;)
+[//]: # (    """)
+[//]: # (-   &#41;.all&#40;&#41;)
+[//]: # (+   &#41;.incremental&#40;incremental_column="authorized_at"&#41;)
+[//]: # (```)
+[//]: # ()
+[//]: # (---)
+[//]: # ()
 
 ---
 
@@ -404,7 +408,7 @@ Pandas DataFrame using the [`get_data_as_pandas`](/api-docs#Dataset.get_data_as_
 ```python notebook.ipynb
 dataset = client.offline_query(
     input={
-        Merchant.id: [1,2,3]
+        Merchant.id: [1, 2, 3]
     },
     output=[
         Merchant.id,
@@ -415,7 +419,7 @@ dataset = client.offline_query(
 ).get_data_as_dataframe()
 ```
 
-We get back the following DataFrame, validating that our resolvers are working as expected
+We get back the following `DataFrame`, validating that our resolvers are working as expected
 
 ```
 ┌───────────────────────┬───────────────────────────┬─────────────────┐
@@ -432,6 +436,8 @@ We get back the following DataFrame, validating that our resolvers are working a
 Note that we specified the [`recompute_features`](/api-docs#ChalkClient.offline_query.recompute_features)
 parameter to `True` to ensure that the features are recomputed by the resolvers.
 When set to `False`, output features are sampled from the offline store.
+
+[//]: # (TODO: Add more content on what recompute_features means)
 
 ### Feature Definitions
 
