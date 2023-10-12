@@ -23,7 +23,7 @@ a dataset of credit card authorizations and build out some features and resolver
 1. [Configure Datasources](#configure-datasources)
 2. [Defining Features](#defining-features)
 3. [Defining Resolvers](#defining-resolvers)
-4. [Offline Queries](#offline-queries)
+4. [Computed Features](#computed-features)
 5. [Troubleshooting](#troubleshooting)
 6. [Summary](#summary)
 
@@ -453,6 +453,9 @@ class Authorization:
     status: str
     authorized_at: FeatureTime
 
++   # The authorization amount (in cents) of the previous transaction
++   previous_auth_amount_in_cents: int
+
     # Relationships
     card: "Card"
 
@@ -484,6 +487,31 @@ class Card:
 ```
 
 Next, we will define resolvers for these features.
+
+
+```sql notebook.ipynb
+%%resolver get_prev_auth_amounts
+-- resolves: Authorization
+-- source: snowflake
+WITH ordered AS (
+	SELECT
+		id,
+		card_id,
+		amount_in_cents,
+		LAG(amount_in_cents,
+			1) OVER (PARTITION BY card_id ORDER BY created_at) AS previous_auth_amount_in_cents
+	FROM
+		AUTHORIZATION
+)
+SELECT
+	id,
+	previous_auth_amount_in_cents
+FROM
+	ordered
+WHERE
+	previous_auth_amount_in_cents IS NOT NULL
+```
+
 
 ```python notebook.ipynb
 from chalk.features import after
