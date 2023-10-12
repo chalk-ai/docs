@@ -1,0 +1,30 @@
+---
+title: BigQuery
+description: Integrate with your BigQuery data warehouse.
+---
+
+---
+
+Chalk has an integration with [BigQuery](https://cloud.google.com/bigquery)
+that makes it easy to read queries and tables into your feature store.
+
+## Authorization
+
+To use [BigQuery](https://cloud.google.com/bigquery)
+in your resolvers, you first need to add the
+[Chalk GCP integration](/docs/gcp) to the environments
+where you would like to use
+[BigQuery](https://cloud.google.com/bigquery).
+
+## Usage
+
+Chalk's [BigQuery](https://cloud.google.com/bigquery)
+integration can be used as a [SQL source](/docs/sql).
+
+```py
+bq = BigQuerySource()
+
+@online
+def fn(...) -> ...:
+    return bq.query(...).first()
+```

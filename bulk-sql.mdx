@@ -1,0 +1,39 @@
+---
+title: SQL Interface
+description: Querying Chalk with SQL.
+comingSoon: true
+---
+
+---
+
+Chalk is testing a direct SQL query interface for your feature values.
+Feature classes function like SQL tables in this model,
+and [has-one relationships](/docs/has-one) and [has-many relationships](/docs/has-many)
+can be used as joins to other feature tables.
+
+Chalk's interface supports read-only ANSI-SQL queries to your offline feature store.
+For example, if you have the feature classes:
+
+```py
+@features
+class User:
+    uid: str
+    full_name: str
+
+@features
+class Transfer:
+    uid: str
+    amount_cents: str
+    user: User
+```
+
+You can join across feature classes and select data from them:
+
+```sql
+SELECT transfer.amount_cents, user.full_name
+FROM transfer
+JOIN user
+ON user.uid = transfer.uid
+```
+
+This allows you to use computed features directly in BI dashboards and for analytics use-cases.

@@ -1,0 +1,67 @@
+---
+title: Overview
+description: Build a feature pipeline for fraud detection.
+published: true
+---
+
+## Introduction
+
+Chalk helps you build out feature pipelines for training and serving machine learning models.
+
+The building blocks of Chalk are [features](/docs/features).
+Each piece of data in your system, whether a column in a database
+or a value passed in at inference, is a feature.
+For example, a user's age and whether they are an adult might be a
+features in your system:
+
+```python
+from chalk.features import features
+
+@features
+class User:
+    id: int
+    age: int
+    is_adult: bool
+```
+
+Features are computed by [resolvers](/docs/resolver-overview).
+A resolver is a function that takes features as arguments and
+outputs new features. For example, a resolver might take a user's
+age and output a boolean indicating whether they are over 18.
+
+```python
+from chalk.features import online
+
+@online
+def is_adult(age: User.age) -> User.is_adult:
+    return age >= 18
+```
+
+The focus on data instead of pipelines may be unfamiliar at first.
+Traditional orchestration platforms
+like [Airflow](https://airflow.apache.org/) or [Dagster](https://dagster.io/)
+explicitly compose functions which produce data into a DAG of tasks.
+With Chalk, the DAG of [resolvers](/docs/resolver-overview) is defined implicitly by the [features](/docs/features)
+they produce. This architecture makes it easy to build out feature pipelines that are reusable and composable.
+Chalk handles tracking your features for [temporal consistency](/docs/temporal-consistency),
+running your resolvers in parallel, and horizontally scaling your feature pipelines.
+
+This tutorial will walk you through the process of building a feature pipeline for a simple model.
+We will be building a feature pipeline for a fraud detection model,
+and will cover the full feature development lifecycle:
+
+1. [Data Modeling](/docs/fraud-2) - Creating feature classes for the data we want to compute.
+2. [SQL Resolvers](/docs/fraud-3) - Mapping data from SQL sources to feature classes.
+3. [Python Resolvers](/docs/fraud-4) - Defining resolvers in Python that call APIs and compute derived features.
+4. [Inference](/docs/fraud-5) - Integrating Chalk into production decisioning systems.
+5. [Backtesting](/docs/fraud-6) - Experimenting with new features
+
+Before you get started, make sure you have the
+[Chalk CLI installed](/docs/installation).
+
+[//]: # (First, we'll map in our existing data from SQL sources.)
+[//]: # (Then, we'll create a feature pipeline to transform that data into higher-order features.)
+[//]: # (Finally, we'll train a model and deploy it to production.)
+
+If you want to skip ahead, you can find the full source code for this tutorial on
+[GitHub](https://github.com/chalk-ai/fraud-example).

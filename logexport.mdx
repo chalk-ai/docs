@@ -1,0 +1,98 @@
+---
+title: Log Export
+description: Export Chalk logs to other monitoring systems.
+published: true
+---
+
+import { Attribute, AttributeTable } from '@/components/AttributeTable'
+
+---
+
+Chalk's online dashboard provides a simple way to view logs
+from resolver execution. However, you may wish to
+export these logs into other observability
+tools so that you can view your Chalk-related data alongside
+data from other systems you maintain.
+
+## Exporting logs
+
+Chalk can export your logs to a sink of your choosing.
+You can configure sinks for log export from your settings page.
+Exported logs will contain the following fields:
+
+<AttributeTable>
+
+<Attribute field="@timestamp" kind="Instant">
+  ISO8601 timestamp.
+</Attribute>
+
+<Attribute field="@version" kind="string">
+  The log line format version. Currently constant "1".
+</Attribute>
+
+<Attribute field="message" kind="string">
+  The log message.
+</Attribute>
+
+<Attribute field="logger_name" kind="string">
+  Name of the logger, if relevant.
+</Attribute>
+
+<Attribute field="level" kind="string">
+  The log level as a string: "INFO", "WARN", "ERROR", "DEBUG".
+</Attribute>
+
+<Attribute field="stack_trace" kind="string">
+  Stack trace of the associated exception, if relevant.
+</Attribute>
+
+<Attribute field="trace" kind="string">
+  A trace id in OpenCensus format. Used for correlating logs corresponding to a single query.
+</Attribute>
+
+<Attribute field="project" kind="string">
+  Chalk Project ID.
+</Attribute>
+
+<Attribute field="deployment" kind="string">
+  Chalk Deployment ID. Can be used to understand log patterns as code evolves.
+</Attribute>
+
+<Attribute field="commit_sha" kind="string">
+  Your commit SHA, if available for the deployment.
+</Attribute>
+
+<Attribute field="context" kind="string">
+  "online" or "offline".
+</Attribute>
+
+<Attribute field="resolver_name" kind="string">
+  The name of the resolver that produced this log line, if available.
+</Attribute>
+
+<Attribute field="environment" kind="string">
+  Environment name.
+</Attribute>
+<Attribute field="environment_id" kind="string">
+  Environment id.
+</Attribute>
+<Attribute field="tags" kind="string[]">
+An array of the tags that were provided for the associated query.
+</Attribute>
+<Attribute field="agent_id" kind="string">
+The id of the agent that made the request (a service token or Chalk user).
+</Attribute>
+</AttributeTable>
+
+## Custom logs
+
+Chalk provides an implementation of the standard Python Logger interface that supports
+emitting logs to the web UI and your metrics export sink. You can use this logger like this:
+
+```py
+from chalk.clogging import chalk_logger
+
+@online
+def your_resolver(...):
+    chalk_logger.info("Hello world!")
+```

@@ -1,0 +1,44 @@
+---
+title: Errors
+description: Surface and handle failed feature values.
+---
+
+---
+
+Resolvers can raise errors in the course of executing,
+and handle errors in resolving other feature values.
+
+## Raising errors
+
+If your resolver fails by raising an exception,
+the error will be surfaced as a
+[ChalkError](/docs/query-errors#chalkerror)
+in query responses.
+Clients will receive a `null` value for the feature,
+and by default,
+downstream resolvers won't run.
+
+## Handling errors
+
+By default, if there was an error in computing one of the inputs
+to a resolver, that resolver will also fail with the error code
+[UPSTREAM_FAILED](/docs/query-errors#error-code).
+To handle failures in the input features, take as input the feature
+value, but wrapped in [typing.Optional](https://docs.python.org/3/library/typing.html#typing.Optional/):
+
+```py
+from typing import Optional
+
+@online
+def fn(score: Optional[User.fraud_score]) -> ...:
+```
+
+The argument `score` will receive the value `None` in the case of a failure.
+
+If you'd like to provide a default value to use in the case of a failure, you can use Python's syntax for assigning
+a default value to an argument:
+
+```py
+@online
+def fn(score: Optional[User.fraud_score] = -1) -> ...:
+```

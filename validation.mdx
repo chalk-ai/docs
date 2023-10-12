@@ -1,0 +1,69 @@
+---
+title: Validation
+description: Validate features and resolvers
+---
+
+---
+
+## Feature Values
+
+Chalk can enforce requirements on your feature values.
+You can validate the values and length of many primitive types
+through the keyword arguments `min`, `max`, `min_length`, and `max_length`.
+
+[//]: # (A feature which does not meet the given constraints will not be fed to downstream resolvers or returned in queries.)
+To prevent 'invalid' features from being written
+to the offline or online store, set `strict=True`.
+In this case an error will be thrown when an invalid
+feature is observed.
+The `validations` keyword argument can be used when there are
+multiple validations, only some of which are strict.
+
+```python
+from chalk import Validation
+from chalk.features import feature, features
+
+@features
+class Office:
+    size_sqft: int = feature(min=0, max=100_000_000)
+    street: str = feature(validations=[
+        Validation(min_length=1, max_length=256, strict=True),
+        Validation(min_length=20, max_length=100)
+    ])
+```
+
+---
+
+## Feature validation requirements
+
+For some features, it is important to specify metadata
+such as `owner` and `description`.
+Chalk allows you to enforce metadata requirement easily.
+In addition, you can specify for each feature the severity
+at which to raise a missing metadata issue.
+
+In `chalk.yml`, the `validation > feature > metadata`
+section specifies settings for metadata validation.
+In the following example, users will be blocked from
+deploying features ([`chalk apply`](/cli/apply)) with
+an unspecified `owner`. They are allowed to deploy
+features with missing `description` and `tags`.
+
+```yaml
+project: Predict Q2 Spending
+
+validation:
+  feature:
+    metadata:
+      - name: owner
+        missing: error
+      - name: description
+        missing: warning
+      - name: tags
+        missing: info
+
+environments:
+  default:
+    runtimes: 'python310'
+    requirements: requirements.txt
+```

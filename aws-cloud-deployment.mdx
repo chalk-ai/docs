@@ -1,0 +1,155 @@
+---
+title: AWS Cloud Deployment IAM Requirements
+---
+
+import { ArchitectureDiagram, ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
+
+
+## Background
+
+Chalk enables innovative machine learning teams to focus on building
+the unique products and models that make their business stand
+out. Behind the scenes Chalk seamlessly handles data infrastructure
+with a best-in-class developer experience.
+
+Chalk is both a framework and a platform — developers can write code
+using familiar Python packages, and deploy that code to Chalk’s
+platform. In the Customer Cloud deployment, Chalk runs & administers its platform
+on the customer’s cloud account. Chalk's managed infrastructure then executes-customer defined pipelines to compute
+“[feature](<https://en.wikipedia.org/wiki/Feature_(machine_learning)>)”
+data for machine learning applications. Chalk then serves this data
+back to customer applications for online inference and to customer
+data teams for training set generation.
+
+## Architecture Diagram
+
+<ServiceDiagramSwitcher default_option={"AWS"} />
+
+## IAM Requirements
+
+Chalk requires certain IAM permissions to manage infrastructure in your cloud account.
+Typically, Chalk recommends:
+
+- creating a new account in your AWS organization
+- creating a new role in your root AWS organization with the permissions in this document
+- granting Chalk's management role AssumeRole on the role you created
+
+## Setup permissions
+
+Chalk recommends creating a custom "role" in your organization with the following permissions granted.
+At a high level, Chalk needs the ability to provision the key components of your infrastructure:
+
+- Storage resources (buckets for dataset storage and bulk insertion into offline storage)
+- Networking resources (LBs, VPCs, etc.)
+- IAM resources (e.g. creating service accounts for workload identity, etc.)
+- Kubernetes resources (EKS)
+- Online storage (RDS, or Elasticache, or Dynamo)
+- Offline storage (typically Snowflake or Redshift)
+
+```txt
+{
+    "Statement": [
+        {
+            "Resource": "*",
+            "Action": [
+                "sqs:*",
+                "sns:*",
+                "acm:*",
+                "secretsmanager:*",
+                "s3:*",
+                "redshift:*",
+                "redshift-data:*",
+                "redshift-serverless:*",
+                "rds:*",
+                "logs:*",
+                "kms:*",
+                "kafkaconnect:*",
+                "kafka:*",
+                "kafka-cluster:*",
+                "iam:UploadServerCertificate",
+                "iam:UploadSSHPublicKey",
+                "iam:UpdateServerCertificate",
+                "iam:UpdateRoleDescription",
+                "iam:UpdateRole",
+                "iam:UpdateOpenIDConnectProviderThumbprint",
+                "iam:UpdateAssumeRolePolicy",
+                "iam:RemoveRoleFromInstanceProfile",
+                "iam:RemoveClientIDFromOpenIDConnectProvider",
+                "iam:PutRolePolicy",
+                "iam:PassRole",
+                "iam:ListSSHPublicKeys",
+                "iam:ListRoles",
+                "iam:ListRolePolicies",
+                "iam:ListPolicyVersions",
+                "iam:ListPolicyTags",
+                "iam:ListPolicies",
+                "iam:ListOpenIDConnectProviders",
+                "iam:ListOpenIDConnectProviderTags",
+                "iam:ListAttachedRolePolicies",
+                "iam:GetServerCertificate",
+                "iam:GetSSHPublicKey",
+                "iam:GetRolePolicy",
+                "iam:GetRole",
+                "iam:GetPolicyVersion",
+                "iam:GetPolicy",
+                "iam:GetOpenIDConnectProvider",
+                "iam:GetInstanceProfile",
+                "iam:DetachRolePolicy",
+                "iam:DeleteServiceLinkedRole",
+                "iam:DeleteServerCertificate",
+                "iam:DeleteRolePolicy",
+                "iam:DeleteRole",
+                "iam:DeleteOpenIDConnectProvider",
+                "iam:DeleteInstanceProfile",
+                "iam:CreateServiceLinkedRole",
+                "iam:CreateRole",
+                "iam:CreatePolicyVersion",
+                "iam:CreatePolicy",
+                "iam:CreateOpenIDConnectProvider",
+                "iam:CreateInstanceProfile",
+                "iam:AttachRolePolicy",
+                "iam:AddRoleToInstanceProfile",
+                "iam:AddClientIDToOpenIDConnectProvider",
+                "elasticloadbalancing:*",
+                "eks:*",
+                "ecr:*",
+                "ec2:*",
+                "cloudwatch:*",
+                "autoscaling:*",
+                "application-autoscaling:*"
+                "dynamodb:*",
+                "dax:*",
+            ],
+            "Effect": "Allow"
+        }
+    ],
+    "Version": "2012-10-17"
+}
+```
+
+## What are these permissions for?
+
+- `cloudwatch`: The metrics viewer in the web UI
+- `logs`: Logs for the web UI
+- `acm`: Provisioning SSL certs for client&lt;&gt;server encryption
+- `rds`: RDS Onlinestore
+- `redshift`: Redshift offline store
+- `redshift-data`: Redshift offline store
+- `redshift-serverless`: Redshift offline store
+- `kafka`: Asynchronous persistence queues for metrics & feature storage
+- `kafka-cluster`: Asynchronous persistence queues for metrics & feature storage
+- `dynamodb`: Dynamodb onlinestore
+- `dax`: Dynamodb onlinestore
+- `application-autoscaling`: Dynamodb onlinestore, if autosacling is required
+- `ec2`: ALB and EKS node pool management
+- `ecr`: ECR image management for deployments
+- `eks`: EKS cluster management for running featurte engineering worklods
+- `kms`: Encryption keys for secrets
+- `secretsmanager`: Encrypting datasource secrets from the web UI
+
+## Ongoing permissions
+
+Chalk's support team will work with you to scope permissions down to what are needed for ongoing maintenance.
+The precise details depend on the level of ongoing support that your team needs and your compliance requirements.
+In principal, Chalk does not require ongoing access to data, or to the ability to edit IAM permissions,
+but Chalk requires ongoing access to update the software deployed in your environment.

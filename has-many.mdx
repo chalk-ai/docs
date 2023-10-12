@@ -1,0 +1,95 @@
+---
+title: Has Many
+description: Define one-to-many and many-to-many relationships between feature sets.
+---
+
+import { PyDiffEditor } from '@/components/Editor'
+import { highlightedCode as manyToOneDiff } from '@/samples/features/many_to_one.py?highlight=diff-py'
+import { highlightedCode as oneToManyDiff } from '@/samples/features/one_to_many.py?highlight=diff-py'
+import { highlightedCode as manyToManyDiff } from '@/samples/features/many_to_many.py?highlight=diff-py'
+import { TipInfo } from '@/components/Tip'
+
+---
+
+A feature set can be linked to many examples of a different feature set
+via the function `has_many`, where the first argument specifies a
+function returning how to join the tables.
+
+## Example
+
+In the example below, users have many transfers:
+
+```py
+from chalk.features import has_many, DataFrame, ...
+
+@features
+class Transfer:
+    ...
+    user_id: str
+    amount: float
+
+@features
+class User:
+    ...
+    uid: str
+    transfers: DataFrame[Transfer] = has_many(lambda: Transfer.user_id == User.uid)
+```
+
+<TipInfo>
+  The `lambda` solves forward references, letting you reference `User` before it is defined.
+</TipInfo>
+
+Now, you can reference the transfers for a user through the user.
+The `has_many` function returns a [chalk.DataFrame](/docs/dataframe),
+which supports many helpful aggregate operations:
+
+```py
+# Number of transfers made by a user
+User.transfers.count()
+
+# Total amount of transfers made by the user
+User.transfers[Transfer.amount].sum()
+
+# Total amount of the transfers made by the user that were returned
+User.transfers[
+    Transfer.status = "returned",
+    Transfer.amount
+].sum()
+```
+
+---
+
+## Back-references
+
+### One-to-many
+
+One-to-many is defined by a [has_one](/docs/has-one) relationship
+on the other side of the relation.
+However, you don't have to explicitly use [has_one](/docs/has-one).
+Instead, the join condition is assumed to be symmetric and copied over.
+Building on the above example, all you need to do
+to complete the one-to-many relationship is to add a `User` to
+the `Transfer` class:
+
+<PyDiffEditor html={manyToOneDiff} />
+
+<TipInfo>Here you need to use quotes around `User` to use a forward reference.</TipInfo>
+
+Alternatively, you could define the join condition on the [has_one](/docs/has-one)
+side, and add the [DataFrame](/docs/dataframe) to the `User` class:
+
+<PyDiffEditor html={oneToManyDiff} />
+<TipInfo>Again, you need to use quotes around `User` deal with forward references.</TipInfo>
+
+### Many-to-many
+
+Many-to-many is defined by a `has_many` relationship
+on the both sides of the relation.
+As before, you don't need to specify the join condition a second time
+so long as the join condition is symmetric.
+
+<PyDiffEditor html={manyToManyDiff} />
+
+<TipInfo>
+  Here you need to use quotes around `DataFrame[Author]` to use a forward reference.
+</TipInfo>

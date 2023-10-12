@@ -1,0 +1,56 @@
+---
+title: Timeout
+description: Maximum execution time for resolvers
+---
+
+---
+
+Computing features associated with third-party services can be unpredictably slow.
+Chalk helps you manage such uncertainty by specifying a resolver timeout duration.
+
+Chalk will instantaneously (&pm;1ms) cease waiting for a resolver whose
+runtime has exceeded the specified timeout duration. Simultaneously,
+via parallel execution, Chalk will return other crucial features whose
+resolvers did not time out.
+
+---
+
+To specify a timeout, use the `timeout` keyword argument to either
+`@online` or `@offline`:
+
+## Example
+
+```python
+@online(timeout="200ms")
+def resolve_australian_credit_score(
+    driver_id: User.driver_id_aus,
+) -> User.credit_score_aus:
+    return experian_client.get_score(driver_id)
+
+@offline(timeout=timedelta(milliseconds=50))
+def resolve_canadian_credit_score(
+    user_si_number: User.social_insurance_number,
+) -> User.credit_score_can:
+    return equifax_client.get_score(user_si_number)
+```
+See [Duration](/docs/duration) for supported durations.
+
+---
+
+## Behavior upon timeout
+### Direct timeout
+If a query's output feature is directly resolved by a resolver that
+timed out, Chalk will return an error with the error code `RESOLVER_TIMED_OUT`,
+and its message will contain the name of the timed-out resolver.
+
+### Upstream timeout
+If a query's output feature is resolved by a resolver whose upstream
+resolver has timed out, Chalk will return an error with the error
+code `UPSTREAM_FAILED`.
+
+The resolver that directly outputs the requested feature will not be
+run (unless it marks its inputs as optional).
+
+### Multiple output features
+If your query contains multiple output features, Chalk will still
+return the other features whose resolver did not time out.

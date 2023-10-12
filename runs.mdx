@@ -1,0 +1,87 @@
+---
+title: Triggered Runs
+description: Execute resolver runs via API
+---
+
+import {
+  Attribute,
+  AttributeTable,
+} from '@/components/AttributeTable'
+import { RequestUrl } from '@/components/RequestUrl'
+
+---
+
+In addition to [scheduling resolver executions](/docs/resolver-cron),
+Chalk allows you to trigger resolver executions programmatically via the REST API.
+Using the `trigger` API endpoint allows you to build custom integrations with other
+data orchestration tools like Airflow.
+
+The `trigger` endpoint will return within 300 seconds, even if the
+triggered run takes longer to execute. If the returned status is `received`,
+you should poll the `v1/runs/{id}` endpoint until `status` transitions to `succeeded` or `failed`.
+
+Note: if you use a user-scoped token (i.e. one that's derived from `chalk login`) you will need to
+specify the environment in which to trigger your resolver via the `X-Chalk-Env-id` header.
+
+## Trigger a run
+
+<RequestUrl url="https://api.chalk.ai/v1/runs/trigger" type="POST" />
+
+<AttributeTable title={"Request Body"}>
+
+<Attribute field={'resolver_fqn'} kind={'string'}>
+  The fully qualified name of the resolver to trigger. Example: 'neobank.resolvers.offline_get_transactions'.
+</Attribute>
+
+</AttributeTable>
+
+## Response
+
+<AttributeTable>
+<Attribute field={'id'} kind={'string'}>ID of the relevant run.</Attribute>
+    <Attribute field={'status'} kind={'enum'}>
+        One of 'received', 'succeeded', or 'failed'
+    </Attribute>
+</AttributeTable>
+
+## Example
+
+```bash
+curl -XPOST -H "Authorization: Bearer $(chalk token)" \
+     -H "X-Chalk-Env-Id: <your-environment-id>" \
+     -H "Content-Type: application/json" \
+     https://api.chalk.ai/v1/runs/trigger \
+     -d '{ "resolver_fqn": "neobank.resolvers.offline_get_transactions" }'
+
+# Returns
+
+{
+  "id": "<run-id>",
+  "status": "succeeded"
+}
+```
+
+## Query run status
+
+<RequestUrl url="https://api.chalk.ai/v1/runs/:id" type="GET" />
+
+<AttributeTable>
+    <Attribute field={'id'}>URL Param. ID of the relevant run.</Attribute>
+</AttributeTable>
+
+## Response
+
+<AttributeTable>
+    <Attribute field={'id'} kind={'string'}>ID of the relevant run.</Attribute>
+<Attribute field={'status'} kind={'enum'}>
+    One of 'received', 'succeeded', or 'failed'
+</Attribute>
+</AttributeTable>
+
+## Example
+
+```bash
+curI -H "Authorization: Bearer $(chalk token)" \
+     -H "X-Chalk-Env-Id: <your-environment-id>" \
+     https://api.chalk.ai/v1/runs/{run_id}
+```

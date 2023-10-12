@@ -1,0 +1,89 @@
+---
+title: "Cookbook: Serving Snowflake Data"
+description: Make Snowflake data available for low-latency serving quickly and easily.
+---
+
+Snowflake is a fantastic database for analytics. Snowflake is not a fantastic database for serving production
+traffic when latency or request volume is a concern. Chalk's reverse-ETL functionality makes it trivial to make
+Snowflake data available for latency-sensitive production use-cases.
+
+## Schema Setup
+
+First, we'll need to set up a Snowflake schema. If you already have one, you can skip this step. Here, we'll define
+a table for "business facts" -- imagine that these facts are computed via a batch process and loaded into Snowflake
+once a day.
+
+```snowflake
+create table business_facts (
+    business_id numeric primary key,
+    name varchar,
+    review_count numeric,
+    average_rating numeric,
+    is_verified boolean,
+    inferred_merchant_category varchar
+)
+```
+
+Then, we'll define a corresponding "feature" schema in Chalk:
+
+```python
+@features(max_staleness="1d", etl_offline_to_online=True)
+class BusinessFacts:
+    business_id: int
+    name: str
+    review_count: int
+    average_rating: float
+    is_verified: bool
+    inferred_merchant_category: str
+```
+
+Note the two parameters to `@features`.
+
+- `max_staleness` tells Chalk to cache all computed `BusinessFacts` features for one day.
+- `etl_offline_to_online` tells Chalk to reverse-ETL data from `@offline` resolvers into the online store.
+
+## Loading the data
+
+Finally, we'll define a SQL resolver that loads this data into Chalk's online store:
+
+```sql
+-- type: offline
+-- resolves: business_facts
+-- schedule: 1d
+-- source: snowflake # the name of your data source, as defined in the data sources web interface
+
+select business_id, name, review_count, average_rating, is_verified, inferred_merchant_category
+from business_facts
+```
+
+The `schedule` field tells Chalk to run this query once per day and load the results into the online store.
+Runs of the resolver, associated logs, and metrics will be displayed in the web interface.
+
+If you want to manually trigger one-off execution, you can run the following CLI command:
+
+```
+chalk trigger --resolver business_facts
+```
+
+or you can trigger the resolver via the web interface with the "Run" button.
+
+## Querying the data
+
+Now, we can query the data from Python. To do this, we'll instantiate a `ChalkClient` and run a `query`:
+
+```python
+from chalk import ChalkClient
+
+client = ChalkClient()
+
+client.query(inputs={BusinessFacts.id: 1234}, outputs=[BusinessFacts.name, BusinessFacts.review_count])
+
+# Output:
+# {
+#     "name": "The Best Restaurant",
+#     "review_count": 1234
+# }
+```
+
+Chalk's `query` endpoint can support thousands of requests per second with low-latency, so now this Snowflake-sourced
+data can easily be used for low-latency production use-cases.

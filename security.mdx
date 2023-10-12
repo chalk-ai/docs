@@ -1,0 +1,236 @@
+---
+title: Security Overview
+description: How Chalk protects your data.
+---
+
+import {
+  DeploymentArchitectureDiagram,
+  NetworkArchitectureDiagram,
+} from '@/components/DeploymentArchitectureDiagram'
+
+---
+
+## About Chalk
+
+Chalk enables innovative machine learning teams to focus on building
+the unique products and models that make their business stand
+out. Behind the scenes Chalk seamlessly handles data infrastructure
+with a best-in-class developer experience.
+
+Chalk is both a framework and a platform — developers can write code
+using familiar Python packages, and deploy that code to Chalk’s
+platform. Chalk infrastructure executes-customer defined pipelines to
+compute
+“[feature](<https://en.wikipedia.org/wiki/Feature_(machine_learning)>)”
+data for machine learning applications. Chalk then serves this data
+back to customer applications for online inference and to customer
+data teams for training set generation.
+
+Chalk was built to help answer the world’s hardest questions. By
+democratizing access to machine learning, we hope to do just that.
+
+Chalk was founded and is based in San Francisco, with our primary office
+in the Mission District.
+
+---
+
+## Culture of Security
+
+At Chalk, protecting customer data is core to our mission. It goes
+without saying — a culture of security is required to earn the trust
+of organizations that are solving important problems. Consequently, we
+integrate security best practices into every aspect of our operations
+and product development and continuously work to harden our security.
+
+### Security Program
+
+Chalk adheres to a program that protects confidentiality, integrity,
+and availability of data. We have developed information security
+policies, updated at a minimum on an annual basis, to enforce best
+practices across access control, risk management, change management,
+incident response, and other critical areas.
+We align our policies with standard industry frameworks and
+our controls are certified via a SOC-2 Type 1 assessment.
+You can request a copy of our certified report by contacting
+[security@chalk.ai](mailto:security@chalk.ai).
+
+### Our People
+
+Chalk’s security starts with the people who work here. We maintain
+strict standards for hiring and all employees undergo background
+checks prior to employment. During onboarding, we require employees to
+sign a Code of Conduct and an Acceptable Use Policy. Periodically, we
+evaluate employee performance in order to ensure alignment with our
+objectives. Employees who fail to comply with policies are subject to
+disciplinary procedures up to and including termination.
+
+---
+
+## Protecting Customer Data
+
+### Endpoint security
+
+Chalk takes the protection of customer data seriously. We recognize
+that failing to protect production customer data is an existential threat to our
+business. To that end, Chalk strictly forbids storing customer data on
+company workstations, laptops, or removable media. Customer data is
+stored exclusively in production data environments.
+
+In addition, Chalk maintains strict controls for production
+systems. Chalk employees are not permitted to access Chalk production
+systems via mobile devices. All access to production systems is gated via IAM
+grants which require justification. Furthermore, access is only
+permitted on computers that are verified to comply with our endpoint
+standards. No customer data may be transferred to employee
+workstations.
+
+### Network security and server hardening
+
+Customer data is logically segregated and encrypted at rest and in
+transit. We use a multi-tenant database for metadata and
+configuration, and feature engineering data is stored in isolated
+single-tenant stores.
+
+Chalk infrastructure is hosted in AWS and GCP and relies on their
+respective physical and environmental security controls. Their
+security is described in detail in the
+[AWS](https://docs.aws.amazon.com/whitepapers/latest/introduction-aws-security/introduction-aws-security.pdf)
+and [GCP](https://cloud.google.com/security/infrastructure) security
+documentation.
+
+Our production VPC networks are segregated from development and
+staging networks, and utilize strict firewall controls to prevent any
+unauthorized access.
+
+<NetworkArchitectureDiagram />
+
+We use separate AWS accounts and GCP projects for segregated
+environments, and strictly control IAM access to environments using
+the [principle of least
+privilege](https://www.google.com/search?q=principle+of+least+privilege&oq=principle+of+least+p&aqs=chrome.0.0i512j69i57j0i512l8.1378j0j7&sourceid=chrome&ie=UTF-8).
+
+### Encryption
+
+At Chalk we use encryption mechanisms to protect customer data. Chalk
+makes use of GCP and AWS services to manage encryption of data at rest
+and in transit. Data at rest is encrypted using AES 256-bit
+encryption. Data in transit is protected using TLSv1.2 or higher, and
+we require modern cipher suites for all connections.
+
+### Access Control
+
+Chalk uses the IAM capabilities of GCP and AWS to manage users who
+have access to Chalk's production environments. We use auditing
+tools to verify that the principle of least privilege is followed, and we
+use granular service accounts to enforce separation of duties. Access
+privileges are reviewed at least quarterly.
+
+<DeploymentArchitectureDiagram />
+
+### Data retention and disposal
+
+Chalk maintains explicit policies for data retention and deletion. We retain customer data for as long as is needed to satisfy contractual obligations with our customers, or in accordance with regulatory frameworks. We maintain corporate data for periods that are defined by relevant business stakeholders in accordance with business objectives.
+
+Chalk performs daily automated backups of systems that hold customer data.
+
+---
+
+## Monitoring and Risk Management
+
+### System monitoring, logging, and alerting
+
+Chalk invests heavily in extensive monitoring, observability, and
+alerting for our production environments. We make use of several
+tools, including Datadog's [SIEM
+solution](https://www.datadoghq.com/product/security-platform/cloud-siem/).
+
+We rely on AWS and GCP’s audit logging capabilities to keep a record of all production access grants, which includes access that would allow an employee to view customer data. Administrative activity in AWS and GCP is logged and retained immutably.
+
+Alerts are configured for important production systems and
+functionality. Critical alerts are actioned immediately, with pages
+going out to our 24x7x365 on-call rotation.
+
+### Third-party review & management
+
+Chalk evaluates third-party sub-processors and vendors according to a risk-based framework. We assess their privacy, security, and confidentiality processes in order to confirm that they will not impact our responsibility to protect customer data and provide a highly-available service.
+
+Vendors are reviewed on a yearly cadence. We evaluate factors like the
+sensitivity of data stored on the service, criticality of our
+dependence on the service, and the reputation of the service. A
+current list of our sub-processors is available
+[here](https://chalk.ai/legal/subprocessors).
+
+---
+
+## Change Management
+
+Chalk utilizes an agile methodology for software development, and
+performs extensive code reviews and testing before each release.
+
+We adhere to industry best practices, which include mandatory PR
+approvals, [automated code review](https://semgrep.dev/), a suite of
+integration and unit tests, and preview deployments to non-production
+environments for manual QA.
+
+Developers are trained to adhere to secure coding guidelines, and are
+aware of the OWASP Top 10 issues. Security-sensitive code is always
+reviewed by domain experts.
+
+---
+
+## Incident Management and Business Continuity
+
+### Responding to security incidents
+
+Chalk follows a documented Incident Response Plan which is aligned
+with the [SANS Incident Handlers
+Handbook](https://www.sans.org/white-papers/33901/).
+
+Our plan includes steps for initiating the response plan, escalation
+to relevant leadership stakeholders, triage, investigation, analysis,
+mitigation, restoration, and post-mortem. Our engineering team works
+to monitor potential security issues pro-actively, and takes all
+reports of security-related issues very seriously.
+
+Our 24x7x365 on-call rotation is available for customers to report
+security incidents. Reports should be made to
+[security@chalk.ai](mailto:security@chalk.ai), or through other
+contracted support channels.
+
+Chalk will notify impacted customers of any security issues in a
+timely fashion.
+
+### Disaster recovery and business continuity
+
+Chalk has developed a Business Continuity and Disaster Recovery
+Plan. We perform an annual review and trial run of the plan, and work
+to ensure that we are able to resume business operations from backup
+locations, establish communication among core team members, and
+perform backup restorations successfully.
+
+---
+
+## Awareness Training
+
+Chalk maintains a Security Awareness program as part of our onboarding
+and annual review cadence. All employees are required to participate
+in order to ensure that they are aware of and understand the policies
+and procedures that they are required to abide by.
+
+Developers are educated on OWASP Top 10 issues, and other secure
+coding concepts.
+
+---
+
+## Conclusion
+
+Chalk’s goal is to make it as easy as possible to deploy
+production-grade machine learning pipelines. We understand that we
+must earn and keep the trust of our customers in order to succeed in
+our mission. As such, we have implemented policies and procedures
+which reflect today’s best practices and we are committed to evolving
+our standards to always reflect updated security best practices.
+
+If you have any questions, please reach out to us at
+[security@chalk.ai](mailto:security@chalk.ai), or by contacting your
+Chalk relationship manager.

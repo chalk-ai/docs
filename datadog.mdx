@@ -1,0 +1,89 @@
+---
+title: Datadog
+description: Ingest Chalk metrics into Datadog.
+published: true
+---
+
+---
+
+Chalk stores a variety of time series metrics that measure the latency and
+throughput of resolvers and streaming pipelines.
+Chalk displays these metrics on the Chalk Dashboard, but can also export them to monitoring systems
+of your choice via the [OpenMetrics](https://openmetrics.io/) standard.
+
+For this purpose, Chalk exposes an endpoint with metrics in a
+[text-based format](https://prometheus.io/docs/instrumenting/exposition_formats/) that systems like Datadog
+are designed to ingest.
+Datadog polls this endpoint periodically and ingests
+gauges, counters, histograms, and summaries from Chalk.
+Then, these metrics appear in Datadog as custom metrics.
+
+## Configuring Datadog
+
+### Step 1: Create a Datadog agent
+
+Datadog Agents are processes that run on your servers to collect metrics and send them to Datadog's online
+monitoring systems.
+
+You can use an existing agent to collect Chalk metrics, or
+[create an agent specifically for Chalk](https://docs.datadoghq.com/agent/basic_agent_usage/).
+Once you have created an agent, you can configure it to ingest metrics from Chalk.
+
+### Step 2: Create a Chalk service token
+
+Chalk secures the metrics export endpoint using the same authentication and authorization mechanisms used for
+accessing other Chalk systems.
+
+After creating a Datadog agent, generate a set of [service credentials](/docs/online-authentication) with the `logs.list`
+permission.
+
+![Datadog token](/img/ddogtoken.png)
+
+Keep the `client_id` and `client_secret` handy -- you'll need them in the next step.
+
+### Step 3: Configure the agent
+
+Next, configure the Datadog agent
+[to ingest OpenMetrics data](https://docs.datadoghq.com/integrations/openmetrics/) from Chalk.
+
+Edit the OpenMetrics configuration file, which
+comes standard with Datadog Agent as of version 6.6.0. Datadog Agent configuration files are found in the
+[agent configuration directory](https://docs.datadoghq.com/agent/guide/agent-configuration-files/).
+In that directory is a file named `openmetrics.d/conf.yaml`.
+Add the following content:
+
+```yaml openmetrics.d/conf.yaml
+instances:
+  - openmetrics_endpoint: https://api.chalk.ai/v1/metrics/export
+
+    ## (Optional) A prefix to prepend to all metrics
+    namespace: chalk
+
+    metrics:
+      - resolver_latency_seconds
+      - resolver_request
+      - feature_request
+      - deployment
+      - query_http_response
+
+    headers:
+      X-Chalk-Client-Id: token-<redacted>
+      X-Chalk-Client-Secret: ts-<redacted>
+```
+
+In `X-Chalk-Client-Id` and `X-Chalk-Client-Secret`,
+supply the client ID and secret you generated in
+[Step 2](#step-2-create-a-chalk-service-token).
+In the `metrics` section of the config file,
+you can specify any of the metrics found in the
+[list of supported metrics](/docs/metricexport#available-metrics).
+
+### Step 4: Verification
+
+Your Chalk metrics will appear on the Datadog
+[metrics summary page](https://app.datadoghq.com/metric/summary)
+after updating the Datadog Agent configuration and restarting your Datadog Agent.
+
+They should appear like this:
+
+![Datadog verification](/img/ddogverify.png)

@@ -1,0 +1,121 @@
+---
+title: "Tutorial: Feature Versions"
+description: Learn how to create and interact with versioned features
+---
+
+---
+
+## Introduction
+
+With [`Feature Versioning`](/docs/feature-versions) on the Chalk
+platform, you can manage multiple versions of a feature.
+In this guide, you'll add versioning to a feature in an existing
+Chalk project.
+
+The following example shows you how to add versions to a feature,
+manage resolvers for different versions, query versioned features,
+and generally interact with versioned features.
+
+---
+
+## Creating your first versioned feature
+
+
+1. Create a `versioned_feature.py` file in your Chalk project.
+2. Copy the following Python contents into the `versioned_feature.py` file.
+
+```python
+from chalk.features import feature, features, online
+
+@features
+class Animal:
+    id: str
+    sound: str = feature(version=2)
+
+@online
+def resolver_1(id: Animal.id) -> Animal.sound@1:
+    return "Hello"
+
+@online
+def resolver_2(id: Animal.id) -> Animal.sound@2:
+    match id:
+        case "Cow": return "Moo"
+        case "Dog": return "Woof"
+        case _: return "Hello"
+```
+
+3. Deploy your new feature with [`chalk apply --no-promote`](/cli/apply#no-promote).
+4. Now try a basic query for `animal.sound`. When no explicit version is provided, and no `default_version` is set, version 1 will be requested, so this function will return `"Hello"`.
+```bash
+$ chalk query --in animal.id=Cow --out animal.sound
+```
+5. To query a specific version, use the `@` syntax
+```bash
+$ chalk query --in animal.id=Cow --out animal.sound@2
+```
+
+---
+
+## Changing default versions
+
+When you create a versioned feature, the default version is 1.
+You can control this default version and change the behavior of querying and resolvers.
+
+1. Replace the contents of `versioned_feature.py` with the following Python code.  Note that we didn't specify `@2` in `resolver_2`.  We can do that because `2` is the default version of `Animal.sound`.
+```python
+from chalk.features import feature, features, online
+
+@features
+class Animal:
+    id: str
+    sound: str = feature(version=2, default_version=2)
+
+@online
+def resolver_1(id: Animal.id) -> Animal.sound@1:
+    return "Hello"
+
+@online
+def resolver_2(id: Animal.id) -> Animal.sound:
+    match id:
+        case "Cow": return "Moo"
+        case "Dog": return "Woof"
+        case _: return "Hello"
+```
+2. [`chalk apply --no-promote`](/cli/apply#no-promote) to deploy.
+3. Now try querying without a version, and resolver_2 will get executed.
+```bash
+$ chalk query --in animal.id=Cow --out animal.sound
+```
+---
+
+## Using versioned features in resolvers
+
+Versioned features can also be used as the inputs for resolvers,
+which lets you do some clever things!
+Let's check it out.
+
+1. Replace the contents of `versioned_features.py` with this code.
+
+```python
+from chalk.features import feature, features, online
+
+@features
+class Animal:
+    id: str
+    sound: str = feature(version=2)
+
+@online
+def resolver_1(id: Animal.id) -> Animal.sound@1:
+    return "Hello"
+
+@online
+def resolver_2(id: Animal.id, sound: Animal.sound@1) -> Animal.sound@2:
+    sounds = {"Cow" : "Moo", "Dog": "Woof"}
+    return f"The {id} says {sounds.get(id, 'Hello')}, but its trying to say {sound}"
+```
+
+2. Now query for an `Cow.sound@2` and notice how Chalk automatically generates the dependent `Cow.sound@1` feature!
+
+```bash
+$ chalk query --in animal.id=Cow --out animal.sound@2
+```

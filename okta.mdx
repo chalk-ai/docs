@@ -1,0 +1,40 @@
+---
+title: Okta SSO
+description: Setting up Okta to work with Chalk
+---
+
+Chalk is capable of using standard SSO providers like Google and GitHub for SSO authentication. For companies that use [Okta](https://okta.com/), additional configuration is required.
+
+---
+
+## Supported Features
+
+- IDP-initiated Single Sign-On (OpenID Connect), initiated via Okta
+- SP-initiated Single Sign-On (OpenID Connect), initiated from Chalk
+
+---
+
+## Requirements
+
+- Configure a custom OIDC app in Okta's dashboard
+- Send configuration parameters to Chalk support
+
+---
+
+## Configuration Steps
+
+Currently, Chalk requires a custom OIDC app integration to work with Okta for SSO.
+
+1. Navigate to your admin dashboard (`https://<your-domain>.okta.com/admin/apps/active`)
+2. Choose "Create App Integration"
+    ![App Integration Configuration](/img/okta-1.png)
+    * Choose "OIDC - OpenID Connect" for "Sign-in Method"
+    * Choose "Web Application" for "Application type"
+3. Configure the Web App Integration
+    * App integration name: `Chalk`
+    * Logo: Chalk logo is available [here](https://chalk.ai/chalk_logo.png)
+    * Grant type: Ensure that `Authorization Code` is checked
+    * Sign-in redirect URIs: `https://chalk.ai/api/auth/callback/okta`
+    * Sign-out redirect URIs `https://chalk.ai/api/oidc/post-logout`
+4. After clicking "save", copy the "Client ID" and a "Client Secret" from the *Client Credentials* section on the application configuration page
+5. Submit the "Client ID" and "Client Secret" to Chalk Support, along with your Okta domain (your "issuer")

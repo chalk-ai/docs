@@ -1,0 +1,169 @@
+---
+title: Datasets
+description: Persist and evolve offline queries over time
+---
+
+The Chalk [Dataset](/api-docs#Dataset) class governs metadata related to offline queries,
+supports revisions to queries over time, and enables the easy retrieval
+of data from the cloud.
+
+## Datasets from offline query
+
+`Dataset` instances are obtained by calling [ChalkClient.offline_query()](/api-docs#ChalkClient.offline_query)
+which computes feature values from the offline store.
+If inputs are given, the method returns the values corresponding to those inputs.
+Otherwise, the method returns a random sample according to the parameter `max_samples`,
+or features from within timebounds specified by `lower_bound` and `upper_bound`.
+
+```py
+from chalk.client import ChalkClient, Dataset
+uids = [1, 2, 3, 4]
+at = datetime.now()
+dataset: Dataset = ChalkClient().offline_query(
+     input={
+         User.id: uids,
+         User.ts: [at] * len(uids),
+     },
+     output=[
+         User.id,
+         User.fullname,
+         User.email,
+         User.name_email_match_score,
+     ],
+     dataset_name='my_dataset'
+)
+
+sample_dataset: Dataset = ChalkClient().offline_query(
+     output=[
+         User.id,
+         User.fullname,
+         User.email,
+         User.name_email_match_score,
+     ],
+     max_samples=10,
+     lower_bound=datetime.now() - timedelta(days=7),
+     upper_bound=datetime.now(),
+     dataset_name='my_sample'
+)
+```
+
+Here, we attach a unique name to the `Dataset`. Whenever we send additional
+queries with the same name, a new [DatasetRevision](/api-docs#DatasetRevision) instance will be created
+and attached to the existing dataset.
+If a `dataset_name` is not given, the output data won't be retrievable beyond the current session.
+
+A dataset's revisions can be inspected in `Dataset.revisions`:
+they hold useful metadata relating to the offline query job and the data itself.
+Be sure to check out `Dataset.errors` for any errors upon submitting the query.
+
+## Retrieving output data
+
+Since offline queries are not realtime, the `Dataset` instance returned
+is not guaranteed to have the outputs of the query instantaneously.
+Thus, loading the data may take some time.
+
+The data can be accessed programmatically by calling
+`Dataset.get_data_as_pandas()`,  `Dataset.get_data_as_polars()`, or `Dataset.get_data_as_dataframe()`.
+If the offline query job is still running, the `Dataset` will poll the engine until the
+results are completed.
+
+```py
+from chalk.client import ChalkClient, Dataset
+uids = [1, 2, 3, 4]
+at = datetime.now()
+dataset: Dataset = ChalkClient().offline_query(
+     input={
+         User.id: uids,
+         User.ts: [at] * len(uids),
+     },
+     output=[
+         User.id,
+         User.fullname,
+         User.email,
+         User.name_email_match_score,
+     ],
+     dataset_name='my_dataset'
+)
+
+pandas_df: pd.DataFrame = dataset.get_data_as_pandas()
+polars_df: pl.LazyFrame = dataset.get_data_as_polars()
+chalk_df: chalk.features.DataFrame = dataset.get_data_as_dataframe()
+```
+
+The file outputs of the query themselves can also be downloaded to a specified directory.
+
+```py
+from chalk.client import ChalkClient, Dataset
+uids = [1, 2, 3, 4]
+at = datetime.now()
+dataset: Dataset = ChalkClient().offline_query(
+     input={
+         User.id: uids,
+         User.ts: [at] * len(uids),
+     },
+     output=[
+         User.id,
+         User.fullname,
+         User.email,
+         User.name_email_match_score,
+     ],
+     dataset_name='my_dataset'
+)
+dataset.download_data('my_directory')
+```
+
+By default, `Dataset` instances fetch the output data from their most recent revision.
+A specific `DatasetRevision`'s output data can be fetched using the same methods.
+
+```py
+from chalk.client import ChalkClient, Dataset
+uids = [1, 2, 3, 4]
+at = datetime.now()
+dataset: Dataset = ChalkClient().offline_query(
+     input={
+         User.id: uids,
+         User.ts: [at] * len(uids),
+     },
+     output=[
+         User.id,
+         User.fullname,
+         User.email,
+         User.name_email_match_score,
+     ],
+     dataset_name='my_dataset'
+)
+for revision in dataset.revisions:
+    print(revision.get_data_as_pandas())
+```
+
+## Dataset Inputs
+
+`Dataset` objects also store the inputs for each revision.
+
+```py
+from chalk.client import ChalkClient, Dataset
+uids = [1, 2, 3, 4]
+at = datetime.now()
+dataset: Dataset = ChalkClient().offline_query(
+     input={
+         User.id: uids,
+         User.ts: [at] * len(uids),
+     },
+     output=[
+         User.id,
+         User.fullname,
+         User.email,
+         User.name_email_match_score,
+     ],
+     dataset_name='my_dataset'
+)
+df = dataset.get_input_dataframe()
+```
+
+
+## Recompute a Dataset
+
+Datasets expose a [recompute](/api-docs#Dataset.recompute) method
+that enables users to see the results of updates to resolvers/features in the context of this dataset.
+`recompute` takes a list of features as an argument to be recomputed,
+and any other required input features are sampled from the offline store.

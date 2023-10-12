@@ -1,0 +1,237 @@
+---
+title: Overview
+description: Fetch feature values via online query.
+---
+
+import { RequestingFeaturesOnline } from '@/components/home/RequestingFeaturesOnline'
+import {
+  Attribute,
+  AttributeTable,
+  SubAttribute,
+  SubAttributeTable,
+} from '@/components/AttributeTable'
+import { RequestUrl } from '@/components/RequestUrl'
+
+---
+
+Chalk supports a REST API for querying online features
+and exposes this endpoint in several API clients.
+When you execute an online query, [resolvers](/docs/resolver-online-offline)
+will execute to produce the requested data.
+Online query will prioritize running online resolvers over offline resolvers to compute features
+if both are possible.
+
+The following endpoint can also be hit with the python [ChalkClient](/api-docs#ChalkClient) by using its `query` method.
+For information on how to authenticate the `ChalkClient`, check out the section on
+[authentication](/docs/online-authentication).
+Read more about the parameters to this method [here](/api-docs#ChalkClient.query).
+
+
+## Request
+
+<RequestUrl url="https://api.chalk.ai/v1/query/online" type="POST" />
+
+<AttributeTable>
+
+<Attribute field={'inputs'} kind={'map[string, JSON]'}>
+  Input features and values are provided at the time of request.
+  For example, primary key-value pairs often designate the subset of data returned. Feature inputs
+  are provided by fully qualified path, rooted in the same feature namespace.  <a href={'/docs/has-many'}>Has many features</a>
+  are input as lists, and <a href={'/docs/feature-types#dataclass'}>struct features</a> are input as Json.
+
+  An example of passing a user with two credit cards as input:
+  ```{user.id: '1', user.cards: [card.id: 'xyz', card.id:'abc']}```
+</Attribute>
+
+<Attribute field={'outputs'} kind={'string[]'}>
+  Outputs are the features that you'd like to compute from the inputs.
+</Attribute>
+
+<Attribute
+  field={'staleness'}
+  kind={
+    <span>
+      map[string, <a href={'/docs/duration'}>duration</a>]
+    </span>
+  }
+>
+  Maximum staleness overrides for any output features or intermediate features. See{' '}
+  <a href={'/docs/query-caching'}>query caching</a> for more information.
+</Attribute>
+
+<Attribute field={"context"} kind={"QueryContext?"}>
+The context object controls the environment and tags
+under which a request should execute resolvers:
+
+<SubAttributeTable title={"QueryContext"}>
+
+<SubAttribute field={'environment'} kind={'string?'}>
+The <a href={'/docs/resolver-environments'}>environment</a> in which to run the resolvers.
+Like resolvers, API tokens can be scoped to an environment.
+If no environment is specified in the query,
+but the token supports only a single environment,
+then that environment will be taken as the scope for executing
+the request.
+
+</SubAttribute>
+
+<SubAttribute field={'tags'} kind={'string[]?'}>
+  The <a href={'/docs/resolver-tags'}>tags</a> used to scope the resolvers.
+</SubAttribute>
+
+</SubAttributeTable>
+
+</Attribute>
+
+<Attribute field={'preview_deployment_id'} kind={'string?'}>
+  The preview deployment id. See{' '}
+  <a href={'/docs/integration-tests#branch-deployments'}>Preview Deployments</a> for more
+  information.
+</Attribute>
+
+<Attribute field={'query_name'} kind={'string?'}>
+  The query name.  Information about <a href={'/docs/metricmonitor'}>Named Queries</a> is available in the dashboard.
+</Attribute>
+
+<Attribute field={'branch'} kind={'string?'}>
+  If specified, routes to the relevant branch. See{' '}
+  <a href={'/docs/branches'}>Branches</a> for more
+  information.
+</Attribute>
+
+</AttributeTable>
+
+More information on parameters is available [here](/api-docs#ChalkClient.query)
+
+## Response
+
+<AttributeTable>
+<Attribute field={'data'} kind={<a href={'#query-basics'}>FeatureResult[]</a>}>
+The outputs features and any query metadata
+<SubAttributeTable title={"FeatureResult"}>
+
+<SubAttribute field={'field'} kind={'string'}>
+  The name of the feature requested, eg.{' '}
+  <code className={'whitespace-nowrap before:content-none dark:text-white after:content-none'}>
+    user.identity.has_voip_phone
+  </code>
+  .
+</SubAttribute>
+
+<SubAttribute field={'value'} kind={'typeof(field)?'}>
+  The value of the requested feature. If an error was encountered in resolving this feature, this
+  field will be empty.
+</SubAttribute>
+
+<SubAttribute field={'error'} kind={<a href={'/docs/query-errors#error-code'}>ChalkError?</a>}>
+  The error code encountered in resolving this feature. If no error occurred, this field is empty.
+</SubAttribute>
+
+<SubAttribute field={'meta'} kind={'FeatureResolutionMeta?'}>
+  Metadata pertaining to the feature, including the resolver run and whether the result was a cache hit.
+</SubAttribute>
+
+</SubAttributeTable>
+
+</Attribute>
+
+<Attribute field={'errors'} kind={<a href={'query-errors#chalk-error'}>ChalkError[]?</a>}>
+Errors encountered while running the resolvers. Each element in the list is a{' '}
+<a href={'query-errors#chalk-error'}>ChalkError</a>. If no errors were encountered, this field
+is empty.
+</Attribute>
+
+<Attribute field={'meta'} kind={'QueryMeta?'}>
+Metadata related to the query. Returned if {' '}
+<code className={'whitespace-nowrap before:content-none dark:text-white after:content-none'}>
+    include_meta
+</code> or {' '}
+<code className={'whitespace-nowrap before:content-none dark:text-white after:content-none'}>
+    explain
+</code> is set to {' '}
+<code className={'whitespace-nowrap before:content-none dark:text-white after:content-none'}>
+    True
+</code>.
+
+
+<SubAttributeTable title={"QueryMeta"}>
+
+<SubAttribute field={'execution_duration_s'} kind={'float'}>
+The time, expressed in seconds, that Chalk spent executing this query.
+</SubAttribute>
+
+<SubAttribute field={'deployment_id'} kind={'string?'}>
+The id of the deployment that served this query.
+</SubAttribute>
+
+<SubAttribute field={'environment_id'} kind={'string?'}>
+The id of the environment that served this query.
+</SubAttribute>
+
+<SubAttribute field={'environment_name'} kind={'string?'}>
+The short name of the environment that served this query. For example: "dev" or "prod".
+</SubAttribute>
+
+<SubAttribute field={'query_id'} kind={'string?'}>
+A unique ID generated and persisted by Chalk for this query. All computed features, metrics, and logs are
+associated with this ID. Your system can store this ID for audit and debugging workflows.
+</SubAttribute>
+
+<SubAttribute field={'query_timestamp'} kind={'datetime?'}>
+At the start of query execution, Chalk computes 'datetime.now()'.
+This value is used to timestamp computed features.
+</SubAttribute>
+
+<SubAttribute field={'query_hash'} kind={'string?'}>
+Deterministic hash of the 'structure' of the query. Queries that have the same input/output features will
+typically have the same hash; changes may be observed over time as we adjust implementation details.
+</SubAttribute>
+
+<SubAttribute field={'explain_output'} kind={'string?'}>
+An unstructured string containing diagnostic information about the query execution.
+Only included if
+<code className={'whitespace-nowrap before:content-none dark:text-white after:content-none'}>
+explain
+</code> is set to
+<code className={'whitespace-nowrap before:content-none dark:text-white after:content-none'}>
+True
+</code>.
+</SubAttribute>
+
+</SubAttributeTable>
+
+</Attribute>
+</AttributeTable>
+
+---
+
+## Query Explanation
+
+Chalk offers support for the user for when queries don't work.
+The first step is always to check to see the response contains any `errors`.
+Often, the error message will directly point to the failure.
+
+In the case of more complicated queries, queries can be sent with `explain=True`.
+This will return a representation of the query plan in the `meta` return attribute.
+The user can use this information to verify the resolvers and operators ran during execution.
+Beware, this will result in slower execution times.
+
+Some queries that involve multiple operations might need additional tracking.
+Users can supply `store_plan_stages=True` to store intermediate outputs at all operations of the query.
+This will dramatically slow things down, so use wisely!
+These results are visible in the dashboard under the "Queries" page.
+
+For more information, read the `ChalkClient` docs [here](/api-docs#ChalkClient.query).
+
+
+---
+
+## Library support
+
+Chalk maintains libraries in several major languages
+for fetching online feature values. If you need support
+for a language that we don't support, let us know!
+We also support a rest API if you'd like to build your
+own.
+
+<RequestingFeaturesOnline />

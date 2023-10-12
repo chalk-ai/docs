@@ -1,0 +1,51 @@
+---
+title: Okta SCIM
+description: Setting up Okta to automatically provision and deprovision Chalk users.
+---
+
+Chalk implements SCIM in order to allow external
+identity providers (IDPs) to automatically provision and
+deprovision users as they are added and removed from
+the external identity provider.
+
+---
+
+## Supported Features
+
+- IDP-initiated user provisioning
+- IDP-initiated user deprovisioning
+- IDP-managed group assignment
+
+---
+
+## Requirements
+
+1. [Configure Chalk to use Okta SAML](/docs/okta-saml)
+for authentication
+
+2. Configure the Okta Chalk SAML app to use SCIM for
+provisioning.
+
+---
+
+## Configure Okta SCIM
+
+1. Generate an SCIM authentication token in your Chalk
+settings dashboard. This token is extremely sensitive
+and care should be taken to ensure that it is not leaked.
+You'll use this token to configure Okta's SCIM authentication.
+2. Navigate to your Okta admin dashboard.
+3. Edit your Chalk SAML app.
+4. Configure SCIM using:
+    - SCIM Connector base URL: `https://api.chalk.ai/scim/v2`
+    - Unique identifier field for users: `email`
+    - Supported provisioning actions:
+        - Push New Users
+        - Push Profile Updates
+        - Push Groups
+    - Authentication Mode: "HTTP Header", and set the Bearer header to the SCIM token you generated in your Chalk dashboard.
+5. Contact Chalk Support to enable SCIM on
+your account, and set up the initial Okta Group to Chalk
+Role mapping.
+
+![App Integration Configuration](/img/scim-assignment.png)

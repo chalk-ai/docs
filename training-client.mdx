@@ -1,0 +1,145 @@
+---
+title: Overview
+description: Fetch offline feature values.
+---
+
+import { JupyterNotebook } from '@/components/home/Jupyter'
+
+---
+
+Chalk supports a Python client for sampling offline data for use in training or feature development.
+This client can be used directly in a Jupyter notebook:
+
+<JupyterNotebook />
+
+The client for querying offline data largely mirrors the
+contract for [querying data online](/docs/query-basics).
+Here, however, we return many rows of data instead of data
+for a single example.
+
+## API
+
+Offline data is accessed via the class
+`chalk.ChalkClient`.
+Authentication is handled by the Chalk CLI tool.
+So long as the machine you're using is authenticated
+to Chalk, no API tokens or client secrets are needed
+for use in a notebook.
+
+The `ChalkClient` exposes a method
+`offline_query`,
+which takes in
+input features (`input`),
+desired features to compute (`output`), and
+information about the environment (`environment`),
+and returns a [Dataset](/docs/datasets)
+which includes the requested features.
+For more information, see the documentation for Chalk's [Python Client](/api-docs#ChalkClient.offline_query).
+
+### Input
+
+As [input](/api-docs#ChalkClient.offline_query.input), `offline_query` takes a
+[chalk.DataFrame](/docs/dataframe)
+or
+[pandas.DataFrame](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html)
+with one column for each known feature in the input, and one column
+with the heading of `chalk.features.timestamp`.
+The primary key feature must be included among the inputs.
+
+The values of the `chalk.features.timestamp` field should be of type
+`datetime.datetime`. If the timestamp column is omitted, it is defaulted to `datetime.now()`.
+More discussion about the timestamp inputs
+can be found in the [temporal consistency](/docs/temporal-consistency) section.
+
+Alternatively, instead of a `DataFrame`, users can pass a mapping from features to a list of values for each feature.
+
+```py
+input={
+    User.id: ['id1', 'id2'],
+    User.age: [23, 40]
+}
+```
+
+### Input Times
+
+Timestamps can be also be passed in the [input_times](/api-docs#ChalkClient.offline_query.input_times) argument instead.
+
+```py
+input={
+    User.id: ['id1', 'id1'],
+}
+input_times=[datetime.now() - timedelta(days=1), datetime.now() - timedelta(days=2)]
+```
+
+### Output
+
+This argument describes a list of features to sample.
+
+```py
+output=[
+    User.returned_transactions_last_60,
+    User.user_account_name_match_score,
+    User.socure_score,
+    User.identity.has_verified_phone,
+    User.identity.is_voip_phone,
+    User.identity.account_age_days,
+    User.identity.email_age,
+]
+```
+
+### Recompute Features
+
+Users can request that certain features be recomputed by resolvers
+at query time instead of sampled from the offline store.
+For more information, read [here](/api-docs#ChalkClient.offline_query.recompute_features).
+
+### Timebounds
+
+In some cases, users may not have a list of primary keys to sample with,
+and instead would like to see results within a period of time.
+The user can then leave the `inputs` argument empty and supply a
+[lower bound](/api-docs#ChalkClient.offline_query.lower_bound) and an
+[upper bound](/api-docs#ChalkClient.offline_query.upper_bound) along with the requested output features.
+
+```py
+dataset: Dataset = ChalkClient().offline_query(
+     output=[
+         User.id,
+         User.fullname,
+         User.email,
+         User.name_email_match_score,
+     ],
+     lower_bound=datetime.now() - timedelta(days=7),
+     upper_bound=datetime.now(),
+)
+```
+
+### Environment
+
+The user can specify
+[tags](/docs/resolver-tags),
+[environment](/docs/resolver-environments),
+or [branch](/docs/branches)
+as parameters to `offline_query` in the same fashion
+as [online query](/docs/query-basics).
+
+### Query Explanation
+
+Chalk offers support for the user for when queries don't work.
+The first step is always to check to see the response contains any `errors`.
+Often, the error message will directly point to the failure.
+
+In the case of more complicated queries, queries can be sent with `explain=True`.
+This will return a representation of the query plan in the `meta` return attribute.
+The user can use this information to verify the resolvers and operators ran during execution.
+Beware, this will result in slower execution times.
+
+Some queries that involve multiple operations might need additional tracking.
+Users can supply `store_plan_stages=True` to store intermediate outputs at all operations of the query.
+This will dramatically slow things down, so use wisely!
+These results are visible in the dashboard under the "Queries" page.
+
+### Return Value
+
+The return value for `offline_query` is a Chalk `Dataset`,
+which is described in the next [section](/docs/datasets).

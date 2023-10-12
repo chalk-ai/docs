@@ -1,0 +1,60 @@
+---
+title: Okta SAML SSO
+description: Setting up Okta to work with Chalk
+---
+
+Chalk is capable of using standard SSO providers like Google and GitHub for SSO authentication.
+For companies that use [Okta](https://okta.com/), additional configuration is required.
+
+---
+
+## Supported Features
+
+- IDP-initiated Single Sign-On, initiated via Okta
+- SP-initiated Single Sign-On, initiated from Chalk
+- Push group and user provisioning via SCIM, initiated from Okta
+
+---
+
+## Requirements
+
+- Configure a custom SAML app in Okta's dashboard
+- Send configuration parameters to Chalk support
+
+---
+
+## Configure Okta
+
+1. Navigate to your Okta admin dashboard
+2. Choose "Create App Integration"
+    * Choose "SAML 2.0" for "Sign-in Method"
+    * Choose "Web Application" for "Application type"
+3. General Settings
+    * Name this application ("Chalk", for example)
+    * Upload the Chalk logo (<a href="https://chalk.ai/img/chalk_okta.png" download>download here</a>)
+    * Upload the Chalk logo ([download here](https://chalk.ai/img/chalk_okta.png)).
+4. Configure SAML
+    * Single sign on URL: `https://chalk.ai/api/auth/login/saml`
+    * Make sure that "Use this for the Recipient URL and Destination URL" is checked
+    * Audience URI: `https://chalk.ai/api/saml/metadata.xml`
+    * Default RelayState: Leave blank
+    * Name ID Format: Unspecified
+    * Application username: Email
+    * Update application username: Create and update
+    * Show advanced settings
+    * Change "Assertion Encryption" to Encrypted
+    * Upload Chalk's SAML certificate (<a href="https://chalk.ai/api/saml/chalk_certificate.pem" download>download here</a>)
+    * Attribute Statements
+        * given_name
+            * Name format: unspecified
+            * Value: `user.firstName`
+        * last_name
+            * Name format: unspecified
+            * Value: `user.lastName`
+5. Feedback
+    * Check "I'm an Okta customer adding an internal app"
+6. On the resulting page, click "View SAML Setup Instructions". You'll be presented with text boxes showing:
+    - Identity Provider Single Sign-On URL
+    - Identity Provider Issuer
+    - X.509 Certificate
+7. Send all three values to Chalk support

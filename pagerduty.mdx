@@ -1,0 +1,34 @@
+---
+title: PagerDuty
+description: Alerting for your feature pipelines
+published: true
+---
+
+---
+
+Chalk supports integration with [PagerDuty](https://pagerduty.com) for alerting.
+
+## Creating an integration key
+
+To connect PagerDuty to Chalk, you'll need to generate an integration key from
+your PagerDuty settings page.
+
+To install, go to the [PagerDuty](https://pagerduty.com) service you want to add Chalk
+to, and click on the tab for integrations.
+Click `Add another integration`, and then choose the `Events API V1` option.
+Copy the `Integration Key` into your dashboard settings page.
+
+For more information, see
+[PagerDuty's guide](https://support.pagerduty.com/docs/services-and-integrations#generate-a-new-integration-key)
+to creating an integration key.
+
+---
+
+## Adding to Chalk
+
+Once you have an integration key, you can insert it on your environment settings page.
+
+![Pagerduty integration](/img/pagerduty.png)
+
+Integrations are per-environment, so you'll want one PagerDuty integration key per
+Chalk environment for which you'd like to configure alerting.

@@ -1,0 +1,71 @@
+---
+title: Has One
+description: Define one-to-one relationships between feature sets.
+---
+
+import { PyDiffEditor } from '@/components/Editor'
+import { highlightedCode as oneToOneDiff } from '@/samples/features/one_to_one.py?highlight=diff-py'
+import { highlightedCode as hasOneOptionalDiff } from '@/samples/features/one_to_one_optional.py?highlight=diff-py'
+import { TipInfo } from '@/components/Tip'
+
+---
+
+In a one-to-one relationship, two feature sets have at most one
+feature set on both sides of the relation.
+One-to-one relationships are specified via the function
+`has_one`, where the first argument specifies a function returning
+how to join the tables.
+
+## Example
+
+In the example below, users have an associated profile:
+
+```py
+from chalk.features import has_one, ...
+
+@features
+class Profile:
+    ...
+    user_id: str
+    email_age_years: float
+
+@features
+class User:
+    ...
+    uid: str
+    profile: Profile = has_one(lambda: Profile.user_id == User.uid)
+```
+
+<TipInfo>
+  The `lambda` solves forward references, letting you reference `User` before it is defined.
+</TipInfo>
+
+Now, you can reference features on `Profile` through `User`. For example:
+
+```py
+user_email_age = User.profile.email_age_years
+```
+
+---
+
+## Back-references
+
+### One-to-one
+
+You can also add the back-reference to `User` from `Profile`.
+You don't have to explicitly use `has_one` again on `Profile`, however.
+Instead, the join condition is assumed to be symmetric and copied over.
+Building on the above example, all you need to do
+to complete the one-to-one relationship is to add a `User` to
+the `Profile` class:
+
+<PyDiffEditor html={oneToOneDiff} />
+
+<TipInfo>Here you need to use quotes around `User` to use a forward reference.</TipInfo>
+
+### Optional relationships
+
+You can define optional relationships simply by
+using the `typing.Optional[...]` keyword:
+
+<PyDiffEditor html={hasOneOptionalDiff} />

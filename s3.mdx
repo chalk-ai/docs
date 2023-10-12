@@ -1,0 +1,60 @@
+---
+title: S3 / Object Storage
+description: Integrate with S3 compatible data sources.
+---
+
+---
+
+## Reading .csv files
+
+Chalk parses .csv files from s3 or the local file system
+with the function `DataFrame.read_csv(...)`.
+
+If your .csv has headers, you can tell Chalk which
+columns to parse into which features by providing
+a mapping in the `columns` keyword argument:
+
+```py
+DataFrame.read_csv(
+    path="s3://your-bucket/path/to/file.csv",
+    columns={"uid": User.uid, "fraud score": User.socure_score},
+)
+```
+
+The first line of the file is taken to be the header
+row, and subsequent lines are parsed into the provided
+features.
+
+The returned value matches the type:
+
+```py
+DataFrame[User.uid, User.socure_score]
+```
+
+Alternatively, you can map the file into features by
+column number in the .csv, and optionally skip rows
+that might contain header fields or summary stats:
+
+```py
+DataFrame.read_csv(
+    path="s3://your-bucket/path/to/file.csv",
+    columns={0: User.uid, 1: User.socure_score},
+    skip_rows=1
+)
+```
+
+## Reading .parquet files
+
+Reading .parquet files works just like reading .csv files.
+As with .csv, Chalk parses .parquet files from s3 or the
+local file system, this time with the function
+`DataFrame.read_parquet(...)`.
+Otherwise, the functionality provided is the same as provided
+above for reading .csv files.
+
+## Authentication
+
+Chalk can connect to AWS S3 or GCP Cloud Storage
+for reading .csv and .parquet files.
+Chalk will use the application credentials that you
+set up in the [AWS](/docs/aws) and [GCP](/docs/gcp) integrations sections.

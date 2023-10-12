@@ -1,0 +1,50 @@
+---
+title: Environment Variables
+description: Access environment variables in your resolvers.
+---
+
+import { AddNewEnvVar } from '@/components/shared/envVar'
+
+---
+
+Chalk lets you inject environment variables into the
+runtime for your resolvers.
+You can add an environment variable through the dashboard,
+where you'll find a form that looks like this:
+
+<AddNewEnvVar onSubmit={(e) => e.preventDefault()} />
+
+Here, you can provide any environment variable you need.
+The value will be available in all the environments you
+check on the right side of the pane.
+
+Environment variables can include secrets or configuration.
+All environment variables are securely stored using a
+[Key Management Service](https://en.wikipedia.org/wiki/Key_management).
+
+Then, in your [resolver](/docs/resolver-overview)
+or in a [setup hook](/docs/generic),
+you can access these environment variables as you would
+normally:
+
+```py
+import os
+
+value = os.getenv("my_variable")
+```
+
+---
+
+## Chalk environment variables
+
+Chalk also provides a few environment variables that you
+can use in your resolvers.
+
+| Name                       | Description                                                                                           |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `TARGET_ROOT`              | The root directory of the application. This variable is set for both branch and standard deployments. |
+| `CHALK_DEPLOYMENT_ID`      | The ID of the deployment                                                                              |
+| `CHALK_TEAM_ID`            | The ID of the team                                                                                    |
+| `CHALK_PROJECT_ID`         | The ID of the project                                                                                 |
+| `CHALK_ACTIVE_ENVIRONMENT` | The id of the active environment (eg. `"9d0oj902"`)                                                   |
+| `CHALK_ENVIRONMENT_NAME`   | The name of the active environment (eg. `"prod"`)                                                     |

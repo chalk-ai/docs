@@ -1,0 +1,68 @@
+---
+title: On-Prem Deployment (GCP)
+published: false
+---
+
+import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
+
+---
+
+
+Chalk supports a Cloud On-Prem Deployment Model where Chalk resources are deployed in Google Cloud Platform accounts
+that your organization manages. This deployment model is useful for organizations that want to
+maintain full custody of all compute resources and data storage.
+
+Chalk recognizes that organizations that opt for this style of deployment often have unique
+needs and cloud architectures, so the specific details of the deployment will need to be customized
+This document is intended as a blueprint for how the deployment process can work, and to scope the types of
+resources that must be provisioned.
+
+## Overall Architecture
+
+<ServiceDiagramSwitcher default_option={"GCP"} />
+
+## Major Components
+
+- **Chalk API Server** -- this is a simple API server that manages oauth token exchange, SSO, and controls deployments to the Chalk Compute Cluster.
+- **Chalk Metadata Database** -- this is a Postgres database that is used to store relatively low-volume metadata about objects that Chalk manages (deployments, feature definitions, system users, etc).
+- **Chalk Compute Cluster** -- Kubernetes deployments, statefulsets, and other resources that perform feature derivation and serve feature queries.
+- **Online Storage** -- a low-latency data store that is used to serve cached features for online queries. On GCP, Chalk supports [Memorystore](https://cloud.google.com/memorystore), [Bigtable](https://cloud.google.com/bigtable), or Postgres 15 (via [Cloud SQL](https://cloud.google.com/sql/docs/postgres) or otherwise). These options have different performance characteristics, and we will help you make the right choice for your use case.
+- **Offline Storage** -- a data warehouse that is used to store historical feature data for offline analysis and training set generation. On GCP, Chalk supports [Bigquery](https://cloud.google.com/bigquery).
+- **Docker Image Storage** -- Chalk requires a Docker image registry to store images for the Chalk Compute Cluster. On Google Cloud, we recommend [Google Artifact Registry](https://cloud.google.com/artifact-registry).
+
+## Cloud Resources
+
+- **VPC**: You can create a new one or use an existing VPC. Chalk's API server must be able to communicate with the Chalk Compute Cluster. Your end-users must be able to access the Chalk API Server, and your inference clients must be able to access the Chalk Compute Cluster.
+- **Kubernetes Cluster**: On Google Cloud, Chalk supports [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine) in Autopilot or Standard modes. Chalk requires at least one Kubernetes namespace per Chalk Environment.
+- **BigQuery Datasets**: Chalk requires one BigQuery dataset per Chalk Environment for offline feature storage.
+- **Online Store**: Chalk requires the cloud resources for at least one of the supported online storage options to be provisioned.
+- **Google Secret Manager**: Chalk requires access to [Google Secret Manager](https://cloud.google.com/secret-manager) to store user-provided datasource credentials that are used by the Chalk Compute Cluster to communicate with your underlying datasources.
+- **Google Pubsub**: Chalk uses [Google Pubsub](https://cloud.google.com/pubsub) in order to persist data from the compute server to online and offline storage.
+- **Google Cloud Scheduler**: Chalk uses [Google Cloud Scheduler](https://cloud.google.com/scheduler) in order to coordinate offline feature derivation jobs.
+- **Google Cloud Build**: Chalk uses [Google Gloud Build](https://cloud.google.com/build) in order to construct Docker images containing your feature engineering pipelines.
+- **Google Cloud Storage**: Chalk uses [Google Cloud Storage](https://cloud.google.com/storage) to store computed datasets and for bulk upload jobs into the BigQuery offline store.
+
+## Kubernetes Resources
+
+Chalk's API Server is responsible for managing the majority of the Kubernetes resources that are required to run the Chalk Compute Cluster. The API Server will create and manage the following components within Kubernetes namespaces that you specify:
+
+- Compute Engine Workers: Kubernetes Deployments that serve online inference requests
+- Scheduled Jobs: Kubernetes Job objects that perform scheduled ETLs to ingest features from offline sources (i.e. data warehouses or data lakes)
+- Offline Query Jobs: Kubernetes Job objects that perform bulk computation for training set generation
+- Stream Processing Workers: Kubernetes Statefulsets that manage Kafka / Kinesis workers that compute features from streaming data sources
+- Persistence Workers: Kubernetes deployments that are responsible for processing logged feature data and metrics and persisting it to online and offline storage
+
+Optionally, Chalk's API server can manage:
+
+- API Ingress: Kubernetes Ingress or Gateway & HTTPRoutes objects that expose the Chalk API Server to end-users
+
+## Deployment Management
+
+Chalk will provide sample Terraform modules that can be used to deploy all components of the system. Chalk will work with your
+team to make sure these fit with your particular cloud infrastructure, and Chalk will coordinate with your team
+if any updates are required to Cloud resources in order to support new functionality that Chalk makes available,
+or improvements that Chalk releases.
+
+Chalk will provide access to a private Docker registry. Chalk regularly releases new versions of the software
+that powers the Chalk Compute Cluster and the Chalk API Server. Installation and upgrade of these components typically
+does not require updates to cloud infrastructure, and can be applied by updating image tags.

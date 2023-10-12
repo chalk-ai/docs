@@ -1,0 +1,50 @@
+---
+title: Caching
+description: Override default max-staleness for individual requests.
+---
+
+import { RequestingFeaturesMaxFreshness } from '@/components/home/RequestingFeaturesMaxFreshness'
+
+---
+
+Features may specify a default caching strategy through
+the maximum staleness parameter
+(see [Feature Caching](/docs/feature-caching) for a more in-depth discussion).
+
+However, a request may have freshness requirements that differ from
+the default caching period specified at the feature level.
+
+You can specify maximum staleness requirements for any set of features,
+even features you do not wish to return.
+This facility may be useful if a feature value is
+used as an intermediate result for an explicitly requested feature.
+
+## Example
+
+Consider the following feature definition:
+
+```python
+@features
+class User:
+    fico_score: int = feature(max_staleness="**30d**")
+    ...
+```
+
+For most models, it may be acceptable to use a thirty-day old
+version of the FICO score. However, if you were running a
+model for issuing a new line of credit,
+you may require a more updated version of the feature.
+
+By default, our models will receive a FICO score computed
+in the last 30 days, but we can override this behavior
+at the time of requesting features for the credit model:
+
+<RequestingFeaturesMaxFreshness />
+
+---
+
+## Cache busting
+
+Cache busting is a special case of overriding the maximum
+staleness at the time of making a query.
+To bypass the cache, simply provide `"0s"` as the max-staleness.

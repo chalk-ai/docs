@@ -1,0 +1,325 @@
+---
+title: Getting Started
+description: Your first time with Chalk
+---
+
+---
+
+## Introduction
+
+Chalk's platform is a powerful tool that allows data engineers
+and data scientists to collaborate efficiently and effectively.
+
+In this project we'll create features related to `Users`and their credit scores.  We'll combine data from an
+API and a database to help us decide whether we should issue
+new loans.
+
+You will learn how to create a new Chalk project,
+create features and resolvers, deploy them to the Chalk
+environment, and query the environment using the
+[Chalk CLI](/cli/) and a [Jupyter Notebook](https://jupyter.org/).
+
+This tutorial will take about 45 minutes to complete
+end-to-end.
+
+---
+
+## Installing the Required Software
+
+1. If you don't have a favorite IDE, install VS Code by
+visiting the [download site](https://code.visualstudio.com/download)
+and running the appropriate installer.
+2. You'll also want to [install](https://code.visualstudio.com/docs/setup/mac#_launching-from-the-command-line)
+the `code` CLI command.
+3. If you haven't already, install Python. You can do
+this through [Homebrew](https://brew.sh/) as follows:
+```bash Terminal
+# Install Homebrew
+$ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# Use Homebrew to install python3
+$ brew install python
+```
+
+If you're having trouble installing Python, follow the
+instructions in [Python's docs](https://docs.python-guide.org/starting/install3/osx/).
+
+4. Install the [Chalk CLI](/cli/) by running
+```bash Terminal
+$ curl -s -L https://api.chalk.ai/install.sh | sh
+```
+
+---
+
+## Creating your Chalk project
+
+Now that all of your software is installed, let's create
+a Chalk project where you will add your features and
+resolvers.
+
+1. Create a folder and call it `chalk-tutorial`.
+2. Run [`chalk init`](/cli/init) from inside the `chalk-tutorial`
+to initialize your project files.
+This will create two files for you: `chalk.yaml` and `.chalkignore`.
+The first file, `chalk.yaml`, contains configuration information about
+your project. The second file, `.chalkignore`, tells your
+[Chalk CLI](/cli/) tool which files to ignore when deploying
+to your Chalk environment. You can edit this file and use it
+just like a `.gitignore` file.
+```bash Terminal
+$ mkdir chalk-tutorial
+$ cd chalk-tutorial
+$ chalk init
+Created project config file chalk.yaml
+Created .chalkignore file
+```
+3. Now edit the `chalk.yaml` file and set the `project` field to the
+name of your Chalk project. This might be `chalk-tutorial`, but check
+by visiting the Projects page.
+4. Login by typing [`chalk login`](/cli/login).
+If you're using a dedicated environment,
+make sure you use the [`--api-host`](/cli/chalk#api-host) flag.
+Type `y` when prompted and login in the browser.
+
+Now you're ready to deploy code and query the environment!
+
+---
+
+## Create a virtual environment
+
+We're going to create a [virtual environment](https://docs.python.org/3/library/venv.html)
+so that you can download and use Python libraries
+in your Chalk project.
+
+1. Run the following command from inside your Chalk project
+to create and activate your virtual environment.
+When you want to deactivate your virtual environment,
+type `deactivate`.
+```bash Terminal
+$ python3 -m venv chalk-tutorial-venv
+$ source chalk-tutorial-venv/bin/activate
+```
+2. Your `requirements.txt` file tells your virtual environment
+(and Chalk) which libraries to install. We'll use a few
+libraries for this tutorial, so add the following to the
+`requirements.txt`. Feel free to add more libraries later.
+```txt requirements.txt
+chalkpy
+pydantic
+requests
+```
+3. Install the requirements.
+```bash Terminal
+$ pip3 install -r requirements.txt
+```
+4. Check that the libraries are installed by importing
+`requests` in Python. If there's no error message, it
+worked. Exit by typing `exit()` and hitting enter.
+```bash Terminal
+$ python3
+>>> import requests
+>>> exit()
+```
+
+---
+### Use Curl and Jupyter to call APIs.
+
+Now that all the software is installed and ready to use,
+you're ready to start integrating an API.
+
+1. First, lets test the API we're going to use.
+Run this command to hit the API from your command line.
+Here we're asking "give me the credit score for user 12"
+and the API gives us back a JSON object with a credit score.
+```bash Terminal
+$ curl https://credit-report.chalk.dev/rutter_score/12
+{"score":98}
+```
+Now you should try to hit this API from Python using a
+[Jupyter Notebook](https://jupyter.org/).
+
+2. Open VS Code, and create a new file `File -> New File`.
+Select `Jupyter Notebook`.
+3. [Jupyter](https://jupyter.org/) will probably ask you which interpreter to use.
+If it does, select the virtual environment you created before
+(`chalk-tutorial-venv`).
+4. If not, you can select it manually.
+![Select Jupyter virtual environment](/img/chalk-tutorial-venv-jupyter.png)
+5. Finally, let's query the API from [Jupyter](https://jupyter.org/). Enter the following
+code and run it with `shift+enter`.
+```python Jupyter
+import requests
+requests.get(
+    "https://credit-report.chalk.dev/rutter_score/12"
+).json()["score"]
+```
+
+If you see 98, congratulations! You're all setup and ready
+to start developing your Chalk project.
+
+---
+
+## Building a Chalk project
+
+With all the pre-requisites completed, let's jump right
+into building your Chalk project.
+
+### Creating your first Chalk feature
+
+We'll create a feature called `User` with a "Rutter score"
+property. The resolver will call the "Rutter" API we tested
+earlier, passing the User ID, and return the score.
+After you deploy the feature, you will test it in
+[Jupyter](https://jupyter.org/).
+
+1. Create a `credit.py` file and copy in the feature and
+resolver definitions below:
+```python credit.py
+import requests
+from chalk.features import online, features, Features
+
+@features
+class User:
+    id: str
+    credit_score: int
+
+@online
+def get_credit_score(
+    id: User.id,
+) -> Features[User.credit_score]:
+    return requests.get(
+        f"https://credit-report.chalk.dev/rutter_score/{id}"
+    ).json()["score"]
+```
+2. Deploy your code. Pass the [`--no-promote`](/cli/apply#no-promote)
+flag so that you don't affect the "actual" environment, and the
+[`--await`](/cli/apply#await) flag so that your CLI will
+wait for deploy to finish before returning. Take note of
+the deployment ID so that you can use it when querying.
+The deployment ID is the last part of the deployment url
+returned by CLI.
+```bash Terminal
+chalk apply --await --no-promote
+```
+3. Now lets query for your feature from your [Jupyter Notebook](https://jupyter.org/).
+Enter and execute the following code in your notebook.
+```python Jupyter
+from credit import User
+from chalk.client import ChalkClient
+ChalkClient().query(
+   input={User.id: 'u_F6zY0tE4w8'},
+   output=[User.credit_score],
+   preview_deployment_id='XXYYZZ'
+)
+```
+You can also query for this feature in your terminal:
+
+```bash Terminal
+$ chalk query --in user.id=u_F6zY0tE4w8 \
+              --out user.credit_score \
+              --deployment XXYYZZ
+```
+
+Congratulations! You've written your first Chalk feature,
+connected it to an external API, and queried it from a
+[Jupyter Notebook](https://jupyter.org/). This is a big achievement!
+
+---
+
+## Adding a database to Chalk
+
+We have a database containing more information about users,
+and it would be good to combine that information together
+on our user feature.
+
+1. If you have [psql](https://www.timescale.com/blog/how-to-install-psql-on-mac-ubuntu-debian-windows/)
+or similar tool installed, you can preview the database from the command line.
+When prompted, the password is `postgres`.
+```bash Terminal
+psql -U postgres -p 5432 -h 35.188.7.252 -d postgres
+postgres=> select * from users limit 10;
+```
+Notice that we know `name`, `surname`, `email`, `birthday`, and
+`is_fraud`, a flag that tells us whether we know this user
+has committed fraud in the past.
+
+2. To use this in your Chalk project, we'll add the database
+through the UI. Navigate to your environment, and find
+"Data Sources" on the left hand navigation.
+3. If you see the database already, great, you can skip the
+next step of adding the database. Otherwise, continue.
+4. Click `Add a Data Source` and choose `PostgreSQL`.
+5. Fill out the fields as shown here. The password is `postgres`.
+![Postgres](/img/tutorial_postgres.png)
+
+### Write a resolver that resolves a database
+
+1. Add the fields from the database to the `User` feature class
+you created before. The properties `name`, `surname`, and
+`email` are strings. Birthday is a date, and `is_fraud`
+is a boolean. (Hint: you may have to add `from datetime import date` to your credit.py file)
+2. Add the datasource to your Python context. Add the below
+code to your `credit.py` file. This tells Python about
+your datasource.
+```py credit.py
+from chalk.sql import PostgreSQLSource
+user_pg = PostgreSQLSource(name="User_PG")
+```
+3. You can use a [SQL File Resolver](https://docs.chalk.ai/docs/sql#sql-file-resolvers)
+to pull this information. Create a new file called
+`users.chalk.sql` and copy the below contents:
+```sql users.chalk.sql
+-- type: online
+-- resolves: user
+-- source: postgres
+-- count: 1
+select name, surname, email, birthday, is_fraud from users where id=${user.id}
+```
+4. After deploying (remember to use `--no-promote`),
+query your feature. Supplying `User` as the output
+tells Chalk to give you back ALL the features of `User`.
+```py Jupyter
+res = client.query(
+    input={User.id: 'u_F6zY0tE4w8'},
+    output=[User],
+    preview_deployment_id='XXYYZZ'
+)
+```
+You can also query for this feature in your terminal:
+
+```bash Terminal
+$ chalk query --in user.id=u_F6zY0tE4w8 \
+              --out user \
+              --deployment XXYYZZ
+```
+
+---
+
+## Higher order features
+
+### Add experian credit score
+Now that you've got some experience under your belt, let's try
+a challenge. In this exercise, we'll give you a new API to
+integrate as a feature on `User`, with a new resolver.
+This feature is another credit score (this time from Experian).
+Add a second new feature that is the average of the
+`rutter_score` and the `experian_score`.
+Make sure to deploy with [`--no-promote`](/cli/apply#no-promote)
+and query for your new feature using [Jupyter](https://jupyter.org/). Good luck!
+
+Here's an example using the API:
+
+```bash Terminal
+$ curl -X POST https://experian.chalk.dev/bureau_score \
+       -H 'Content-Type: application/json' \
+       -d '{"name": "Riley Siebel", "email": "riley@chalk.ai"}'
+```
+
+If you do this right, you should be able to run the below query, even though the experian api takes an email as input.  How do you think that works!?
+
+```python Jupyter
+client.query(input={User.id: 'u_a8fU4zT0Y8'}, output=[User.experian_score])
+```
+
+### Combine 2 features
+
+Now create another feature to average the 2 credit scores.  The user with id: 'u_a8fU4zT0Y8' should have an average credit score of ~18.8.

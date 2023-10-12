@@ -1,0 +1,54 @@
+---
+title: Enterprise Deployment
+description: Enterprise Deployment Model
+published: true
+---
+
+import { EnterpriseServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
+
+---
+
+Chalk integrates with your _data sources_, transform this data with _feature pipelines_,
+store this data in _online_ and _offline storage_, and provide _monitoring_ on feature computation and distributions.
+
+## Enterprise Service Architecture
+
+By default, Chalk operates as a SaaS offering,
+where Chalk executes pipelines and stores data on
+its cloud infrastructure.
+However, Chalk can also deploy its software into your
+AWS or GCP project.
+In this model, environments are provisioned via [Terraform](https://terraform.io)
+and managed by the Chalk team.
+
+There are a few main components of a Chalk deployment:
+
+- **Management** - serves non-customer data (like alert configuration and RBAC configuration).
+- **Builder** - builds containers that run your feature pipelines.
+- **Compute** - machines that run your feature pipelines. In both AWS and GCP, the compute runs on
+  Kubernetes with [Knative](https://knative.dev/).
+- **Customer Data** - the online and offline stores for your features.
+- **Secrets** - environment variables and configuration for your data sources.
+
+These components are organized as follows:
+
+<EnterpriseServiceDiagramSwitcher />
+
+## Data Isolation
+
+In the enterprise deployment, your API clients talk directly to the compute engine deployed into your cloud.
+Feature values, historical and online, do not escape your cloud project.
+
+### Storage
+
+Chalk uses different storage technologies to support online and offline use-cases.
+
+The online store is optimized for serving the latest version of any given feature for any given entity with the minimum possible latency.
+Behind the scenes, Chalk uses a key-value store for this purpose.
+Chalk can be configured to use Redis or Cloud Memory Store for smaller resident data sets with high latency requirements,
+or DynamoDB when horizontal scalability is required.
+
+The offline store is optimized for storing all historical feature values, serving point-in-time correct queries,
+and tracking provenance of features.
+Chalk supports a variety of storage backends depending on data scale and latency requirements.
+Typically, Chalk uses TimescaleDB, Redshift, or BigQuery.

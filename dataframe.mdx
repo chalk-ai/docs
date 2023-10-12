@@ -1,0 +1,279 @@
+---
+title: DataFrame
+description: Describe and fetch rows of features.
+---
+
+---
+
+A Chalk [`DataFrame`](/api-docs#DataFrame) is a 2-dimensional data structure
+similar to `pandas.Dataframe`, but with richer underlying optimizations.
+In a Chalk `DataFrame`, the column headers are instances of `chalk.feature`.
+The Chalk `DataFrame` can be used to describe rows of data
+and as a wrapper for returning that data.
+
+The Chalk `DataFrame` is parameterized by the feature values it contains.
+For example:
+
+```python
+DataFrame[User.name, User.email]
+```
+
+The `DataFrame` type is commutative on its type parameters.
+This property allows you to write the type parameters of
+a `DataFrame` in any order:
+
+```python
+DataFrame[User.name, User.email] == DataFrame[User.email, User.name]
+```
+
+---
+
+## Constructing a DataFrame
+
+You're likely to use the Chalk `DataFrame` primarily as a type,
+or to handle one as the result of a SQL query.
+However, you can also construct a `DataFrame` directly.
+
+### From a dictionary
+
+Much like a `pandas.DataFrame`, a `chalk.DataFrame` can be constructed from a dictionary.
+The keys of the dictionary are the headers and the values are the rows under each header.
+The keys can be specified as either strings
+(<code className="before:content-none after:content-none">"taco.price"</code>)
+or as their Python types
+(<code className="before:content-none after:content-none">Taco.price</code>).
+You can convert from a feature's Python definition to a string with a cast:
+`str(Taco.price) == "taco.price"`.
+
+```python
+chalk_df = DataFrame(
+    {
+        Taco.id: ["t_1", "t_2", "t_3"],
+        "taco.price": [1, 2, 10],
+        str(Taco.contains_meat): [True, True, False],
+    }
+)
+```
+
+In the above example, we use all forms of referencing a feature's name.
+
+### From a list
+
+You can create the same [`chalk.DataFrame`](/api-docs#DataFrame.__init__) by passing a list of feature sets:
+
+```python
+chalk_df = DataFrame([
+    Taco(id="t_1", price=1, contains_meat=True),
+    Taco(id="t_2", price=2, contains_meat=True),
+    Taco(id="t_3", price=10, contains_meat=False),
+])
+```
+
+### From a pandas.DataFrame
+
+You can also convert to and from a `pandas.DataFrame`.
+We recommend using string values as the columns of the `pandas.DataFrame`.
+
+```python
+import pandas as pd
+
+DataFrame.from_pandas(
+    pd.DataFrame({
+        "taco.id": ["t_1", "t_2", "t_3"],
+        "taco.price": [1, 2, 10],
+    })
+)
+```
+
+The Chalk `DataFrame` can be converted to a `pandas.DataFrame`
+via the method [`.to_pandas()`](/api-docs#DataFrame.to_pandas):
+
+```py
+df = DataFrame(...)
+df.to_pandas()
+```
+
+### From a SQL query
+
+Chalk's SQL integrations output the type `DataFrame`.
+For more information, see the [SQL Integration section](/docs/sql).
+
+```python
+pg = PostgreSQLSource()
+
+@offline
+def fn() -> DataFrame[Login.ts, Login.user_id, Login.status]:
+    return pg.query(
+        Login(
+            status=LoginHistorySQL.status,
+            ts=LoginHistorySQL.created_at,
+            user_id=LoginHistorySQL.user_id,
+        )
+    ).all()
+```
+
+---
+
+## Aggregations
+
+| Method                                                                                                                                     | Description                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| <code className="whitespace-nowrap before:content-none after:content-none"><span className="text-zinc-400">DataFrame.</span>count()</code> | The number of rows in a `DataFrame`                                     |
+| <code className="whitespace-nowrap before:content-none after:content-none"><span className="text-zinc-400">DataFrame.</span>mean()</code>  | The average for each column in the `DataFrame`<sup>&dagger;</sup>       |
+| <code className="whitespace-nowrap before:content-none after:content-none"><span className="text-zinc-400">DataFrame.</span>sum()</code>   | The sum of each column in the `DataFrame`<sup>&dagger;</sup>            |
+| <code className="whitespace-nowrap before:content-none after:content-none"><span className="text-zinc-400">DataFrame.</span>max()</code>   | The maximum value for each column in the `DataFrame`<sup>&dagger;</sup> |
+| <code className="whitespace-nowrap before:content-none after:content-none"><span className="text-zinc-400">DataFrame.</span>min()</code>   | The minimum value for each column in the `DataFrame`<sup>&dagger;</sup> |
+
+&dagger; There will be only one row in the `DataFrame` after this operation, one for each
+value. If the `DataFrame` contained only a single column to start,
+then the value returned is a scalar.
+
+---
+
+## Projections
+
+You can [select columns](/api-docs#DataFrame.__getitem__) out of a `DataFrame` from the set
+of columns already present to produce a new `DataFrame`
+scoped down to those columns. For example:
+
+```python
+df: DataFrame[User.name, User.email, User.age] = ...
+projected = df[User.email, User.age]
+# type(projected) == DataFrame[User.email, User.age]
+```
+
+---
+
+## Filters
+
+In addition to selecting columns, you can
+[filter the rows](/api-docs#DataFrame.__getitem__)
+of a `DataFrame`.
+The example below restricts the rows of a `DataFrame` to only rows where
+the `User` is over 21 years old:
+
+```python
+df: DataFrame[User.name, User.email, User.age]
+f = df[User.age >= 21]
+# type(f) == DataFrame[User.name, User.email, User.age]
+```
+
+Filtering a `DataFrame` keeps all the existing columns,
+but drops rows where the predicate is not met.
+
+The Chalk `DataFrame` supports the standard comparison
+functions
+(`<`, `<=`, `>`, `>=`, `in`, `is`, `is not`, `==`, and `!=`)
+for features and their matching scalars values.
+You can compose these filters with the boolean operations
+`and`, `or`, and `not`.
+
+| Operation(s)                                                                                                         | Example                                                                                                                                                         | Comment                   |
+| -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| <code className="whitespace-nowrap text-indigo-600 before:content-none after:content-none">>, &lt;, >=, &lt;=</code> | <code className="whitespace-nowrap text-pink-600 before:content-none after:content-none">User.age > 21</code>                                                   |                           |
+| <code className="whitespace-nowrap text-indigo-600 before:content-none after:content-none">==, !=</code>             | <code className="whitespace-nowrap text-pink-600 before:content-none after:content-none">User.age is None<br />User.age is not None</code>                      | AST-only feature.&dagger; |
+| <code className="whitespace-nowrap text-indigo-600 before:content-none after:content-none">is, is not</code>         | <code className="whitespace-nowrap text-pink-600 before:content-none after:content-none">User.age is None<br />User.age is not None</code>                      | AST-only feature.&dagger; |
+| <code className="whitespace-nowrap text-indigo-600 before:content-none after:content-none">in, not in</code>         | <code className="whitespace-nowrap text-pink-600 before:content-none after:content-none">User.age in {17, 18}<br />User.age not in [17, 18]</code>              | AST-only feature.&dagger; |
+| <code className="whitespace-nowrap text-indigo-600 before:content-none after:content-none">or, and</code>            | <code className="whitespace-nowrap text-pink-600 before:content-none after:content-none">(User.state == "AL" and User.age >= 17) <br />or User.age >= 18</code> | AST-only feature.&dagger; |
+| <code className="whitespace-nowrap text-indigo-600 before:content-none after:content-none">not</code>                | <code className="whitespace-nowrap text-pink-600 before:content-none after:content-none">not (User.state == "AL" and User.age >= 17)</code>                     | AST-only feature.&dagger; |
+
+&dagger; The marked operations must be provided as direct arguments.
+They cannot first be assigned to a variable, and later provided as an argument.
+For example, `DataFrame[User.age in {17, 18}]` is valid, but
+defining `x = User.age in {17, 18}` and then running `DataFrame[x]` is not valid.
+The reason for this is that Python does not allow overriding these operations.
+However, Chalk's aim is to allow developers to inspect and support natural Python syntax.
+To that end, Chalk parses the AST to override these operations, with the restriction
+that they are provided as arguments directly.
+
+### Composing Filters
+
+To filter on multiple columns, separate your filters by
+a comma:
+
+```python
+df[User.age > 21, User.email == "joe@chalk.ai"]
+```
+
+Alternatively, use the `and` keyword between filters:
+
+```python
+df[User.age > 21 and User.email == "joe@chalk.ai"]
+```
+
+Similarly, you can perform `or` queries with Python's
+`or` keyword:
+
+```python
+df[User.age > 21 or User.email == "joe@chalk.ai"]
+```
+
+All of these can be composed:
+
+```python
+df[
+  User.age > 21 and (
+    User.email == "joe@chalk.ai" or
+    User.full_name is None
+  )
+]
+```
+
+---
+
+## Composing projections and filters
+
+Filtering may be combined with projection.
+For example, you can select all the values for `User.email`
+where the user is at least 21 years old as follows:
+
+```python
+df: DataFrame[User.name, User.email, User.age]
+projected = df[User.email, User.age > 21]
+# type(projected) == DataFrame[User.email]
+```
+
+If you'd like to filter on a value and also return the value,
+you need to explicitly select it. You can amend the
+above example to include the `User.age` feature like so:
+
+```python
+df: DataFrame[User.name, User.email, User.age]
+projected = df[User.email, User.age, User.age > 21]
+# type(projected) == DataFrame[User.email, User.age]
+```
+
+---
+
+## Performance (Vectorization, Laziness)
+
+Chalk's `DataFrame` is designed to support efficient operations
+across a variety of underlying data sources. `DataFrame`
+vectorizes scalar operations on data that is kept resident in memory. Chalk
+calls operations on data that is loaded into memory "strict execution".
+
+In coordination with Chalk's Execution Engine, `DataFrame` is capable of
+pushing down filtering, projection, and aggregation operations to
+underlying data sources. Chalk calls this style of execution "lazy execution".
+
+Suppose that we use a `DataFrame` to query a SQL source:
+
+```py
+@online
+def get_return_count(
+    transfers: User.transfers[Transfer.status == "returned", after(days_ago=60)]
+) -> User.returned_transactions_last_60:
+    return transfers.count()
+```
+
+This ultimately results in (approximately) the following SQL query being executed:
+
+```sql
+SELECT COUNT(*) from transfers
+WHERE status = 'returned' and
+transfers.ts > current_date - interval '60' day;
+```
+
+This "push down" mechanism in lazy computation helps make
+computationally expensive operations execute quickly, since Chalk only needs to load
+a single integer from the underlying data source, instead of potentially all `Transfer` rows.

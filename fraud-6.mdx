@@ -1,0 +1,62 @@
+---
+title: Backtesting
+description: Try out new feature values on historical data.
+published: true
+---
+
+*If you want to skip ahead, you can find the full source code for this tutorial on
+[GitHub](https://github.com/chalk-ai/fraud-example).*
+
+---
+
+After you've created some features and resolvers,
+you can use them to generate values for training.
+
+Chalk tracks all the values of the features you
+compute, and times at which those values were
+computed.
+
+First, we need to sample some user ids on which to
+build a dataset.
+
+```python datascience/notebook.ipynb
+from datetime import datetime, timezone, timedelta
+from chalk.client import ChalkClient
+from src.models import User
+
+client = ChalkClient()
+
+now = datetime.now(tz=timezone.utc)
+ds = client.offline_query(
+    output=[User.id],
+    lower_bound=now - timedelta(hours=12),
+    upper_bound=now,
+)
+
+```
+
+```python datascience/notebook.ipynb
+from chalk.client import ChalkClient
+
+client = ChalkClient()
+dataset = client.offline_query(
+    input={
+        User.id: [],
+    },
+    output=[],
+    recompute_features=True,
+)
+
+
+ds = client.offline_query(
+    input={
+    "fraud_model.id": spine["fraud_model.id"].to_list()
+    },
+    input_times=spine['__chalk__.CHALK_TS'].to_list(),
+    output=[
+        "fraud_model.id",
+        "fraud_model.card_created_at",
+    ],
+    recompute_features=True
+)
+```

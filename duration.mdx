@@ -1,0 +1,36 @@
+---
+title: Duration
+description: Describing time durations in Chalk.
+---
+
+---
+
+## Duration
+
+Durations in Chalk can be given in natural language, or specified using
+[datetime.timedelta](https://docs.python.org/3/library/datetime.html#timedelta-objects).
+To specify using natural language, write the count of the unit you would like,
+followed by the representation of the unit. Chalk support the following units:
+
+[//]: # "TODO: These aren't supported by timedelta."
+[//]: # '|<code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> y </code> | Years        |'
+[//]: # '|<code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> m </code> | Months       |'
+
+| Signifier                                                                                           | Meaning |
+| --------------------------------------------------------------------------------------------------- | ------- |
+| <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> w </code> | Weeks   |
+| <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> d </code> | Days    |
+| <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> h </code> | Hours   |
+| <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> m </code> | Minutes |
+| <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> s </code> | Seconds |
+| <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> ms </code> | Milliseconds |
+
+### Examples
+
+Using these, we can write:
+
+| Signifier                                                                                                     | Meaning                           |
+| ------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| <code className="whitespace-nowrap before:content-none text-blue-400 after:content-none"> "10h" </code>       | 10 hours                          |
+| <code className="whitespace-nowrap before:content-none text-blue-400 after:content-none"> "1w 2m" </code>     | 1 week and 2 minutes              |
+| <code className="whitespace-nowrap before:content-none text-blue-400 after:content-none"> "1h 10m 2s" </code> | 1 hour, 10 minutes, and 2 seconds |

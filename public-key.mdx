@@ -1,0 +1,33 @@
+---
+title: Sharing sensitive data with Chalk
+hideToc: true
+---
+
+---
+
+## Overview
+
+If you need to send sensitive material to Chalk, you can use
+[asymmetric encryption](https://en.wikipedia.org/wiki/Public-key_cryptography)
+to transmit your data securely. Only Chalk will be able to view the data
+that you encrypt with [Chalk's public key](/chalk-public-key.key).
+
+## Using GnuPG
+
+To begin, ensure that you've installed GnuPG ([Mac](https://formulae.brew.sh/formula/gnupg), [Ubuntu](https://help.ubuntu.com/community/GnuPrivacyGuardHowto)). GnuPG provides the `gpg` utility, which you will use to encrypt your data using Chalk's public key.
+
+Next, download and import Chalk's public key:
+
+```sh
+curl -s https://docs.chalk.ai/chalk-public-key.key > chalk-public-key.key
+gpg --import chalk-public-key.key
+```
+
+Next, encrypt your plaintext using Chalk's public key:
+
+```sh
+cat <plaintext_file> | gpg -e -r Chalk > ciphertext.gpg
+```
+
+Now you can transmit `ciphertext.gpg` via email or Slack to Chalk. Only
+Chalk's support staff will be able to decrypt and view the contents of `ciphertext.gpg`.

@@ -1,0 +1,127 @@
+---
+title: Working With Branches
+description: Make rapid changes and explore features with branches.
+---
+
+---
+
+Branch deployments allow users to quickly iterate on features and datasets.  
+When working in a branch users have a number of useful capabilities, including:
+
+- Chalk can automatically watch your files and deploy any changes
+- Updates to your project are deployed in seconds
+- Adjust and create features and resolvers inside a JupyterNotebook
+- Quickly `recompute` datasets to see the effects of changes
+- Branches have a consistent name across deployments
+
+---
+
+## Create a Branch Deployment
+
+To create a branch, simply run [`chalk apply --branch <branch_name>`](/cli/chalk#branch). Chalk will create a new branch in the environment that you can interact with. Now, you can make queries against your branch with `chalk query --branch`.  
+If you're using the Python API, you can set the branch when creating your [client](/api-docs#ChalkClient), and all subsequent commands will execute against your branch.
+
+### Continuously Deploy Changes
+
+You can ask the Chalk CLI to continuously deploy changes to your branch using the [`watch`](cli/apply#watch) flag.  
+Chalk will automatically keep the branch up to date as you make changes locally.
+
+---
+
+## Develop in a Notebook
+
+One of the major advantages of branch deployments is the flexibility they offer when working in notebooks.  
+Once you've deployed a branch, you can iteratively edit features and resolvers and see the effects of these updates in a dataset.
+Create a chalk client and set the `branch` parameter equal to your branch. Then, any time you execute a cell that contains a class annotated with `@features` it will automatically be updated in your branch.
+Similarly, executing cells that contain a function annotated with `@online` or `@offline` will automatically deploy the resolver to your branch.
+
+```python
+@features
+class NewFeatures:
+    id: int
+    name: str
+    greeting: str
+
+@online
+def new_resolver(name: NewFeatures.name) -> NewFeatures.greeting:
+    return f"Hello {name}!"
+```
+
+---
+
+## Recompute Datasets
+
+As you adjust features and resolvers, you can iteratively see how your changes affect the your feature values with the [`Dataset.recompute`](/api-docs#Dataset.recompute) method. Just pass any features you want to be re-computed as arguments to the `features` parameter, and Chalk will generate a new Dataset revision using the latest definitions of features and resolvers.
+
+When used in conjunction with the ability to adjust your features and resolvers in the notebook, this tool allows developers and data scientists to rapidly experiement and productionize their work.
+
+---
+
+## Example
+
+In the following example we add an `oversize` feature to an existing dataset of loans.
+
+We start out with a dataset. We may have produced this dataset manually, by calling an external API, or by executing offline_query.
+
+```python
+dataset
+shape: (786, 3)
+┌───────────────┬──────────────┬─────────────────────────┐
+│ loan.amount   ┆ loan.id      ┆ loan.event_time         │
+│ ---           ┆ ---          ┆ ---                     │
+│ f64           ┆ str          ┆ datetime[μs, UTC]       │
+╞═══════════════╪══════════════╪═════════════════════════╡
+│ 165435.647396 ┆ l_G3Mc6bi9y4 ┆ 2023-04-08 10:03:09 UTC │
+│ 405006.796909 ┆ l_O9OK3us7t2 ┆ 2022-02-07 20:46:08 UTC │
+│ 680377.427817 ┆ l_L0Gg0Bd1v3 ┆ 2023-02-16 16:48:29 UTC │
+│ 562678.545344 ┆ l_D1Rb5Jq4U5 ┆ 2022-06-21 06:15:19 UTC │
+│ …             ┆ …            ┆ …                       │
+│ 750583.279013 ┆ l_W4ZY9OK5N7 ┆ 2021-12-16 21:40:27 UTC │
+│ 71698.15609   ┆ l_H9tG2yJ5B6 ┆ 2023-01-04 11:33:54 UTC │
+│ 488697.890372 ┆ l_L4fd4xu4w2 ┆ 2022-08-22 03:55:16 UTC │
+│ 769665.198436 ┆ l_k4Dq8bl7b3 ┆ 2022-10-31 07:15:52 UTC │
+└───────────────┴──────────────┴─────────────────────────┘
+```
+
+In our jupyter notebook, we can execute this in a cell to setup our notebook to point to our branch, then update our branch with the new feature and resolver.
+
+```python
+client = ChalkClient(branch="<our_branch>")
+
+# We want to introduce an `oversize` detection feature
+@features
+class Loan:
+    id: str
+    event_time: datetime
+    status: str
+    amount: float
+    oversize: bool
+
+# Detect any loans bigger than $250,000
+@online
+def is_oversize(amt: Loan.amount) -> Loan.oversize:
+    return amt > 250000
+```
+
+Finally, we can `recompute` our dataset, telling it to calculate `Loan.oversize`, to get a dataset back with our new feature values.
+
+```python
+# Recomputing the dataset will add the oversize column to our result
+dataset.recompute(features=[Loan.oversize])
+shape: (786, 4)
+┌───────────────┬───────────────┬──────────────┬─────────────────────────┐
+│ loan.oversize ┆ loan.amount   ┆ loan.id      ┆ loan.event_time         │
+│ ---           ┆ ---           ┆ ---          ┆ ---                     │
+│ bool          ┆ f64           ┆ str          ┆ datetime[μs, UTC]       │
+╞═══════════════╪═══════════════╪══════════════╪═════════════════════════╡
+│ true          ┆ 165435.647396 ┆ l_G3Mc6bi9y4 ┆ 2023-04-08 10:03:09 UTC │
+│ true          ┆ 405006.796909 ┆ l_O9OK3us7t2 ┆ 2022-02-07 20:46:08 UTC │
+│ true          ┆ 680377.427817 ┆ l_L0Gg0Bd1v3 ┆ 2023-02-16 16:48:29 UTC │
+│ true          ┆ 562678.545344 ┆ l_D1Rb5Jq4U5 ┆ 2022-06-21 06:15:19 UTC │
+│ …             ┆ …             ┆ …            ┆ …                       │
+│ true          ┆ 750583.279013 ┆ l_W4ZY9OK5N7 ┆ 2021-12-16 21:40:27 UTC │
+│ true          ┆ 71698.15609   ┆ l_H9tG2yJ5B6 ┆ 2023-01-04 11:33:54 UTC │
+│ true          ┆ 488697.890372 ┆ l_L4fd4xu4w2 ┆ 2022-08-22 03:55:16 UTC │
+│ true          ┆ 769665.198436 ┆ l_k4Dq8bl7b3 ┆ 2022-10-31 07:15:52 UTC │
+└───────────────┴───────────────┴──────────────┴─────────────────────────┘
+```

@@ -1,0 +1,120 @@
+---
+title: Integration Tests
+description: Integration tests for Chalk resolvers
+---
+
+import { PyEditor } from '@/components/Editor'
+import { highlightedCode as integrationTest } from '@/samples/features/integration_test.py?highlight=py'
+
+---
+
+Chalk resolvers are callable and [unit-testable](/docs/unit-tests) Python functions.
+However, you may want to test the interactions between Chalk
+resolvers with an integration test.
+
+With branch deploys, you can deploy and test your changes before
+shipping your code to production.
+
+---
+
+## Branch deployments
+
+Chalk allows you to create an unlimited number of branch deployments.
+Branch deployments run all of your resolvers in the same way
+that they run in production. However, branch deployments don't impact
+the [offline store](/docs/training-client).
+
+### Creating a branch deployment
+
+You can create a branch deployment in the same
+way that you create a full deployment by passing
+the flag [`--branch <branch_name>`](/cli/apply).
+
+```bash
+# --branch creates a branch deployment
+> chalk apply --force --await --branch <branch_name>
+```
+
+The [`--await`](/cli/apply#await) flag means that the deployment will
+be live by the time that the command returns.
+
+### Querying a branch deployment
+
+You can quickly check your branch deployment using
+[`chalk query --branch`](/cli/query) on the command line to
+pull feature values:
+
+```bash
+# Example of making a query directly
+> chalk query --branch <branch_name> \
+              --in user.id=1 \
+              --out user.id \
+              --out user.email
+```
+
+The flag [`--branch`](/cli/query) tells this query to target the branch set during `chalk apply`.
+
+---
+
+## Integration test
+
+You can also target a branch from the
+[Chalk API client](/docs/query-basics).
+Using this client, you can write integration tests:
+
+<PyEditor html={integrationTest} filename={'integration_test.py'} />
+
+---
+
+## GitHub Action
+
+Chalk can be easily integrated in a
+[GitHub Action](https://github.com/chalk-ai/cli-action).
+You will need to create a Chalk token from the settings
+page of your dashboard and store the resulting client
+id and secret as
+[GitHub Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets#creating-encrypted-secrets-for-a-repository).
+
+```yaml
+name: Chalk Integration Test
+
+on: push
+
+jobs:
+  chalk-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - uses: chalk-ai/deploy-action@v1
+        with:
+          client-id: ${{secrets.CHALK_CLIENT_ID}}
+          client-secret: ${{secrets.CHALK_CLIENT_SECRET}}
+          # Creates a preview deployment (Optional, default false)
+          no-promote: true
+          # Waits for the deployment to succeed (Optional, default false)
+          await: true
+
+      - name: Create a preview deployment and test
+        run: |
+          # --no-promote creates a preview deployment
+          export DEPLOYMENT_ID=$(chalk apply --force --await --json --no-promote | jq -r .deployment_id)
+          # Example of making a query directly
+          chalk query --deployment $DEPLOYMENT_ID \
+                      --in user.id=1 \
+                      --out user.id \
+                      --out user.email \
+                      --json \
+                      --include-meta
+          # Running the integration test suite, which can pick up the DEPLOYMENT_ID environment variable.
+          python -m unittest ./tests/integration_tests.py
+```

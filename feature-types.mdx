@@ -1,0 +1,163 @@
+---
+title: Feature Types
+description: Define features for training and inference.
+---
+
+---
+
+## Scalars
+
+Features can be any primitive Python type:
+
+```python
+from enum import Enum
+
+class Genre(Enum):
+    FICTION = "FICTION"
+    NONFICTION = "NONFICTION"
+    DRAMA = "DRAMA"
+    POETRY = "POETRY"
+
+@features
+class Book:
+    id: int
+    name: str
+    publish_date: date
+    copyright_ended_at: datetime | None
+    genre: Genre
+
+```
+
+## Collections
+
+Features can also be lists and sets of any primitive, including
+[dataclasses](/docs/feature-types#dataclass),
+[Pydantic models](/docs/feature-types#pydantic-models), and
+[attrs classes](/docs/feature-types#attrs).
+
+```python
+@features
+class Book:
+    authors: list[str]
+    categories: set[str]
+```
+
+## Dataclass
+
+You can use any `dataclass` as a struct feature.
+Struct types should be used for objects that don't have ids.
+If an object has an id, consider using [has-one](/docs/has-one).
+
+```python
+@dataclass
+class JacketInfo:
+    title: str
+    subtitle: str
+    body: str
+
+@features
+class Book:
+    id: int
+    jacket_info: JacketInfo
+```
+
+## Pydantic models
+
+If you prefer `pydantic` to `dataclass`, you can use that instead.
+
+```python
+from pydantic import BaseModel, constr
+
+class TitleInfo(BaseModel):
+    heading: constr(min_length=2)
+    subheading: Optional[str]
+
+@features
+class Book:
+    title: TitleInfo
+    ...
+```
+
+## Document
+
+Both [dataclass](/docs/feature-types#dataclass) and [pydantic](/docs/feature-types#pydantic-models) 
+structs are implemented using the [pyarrow](https://arrow.apache.org/docs/python/index.html) 
+serialization format, a high-performance schema for data serialization.  
+This data is stored "value only", i.e. without keys, so any change to these structs over time will invalidate historical data.
+To support feature values where the schema changes over time, we introduced the `Document` struct type.   
+Documents are serialized as JSON and supports changes to schema over time, at the cost of a small performance penalty.
+
+```python
+from pydantic import BaseModel
+from chalk import Document
+
+class AuthorInfo(BaseModel):
+    first_name: str
+    last_name: str
+
+@features
+class Book:
+    title: Document[AuthorInfo]
+    ...
+```
+
+## attrs
+
+Alternatively, you can use `attrs`. Any of these struct types
+(`dataclass`, `pydantic`, and `attrs`) can be used with
+[collections](/docs/feature-types#collections) like
+`set[...]` or `list[...]`.
+
+```python
+import attrs
+
+@attrs.define
+class TableOfContentsItem:
+    foo: str
+    bar: int
+
+@features
+class Book:
+    table_of_contents: list[TableOfContentsItem]
+    ...
+```
+
+## Custom serializers
+
+Finally, if you have an object that you want to serialize that isn't
+from `dataclass`, `attrs`, or `pydantic`, you can write a custom codec.
+This custom codec must target a type that can be serialized to a [Pyarrow
+data type](https://arrow.apache.org/docs/python/api/datatypes.html), which
+is the underlying serialization format for all features.
+
+Consider the custom class below:
+
+```python
+class CustomStruct:
+    def __init__(self, foo: str, bar: int) -> None:
+        self.foo = foo
+        self.bar = bar
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, CustomStruct)
+            and self.foo == other.bar
+            and self.bar == other.bar
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.foo, self.bar))
+```
+
+Here, we use the custom class as a feature, and provide an encoder and decoder.
+The encoder takes an instance of the custom type and outputs a Python object, and
+the decoder takes output of the encoder and creates an instance of the custom type
+
+```python
+@features
+class Book:
+    custom_field: CustomStruct = feature(
+        encoder=lambda x: dict(foo=x.foo, bar=x.bar),
+        decoder=lambda x: CustomStruct(**x),
+    )
+```

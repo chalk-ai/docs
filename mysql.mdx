@@ -1,0 +1,84 @@
+---
+title: MySQL
+description: Integrate with MySQL data sources.
+---
+
+import { AddMySQLIntegration } from '@/components/shared/mysql'
+import {getEnvironmentVariableText, getNamedIntegrationText} from "@/components/NamedIntegration";
+
+---
+
+Chalk supports [MySQL](https://www.mysql.com/)
+as a [SQL source](/docs/sql).
+You can configure the MySQL-specific
+options using the `MySQLSource` **init** args,
+or configure the source through your dashboard, and
+reference the source in your code.
+
+## Adding MySQL
+
+On the dashboard, you can plug in the configuration for your
+MySQL database:
+
+<AddMySQLIntegration onSubmit={(e) => e.preventDefault()} />
+
+
+## Single Integration
+
+If you have only one MySQL connection that you'd like
+to add to Chalk, you do not need to specify any arguments
+to construct the source in your code.
+
+```py
+from chalk.sql import MySQLSource
+
+mysql = MySQLSource()
+
+@online
+def fn(...) -> ...:
+    return mysql.query(...).first()
+```
+
+## Multiple Integrations
+
+<span>{getNamedIntegrationText()}</span>
+
+```py
+from chalk.sql import MySQLSource
+
+risk = MySQLSource(name="**RISK**")
+marketing = MySQLSource(name="**MARKETING**")
+
+@online
+def risk_resolver(...) -> ...:
+    return risk.query(...).first()
+
+@online
+def marketing_resolver(...) -> ...:
+    return marketing.query(...).first()
+```
+
+<span>{getEnvironmentVariableText("RISK", "MYSQL_HOST")}</span>
+
+## Environment Variables
+
+You can also configure the integration directly using environment variables
+on your local machine or from those added through the
+[generic environment variable](/docs/env-vars) support.
+
+```py
+import os
+from chalk.sql import MySQLSource
+
+mysql = MySQLSource(
+    host=os.getenv(...),
+    port=os.getenv(...),
+    db=os.getenv(...),
+    user=os.getenv(...),
+    password=os.getenv(...),
+)
+
+@online
+def fn(...) -> ...:
+    return mysql.query(...).first()
+```

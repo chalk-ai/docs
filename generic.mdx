@@ -1,0 +1,146 @@
+---
+title: Custom Data Source
+description: Integrate with any data source you use.
+---
+
+import { TipBad, TipGood } from '@/components/Tip'
+
+---
+
+Chalk doesn't need to officially support a data source
+or API vendor for you to include it in your feature pipelines.
+Chalk has a mechanism for initializing objects at boot time,
+and then you can use those objects within your resolver.
+
+## Initializing
+
+To initialize your custom data source, use the `@before_all`
+decorator. The decorated function will run before any of your
+resolvers are called:
+
+```py
+import os
+from chalk.features import before_all
+
+vendor_client: VendorClient = VendorClient(...)
+
+@before_all
+def initialize():
+    key = os.getenv("MY_VENDOR_KEY")
+    vendor_client.api_key = key
+```
+
+This function has access to all
+[environment variables](/docs/env-vars)
+configured for you environment.
+Then, in your [resolver](/docs/resolver-overview),
+you can use the `vendor_client`
+knowing that it has been correctly initialized.
+
+```py
+@online
+def get_vendor_score(...) -> ...:
+    vendor_client.do_something(...)
+```
+
+You can alternatively supply environment-specific
+initialization functions. The `before_all` decorator
+takes an optional keyword argument `environment` that
+accepts a single environment name or a list of applicable
+environment names:
+
+```py
+@before_all(environment="**production**")
+def initialize():
+    ...
+
+@before_all(environment=["**staging**", "**development**"])
+def initialize():
+    ...
+```
+
+### Scopes
+
+You should be careful when trying to assign a variable outside the local
+scope. In the below example, the vendor_client isn't initialized as it may
+appear to be. Instead, a new local variable that shadows the name in the
+outer scope is initialized, and the outer variable doesn't receive a value.
+
+<TipBad>Careful with assigning outside of the local scope.</TipBad>
+
+```py
+vendor_client: VendorClient
+
+@before_all
+def initialize():
+    vendor_client = VendorClient(...)
+```
+
+Instead, try modifying the client inside the initialization function:
+
+<TipGood>Modify the outer scope from the inner scope.</TipGood>
+
+```py
+vendor_client: VendorClient = VendorClient(...)
+
+@before_all
+def initialize():
+    vendor_client.api_key = os.getenv("MY_VENDOR_KEY")
+```
+
+If you really want to assign a variable in the outer scope, you can
+using Python's `global` keyword.
+
+<TipGood>Use the global to modify outside of local scope (not recommended but correct)</TipGood>
+
+```py
+vendor_client: VendorClient
+
+@before_all
+def initialize():
+    global vendor_client
+    vendor_client = VendorClient(...)
+```
+
+However, if you do this,
+you need to make sure that access to `vendor_client`
+happens through the module.
+[Global is discouraged](https://google.github.io/styleguide/pyguide.html#25-global-variables)
+because of this footgun.
+
+```py
+import myproject
+from myproject import vendor_client
+
+@online
+def fn(...) -> ...:
+    vendor_client.api_call(...)            # Error! vendor_client is None
+    myproject.vendor_client.api_call(...)  # Correct!
+```
+
+## Cleaning up
+
+If there is clean up work you need to do when Chalk
+suspends your runtime, you can specify that work in
+a function decorated with `@after_all`.
+
+```py
+from chalk.features import after_all
+
+@after_all
+def tear_down():
+    ...
+```
+
+As with [before_all](/docs/generic#initializing), you can
+optionally supply a filter on the environment:
+
+```py
+@after_all(environment=["**production**"])
+def tear_down():
+    ...
+
+@after_all(environment=["**staging**"])
+def tear_down():
+    ...
+```

@@ -1,0 +1,182 @@
+---
+title: Feature Development Lifecycle
+description: Developing, testing, deploying, and backfilling a new feature
+---
+
+import { highlightedCode as integrationTest } from '@/samples/features/integration_test.py?highlight=py'
+import { highlightedCode as createResolverCode } from '@/samples/features/create_feature.py?highlight=diff-py'
+import { JupyterNotebook } from '@/components/home/Jupyter'
+import { PyDiffEditor, PyEditor } from '@/components/Editor'
+
+---
+
+Chalk is the fastest way to deploy new features and feature
+pipelines to production.
+This demo covers creating a new feature.
+You'll develop, unit test, integration test,
+and deploy a resolver for this feature.
+Then you'll see how to backfill that feature
+to Chalk's offline store so that data scientists
+can use it in historical training sets.
+
+## Develop
+
+The first step is to write a new feature and resolver for that feature.
+Imagine you wanted to create a new feature called `user.name_email_match_score`.
+This feature should capture the similarity between a user's name and email.
+Put another way:
+`andy` and `andy@gmail.com` should produce a high score, and
+`emily` and `andy@gmail.com` should produce a low score.
+
+The first step is to add the new feature, and a resolver for that feature.
+
+<PyDiffEditor html={createResolverCode} filename={'example.py'} />
+
+Our new resolver `name_email_match_scorer` takes a dependency on
+the user's email and fullname in the argument list.
+Then, it declares that it returns the `User.name_email_match_score`
+in the return type signature.
+
+In the body of the function, we compute the
+[Jaccard index](https://en.wikipedia.org/wiki/Jaccard_index)
+between the email without the domain and the full name.
+
+---
+
+## Test
+
+Now that you've written the new feature and resolver, it's time
+to validate your change.
+Chalk supports both unit testing and integration testing of your
+feature pipelines.
+
+### Unit test
+
+You can [unit test](/docs/unit-tests) resolvers just like normal
+Python functions using any unit testing framework:
+
+```py
+from pytest import approx
+
+def test_name_email_match_scorer():
+    assert approx(0.60) == name_email_match_scorer(
+        "katherine.johnson@nasa.gov",
+        "Katherine Johnson",
+    )
+    assert approx(0.39) == name_email_match_scorer(
+        "katherine.johnson@nasa.gov",
+        "Eleanor Roosevelt",
+    )
+```
+
+Here, the
+[Jaccard index](https://en.wikipedia.org/wiki/Jaccard_index)
+for `katherine.johnson@nasa.gov` is higher with the name
+`Katherine Johnson` than with the name `Eleanor Roosevelt`,
+as expected.
+
+### Deploy branch
+
+Now that the unit tests have passed,
+you can create a [Branch Deploy](/docs/integration-tests#branch-deployments)
+with the new changes.
+
+Chalk allows you to create an unlimited number of branch deployments.
+Branch deployments run all of your resolvers in the same way
+that they run in production. However, branch deployments don't impact
+the [offline store](/docs/training-client).
+
+```bash
+chalk apply --no-promote
+```
+
+Take note of the deployment id from this step -- you'll use it later.
+
+### Integration test
+
+With the [Branch Deploy](/docs/integration-tests#branch-deployments)
+in hand, you can integration test your changes.
+
+<PyEditor html={integrationTest} filename={'integration_test.py'} />
+
+Here, the
+[Chalk API client](/docs/query-basics)
+is configured to use the preview deployment id returned
+in the previous step.
+
+---
+
+## Deploy
+
+Once you've tested your changes, it's time to deploy!
+This step looks much like the preview deployment,
+but this time without the flag [`--no-promote`](/cli/apply#no-promote):
+
+```bash
+chalk apply
+```
+
+Now, your production environments can request the new
+`user.name_email_match_score` feature.
+
+```bash
+chalk query --in user.id=1 --out user.name_email_match_score
+```
+
+---
+
+## Backfill
+
+The `user.name_email_match_score` feature is live!
+But historically, this feature did not exist,
+and you won't be able to sample its values at previous times
+until you run a migration.
+
+A migration re-runs a resolver by sampling all possible
+previous calls to the resolver.
+You can also choose exactly which values to re-run with
+additional arguments to the [`chalk migrate`](/cli/migrate) command.
+
+### Planning the migration
+
+Before you run the migration, you can optionally determine the
+expected impact of our changes with the [`--plan`](/cli/apply#plan) flag:
+
+```bash
+chalk migrate --resolver example.name_email_match_scorer --plan
+```
+
+### Running the migration
+
+Once you're happy with the migration plan,
+you can execute the migration with [`chalk migrate`](/cli/migrate):
+
+```bash
+chalk migrate --resolver example.name_email_match_scorer --parallelism 4
+```
+
+### Offline training
+
+With the feature backfilled, you can query
+the historical value:
+
+<JupyterNotebook contents={'/examples/jupyter-demo-2'} />
+
+---
+
+That's how you deploy a new feature with Chalk!
+Let a member of our technical team know if we can be helpful.
+
+---
+
+## Delete
+
+Mistakes are inevitable, but Chalk provides the tools you need to quickly and easily recover and keep going.
+
+### Drop a feature
+
+If you need to change a feature's type (for example from `string` to `int`), or if you want to drop all the data for a feature value, the [Chalk CLI](/cli/) has you covered with [`chalk drop`](/cli/drop).  Simply execute the command from the CLI and you'll have a fresh start to recreate the feature and its data as necessary.
+
+### Delete a row
+
+Sometimes you just need to fully remove a record from your systems, whether because of a GDPR mandated "right to forget" request or due to a business requirement.  Chalk provides the [`chalk delete`](/cli/delete) command to meet this need.

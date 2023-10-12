@@ -1,0 +1,44 @@
+---
+title: Environments
+description: Change resolver behavior by deployment.
+---
+
+---
+
+Environments are used to trigger behavior in different deployments
+such as staging, production, and local development.
+For example, you may wish to interact with a vendor via an API call
+in the `production` environment, and opt to return a constant value
+in a `staging` environment.
+
+## Specifying environments
+
+You can choose to scope resolvers to a restricted set of environments.
+Resolvers optionally take a keyword argument named `environment`
+that can take one of three types:
+
+- **Unassigned (default)** - The resolver will be a candidate to run in _every_ environment.
+- **String value** - The resolver will run _only_ in this environment.
+- **List of strings** - The resolver will run in _any_ of the specified environments and no other environments.
+
+## Example
+
+Say your fraud models needed to interact with a fraud vendor that you wanted
+to mock out in staging. We can scope the environments as follows:
+
+```python
+@online(environment="**production**")
+def fraud_score_prod(email: User.email, phone: User.phone) -> User.fraud_score:
+    return api_vendor.fraud_score(email)
+
+@online(environment=["**staging**", "**dev**"])
+def fraud_score_staging(email: User.email) -> User.fraud_score:
+    if email == "fraud_user@chalk.ai":
+        return 10
+    return 90
+```
+
+Resolvers in different environments don't need to take the same arguments.
+In the above example, the production version of the resolver takes a phone
+number and an email, while the staging version of the resolver takes only
+the email.

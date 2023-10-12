@@ -1,0 +1,206 @@
+---
+title: Overview
+description: Define features for training and inference.
+---
+
+import { PyDiffEditor } from '@/components/Editor'
+import { highlightedCode } from '@/samples/features/namespace.py?highlight=diff-py'
+import { highlightedCode as featureTimeCode } from '@/samples/features/feature_time.py?highlight=diff-py'
+
+---
+
+Chalk lets you spell our your features directly in Python.
+Features are namespaced to a `FeatureSet`.
+To create a new `FeatureSet`, apply the `@features`
+decorator to a Python class with typed attributes.
+A `FeatureSet` is constructed and functions much like
+Python's own
+[dataclass](https://docs.python.org/3/library/dataclasses.html).
+
+## Example
+
+```py
+from datetime import datetime
+from typing import Optional
+from chalk.features import features
+
+@features
+class UserFeatures:
+    id: int
+    full_name: str
+    nickname: Optional[str]
+    email: Optional[str]
+    birthday: datetime
+    fraud_score: float
+```
+
+## Namespacing
+
+Features are namespaced by their containing `FeatureSet`,
+and then by the name of the variable.
+
+In the above example, our features, when rendered as strings, are:
+
+| Feature Name     | Type                                                                                                             |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| user.id          | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Integer </code>        |
+| user.full_name   | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> String </code>         |
+| user.nickname    | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> String \| None </code> |
+| user.email       | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> String \| None </code> |
+| user.birthday    | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Datetime </code>       |
+| user.fraud_score | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Decimal </code>        |
+
+(`FeatureSet` names are stripped of the suffix "Features",
+if it exists).
+
+### Overrides
+
+Feature names and feature classes can be overridden by supplying
+the `name` keyword argument to the `feature` function or the `@features` decorator.
+This practice allows us to evolve our variable names without
+losing the past history of this feature.
+
+<PyDiffEditor html={highlightedCode} />
+
+## Primary keys
+
+Feature sets must all have a primary key.
+This primary key is used to associate features you later resolve
+with this namespace. Your primary key can have any type,
+given by the type annotation on the field.
+
+By default, if you have a feature with the name `id`,
+that feature will be the primary key.
+However, you can override this behavior:
+
+```py
+from chalk.features import features, Primary
+
+@features
+class User:
+    user_id: Primary[str]
+    ...
+```
+
+If you mark an explicit primary key, it will override the default behavior:
+
+```py
+@features
+class User:
+    user_id: Primary[str]
+    # Not really the primary key!
+    id: str
+```
+
+Alternatively, you can use the `feature(...)` function
+to set a feature to primary:
+
+```py
+from chalk.features import features, feature
+
+@features
+class User:
+    user_id: str = feature(primary=True)
+```
+
+## Versions
+
+Chalk versions all of your features with every deployment.
+However, you can also choose explicit versions for your
+features.
+
+```py
+@features
+class User:
+    ...
+    email_domain: str = feature(version=2)
+```
+
+## Feature time
+
+By default, Chalk marks the time a feature was created as the time that
+its resolver was run.
+However, you may want to provide a custom value for this time
+for data sources like events tables.
+
+You can inspect the time a feature was created and set the time
+for when a feature was created by creating a feature assigned to the
+`feature_time()` function.
+
+<PyDiffEditor html={featureTimeCode} />
+
+To set the time a feature was created, assign the feature
+when you resolve it:
+
+```py
+@offline
+def fn(uid: User.uuid) -> Features[User.name, User.ts]:
+    return User(
+        name="Anousheh Ansari",
+        ts=datetime(month=9, day=12, year=1966)
+    )
+```
+
+Then, when you [sample offline data](/docs/temporal-consistency),
+the name feature will be treated as having been created at
+the provided date.
+
+## Constructing feature classes
+
+To construct a `UserFeatures` instance, supply the feature values
+to the `__init__()` method
+
+```py
+UserFeatures(full_name="Grace Hopper", nickname="Amazing Grace")
+UserFeatures(email="grace.hopper@yale.edu")
+```
+
+The `@features` decorator adds a custom `__init__()`:
+
+```py
+def __init__(
+    self,
+    uid: int | MISSING = MISSING,
+    full_name: str | MISSING = MISSING,
+    email: Optional[str] | MISSING = MISSING,
+    ...
+):
+    self.uid = uid
+    self.full_name = full_name
+    self.email = email
+    ...
+```
+
+Note that all fields have a default `MISSING` value.
+Therefore, you can construct feature classes with any subset
+of the fields you would like to use.
+
+Chalk ships a [Mypy Plugin](/docs/editor-setup) that helps with
+many of the types in the Chalk package, including to check that
+`FeatureSets` are constructed
+[only with features](/docs/editor-setup#feature-value-type-checking)
+available on the class.
+
+## Refactoring
+
+After going to production, you may find that you want to change
+the name of a property on the feature class.
+You can change the name of a feature property without changing
+the underlying data using the [name override](/docs/features#overrides).
+From the example in the [namespacing section](/docs/features#overrides),
+if you initially called a feature `birthday`,
+and decided to rename it `date_of_birth`,
+you can keep the underlying data the same and rename the property
+on the class as follows:
+
+<PyDiffEditor html={highlightedCode} />
+
+Here, we also rename the feature class originally named `Prince`
+to `TheArtistFormerlyKnownAsPrince`.
+
+### Interplay with auto-id
+
+Where the name of the Python property
+and the name provided to `feature(name=...)` differ,
+IDs are [auto-assigned](/docs/features#primary-keys) based
+on the name provided to `feature(name=...)`.

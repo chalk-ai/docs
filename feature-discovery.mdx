@@ -1,0 +1,160 @@
+---
+title: Discovery
+description: Declare owners and metadata for features.
+---
+
+---
+
+Features can capture metadata to inform
+alerting, monitoring, and discovery.
+By default, features are created as any type-annotated
+variable of a class decorated with `@features`.
+However, you may also assign these variables to the
+result of the `chalk.features.feature(...)` function
+to provide metadata.
+
+## Description
+
+Descriptions are parsed from the comments preceding
+the feature definition. For example, you can document a
+`fraud_score` feature with information about the values
+as follows:
+
+```py
+@features
+class User:
+    # **0 to 100 score indicating an identity match.**
+    # **Low scores indicate safer users**
+    fraud_score: float
+    ...
+```
+
+You can alternatively provide a description of a feature
+directly in the code. The following example is equivalent to
+explicitly providing the description as above:
+
+```py
+@features
+class User:
+    fraud_score: float = feature(description="""
+           **0 to 100 score indicating an identity match.**
+           **Low scores indicate safer users**
+        """)
+    ...
+```
+
+If both an explicit description and a comment are present,
+the description will be set to the explicit value from
+`feature(description=...)`.
+
+You can programmatically access the description for a feature
+with the `description(...)` function:
+
+```py
+from chalk.feature import description
+print(description(User.fraud_score))
+```
+
+## Owner
+
+You may also specify which person or group is responsible for an individual feature.
+The owner tag will be available in Chalk's web portal.
+Alerts that do not otherwise have an owner will be assigned
+to the owner of the monitored feature.
+Owners are parsed from the source code. For example:
+
+```py
+@features
+class User:
+    full_name: str
+    # :owner: **katherine.johnson@nasa.gov**
+    fraud_score: float
+    ...
+```
+
+You may instead choose to specify an owner via a keyword argument to
+`feature()`.
+For example:
+
+```py
+@features
+class User:
+    full_name: str
+    fraud_score: float = feature(owner="**katherine.johnson@nasa.gov**")
+    ...
+```
+
+An owner can also be assigned to _every_ feature in a namespace via a keyword argument to `@features`:
+
+```py
+@features(owner="**katherine.johnson@nasa.gov**")
+class User:
+    full_name: str
+    fraud_score: float
+    # :owner: **annie.easley@nasa.gov**
+    email: str
+    ...
+```
+
+Here, `User.full_name` and `User.fraud_score`
+assume the owner `katherine.johnson@nasa.gov`.
+However, `User.email`, which specifies an owner at the feature level,
+assumes the owner `annie.easley@nasa.gov`.
+
+You can programmatically access the owner of a feature
+with the `owner(...)` function:
+
+```py
+from chalk.feature import owner
+assert owner(User.email) == "annie.easley@nasa.gov"
+```
+
+## Tags
+
+Tags are a way of adding metadata to features for use in
+filtering, aggregations, and visualizations.
+For example, you can use tags to assign features to a team
+and find all features for a given team.
+
+```py
+@features
+class User:
+    # :tags: **team:identity**, **priority:high**
+    fraud_score: float
+    ...
+```
+
+Alternatively, you may specify tags via explicit construction:
+
+```py
+@features
+class User:
+    fraud_score: float = feature(tags=[
+        "**team:identity**",
+        "**priority:high**",
+    ])
+    ...
+```
+
+As with the owner property, tags can be assigned to all features in a namespace:
+
+```py
+@features(tags="**group:risk**")
+class User:
+    fraud_score: float
+    # :tags: pii
+    email: str
+    ...
+```
+
+Here, `User.fraud_score` inherits the tag `group:risk`.
+The feature `User.email` will also inherit this tag
+in addition to the tag `pii`.
+
+You can programmatically access the tags for a feature
+with the `tags(...)` function:
+
+```py
+from chalk.feature import tags
+assert tags(User.email) == ["pii", "group:risk"]
+```

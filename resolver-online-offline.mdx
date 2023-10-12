@@ -1,0 +1,89 @@
+---
+title: Online / Offline
+description: Predict and train.
+---
+
+---
+
+Chalk supports online and offline resolvers.
+Online resolvers produce features for online inference,
+and offline resolvers produce offline training data.
+
+## Storage
+
+Online and offline resolvers have different read/write needs.
+Your online environment stores data that you want to cache
+for the period you'd like to cache it.
+While this is usually a small amount of data,
+you want exceptionally fast reads.
+These access patterns fit well
+with the performance characteristics of [Redis](https://redis.com) or [BigTable](https://cloud.google.com/bigtable),
+where Chalk stores your online data.
+
+The offline environment stores far more data than the online environment.
+It keeps a record of [all online runs](#online-to-offline)
+and indexes all data brought in from your offline data sources.
+This timeseries data is highly compressible,
+as many features change less frequently than they are sampled
+(for example, users on your platform might very rarely change their names.)
+Chalk uses the column store
+[Timescale](https://timescale.com) or the data warehouse [BigQuery](https://cloud.google.com/bigquery)for this data.
+
+[//]: # 'More detail [Chalk architecture](/docs/architecture)'
+
+## Querying
+
+Online data is used to receive information about a single entity.
+For example, you might be looking to compute the features of a
+credit model for a single user, or decide what products to suggest
+to a customer. You can use our [API client](/docs/query-basics)
+to pull this information.
+
+Offline data is used to query historical data about one or more entities
+at specific points in time.
+Offline data is used to train models or do investigative work.
+See our guide on [querying training data](/docs/training-client)
+for a more in-depth treatment.
+
+## Scheduling
+
+Both offline and online resolvers [support scheduled runs](/docs/resolver-cron).
+However, you're likely to consider scheduling more frequently with offline resolvers.
+Every offline resolver pulls in data from your underlying source to
+Chalk's feature store on a schedule.
+Chalk will determine the frequency at which to poll your data sources,
+or you can choose to provide a custom [duration](/docs/duration) on which
+to pull the data.
+
+Online resolvers can also be scheduled, although they don't _necessarily_
+run on a schedule as offline resolvers do.
+
+Both online and offline scheduled resolvers may take arguments,
+and you have
+[control over the sets of arguments](/docs/resolver-cron#filtering-examples)
+to run.
+
+---
+
+## Interaction
+
+### Online-to-Offline
+
+After an online resolver runs, its values are copied into the [offline store](#storage).
+When you [query the offline store](/docs/training-client),
+you will receive data from both records of online runs and offline-specific resolvers.
+Which data you receive depends on which data was closest to the point-in-time
+that you queried.
+For more information, see [temporal consistency](/docs/temporal-consistency).
+
+### Offline-to-online
+
+In contrast, data from the offline environment _does not_
+reach the online store by default.
+However, you can choose to ETL the data from an offline
+resolver into the online store.
+This can be helpful, for example,
+when you tolerate stale data in online inference and
+have a data source in the offline environment that doesn't
+have a direct replacement in the online environment.
+More details are provided in the section [Reverse ETL](/docs/reverse-etl).

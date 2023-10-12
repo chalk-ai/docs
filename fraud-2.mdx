@@ -1,0 +1,230 @@
+---
+title: Data Modeling
+description: Defining the features that we want to compute.
+published: true
+---
+
+*If you want to skip ahead, you can find the full source code for this tutorial on
+[GitHub](https://github.com/chalk-ai/fraud-example).*
+
+In this example, we'll consider a fintech use-case
+where we want to detect fraudulent credit card purchases.
+Our data consists of a list of credit card transactions,
+each with a timestamp, a location, and a purchase amount.
+We also have information about the cardholder and the
+accounts that the card is linked to.
+
+---
+
+## Define features
+
+We'll start by modeling the features we want for our
+the users in our system.
+We'll start simple with three
+[scalar features](/docs/feature-types):
+`user.id`, `user.name`, and `user.email`.
+First, we'll create a new file called [`models.py`](https://github.com/chalk-ai/fraud-example/blob/main/src/models.py)
+where we'll define a `User` class decorated with
+[`@features`](/api-docs#features).
+
+```python src/user.py
+from chalk.features import features
+
+@features
+class User:
+    id: int
+
+    # The name the user provided to us at signup.
+    # :owner: identity@chalk.ai
+    # :tags: pii
+    name: str
+
+    # :tags: pii
+    email: str
+```
+
+Note that at this point,
+we haven't defined how to compute these
+features. We are only thinking about the data
+that we would like to have.
+
+### Primary keys
+
+There are a few things to note here. First, all our feature
+classes need to have a unique `id` field. By default, this
+is the field named `id`. However, if you want to use a
+different field as the primary key, you can specify it
+using the `Primary` argument to `@features`.
+
+```diff-py src/user.py
+from chalk.features import features
+
+@features
+class User:
+-   id: int
++   user_id: Primary[int]
+    name: str
+    email: str
+```
+
+### Tags, Descriptions, & Owners
+
+In our features below, we've added some comments and
+annotations to our features. These are optional, but
+can be useful for documentation and for setting alerting
+policies. For example, you may wish to send [Pagerduty alerts](/docs/pagerduty)
+to [different teams](/docs/alertconfig) based on
+the owner of the related feature.
+
+Any of the comments and tags from the code also show up
+in the [Chalk dashboard](https://chalk.ai/projects),
+and are indexed for search.
+
+For example, we've added a `pii` tag
+to the `name` and `email` fields. This means that
+these fields will be treated as personally identifiable
+information and will be subject to additional
+restrictions.
+
+---
+
+## Has-One Relationships
+
+Next up, we'll define a related feature class to our users.
+We'll call this class `Account` and it will represent
+a bank account that a user has.
+
+```python src/models.py
+from chalk.features import features
+
+@features
+class Account:
+    id: int
+
+    # The name of the owner of the account.
+    title: str
+
+    # The id of the user that owns this account.
+    user_id: int
+
+    # The balance of the account, in dollars.
+    balance: float
+```
+
+This should look much like what we did for the `User` class.
+However, we may want to link these two classes together.
+We can do this by adding a `user` field to the `Account` class.
+
+```diff-py src/models.py
+@features
+class Account:
+    id: int
+    user_id: int
+    balance: float
+
++   # The user that owns this account.
++   user: User = has_one(lambda: User.id == Account.user_id)
+```
+
+We define the relationship between users and accounts
+with the [`has_one`](/docs/has-one) function, in much
+the same way that we would define a relationship in
+an SQL object relational mapper. The first and only
+argument to `has_one` is a predicate that defines
+the join between the two classes.
+
+Once we've defined the relationship on one side of the
+join, we can define the inverse relationship on the
+other side without needing to specify the predicate
+again.
+
+```diff-py src/models.py
+@features
+class User:
+    id: int
+    name: str
+    email: str
+
++   # The account that this user owns.
++   account: "Account"
+```
+
+---
+
+## Has-Many Relationships
+
+The final feature entity that we'll define in this tutorial is
+for transactions. Each account has many transactions, and each
+transaction is linked to a single account. We'll define the
+`Transaction` class and link it to our `Account` class as follows:
+
+```diff-py src/models.py
+- from chalk.features import features, has_one
++ from chalk.features import features, has_one, has_many
+
++ class TransactionStatus(str, Enum):
++     PENDING = "pending"
++     CLEARED = "cleared"
++     FAILED = "failed"
++
++ @features
++ class Transaction:
++    id: int
++
++    # The id of the account that this transaction belongs to.
++    account_id: int
++
++    # The amount of the transaction, in dollars.
++    amount: float
++
++    # The status of the transaction, defined as an enum above.
++    status: TransactionStatus
++
++    # Because we define the join condition between
++    # `Transaction` and `Account` below, we don't
++    # need to repeat it here.
++    account: "Account"
+
+@features
+class Account:
+    id: int
+    user_id: int
+    balance: float
+    user: User = has_one(lambda: User.id == Account.user_id)
++   transactions: DataFrame[Transaction] = has_many(
++       lambda: Account.id == Transaction.account_id
++   )
+```
+
+This is the first time we're seeing the [`DataFrame`](/docs/dataframe) type.
+
+A Chalk `DataFrame` models tabular data in much the same
+way that `pandas` does. However, there are some key differences that
+allow the Chalk `DataFrame` to increase type safety and performance.
+
+Like pandas, Chalk's `DataFrame` is a two-dimensional data structure with
+rows and columns. You can perform operations like filtering, grouping,
+and aggregating on a `DataFrame`. However, there are two main differences.
+
+- *Lazy implementation* - Chalk's `DataFrame` is lazy and can be backed by multiple data sources, where a `pandas.DataFrame` executes eagerly in memory.
+- *Use as a type* - Chalk's `DataFrame[...]` can be used to represent a type of data with pre-defined filters.
+
+You can read more about the Chalk `DataFrame`
+in the [docs](/docs/dataframe) and
+[API Reference](/api-docs#DataFrame).
+
+You might also notice that we've used an [`Enum`](/docs/feature-types#scalars) feature here.
+Chalk supports many feature types, including
+[`Enum`](/docs/feature-types#scalars),
+[collections](/docs/feature-types#collections),
+and [`@dataclasses`](/docs/feature-types#dataclass).
+
+
+[//]: # (We could choose to write a resolver for each of the tables)
+[//]: # (in our database, but we'll take a shortcut and use)
+
+[//]: # (mapping in some of existing data from a)
+[//]: # ([PostgreSQL database]&#40;/docs/postgresql&#41;. SQL-file resolvers]&#40;/docs/&#41; instead.)
+
+[//]: # (Each of the attributes of the class will be mapped to a)
+[//]: # (field in our database.)

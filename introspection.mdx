@@ -1,0 +1,195 @@
+---
+title: Introspection
+description: View metadata about your deployed Chalk features and resolvers.
+published: true
+---
+
+import {
+  Attribute,
+  AttributeTable,
+  SubAttribute,
+  SubAttributeTable,
+} from '@/components/AttributeTable'
+import { RequestUrl } from '@/components/RequestUrl'
+
+---
+
+Occasionally, you may need to inspect a running Chalk environment to review metadata about your configured Chalk
+pipelines. You can use the provided Rest API to query for this metadata as part of your admin dashboards,
+monitoring tooling, or team knowledge management.
+
+Note: if you use a user-scoped token (i.e. one that’s derived from [`chalk login`](/cli/login)),
+you will need to specify the environment in which to trigger your resolver via the X-Chalk-Env-id header.
+
+---
+
+## View an environment's live feature and resolver graph
+
+<RequestUrl url="https://api.chalk.ai/v1/environment/graph" type="GET" />
+
+<AttributeTable title={"Headers"}>
+<Attribute field={'Authorization'} kind={'string'}>
+The <a href="/docs/online-authentication#authenticating-a-request-using-an-access-token">auth token</a> that should be used for the request, such as{" "}
+<code className='dark:text-white'>Authorization: Bearer $(chalk token)</code>
+</Attribute>
+
+<Attribute field={'X-Chalk-Env-Id'} kind={'string?'}>
+The environment ID for which this request should be executed, if the provided Authorization token was not created with an implicit environment
+</Attribute>
+</AttributeTable>
+
+### Response
+
+<a href="#pipelines">Pipelines</a> object
+
+### Example
+
+```bash
+curl -XGET -H "Authorization: Bearer $(chalk token)" \
+     -H "X-Chalk-Env-Id: <your-environment-id>" \
+     https://api.chalk.ai/v1/environment/graph
+
+# Returns
+
+{
+  "deployment_id": "<deployment-id>",
+  "features": […],
+  "resolvers": […]
+}
+```
+
+---
+
+## View a deployment's feature and resolver graph
+
+<RequestUrl url="https://api.chalk.ai/v1/deployments/{deployment_id}/graph" type="GET" />
+
+<AttributeTable title={"Path Params"}>
+
+<Attribute field={'deployment_id'} kind={'string'}>
+  The machine-generated ID for your deployment, usually a 25-character string that begins with `c`
+  and looks something like `cl789789aoa002chalkexample`. The deployment can be associated with a
+  preview or production environment.
+</Attribute>
+
+</AttributeTable>
+
+<AttributeTable title={"Headers"}>
+<Attribute field={'Authorization'} kind={'string'}>
+The <a href="/docs/online-authentication#authenticating-a-request-using-an-access-token">auth token</a> that should be used for the request, such as{" "}
+<code className='dark:text-white'>Authorization: Bearer $(chalk token)</code>
+</Attribute>
+
+<Attribute field={'X-Chalk-Env-Id'} kind={'string?'}>
+  The environment ID for which this request should be executed, if the provided Authorization token
+  was not created with an implicit environment
+</Attribute>
+
+</AttributeTable>
+
+### Response
+
+<a href="#pipelines">Pipelines</a> object
+
+### Example
+
+```bash
+curl -XGET -H "Authorization: Bearer $(chalk token)" \
+     -H "X-Chalk-Env-Id: <your-environment-id>" \
+     https://api.chalk.ai/v1/deployments/<your-deployment-id>/graph
+
+# Returns
+{
+  "deployment_id": "<deployment-id>",
+  "features": […],
+  "resolvers": […]
+}
+```
+
+---
+
+## Pipelines
+
+<AttributeTable title={"Response (JSON)"}>
+
+<Attribute field={'deployment_id'} kind={'string'}>
+  The deployment ID that is being described by this graph
+</Attribute>
+
+<Attribute field={'features'} kind={'FeatureInfo[]'}>
+Array of <code className="dark:text-white">FeatureInfo</code> objects, one for each Feature in your deployment.
+Most of the metadata in each `FeatureInfo` is defined in your <code className="dark:text-white">Feature()</code> declaration
+
+<SubAttributeTable title='FeatureInfo'>
+<SubAttribute field='fqn' kind='string'>
+The fully-qualified name of this feature, like <code className="dark:text-white">user.id</code>
+</SubAttribute>
+
+<SubAttribute field="name" kind="string">
+  The name of this feature, like "User first name"
+</SubAttribute>
+
+<SubAttribute field="detail" kind="object">
+  Additional metadata about this feature's value type, including its underlying raw type, whether
+  it's a primary key, and feature version metadata.
+</SubAttribute>
+
+<SubAttribute field="tags" kind="string[]">
+  The user tags associated with this feature
+</SubAttribute>
+
+<SubAttribute field="created_at" kind="string">
+  An ISO-8601 datetime string describing when this feature was first introduced to your deployment
+</SubAttribute>
+
+<SubAttribute field="updated_at" kind="string">
+  An ISO-8601 datetime string describing when this feature was last modified by a deployment
+</SubAttribute>
+
+<SubAttribute field='etl_offline_to_online' kind='boolean'>
+Whether this feature has <a href="/docs/reverse-etl">Offline-to-Online Chalk ETL</a> integration
+</SubAttribute>
+</SubAttributeTable>
+</Attribute>
+
+<Attribute field='resolvers' kind='ResolverInfo[]'>
+Array of <code className="dark:text-white">ResolverInfo</code> objects, one for each Resolver in your deployment.
+
+<SubAttributeTable title='ResolverInfo'>
+<SubAttribute field='fqn' kind='string'>
+The fully-qualified name of this resolver, like <code className="dark:text-white">example.resolvers.get_user</code>
+</SubAttribute>
+
+<SubAttribute field="execution_kind" kind='"online" | "offline" | "stream" | "sink"'>
+  Whether this resolver is configured to run as an{' '}
+  <a href="/docs/resolver-online-offline">
+    online or offline resolver, or a stream or sink resolver
+  </a>
+</SubAttribute>
+
+<SubAttribute field="tags" kind="string[]">
+  The user tags associated with this resolver
+</SubAttribute>
+
+<SubAttribute field="feature_inputs" kind="string[]">
+  The declared feature input fqns to this resolver, as a string array
+</SubAttribute>
+
+<SubAttribute field="feature_outputs" kind="string[]">
+  The declared feature output fqns of this resolver, as a string array
+</SubAttribute>
+
+<SubAttribute field="cron" kind="string | null">
+  If the resolver is configured to <a href="/docs/resolver-cron">run with a schedule</a>, this field
+  will describe that schedule
+</SubAttribute>
+
+<SubAttribute field="updated_at" kind="string">
+  The last time this resolver was modified by a deployment, including its declaration or its
+  implementation, as an ISO-8601 datetime string
+</SubAttribute>
+
+</SubAttributeTable>
+</Attribute>
+
+</AttributeTable>

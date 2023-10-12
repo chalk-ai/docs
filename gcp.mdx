@@ -1,0 +1,27 @@
+---
+title: Google Cloud Platform
+description:
+---
+
+import { GcpIntegration } from '@/components/shared/gcp'
+
+---
+
+You can provide Chalk with a GCP application credentials
+to use integrations with GCP (like [BigQuery](/docs/bigquery) and [Cloud Storage](/docs/s3)).
+
+On your dashboard, you'll find a form for adding your credentials:
+
+<GcpIntegration onSubmit={(e) => e.preventDefault()} />
+
+You are encouraged to use different service accounts for different environments,
+although they can be shared.
+
+## Creating credentials
+
+Credentials are [created through GCP directly](https://cloud.google.com/docs/authentication/getting-started).
+You'll want to make a new service key for Chalk
+with the permissions you require.
+Credentials are created through GCP's dashboard.
+You can create a key and download it from your console
+[here](https://console.cloud.google.com/projectselector2/iam-admin/serviceaccounts/create).

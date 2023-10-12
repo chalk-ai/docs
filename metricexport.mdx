@@ -1,0 +1,158 @@
+---
+title: Metrics Export
+description: Export Chalk metrics to other monitoring systems.
+published: true
+---
+
+import {
+  Attribute,
+  AttributeTable,
+  SubAttribute,
+  SubAttributeTable,
+} from '@/components/AttributeTable'
+
+---
+
+Chalk's online dashboard provides a simple way to view
+metrics about performance of your feature pipelines.
+However, you may wish to export these metrics from Chalk
+into other observability tools so that you can view
+your Chalk-related data alongside data from other
+systems you maintain.
+
+## Exporting metrics
+
+Chalk tracks various time series metrics that measure the latency and throughput of resolvers and
+streaming pipelines.
+
+Chalk uses TimescaleDB and [Promscale](https://github.com/timescale/promscale) to store these metrics. You can use any
+OpenMetrics-compatible collector to collect metrics about the execution of your feature pipelines
+from Chalk. Examples include:
+
+- [Prometheus](https://prometheus.io/)
+- [OpenMetrics](https://openmetrics.io/) ([Datadog](/docs/datadog))
+- [NewRelic](https://docs.newrelic.com/docs/infrastructure/prometheus-integrations/get-started/send-prometheus-metric-data-new-relic/)
+- [Stackdriver Prometheus](https://cloud.google.com/stackdriver/docs/managed-prometheus)
+
+### Available metrics
+
+The table below summarizes the metrics that are available for export.
+The headers in the table are the exported metric name followed by the
+[OpenMetrics metric type](https://prometheus.io/docs/concepts/metric_types/)
+([gauge](https://prometheus.io/docs/concepts/metric_types/#gauge),
+[histogram](https://prometheus.io/docs/concepts/metric_types/#histogram),
+[summary](https://prometheus.io/docs/concepts/metric_types/#summary), or
+[counter](https://prometheus.io/docs/concepts/metric_types/#counter)).
+
+<AttributeTable title={"Metrics"}>
+
+<Attribute field={'resolver_latency_seconds'} kind={'Summary'}>
+Provides information about the time it takes to compute a resolver.
+
+<SubAttributeTable title={'Tags'}>
+  <SubAttribute field={'id'} kind={'String'}>
+    The name of the resolver, for example, <code>my.company.get_user</code>
+  </SubAttribute>
+  <SubAttribute field={'quantile'} kind={'0.5 | 0.75 | 0.95 | 0.99'}>
+    Whether this latency represents the median, 75th percentile, 95th percentile, or 99th percentile
+    of the latency
+  </SubAttribute>
+  <SubAttribute field={'resolver_type'} kind={'online | offline | stream'}>
+    The type of the resolver - online, offline, or stream.
+  </SubAttribute>
+</SubAttributeTable>
+
+</Attribute>
+
+<Attribute field={'query_latency_seconds'} kind={'Summary'}>
+Provides information about the time it takes to execute an online query.
+
+<SubAttributeTable title={'Tags'}>
+  <SubAttribute field={'id'} kind={'String'}>
+    The name of the query, for example, <code>eligbility_query_v2</code>. Queries without names are
+    labeled "Unnamed"
+  </SubAttribute>
+  <SubAttribute field={'quantile'} kind={'0.5 | 0.75 | 0.95 | 0.99'}>
+    Whether this latency represents the median, 75th percentile, 95th percentile, or 99th percentile
+    of the latency
+  </SubAttribute>
+</SubAttributeTable>
+
+</Attribute>
+
+<Attribute field={'feature_request'} kind={'Counter'}>
+Provides information about the number of times a feature was computed.
+
+<SubAttributeTable title={'Tags'}>
+  <SubAttribute field={'id'} kind={'String'}>
+    The name of the feature, for example, <code>user.age</code>
+  </SubAttribute>
+  <SubAttribute field={'status'} kind={'success | failure'}>
+    The status of the computed feature (success or failure)
+  </SubAttribute>
+  <SubAttribute field={'context'} kind={'inference | cron | migration | streaming'}>
+    The context in which the feature was generated
+  </SubAttribute>
+</SubAttributeTable>
+
+</Attribute>
+
+<Attribute field={'resolver_request'} kind={'Counter'}>
+Provides information about the number of times a resolver was computed.
+
+<SubAttributeTable title={'Tags'}>
+  <SubAttribute field={'id'} kind={'String'}>
+    The name of the resolver, for example, <code>my.company.get_user</code>
+  </SubAttribute>
+  <SubAttribute field={'status'} kind={'success | failure'}>
+    The status of the resolver run (success or failure)
+  </SubAttribute>
+  <SubAttribute field={'context'} kind={'inference | cron | migration | streaming'}>
+    The context in which the resolver ran
+  </SubAttribute>
+  <SubAttribute field={'resolver_type'} kind={'online | offline | stream'}>
+    The type of the resolver - online, offline, or stream.
+  </SubAttribute>
+</SubAttributeTable>
+
+</Attribute>
+
+<Attribute field={'query_request'} kind={'Counter'}>
+Provides information about the number of times an online query was executed.
+
+<SubAttributeTable title={'Tags'}>
+  <SubAttribute field={'id'} kind={'String'}>
+    The name of the query, for example, <code>eligibility_query_v2</code>. Queries without names are
+    labeled "Unnamed"
+  </SubAttribute>
+  <SubAttribute field={'status'} kind={'success | failure'}>
+    The status of the query (success or failure)
+  </SubAttribute>
+</SubAttributeTable>
+
+</Attribute>
+
+<Attribute field={'deployment'} kind={'Gauge'}>
+The active deployment version. This gauge will always have a value of <code>1</code> for active deployments.
+A gauge of this kind is sometimes called an <code>Info</code> metric.
+
+<SubAttributeTable title={'Tags'}>
+  <SubAttribute field={'id'} kind={'String'}>
+    The ID of the deployment.
+  </SubAttribute>
+</SubAttributeTable>
+
+</Attribute>
+
+<Attribute field={'query_latency_seconds'} kind={'Gauge'}>
+The response counts by HTTP response code.
+
+<SubAttributeTable title={'Tags'}>
+  <SubAttribute field={'environment'} kind={'String'}>
+    The ID of the environment.
+  </SubAttribute>
+</SubAttributeTable>
+
+</Attribute>
+
+</AttributeTable>

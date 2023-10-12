@@ -1,0 +1,200 @@
+---
+title: What is Chalk?
+titleHidden: true
+hideToc: true
+---
+
+import { DocsHero } from '@/components/home/DocsHero'
+import { TemporalCorrectness } from '@/components/home/TemporalCorrectness'
+import { highlightedCode as addCachingCode } from '@/samples/features/add_caching.py?highlight=diff-py'
+import { IntegrationTypes } from '@/components/home/IntegrationTypes'
+import { JupyterNotebook } from '@/components/home/Jupyter'
+import { RequestingFeaturesOnline } from '@/components/home/RequestingFeaturesOnline'
+
+import { PyDiffEditor } from '@/components/Editor'
+
+<DocsHero />
+
+Chalk enables innovative machine learning teams to focus on building
+the unique products and models that make their business stand out.
+Behind the scenes, Chalk seamlessly handles data infrastructure with
+a best-in-class developer experience. Here’s how it works.
+
+---
+
+## Develop
+
+Chalk makes it simple to develop feature pipelines for machine
+learning. Define Python functions using the libraries and tools you're
+familiar with instead of specialized DSLs. Chalk then orchestrates
+your functions into pipelines that execute in parallel on a Rust-based
+engine and coordinates the infrastructure required to compute
+features.
+
+### Features
+
+To get started, [define your features](/docs/features) with
+[Pydantic](https://pydantic-docs.helpmanual.io/)-inspired Python classes.
+You can define schemas, specify relationships, and add metadata
+to help your team share and re-use work.
+
+```py
+@features
+class User:
+    id: int
+    full_name: str
+    nickname: Optional[str]
+    email: Optional[str]
+    birthday: datetime
+    credit_score: float
+    datawarehouse_feature: float
+
+    transactions = has_many(lambda: Transaction.user_id == User.id)
+```
+
+### Resolvers
+
+Next, tell Chalk how to compute your features.
+Chalk ingests data from your existing data stores,
+and lets you use Python to compute features with
+[feature resolvers](/docs/resolver-overview).
+Feature resolvers are declared with the decorators `@online` and
+`@offline`, and can depend on the outputs of other feature resolvers.
+
+Resolvers make it easy to rapidly integrate a wide variety of data
+sources, join them together, and use them in your model.
+
+<IntegrationTypes />
+
+---
+
+## Execute
+
+Once you've defined your features and resolvers, Chalk orchestrates
+them into flexible pipelines that make training and executing models easy.
+
+Chalk has built-in support for feature engineering workflows --
+there's no need to manage Airflow or orchestrate complicated streaming flows.
+You can execute resolver pipelines with declarative caching,
+ingest batch data on a schedule, and easily make slow sources
+available online for low-latency serving.
+
+### Caching
+
+Many data sources (like vendor APIs) are too slow for online use cases
+or charge a high dollar cost-per-call. Chalk lets you optimize latency
+and cost by defining declarative caching policies that are well-integrated
+throughout the system. You no longer have to manage data sources such as
+Redis, Memcached, or DynamoDB, or spend time tuning cache-warming pipelines.
+
+Add a caching policy with one line of code in your feature definition:
+
+<PyDiffEditor html={addCachingCode} />
+
+Optionally warm feature caches by executing resolvers on a schedule:
+
+```py
+@online(cron="**1d**")
+def fn(id: User.id) -> User.credit_score:
+  return redshift.query(...).all()
+```
+
+Or override staleness tolerances at query time when you need fresher
+data for your models:
+
+```py
+chalk.query(
+    ...,
+    outputs: [User.fraud_score],
+    max_staleness: { User.fraud_score: "1m" }
+)
+```
+
+### Batch ETL ingestion
+
+Chalk also makes it simple to generate training sets from data warehouse
+sources -- join data from services like S3, Redshift, BQ, Snowflake
+or other custom sources with historical features computed online.
+Specify a cron schedule on an `@offline` resolver, and Chalk will automatically ingest
+data with support for incremental reads:
+
+```py
+@offline(cron="**1h**")
+def fn() -> Feature[User.id, User.datawarehouse_feature, User.updated_at]:
+  return redshift.query(...).incremental()
+```
+
+Chalk makes this data available for point-in-time-correct dataset
+generation for data science use cases. Every pipeline has built-in
+monitoring and alerting to ensure data quality and timeliness.
+
+### Reverse ETL
+
+When your model needs to use features that are canonically stored in
+a high-latency data source (like a data warehouse), Chalk's Reverse
+ETL support makes it simple to bring those features online and serve
+them quickly.
+
+Add a single line of code to an `offline` resolver, and Chalk constructs
+a managed reverse ETL pipeline for that data source:
+
+```py
+@offline(offline_to_online_etl="5m")
+```
+
+Now data from slow offline data sources is automatically available for
+low-latency online serving.
+
+---
+
+## Deploying and querying
+
+Once you've defined your pipelines, you can rapidly deploy them to
+production with Chalk's CLI:
+
+```bash
+chalk apply
+```
+
+This creates a deployment of your project, which is served at a unique
+preview URL. You can promote this deployment to production, or
+perform QA workflows on your preview environment to make sure that
+your Chalk deployment performs as expected.
+
+Once you promote your deployment to production, Chalk makes features
+available for low-latency [online inference](/docs/query-basics) and
+[offline training](/docs/training-client). Chalk uses
+the **exact same source code** to serve temporally-consistent training
+sets to data scientists and live feature values to models. This re-use
+dramatically shortens development time and ensures that feature values
+from online and offline contexts match.
+
+### Online inference
+
+Chalk's online store & feature computation engine make it easy to query
+features with ultra low-latency for your online inference use cases.
+
+Integrating Chalk with your production application takes minutes via
+Chalk's simple REST API:
+
+<RequestingFeaturesOnline style={{ height: 328 }} />
+
+Features computed to serve online requests are also replicated to Chalk's
+offline store for historical performance tracking and training set generation.
+
+### Offline training
+
+Data scientists can use Chalk's Jupyter integration to create datasets
+and train models. Datasets are stored and tracked so that they can be
+re-used by other modelers. Chalk implements model provenance to track
+inputs, outputs, and other data for audit and reproducibility.
+
+<JupyterNotebook />
+
+Chalk datasets are always "temporally consistent."
+This means that you can provide labels with different past timestamps to easily
+get historical features that represent what your application would have
+retrieved online at those past times. Temporal consistency ensures that
+your model training doesn't mix "future" and "past" data.
+
+<TemporalCorrectness />

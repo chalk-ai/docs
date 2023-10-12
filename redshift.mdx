@@ -1,0 +1,82 @@
+---
+title: Redshift
+description: Integrate with SQL data sources.
+---
+
+import { getEnvironmentVariableText, getNamedIntegrationText } from "@/components/NamedIntegration";
+import { AddRedshiftIntegration } from '@/components/shared/redshift';
+
+---
+
+Chalk supports [Redshift](https://aws.amazon.com/redshift/)
+as a [SQL source](/docs/sql).
+You can configure the Redshift-specific
+options using the `RedshiftSource` **init** args,
+or configure the source through your dashboard, and
+reference the source in your code.
+
+## Adding Redshift
+
+On the dashboard, you can plug in the configuration for your
+Redshift database:
+
+<AddRedshiftIntegration onSubmit={(e) => e.preventDefault()} />
+
+## Single Integration
+
+If you have only one Redshift connection that you'd like
+to add to Chalk, you do not need to specify any arguments
+to construct the source in your code.
+
+```py
+from chalk.sql import RedshiftSource
+
+redshift = RedshiftSource()
+
+@online
+def fn(...) -> ...:
+    return redshift.query(...).first()
+```
+
+## Multiple Integrations
+
+<span>{getNamedIntegrationText()}</span>
+
+```py
+from chalk.sql import RedshiftSource
+
+risk = RedshiftSource(name="**RISK**")
+marketing = RedshiftSource(name="**MARKETING**")
+
+@online
+def risk_resolver(...) -> ...:
+    return risk.query(...).first()
+
+@online
+def marketing_resolver(...) -> ...:
+    return marketing.query(...).first()
+```
+
+<span>{getEnvironmentVariableText("RISK", "REDSHIFT_DB")}</span>
+
+## Environment Variables
+
+You can also configure the integration directly using environment variables
+on your local machine or from those added through the
+[generic environment variable](/docs/env-vars) support.
+
+```py
+import os
+from chalk.sql import RedshiftSource
+
+redshift = RedshiftSource(
+    host=os.getenv("REDSHIFT_HOST"),
+    db=os.getenv("REDSHIFT_DB"),
+    user=os.getenv("REDSHIFT_USER"),
+    password=os.getenv("REDSHIFT_PASSWORD"),
+)
+
+@online
+def resolver_fn(...) -> ...:
+    return redshift.query(...).first()
+```

@@ -1,0 +1,33 @@
+---
+title: Overview
+description: Integrate with any data source.
+---
+
+---
+
+## Integrate any API or Data Source
+
+Instead of complex ETL jobs and streaming pipelines,
+make direct calls to your data sources. Chalk makes
+it fast and easy to call external APIs, query production
+databases and data warehouses, or fetch parquet files
+from S3. Chalk orchestrates pipeline stages automatically
+to achieve maximum possible parallelism, and makes it
+easy to pre-compute + cache features when necessary.
+
+---
+
+## What to read next
+
+Check out some of Chalk's integrations:
+
+- **[SQL Integrations](/docs/sql)** -
+  Chalk has special support for [SQLAlchemy](https://www.sqlalchemy.org/) and can push down filters into SQL queries for more efficient data fetching.
+- **[Custom Data Sources](/docs/generic)** -
+  Chalk offers extra optimizations for some data sources, but you don't need Chalk to officially support a data source to use it!
+- **[Blob Storage](/docs/s3)** -
+  Read .csv and .parquet files in resolvers.
+- **[Dockerfile Base](/docs/docker)** -
+  Customize the base Docker image for your feature pipelines.
+- **[Pip Dependencies](/docs/docker#extra-pip-dependencies)** -
+  Install extra dependencies with pip.

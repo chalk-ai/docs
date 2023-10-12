@@ -1,0 +1,197 @@
+---
+title: Python Resolvers
+description: Define resolvers in Python that call APIs and compute derived features.
+published: true
+---
+
+*If you want to skip ahead, you can find the full source code for this tutorial on
+[GitHub](https://github.com/chalk-ai/fraud-example).*
+
+---
+
+So far, we've mapped SQL tables into feature classes. But there's a lot more we can do with
+Chalk. In this step, we'll add features to our `Account` and `User` feature classes
+that are gathered from API calls and computed downstream of other features.
+
+---
+
+## Derived Features
+
+We've noticed that some fraudsters try to link
+stolen accounts to our platform and attempt to
+transfer money through our system.
+To detect this behavior, we want to compute a
+similarity score between the user's name and the
+account's title.
+
+We'll start by adding this new feature, `account_name_match`,
+to our `User` feature class.
+
+```diff-py src/models.py
+@features
+class User:
+    id: int
+    name: str
+    email: str
+    account: "Account"
+
++   # The similarity between the user's name and the account's title.
++   account_name_match: float
+```
+
+Next, we'll define a resolver that computes this feature.
+We'll use
+[Jaccard similarity](https://en.wikipedia.org/wiki/Jaccard_index)
+to compute the similarity score.
+
+```python src/resolvers.py
+from src.models import User
+from chalk import online
+
+@online
+def account_name_match(
+    title: User.account.title,
+    name: User.name,
+) -> User.account_name_match:
+    """Docstrings show up in the Chalk dashboard"""
+    intersection = set(title) & set(name)
+    union = set(title) | set(name)
+    return len(intersection) / len(union)
+```
+
+The `@online` decorator tells Chalk that this resolver should be called
+in realtime when the `User.account_name_match` feature is requested.
+Our feature dependencies are declared in the function signature
+as `User.account.title` and `User.name`.
+Chalk will automatically retrieve
+`User.account_id` and `User.name`
+from our
+[`user.chalk.sql`](https://github.com/chalk-ai/fraud-example/blob/main/src/user.chalk.sql)
+resolver. Then, using this account id,
+Chalk will retrieve `Account.title`
+from the online store, where it has been cached from our cron run of the
+[`balance.chalk.sql`](https://github.com/chalk-ai/fraud-example/blob/main/src/balance.chalk.sql)
+resolver.
+
+### Testing
+
+Resolvers are callable functions, so we can test them like any other Python function.
+Let's test our new resolver by writing a
+[unit test](https://github.com/chalk-ai/fraud-example/blob/main/tests/test_name_match.py):
+
+```python tests/test_name_match.py
+from src.resolvers import account_name_match
+
+def test_names_match():
+    """Resolvers can be unit tested exactly as you would expect.
+
+    Here, the `account_name_match` resolver should return 1.0
+    because the `title` and `name` are identical.
+    """
+    assert 1 == account_name_match(
+        title="John Coltrane",
+        name="John Coltrane",
+    )
+
+def test_names_completely_different():
+    """The `account_name_match` resolver should return 0
+    because the `title` and `name` don't share any characters.
+    """
+    assert 0 == account_name_match(
+        title="John Coltrane",
+        name="Zyx",
+    )
+````
+
+You can read more about testing resolvers in the
+[API docs](/docs/unit-tests).
+
+---
+
+## API Calls
+
+Any Python function can be used as a resolver.
+This means that we can call APIs to compute features.
+Let's add a feature that computes the user's FICO score
+from our credit scoring vendor,
+[Experian](https://experian.com).
+
+As before, we'll first add the features that we want to compute:
+
+```diff-py src/models.py
++ from chalk.features import feature
+
+@features
+class User:
+    id: int
+    name: str
+    email: str
+    account_name_match: float
+
++   # The fraud score, as provided by a third-party vendor.
++   fico_score: int = feature(min=300, max=850, strict=True)
++
++   # Tags from our credit scoring vendor.
++   credit_score_tags: list[str]
+```
+
+We are adding
+[strict validation](/docs/validation)
+to our `fico_score` feature
+to ensure that we only store and utilize valid FICO scores.
+
+Now, we can write a resolver to fetch the user's FICO score from Experian.
+
+```python src/resolvers.py
+from src.models import User
+from src.mocks import experian
+from chalk.features import online, Features
+
+@online
+def get_fraud_score(
+    name: User.name,
+    email: User.email,
+) -> Features[User.fico_score, User.credit_score_tags]:
+    response = experian.get_credit_score(name, email)
+
+    # We don't need to provide all the features for
+    # the `User` class, only the ones that we want to update.
+    return User(
+        fico_score=response['fico_score'],
+        credit_score_tags=response['tags'],
+    )
+```
+
+Here, we are returning two features of the user,
+`User.fico_score` and `User.credit_score_tags`.
+We use the [`Features`](/api-docs#Features) type to indicate
+which feature we expect to return.
+Also note that we are initializing the `User` class with
+only the features that we want to update.
+This partial initialization is the primary difference
+between Python's
+[`@dataclass`](https://docs.python.org/3/library/dataclasses.html)
+and Chalk's
+[`@features`](/api-docs#features).
+
+---
+
+## Deploying
+
+Finally, we'll want to deploy our new resolvers.
+As before, we can check our work by using a branch
+deployment:
+
+```bash
+$ chalk apply --branch tutorial
+✓ Found resolvers
+✓ Deployed branch
+```
+
+We can then query our new features:
+
+```bash
+$ chalk query --branch tutorial  \
+              --in     user.id=1 \
+              --out    user.name_match_score
+```

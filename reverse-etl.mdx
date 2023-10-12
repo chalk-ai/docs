@@ -1,0 +1,78 @@
+---
+title: Reverse ETL
+description: Move data from offline to online.
+---
+
+---
+
+Reverse ETL is the process of moving data from a data warehouse into
+operational systems. In the context of
+[Chalk's architecture](/docs/architecture),
+our data warehouse is the offline data store
+([Timescale](https://timescale.com) or [BigQuery](https://cloud.google.com/bigquery/docs/))
+and our operational system is the online data store
+([Redis](https://redis.com), [Cloud Memorystore](https://cloud.google.com/memorystore), or [DynamoDB](https://aws.amazon.com/dynamodb/)).
+The online data store is queried by
+one our our [API clients](/docs/query-basics),
+while the offline data store queried by
+our [bulk API](/docs/training-client).
+
+Data from online resolvers is always loaded into the offline store
+and made available for training.
+In contrast,
+data from offline resolvers is _not_ loaded into online stores by default.
+To enable offline data to reach the online environment,
+use the keyword argument `etl_offline_to_online` on the feature you wish to ETL.
+
+```py
+@features
+class User:
+    ...
+    favorite_color: str = feature(etl_offline_to_online=True)
+
+@offline
+def fn(...) -> DataFrame[User.favorite_color, ...]:
+    ...
+```
+
+When this argument is present in the feature declaration,
+Chalk copies this feature into the online environment.
+
+Reverse ETL can also be assigned to all features in a namespace:
+
+```py
+@features(etl_offline_to_online=True)
+class User:
+    fraud_score: float
+    full_name: str
+    email: str = feature(etl_offline_to_online=False)
+    ...
+```
+
+Here, `User.fraud_score` and `User.full_name`
+will be reverse ETL'd into the online environment.
+However, `User.email`, which specifies the ETL parameter at the feature level,
+will not be reverse ETL'd.
+
+[//]: # 'Chalk determines a default schedule for'
+[//]: # 'copying the data into the online environment'
+[//]: # 'that can be overridden with a fixed schedule'
+[//]: # 'by supplying a [duration](/docs/duration) instead'
+[//]: # 'of `True` for the `etl_offline_to_online` parameter.'
+
+---
+
+## Interplay with max staleness
+
+When data from an offline store reaches an online store,
+it is necessarily somewhat stale.
+The data may have come from an events table,
+where it could be arbitrarily old,
+or it could be a snapshot that was live when the
+snapshot was taken, but takes non-zero time to
+migrate online.
+Therefore, you will only receive offline data
+from queries in the online environment when you
+your queries tolerate
+[maximum staleness via features](/docs/feature-caching)
+or [maximum staleness via queries](/docs/query-caching).

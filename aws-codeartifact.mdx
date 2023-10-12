@@ -1,0 +1,84 @@
+---
+title: AWS CodeArtifact
+description: Download pip packages from private AWS CodeArtifact repositories
+---
+
+import { PyEditor } from '@/components/Editor'
+import { highlightedCode as integrationTest } from '@/samples/features/integration_test.py?highlight=py'
+
+---
+
+Chalk supports downloading Python packages from private AWS CodeArtifact repositories. In order to use this feature,
+you must provide a Chalk IAM principal access to your repository so that Chalk can authenticate with the CodeArtifact
+pip registry.
+
+## Grant access to Chalk
+
+Chalk will authenticate to your CodeArtifact repository using an IAM principal. You can view the IAM principal
+in your team's settings page. The principal will look like this:
+
+```
+arn:aws:iam::***********:role/chalk-*********
+```
+
+Once you have the IAM prinicpal ARN, you will need to grant the following permissions to the principal:
+
+```
+codeartifact:DescribePackageVersion
+codeartifact:DescribeRepository
+codeartifact:GetPackageVersionReadme
+codeartifact:GetRepositoryEndpoint
+codeartifact:ListPackages
+codeartifact:ListPackageVersions
+codeartifact:ListPackageVersionAssets
+codeartifact:ListPackageVersionDependencies
+codeartifact:ReadFromRepository
+```
+
+These permissions are derived from [AWS's instructions](https://docs.aws.amazon.com/codeartifact/latest/ug/repo-policies.html).
+These will grant Chalk the ability to read from the repository, but not to write to it. Here's an example IAM policy to do this:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CodeArtifactPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "codeartifact:DescribePackageVersion",
+        "codeartifact:DescribeRepository",
+        "codeartifact:GetPackageVersionReadme",
+        "codeartifact:GetRepositoryEndpoint",
+        "codeartifact:ListPackages",
+        "codeartifact:ListPackageVersions",
+        "codeartifact:ListPackageVersionAssets",
+        "codeartifact:ListPackageVersionDependencies",
+        "codeartifact:ReadFromRepository"
+      ],
+      "Principal": {
+          "AWS": "arn:aws:iam::***********:role/chalk-*********"
+       },
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+Once you have created this policy, you can attach it to your repository with the following example command:
+
+```sh
+aws codeartifact put-repository-permissions-policy --domain my_domain --domain-owner 111122223333 \
+          --repository my_repo --policy-document file:///PATH/TO/policy.json
+```
+
+
+## Configure Chalk
+
+Once you have completed the above steps, please reach out to your Chalk support representative with the following values:
+
+- your CodeArtifact domain name
+- your CodeArtifact account number ("domain owner")
+- your repository name
+
+Chalk will configure the deployment pipeline in your account to integrate this repository.

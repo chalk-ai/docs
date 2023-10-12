@@ -1,0 +1,122 @@
+---
+title: Versioning
+description: Rigorously update your features as their meaning changes.
+---
+
+---
+
+## What are feature versions
+
+Feature versions allow you to manage a feature as its
+definition changes over time.  You can reference versions
+of a feature when querying, in resolvers, in migrations,
+and anywhere you use features!
+
+The ability to maintain multiple versions of a feature is
+especially useful as your use cases evolve and the definition
+of a feature changes.  This might be because your old feature
+had a bug, or maybe you want to improve the feature to be
+even more useful.
+
+Changing the definition of a feature can have unexpected
+side effects, especially when there might be many consumers
+of a feature, some of which you may be unaware of.
+Feature versions allow you to update the feature definition
+without worrying that you might affect these consumers
+unknowingly.
+
+Try it out yourself with this [tutorial](/docs/feature-version-tutorial).
+
+---
+
+## Definition
+
+To define a versioned feature, supply the `version` keyword
+argument to the `feature` function. This allows you to
+continue adding versions without affecting past versions.
+
+```python
+@features
+class Trial:
+    id: int
+    code: str = feature(version=2)
+```
+
+---
+
+## Querying
+
+You can refer to a specific version of a feature using the
+`@` operator.  You can query versioned features from any client,
+including the CLI, Python, etc.
+
+```bash
+$ chalk query --in trial.id=1 --out trial.code@2
+```
+
+---
+
+## Default versions
+
+When you define a versioned feature, that feature always
+has a default version.  When you reference a versioned feature
+without the `@` operator, you reference the default version.
+The default version can be controlled by adding the
+`default_version` keyword argument to the feature function.
+If no `default_version` is provided, the default version is `1`.
+It is best practice to leave the default as `1` until all
+consumers have been updated to use a newer version.
+
+```python
+@features
+class Trial:
+    id: int
+    code: str = feature(version=2, default_version=2)
+```
+
+---
+
+## Resolvers
+
+Resolvers also reference versioned features with `@`.
+Resolvers can take versions of a feature as input, return
+them as output, or both. Chalk will always generate the
+right version of a feature when chaining resolvers that
+require versioned features.
+
+### Requesting versioned features
+
+```python
+@online
+def fn(code: Trial.code) -> Trial.failed:
+    # Default version is 1.
+    return code in {'failed', 'err'}
+
+@online
+def fn2(code: Trial.code@2) -> Trial.failed:
+    # Version 2 is specifically requested.
+    return code in {'FAILED', 'ERR'}
+```
+
+### Producing versioned features
+
+```python
+@online
+def fn(d: Trial.raw_data) -> Trial.code @ 1:
+    return d['code']
+
+@online
+def fn2(d: Trial.raw_data) -> Trial.code @ 2:
+    return d['data']['code']
+```
+
+---
+
+## Limitations
+
+Only scalar features can be versioned.  Other kinds of
+features cannot be versioned. These include:
+* `has_one` and `has_many`
+* `feature_time` 
+* `Windowed`
+* `Primary`

@@ -1,0 +1,776 @@
+---
+title: Changelog
+description: Updates to Chalk!
+hideToc: True
+---
+
+---
+
+Improvements to Chalk are published here!
+See our [public roadmap](https://github.com/orgs/chalk-ai/projects/1) for upcoming changes.
+
+---
+
+## October 5th, 2023
+
+### `query_bulk` support for notebooks
+
+The `query_bulk` method is now available in the `ChalkClient` class. This method allows you to query for multiple rows of
+features at once.
+
+This method uses [Apache Arrow](https://arrow.apache.org/)'s [Feather format](https://arrow.apache.org/docs/python/feather.html)
+to encode data. This allows the endpoint to transmit data (particularly numeric-heavy data) using roughly 1/10th the bandwidth
+that is required for the JSON format used by `query`.
+
+This method has been available in beta for a few months, but is now available for general use, and as part of this
+release is now supported when querying using notebooks without access to feature schemas.
+
+```py
+
+## September 26, 2023
+
+### Improve scheduled resolver runs list
+
+The list of scheduled resolvers now shows which resolvers are actually scheduled to
+run in the current environment, based on the `environment` argument to `@online` and `@offline`.
+
+![Scheduled Resolvers List:](/img/cron-environments.png)
+
+Resolvers that are annotated with an `environment` other than the current environment are labeled with the
+environment in which they are configured to run.
+
+## August 23, 2023
+
+### Improved `chalk query` output
+
+The [chalk query](/cli/query) command now has
+improved output for errors. Previously, errors
+were displayed in a table, which meant that
+stacktraces were truncated:
+
+```
+> chalk query --in email.normalized=nice@chalk.ai --out email
+
+Errors
+
+Code             Feature  Resolver                        Message
+─────────────────────────────────────────────────────────────────────────────
+RESOLVER_FAILED           src.resolvers.get_fraud_tags    KeyError: 'tags'
+```
+
+Now, errors are displayed in a more readable format,
+and stacktraces are not truncated:
+
+```
+> chalk query --in email.normalized=nice@chalk.ai --out email
+
+Errors
+
+Resolver Failed src.resolvers.get_fraud_tags
+
+KeyError: 'tags'
+  File "src/resolvers.py", line 30, in get_fraud_tags
+      return parsed["tags"]
+
+KeyError('tags')
+```
+
+## August 19, 2023
+
+### Query plan trace viewer
+
+The query plan viewer now includes a flame graph visualization of the query plan's execution, called the Trace View. Precise trace
+data is stored for every offline query by default and for online queries when the query is made with the `--explain` flag.
+
+![Trace View:](/img/trace-viewer.png)
+
+## August 11, 2023
+
+### Override `now` in online query
+
+- Support `now=` for `.query`, `--now`, etc.
+
+### Query plan viewer improvements
+
+- Redesigned query plan viewer
+- Support viewing execution time per operator
+- Support viewing data processing metrics per operator
+- Query plans saved for all queries by default
+
+### No-input online and offline query improvements
+
+- `offline_query` now supports running downstream resolvers when no input is provided. Query primary keys will be sampled or computed, depending on the value of `recompute_features`.
+- `online_query` now support running a query without any input. Query primary keys will be computed using an appropriate no-argument resolver that returns a `DataFrame[...]`
+
+### Misc
+
+- `--local` for `chalk query`, combines `chalk apply --branch` and `chalk query --branch`
+- The progress indicator in the `chalk` command line tool is no longer an off-brand magenta.
+
+## August 5, 2023
+
+### Chalk Python SDK Improvements
+
+Added: `.to_polars()`, `to_pandas()`, and `.to_pyarrow()` accept `prefixed: bool` as an argument. `prefixed=True` is the
+default behavior, and will prefix all column names with the feature namespace. `prefixed=False` will not prefix column names.
+
+```
+DataFrame({User.name: ["Andy"]}).to_polars(prefixed=False)
+# output:
+# polars DataFrame with `name` as the sole column.
+
+DataFrame({User.name: ["Andy"]}).to_polars(prefixed=True)
+# output:
+# polars DataFrame with `user.name` as the sole column.
+```
+
+Added: `include_meta` on `ChalkClient.query(...)`, which includes `.meta` on the response object. This metadata object
+includes useful information about the query execution, at the cost of increased network payload size and a small
+increase in latency.
+
+## July 25, 2023
+
+### Freezing time in unit tests
+
+Chalk now supports freezing time in unit tests. This is useful for testing time-dependent resolvers.
+
+```py
+from datetime import timezone, datetime
+from chalk.features import DataFrame, after
+from chalk.features.filter import freeze_time
+
+df = DataFrame([...])
+with freeze_time(at=datetime(2020, 2, 3, tzinfo=timezone.utc)):
+    df[after(days_ago=1)] # Get items after february 2nd
+```
+
+`freeze_time` also works with resolvers that declare specific time bounds for their aggregation inputs:
+
+```py
+@online
+def get_num_transactions(txs: Card.transactions[before(days_ago=1)]) -> Card.num_txs:
+  return len(txs)
+
+with freeze_time(at=datetime(2020, 9, 14)):
+    num_txs = get_num_transactions(txs) # num transactions before september 13th
+```
+
+## July 11, 2023
+
+### Explicitly time-dependent resolvers
+
+Chalk now supports resolvers that are explicitly time-dependent. This is useful for performing backfills which
+compute values that depend on values that are semantically similar to `datetime.now()`.
+
+You can express time-dependency by declaring a dependency on a special feature called `Now`:
+
+```py
+@online
+def get_age_in_years(birthday: User.birthday, now: Now) -> User.age_in_years:
+    return (now - birthday).years
+```
+
+In online query, (i.e. with `ChalkClient().query`), `Now` is `datetime.now()`. In offline query contexts,
+`now` will be set to the appropriate `input_time` value for the calculation. This allows you to backfill
+a feature for a single entity at many different historical time points:
+
+```py
+ChalkClient().offline_query(input={User.id: [1,1,1]}, output=[User.age_in_years], input_times=[
+    datetime.now() - timedelta(days_ago=100),
+    datetime.now() - timedelta(days_ago=50),
+    datetime.now() - timedelta(days_ago=0),
+])
+...
+```
+
+`Now` can be used in batch resolvers as well:
+
+```py
+@online
+def batch_get_age_in_years(df: DataFrame[User.id, User.birthday, Now]) -> DataFrame[User.id, User.age_in_years]:
+    ...
+```
+
+## June 21, 2023
+
+### Testing your SQL File Resolvers
+
+[SQL file resolvers](https://docs.chalk.ai/docs/sql#sql-file-resolvers) are Chalk's preferred method of resolving
+features with SQL queries.
+Now, you can get your SQL file resolvers in Python by the name of the SQL file resolver.
+For example, if you have the following SQL file resolver:
+
+```sql example.chalk.sql
+-- source: postgres
+-- cron: 1h
+-- resolves: Person
+select id, name, email, building_id from table where id=${person.id}
+```
+
+you can test out your resolver with the following code.
+
+```py
+from chalk import get_resolver
+
+resolver = get_resolver('example') # get_resolver('example.chalk.sql') will also work
+result = resolver('my_id')
+```
+
+## June 15, 2023
+
+### Metrics Export Updates
+
+Now, Chalk supports exporting metrics about "named query" execution. These metrics (count, latency) join
+similar metrics about feature and resolver execution. Contact your Chalk Support representative to configure
+metrics export if you would like to view metrics about Chalk system execution in your existing metrics dashboards.
+
+Additional updates:
+
+- synthetic cache resolvers are now excluded
+- query_name is a tag on many metrics
+
+## June 14, 2023
+
+### Branch deployment performance
+
+Chalk Branch Deployments provide an excellent experience for quick iteration cycles on new features and resolvers.
+Now, Chalk Branch Deployments automatically use a pool of "standby" workers, so there is less delay before
+queries can be served against a new deployment. This reduces the time it takes to run query or offline query against
+a new deployment from ~10-15 seconds to ~1-3 seconds. This impacts customers with more complex feature graphs the most.
+
+## June 13, 2023
+
+### Expanded support for logical keying in streaming contexts
+
+[Stream resolvers](https://docs.chalk.ai/api-docs#stream) support a `keys=` parameter. This parameter allows you to re-key a stream by a property of the message,
+rather than relaying on the protocol layer key. This is appropriate if a stream is keyed randomly, or by an entity key like "user",
+but you want to aggregate along a different axis, e.g. "organization".
+
+Now, `keys=` supports passing a "dotted string" (e.g. `foo.bar`) to indicate that Chalk should use a sub-field of your
+message model. Previously, only root-level fields of the model were supported.
+
+### DataFrame unit tests
+
+If you specify projections or filters in
+`DataFrame` arguments of resolvers, Chalk will
+automatically project out columns and filter rows in
+the input data.
+
+Below, we test a resolver that filters rooms in
+a house to only the bedrooms:
+
+```py example.py
+@features
+class Room:
+    id: str
+    name: str
+
+@features
+class Home:
+    id: str
+    rooms: DataFrame[Room] = has_many(
+        lambda: Room.home_id == Home.id
+    )
+    num_bedrooms: int
+
+@online
+def get_num_bedrooms(
+    rooms: Home.rooms[Room.name == 'bedroom']
+) -> Home.num_bedrooms:
+    return len(rooms)
+```
+
+Now, we may want to write a [unit test](/docs/unit-tests)
+for this resolver.
+
+```py test_example.py
+def test_get_num_rooms():
+    # Rooms is automatically converted to a `DataFrame`
+    rooms = [
+        Room(id=1, name="bedroom"),
+        Room(id=2, name="kitchen"),
+        Room(id=3, name="bedroom"),
+    ]
+
+    # The kitchen room is filtered out
+    assert get_num_bedrooms(rooms) == 2
+
+    # `get_num_bedrooms` also works with a `DataFrame`
+    assert get_num_bedrooms(DataFrame(rooms)) == 2
+```
+
+While we could have written this test before, we would
+have had to manually filter the input data to only
+include bedrooms.
+Also note that Chalk will automatically convert our argument
+to a `DataFrame` if it is not already one.
+
+## June 12, 2023
+
+### Query Run Page
+
+Chalk's dashboard shows aggregated logs and metrics about the execution of queries and resolvers. Now, it can also
+show detailed metrics for a single query. This is useful for debugging and performance tuning.
+
+You can access this page from the "runs" tab on an individual named query page, or from the "all query runs" link
+on the "queries" page.
+
+You can search the list of previously executed queries by date range, or by "query id". The query id is returned
+in the "online query" API [response object](https://docs.chalk.ai/api-docs#ChalkClient.query).
+
+## May 15, 2023
+
+### BigTable Online Storage
+
+Chalk now supports BigTable as an online-storage implementation. BigTable is appropriate for customers with large
+working sets of online features, as is common with recommendation systems. We have successfully configured
+BigTable to serve 700,000 feature vectors per second at ~30ms p90 e2e latency.
+
+## May 10, 2023
+
+### Enhancements to Offline Query
+
+The [Offline Query](/api-docs#ChalkClient.offline_query) has been enhanced with a new `recompute_features` parameter. Users can control which features are sampled from the offline store, and which features are recomputed.
+
+- The default value `False` will maintain current behavior, returning only samples from the offline store.
+- `True` will ignore the offline store, and execute `@online` and `@offline` resolvers to produce the requested output.
+- If, instead, the user passes in a list of features to `recompute_features`, those features will be recomputed by running `@online` and `@offline` resolvers, and all other feature values - including those needed to recompute the requested features - will be sampled from the offline store.
+
+### Recompute Dataset
+
+The 'recompute' capability is also exposed on [Dataset](/api-docs#Dataset.recompute). When passed a list of features to recompute, a new [Dataset Revision](/api-docs#DatasetRevision) will be generated, and the existing dataset will be used as inputs to recompute the requested features.
+
+### Developing in Jupyter
+
+Chalk has introduced a new workflow when [working with branches](/docs/branches), allowing full iterations to take place directly in any IPython notebook. When a user creates a [Chalk Client](/api-docs#ChalkClient) with a branch in a notebook, subsequent features and resolvers in the notebook will be deployed to that branch.
+When combined with Recompute Dataset and the enhancements to Offline Query, users have a new development loop available for feature exploration and development:
+
+1. Take advantage af existing data in chalk
+2. Explore that data using familiar tools in a notebook
+3. Enrich the data by developing new features and resolvers
+4. Immediately view the results of adjusting features in the dataset
+5. When exploration is complete, features and resolvers can be directly added back to the Chalk project
+
+## May 5, 2023
+
+### View Deployment Source Code
+
+Deployments now offer the ability to view their source code. By clicking the "View Source" button on the Deployment Detail page, users can view all files included in the deployed code.
+
+## April 21, 2023
+
+### Improved Deployment Utilities
+
+Users can now "redeploy" any historical deployement with a UI button on the deployment details page. This enables useful workflows including rollbacks.
+The "download source" button downloads a tarball containing the deployed source to your local machine.
+![Deploy UI Enhancements](/img/DeploymentButtons.png)
+
+## April 18, 2023
+
+### Resolver error messages for incorrect types include primary keys
+
+When writing resolvers, incorrect typing can be a difficult to track.
+Now, if a resolver instantiates a feature of an incorrect type, the resolver error message
+will include the primary key value(s) of the query itself.
+
+## April 11, 2023
+
+### Online query improvements
+
+The Online Query API can now be used to query DataFrame-typed features. For instance, you can query all of a user's
+transaction level features in a single query:
+
+```sh
+chalk query --in user.id --out user.transactions
+
+{
+  "columns": ["transaction.id", "transaction.user_id", ...],
+  "values": [[1, 2, 3, ...], ["user_1", "user_2", "user_3", ...]
+}
+```
+
+More functionality will be added to Online and Offline query APIs to support more advanced query patterns.
+
+## April 6, 2023
+
+### Branch deployments
+
+When deploying with [`chalk apply`](/cli/chalk#branch) a new flag `--branch <branch_name>` has been introduced which creates a branch deployment.
+Users can interact with their branch deployment using a consistent name by passing the branch name to query, upload_features, etc.
+Chalk [clients](https://docs.chalk.ai/api-docs#ChalkClient) can also be scoped to a branch by passing the branch in the constructor.
+Branch deployments are many times faster than other flavors of `chalk apply`, frequently taking only a few seconds from beginning to end.
+Branch deployments replace preview deploys, which have been deprecated.
+
+## March 31, 2023
+
+### Speed improvements for deployments
+
+Deployments via `chalk apply` are now up to 50% faster in certain cases. If your project's PIP dependencies haven't changed, new deployments will build & become active significantly faster than before.
+
+![Deploy Time Comparison:](/img/deploy_speedup.png)
+
+## March 17, 2023
+
+### Offline TTL
+
+Introduces a new "offline_ttl" property to features decorator . Now you can control for how long data is valid in the offline_store. Any feature older than the ttl value will not be returned in an offline query.
+
+```py
+@features
+class MaxOfflineTTLFeatures:
+    id: int
+    ts: datetime = feature_time()
+
+    no_offline_ttl_feature: int = feature(offline_ttl=timedelta(0))
+    one_day_offline_ttl_feature: int = feature(offline_ttl=timedelta(days=1))
+    infinite_ttl_feature: int
+```
+
+### Strict Feature Validation
+
+Adds the `strict` property to features decorator, indicating that any failed validation will throw an error. Invalid features will never be written to the online or offline store is `strict` is `True`. Also introduces the `validations` array to allow differentiated strict and soft validations on the same feature.
+
+```py
+@features
+class ClassWithValidations:
+    id: int
+    name: int = feature(max=100, min=0, strict=True)
+    feature_with_two_validations: int = feature(
+        validations=[
+            Validation(min=70, max=100),
+            Validation(min=0, max=100, strict=True),
+        ]
+    )
+```
+
+## March 7, 2023
+
+### Datasets in Offline Query
+
+The `Dataset` class is now live!
+Using the new `ChalkClient.offline_query` method,
+we can inspect important metadata about the query and
+retrieve its output data in a variety of ways.
+
+Simply attach a `dataset_name` to the query to persist the results.
+
+```py
+from chalk.client import ChalkClient, Dataset
+uids = [1, 2, 3, 4]
+at = datetime.now()
+dataset: Dataset = ChalkClient().offline_query(
+     input={
+         User.id: uids,
+         User.ts: [at] * len(uids),
+     },
+     output=[
+         User.id,
+         User.fullname,
+         User.email,
+         User.name_email_match_score,
+     ],
+     dataset_name='my_dataset'
+)
+pandas_df: pd.DataFrame = dataset.data_as_pandas
+```
+
+Check out the [documentation ](/docs/datasets) here.
+
+## February 28, 2023
+
+### Deployment Build Logs
+
+Chalk now provides access to build and boot logs through the Deployments page in the dashboard.
+
+![Build Logs](/img/BuildLogs.png)
+
+## February 16, 2023
+
+### Resolver timeouts
+
+Computing features associated with third-party services can be unpredictably slow.
+Chalk helps you manage such uncertainty by specifying a resolver timeout duration.
+
+Now you can set timeouts for resolvers!
+
+```python
+@online(timeout="200ms")
+def resolve_australian_credit_score(driver_id: User.driver_id_aus) -> User.credit_score_aus:
+    return experian_client.get_score(driver_id)
+```
+
+## January 26, 2023
+
+### SQL File Resolvers
+
+SQL-integrated resolvers can be completely written in SQL files: no Python required!
+If you have a SQL source like as follows:
+
+```py
+pg = PostgreSQLSource(name='PG')
+```
+
+You can define a resolver in a `.chalk.sql` file, with comments that detail important
+metadata. Chalk will process it upon `chalk apply` as it would any other Python resolver.
+
+```sql get_user.chalk.sql
+-- type: online
+-- resolves: user
+-- source: PG
+-- count: 1
+select email, full_name from user_table where id=${user.id}
+```
+
+Check out the [documentation ](/docs/sql#sql-file-resolvers) here.
+
+## January 12, 2023
+
+### Improved Logging
+
+Logging on your dashboard has been improved. You can now scroll through more logs, and the formatting is cleaner and easier to use.
+This view is available for resolvers and resolver runs.
+
+![Logs Viewer](/img/Logs.png)
+
+## January 9, 2023
+
+### Pretty Print Online Query Results
+
+Online Query Response objects now support pretty-print in any iPython environment.
+
+![Pretty Print Query Response](/img/PrettyPrintImg.png)
+
+## January 8, 2023
+
+### Linux docker containers on M1 Macs
+
+`chalkpy` has always supported running in docker images using M1's native `arm64` architecture, and now
+`chalkpy==1.12.0` supports most functionality on M1 Macs when run with AMD64 (64 bit Linux) architecture docker images.
+This is helpful when testing images built for Linux servers that include `chalkpy`.
+
+## January 6, 2023
+
+### Docs Search
+
+Chalk has lots of documentation, and finding content is now difficult.
+
+We've added docs search!
+
+![Documentation search](/img/docs-search.gif)
+
+Try it out by typing `cmd-K`, or clicking the search button at the top of the
+table of contents.
+
+## September 27, 2022
+
+### Tags & Owners as Comments
+
+This update makes several improvements to [feature discovery](/docs/feature-discovery).
+
+Tags and owners are now parsed from the comments preceding
+the feature definition.
+
+```py
+@features
+class RocketShip:
+    # :tags: **team:identity**, **priority:high**
+    # :owner: **katherine.johnson@nasa.gov**
+    velocity: float
+    ...
+```
+
+Prior to this update, owners and tags needed to be set in the `feature(...)` function:
+
+```py
+@features
+class RocketShip:
+    velocity: float = feature(
+        tags=["**team:identity**", "**priority:high**"],
+        owner="**katherine.johnson@nasa.gov**"
+    )
+    ...
+```
+
+Feel free to choose either mechanism!
+
+## July 28, 2022
+
+### Auto Id Features
+
+It's natural to name the primary feature of a feature set
+`id`. So why do you always have to specify it?
+Until now, you needed to write:
+
+```py
+@features
+class User:
+    id: str = feature(primary=True)
+    ...
+```
+
+Now you don't have to! If you have a feature class that does
+not have a feature with the primary field set, but has a feature
+called `id`, it will be assigned `primary` automatically:
+
+```py
+@features
+class User:
+    id: str
+    ...
+```
+
+The functionality from before sticks around:
+if you use a field as a primary key with a name other than
+`id`, you can keep using it as your primary feature:
+
+```py
+@features
+class User:
+    user_id: str = feature(primary=True)
+    # Not really the primary key!
+    id: str
+```
+
+## July 25, 2022
+
+### DataFrame Expressions
+
+The Chalk `DataFrame` now supports boolean expressions!
+The Chalk team has worked hard to let you express your
+`DataFrame` transformations in natural, idiomatic Python:
+
+```python
+DataFrame[
+  User.first_name == "Eleanor" or (
+    User.email == "eleanor@whitehouse.gov" and
+    User.email_status not in {"deactivated", "unverified"}
+  ) and User.birthdate is not None
+]
+```
+
+Python experts will note that `or`, `and`, `is`, `is not`, `not in`, and `not`
+aren't overload-able.
+So how did we do this?
+The answer is AST parsing! A more detailed blog post to follow.
+
+## July 22, 2022
+
+### Descriptions as Comments
+
+This update makes several improvements to [feature discovery](/docs/feature-discovery).
+
+Descriptions are now parsed from the comments preceding
+the feature definition. For example, we can document the feature
+`User.fraud_score` with a comment above the attribute definition:
+
+```py
+@features
+class User:
+    # **0 to 100 score indicating an identity match.**
+    # **Low scores indicate safer users**
+    fraud_score: float
+    ...
+```
+
+Prior to this update, descriptions needed to be set in the `feature(...)` function:
+
+```py
+@features
+class UserFeatures:
+    fraud_score: float = feature(description="""
+           **0 to 100 score indicating an identity match.**
+           **Low scores indicate safer users**
+        """)
+    ...
+```
+
+The description passed to `feature(...)` takes precedence over the
+implicit comment description.
+
+### Namespace Metadata
+
+You can now set attributes for all features in a namespace!
+
+Here, we assign the tag `group:risk` and the owner `ravi@chalk.ai`
+to all features on the feature class.
+Owners specified at the feature level take precedence
+(so the owner of `User.email` is the default `ravi@chalk.ai` whereas the
+owner of `User.flaky_api_result` is `devops@chalk.ai`).
+Tags aggregate, so `email` has the tags `pii` and `group:risk`.
+
+```py
+@features(tags="group:risk", owner="ravi@chalk.ai")
+class User:
+    email: str = feature(tags="pii")
+    flaky_api_result: str = feature(owner="devops@chalk.ai")
+```
+
+## July 14, 2022
+
+### Self-Serve Slack Integration
+
+You can configure Chalk to post message to your Slack workspace!
+You can find the Slack integration tab in the settings page of your dashboard.
+
+![Slack integration](/img/slack.png)
+
+Slack can be used as an alert channel or for build notifications.
+
+## July 13, 2022
+
+### Python 3.8 Support
+
+Chalk's pip package now supports Python 3.8!
+With this change, you can use the Chalk package to run
+online and offline queries in a Python environment
+with version >= 3.8.
+Note that your features will still be computed on a runtime
+with Python version 3.10.
+
+## July 8, 2022
+
+### Named Integrations
+
+Chalk's injects environment variables to support data integrations.
+But what happens when you have two data sources of the same kind?
+Historically, our recommendation was to create one set of environment
+variables through an official data source integration,
+and one set of prefixed environment variables yourself using
+the generic environment variable support.
+
+With the release of named integrations, you can connect to as many
+of the same data source as you need!
+Provide a name at the time of configuring your data source,
+and reference it in the code directly.
+Named integrations inject environment variables with the standard names
+prefixed by the integration name (ie. `RISK_PGPORT`).
+The first integration of a given kind will also create the un-prefixed environment
+variable (ie. both `PGPORT` and `RISK_PGPORT`).
+
+## June 29, 2022
+
+### SOC 2 Report
+
+Chalk is excited to announce the availability of our SOC 2 Type 1 report from Prescient Assurance. Chalk
+has instituted rigorous controls to ensure the security of customer data and earn the trust of our customers,
+but we're always looking for more ways to improve our security posture, and to communicate these steps to our customers.
+This report is one step along our ongoing path of trust and security.
+
+If you're interested in reviewing this report, please contact [support@chalk.ai](mailto:support@chalk.ai) to request a copy.
+
+## June 3, 2022
+
+### Pandas Integration
+
+You can now convert Chalk's `DataFrame` to a `pandas.DataFrame` and back!
+Use the methods `chalk_df.to_pandas()` and `.from_pandas(pandas_df)`.
+
+### Migration Sampling
+
+The 1.4.1 release of the CLI added a parameter `--sample` to `chalk migrate`.
+This flag allows migrations to be run targeting specific sample sets.
+
+### Feature/Resolver Health
+
+Added spark lines to the feature and resolver tables which show a quick summary of request counts over the past 24 hours.
+Added status to feature and resolver tables which show any failing checks related to a feature or resolver.

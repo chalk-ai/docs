@@ -1,0 +1,133 @@
+---
+title: Charts with Code 
+description: Define charts and alerts with code.
+---
+
+---
+
+You can also create charts using Python, just as you would your features and resolvers.
+
+---
+
+## Charts and Series
+
+The heart of the `Chart` paradigm is the `Series`,
+a single collection of data points over time.
+They must be instantiated with a metric and name,
+and can accumulate filters and group-bys to
+support advanced calculations.
+Some `Series` metrics require a window function parameter
+to decide how to calculate values.
+Window functions often include aggregates such as
+`count` and `mean` and percentiles such as `95%` and `99%`.
+Methods and options will auto-complete in your text
+editor based on the type of series.
+
+`Series` objects must be attached to a `Chart`,
+which can have multiple series and up to one trigger.
+
+Let's say you have a resolver `get_fraud_profile` and you want to make sure it goes fast.
+The following chart will track the p95 latency of your resolver,
+and attach it to its resolver page on the dashboard.
+
+```py
+from chalk.monitoring import Chart, Series
+
+Chart(
+    name="my_chart_1",
+    window_period="30m"
+).with_series(
+    Series.resolver_latency_metric(
+        name="p95 latency for `get_fraud_profile`",
+        window_function="95%"
+    ).where(resolver=get_fraud_profile)
+).with_resolver_link(get_fraud_profile)
+```
+
+This is all that's necessary to ship a chart to your online dashboard upon [`chalk apply`](/cli/apply)!
+
+Using this builder pattern, we're able to generate charts
+quickly and by reusing intermediate instances if necessary
+since every instance is deep-copied from the previous instance.
+
+By default, only non-copied charts will be registered to the server.
+Consider the following example:
+
+```py
+from chalk.monitoring import Chart, Series
+
+base = Chart(
+    name="my_chart_1",
+    window_period="30m",
+).with_series(
+    Series.resolver_latency_metric(window_function="99%")
+)
+
+modified = base.with_series(
+    Series.resolver_latency_metric(
+        window_function="99%",
+    ).where(resolver_type='online')
+)
+```
+
+Since `modified` has not been copied,
+it will be the only one of the three to be shipped to the server.
+However, `base` has been copied, and will not create a chart.
+To force-register charts to the server, use `.keep()`,
+which will be applied to the chart itself and all its descendants.
+
+In the above example, we also added a filter to our `Series` object.
+Here, we restrict the series to only calculate latencies for online resolvers.
+The filters enabled differ depending on the series metric,
+and the appropriate options should be available through
+auto-complete in your text editor.
+
+---
+
+## Triggers
+
+Triggers can also be added to charts. The following `error` trigger will
+alert `myemail@chalk.ai` when the resolver `get_fraud_profile` takes more
+than `200ms` to execute.
+
+```py
+from chalk.monitoring import Chart, Series
+
+Chart(name="my_chart_1", window_period="30m").with_trigger(
+    Series.resolver_latency_metric(
+        window_function="95%"
+    ).where(resolver=get_fraud_profile) > 0.2,
+    trigger_name=f"High latency alert",
+    severity="error",
+    channel_name="myemail@chalk.ai",
+).with_resolver_link(get_fraud_profile)
+```
+
+[//]: # (To get a series by name from a chart, we can simply index the `Chart` instance by series name.)
+[//]: # (In the above example, we do that to find the relevant `Series` to create our trigger. )
+
+---
+
+## Advanced Chart Building
+
+We can also easily create charts in bulk.
+Let's say we have a feature class `Transaction` with four scalar features. 
+
+```py
+from chalk.monitoring import Chart, Series
+
+for feature in Transaction:
+    Chart(
+        name=f"{feature} request count chart",
+        window_period="5m"
+    ).with_trigger(
+        Series.feature_request_count_metric().where(feature=feature) < 10,
+        trigger_name=f"Low volume requests for {feature}",
+        severity="error",
+        channel_name="myemail@chalk.ai",
+    ).with_feature_link(feature)
+```
+
+Upon [`chalk apply`](/cli/apply), four charts will be registered to the server filtering
+on feature requests for each of the four features.
+These charts will be available on the relevant feature pages on the dashboard.

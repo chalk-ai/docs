@@ -1,0 +1,24 @@
+---
+title: API Components
+description: The building blocks of Chalk.
+---
+
+---
+
+Chalk's feature pipeline helps you define the features you need and compute their values.
+The following concepts are the foundation of our implementation:
+
+- **[Features](/docs/features)** - Chalk lets you spell out your feature
+  values using Python classes. Feature classes are [namespaced](/docs/features#namespacing), and can have
+  [relationships](/docs/has-one) to other feature namespaces.
+- **[Resolvers](/docs/resolver-overview)** - Resolvers compute the values
+  of your features from other feature values. Feature resolvers are defined
+  [online and offline](/docs/resolver-online-offline) for inference and training,
+  and support [ETL between online and offline](/docs/reverse-etl).
+- **[Online Inference](/docs/query-basics)** - In production, you can query
+  your features through one of Chalk's API clients. At query time, you can choose
+  to [override any feature caching](/docs/query-caching).
+- **[Training](/docs/temporal-consistency)** - Chalk supports querying your
+  offline features directly from a [Python notebook](/docs/training-client).
+- **[Data Export](/docs/sinks)** - Data can be exported from your offline
+  feature store to any destination of your choice.

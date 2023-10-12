@@ -1,0 +1,93 @@
+---
+title: Platform Architecture
+description: How it all fits together.
+---
+
+import { ArchitectureDiagram, ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
+
+---
+
+Chalk integrates with your _data sources_, transforms data with _feature pipelines_,
+stores this data in _online_ and _offline storage_, and provides _monitoring_ on feature computation and distributions.
+
+<ArchitectureDiagram />
+
+## Service Architecture
+
+By default, Chalk operates as a SaaS offering,
+where Chalk executes pipelines and stores data on
+its cloud infrastructure.
+However, Chalk can also deploy its software into your
+AWS or GCP project.
+In this model, environments are provisioned via [Terraform](https://terraform.io)
+and managed by the Chalk team.
+
+There are a few main components of a Chalk deployment:
+
+- **Management** - serves non-customer data (like alert and RBAC configurations).
+- **Builder** - builds containers that run your feature pipelines.
+- **Compute** - machines that run your feature pipelines. In both AWS and GCP, compute runs on
+  Kubernetes with [Knative](https://knative.dev/).
+- **Customer Data** - the online and offline stores for your features.
+- **Secrets** - environment variables and configuration for your data sources.
+
+These components are organized as follows:
+
+<ServiceDiagramSwitcher />
+
+## Online Computation and Serving
+
+Let's explore Chalk's architecture by examining how the pieces work together to compute & serve **[Features](/docs/features)** online. Suppose that you want to compute a set of features for making a decision about a request from a user:
+
+1. Your application sends an [HTTP request](/docs/query-basics) to Chalk's serving API, specifying information about which features you would like to compute.
+2. Chalk's Query Planner creates an optimized "plan" to understand which data must be fetched or transformed in order to answer your request.
+3. Chalk's Compute Engine executes this query plan, either by fetching data directly from your data sources and running transformations on that data, or by pulling cached feature values from **Online Storage**.
+4. Chalk responds to your application with the features you requested.
+5. Chalk logs any newly computed features to Online and/or Offline Storage for future use.
+
+Chalk's online query serving platform is designed to fetch data from a variety of heterogeneous data sources and execute complex transformations on that data with the minimum possible latency. Chalk uses many techniques to reduce latency, such as:
+
+- Automatic parallel execution of concurrent pipeline stages
+- Vectorization of pipeline stages that are written using scalar syntax
+- Low-latency key/value stores (like Redis, Cloud Memorystore, or DynamoDB) to minimize cached feature fetch time
+- Statistics-informed join planning
+- JIT transformation of Python code into native code
+
+## Offline Computation and Serving
+
+Chalk's architecture also supports efficient batch point-in-time queries to construct model
+training sets or perform batch offline inference.
+
+1. You submit a [training data request](/docs/training-client) from a notebook client like Jupyter using Chalk's client library.
+2. Chalk's Query Planner creates a plan to determine which data can be served from **Offline Storage**, and which data must be computed fresh (i.e. in the case of lazy backfills).
+3. Chalk's Compute Engine pulls [point-in-time correct](/docs/temporal-consistency) feature values from Offline Storage.
+4. Chalk returns a dataframe of features to you.
+
+Chalk's **Offline Storage** is optimized for batch querying of temporally consistent data. Chalk uses columnar storage backends (like TimescaleDB or BigQuery) to ingest massive amounts of data from a variety of data sources and query it efficiently. Note that data ingested
+into the Offline Store can be trivially made available for use in an online querying context using [Reverse ETL](/docs/reverse-etl).
+
+You can see a list of supported ingestion sources in the **Integrations** section of these docs.
+
+## Storage
+
+Chalk uses different storage technologies to support online and offline use cases.
+
+The online store is optimized for serving the latest version of any given feature for any given entity with the minimum possible latency. Behind the scenes, Chalk uses key-value stores for this purpose. Chalk can be configured to use Redis or Cloud Memory Store for smaller resident data sets with high latency requirements, or DynamoDB when horizontal scalability is required.
+
+The offline store is optimized for storing all historical feature values, serving point-in-time correct queries, and tracking provenance of features. Chalk supports a variety of storage backends depending on data scale and latency requirements. Typically, Chalk uses TimescaleDB or BigQuery.
+
+## Monitoring
+
+Chalk supports not only robust monitoring of pipeline execution, but of the feature values themselves as well. Monitoring machine learning data infrastructure is just as important as monitoring application availability, but is often overlooked.
+
+Each time a query is served, Chalk assigns a unique "trace id" for the request. Chalk tracks all emitted logs on both a per-resolver basis and a per-trace basis.
+This enables you to debug problems and track fine-grained performance metrics pertaining to specific features and resolvers.
+Leveraging this helps answer common questions such as how often certain features are computed and how long the computation takes.
+
+Like many traditional application monitoring platforms, Chalk supports alerting on performance or availability issues via integrations with [PagerDuty](https://www.pagerduty.com/) and [Slack](https://slack.com/).
+
+In addition to performance and request metrics for computation, Chalk supports alerting on feature values themselves. You can specify a variety of threshold requirements and drift tolerance tests to help spot issues such as:
+
+- feature drift
+- mismatches between offline/online pipelines
+- format changes with external data sources
