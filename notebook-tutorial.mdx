@@ -298,13 +298,13 @@ FROM cardholder
 %%resolver get_authorization_features
 -- resolves: Authorization
 -- source: snowflake
- SELECT id,
+SELECT id,
        amount_in_cents,
        card_id,
        merchant_id,
        status,
        country_code,
-       created_at as authorized_at,
+       created_at as authorized_at
 FROM authorization
 ```
 
