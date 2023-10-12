@@ -1,0 +1,36 @@
+---
+title: Magics
+description: Chalk cell magics for notebooks
+published: true
+---
+import { TipInfo, TipGood } from '@/components/Tip'
+import { AddSnowflakeIntegration } from '@/components/shared/snowflake'
+
+---
+
+Chalk provides a set of [IPython magics](https://ipython.readthedocs.io/en/stable/interactive/magics.html) to improve the experience of defining resolvers in notebooks.
+
+## Cell Magics
+
+### %%resolver
+
+You can define a SQL resolver in a notebook cell using the `%%resolver` magic. The magic will parse the cell contents
+and upload your resolver to your current working branch.
+
+`%%resolver` needs to be followed by a resolver name, e.g. `root_authorization_resolver` as shown below.
+
+Refer to the section on [SQL Resolvers](/docs/sql#sql-file-resolvers) to learn more about how to define resolvers.
+
+```sql
+%%resolver root_authorization_resolver
+-- type: offline
+-- resolves: Authorization
+-- source: Snowflake
+SELECT
+    id
+    amount_in_cents
+    card_id
+    merchant_id
+    created_at as authorized_at
+FROM authorizations;
+```

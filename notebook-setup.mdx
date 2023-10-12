@@ -1,0 +1,108 @@
+---
+title: Setup
+description: Setup Chalk in your notebook of choice
+published: true
+---
+
+
+
+## Installation
+
+### Dependencies
+
+
+```python notebook.ipynb
+!pip install chalkpy[all]
+```
+
+### Generating access tokens
+
+To use Chalk in a notebook, we will need to generate an access token.
+
+To generate an access token, in the Chalk Dashboard, under the **Settings > Access Tokens**
+Generate an access token by clicking on **New Token** and select all necessary permissions.
+
+We will need the `CLIENT_ID` and `SECRET_KEY` of the access token we generated to initialize a Chalk client in our notebook.
+
+---
+
+
+## Environment Setup
+### Local
+
+If you are working with a local notebook, add the following to your `.env` file
+
+```bash
+CHALK_CLIENT_ID=<CLIENT_ID>
+CHALK_CLIENT_SECRET=<CLIENT_SECRET>
+```
+
+and then initialize the Chalk client in your notebook as follows:
+
+```python notebook.ipynb
+import os
+from chalk.client import ChalkClient
+from dotenv import load_dotenv
+
+load_dotenv()
+
+client= ChalkClient(
+    client_id=os.getenv("CHALK_CLIENT_ID"),
+    client_secret=os.getenv("CHALK_SECRET_KEY"),
+)
+```
+
+### Deepnote
+
+On Deepnote, you can set [environment variables](https://deepnote.com/docs/environment-variables) by going to the
+integrations tab and clicking on the "Environment Variables" button.
+
+![Deepnote Environment Variables](/img/DeepnoteEnvVar.png)
+
+Set the `CHALK_CLIENT_ID` and `CHALK_CLIENT_SECRET` variables to the values you generated in the previous step.
+You can then initialize Chalk by running the following code in a cell:
+
+```python notebook.ipynb
+import os
+from chalk import ChalkClient
+
+client = ChalkClient(
+    client_id=os.environ.get("CHALK_CLIENT_ID"),
+    client_secret=os.environ.get("CHALK_CLIENT_SECRET"),
+)
+```
+
+### Hex
+
+On [Hex](https://hex.tech), you can store your access tokens using [secrets](https://learn.hex.tech/docs/environment-configuration/environment-views#secrets)
+
+![Hex Secrets](/img/HexSecrets.png)
+
+The Chalk client can then be initialized referencing the variables directly
+
+```python notebook.ipynb
+from chalk import ChalkClient
+
+client = ChalkClient(
+    client_id=CHALK_CLIENT_ID,
+    client_secret=CHALK_CLIENT_SECRET,
+)
+```
+
+## Creating a branch
+
+To start using Chalk in a notebook, we will need to create a [branch deployment](/docs/branches).
+Branch deployments are isolated environments that can be used to test features and resolvers before deploying them to production.
+
+Working in a branch makes it seamless to iterate on features and resolvers in notebooks.
+Any time we execute a cell in our notebook with feature or resolver definitions,
+Chalk will automatically update our branch deployment with the latest changes.
+
+Once you've got your client setup, you can create a branch calling [`create_branch`](/api-docs#ChalkClient.create_branch).
+Setting `switch=True` will point your client to the newly created branch.
+
+```python notebook.ipynb
+BRANCH_NAME = "my-branch"
+
+client.create_branch(BRANCH_NAME, switch=True)
+```
