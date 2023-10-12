@@ -13,6 +13,31 @@ See our [public roadmap](https://github.com/orgs/chalk-ai/projects/1) for upcomi
 
 ## October 5th, 2023
 
+### Alert descriptions
+
+Alerts now support descriptions, which can be used to provide more context about the alert.
+
+```diff-py
+from chalk.monitoring import Chart, Series
+Chart(name="Request count").with_trigger(
+    Series
+        .feature_null_ratio_metric()
+        .where(feature=User.fico_score) > 0.2,
++   description="""*Debugging*
++
++   When this alert is triggered, we're parsing null values from
++   a lot of our FICO reports. It's likely that Experian is
++   having an outage. Check the <dashboard|https://internal.dashboard.com>.
++   """
+)
+```
+
+These descriptions can also be added to charts created from the web.
+
+---
+
+## October 5th, 2023
+
 ### `query_bulk` support for notebooks
 
 The `query_bulk` method is now available in the `ChalkClient` class. This method allows you to query for multiple rows of
