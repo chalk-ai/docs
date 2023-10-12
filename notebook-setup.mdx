@@ -1,10 +1,8 @@
 ---
 title: Setup
-description: Setup Chalk in your notebook of choice
+description: Set up Chalk in your notebook of choice
 published: true
 ---
-
-
 
 ## Installation
 
@@ -27,23 +25,18 @@ a Chalk client in our notebook.
 ---
 
 ## Environment Setup
+
+You can use the `ChalkClient` from any Jupiter notebook environment.
+
 ### Local
 
-If you are working with a local notebook, add the following to your `.env` file
+If you are working with a local notebook, Chalk will pick up your access token
+generated from running `chalkpy login` in your terminal.
 
-```bash
-CHALK_CLIENT_ID=<CLIENT_ID>
-CHALK_CLIENT_SECRET=<CLIENT_SECRET>
-```
-
-and then initialize the Chalk client in your notebook as follows:
+All you need to do is initialize the client:
 
 ```python notebook.ipynb
-import os
 from chalk.client import ChalkClient
-from dotenv import load_dotenv
-
-load_dotenv()
 
 client = ChalkClient()
 ```
