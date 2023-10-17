@@ -1,0 +1,17 @@
+---
+title: Cohere
+description: Integrate with Cohere for embedding models.
+---
+
+import { getEnvironmentVariableText, getNamedIntegrationText } from "@/components/NamedIntegration";
+import { AddCohereIntegration } from '@/components/shared/cohere';
+
+---
+
+Chalk supports [Cohere](https://cohere.com/embed) as an [embeddings](/docs/embeddings#cohere) provider.
+
+## Adding OpenAI
+
+On the dashboard, you can provide your Cohere api key.
+
+<AddCohereIntegration onSubmit={(e) => e.preventDefault()} />

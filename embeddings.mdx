@@ -1,0 +1,147 @@
+---
+title: Embeddings
+description: Automatically calculate embeddings from existing features
+comingSoon: true
+---
+
+import { TipInfo } from '@/components/Tip'
+
+---
+
+Embedding models are generally used to calculate a [vector feature](/docs/feature-types#vectors). Chalk includes
+built-in support for common embedding models, or can define your own embedding model through a resolver.
+
+## Built-In Embedding Functions
+
+Chalk includes built-in support for both open-source and hosted embedding models via the `embedding` function.
+We recommend using this function when possible, as Chalk will automatically handle batching and retries,
+and you don't need to specify the vector size. The main arguments for this function are:
+
+1.  `feature` (required): The name of feature that is used to generate the embedding. This feature must have a
+    string type. If you would like to use multiple features as input, you can define a [resolver](/docs/resolver) to map
+    these features into one that will be used as the input.
+1.  `provider` (required): The embedding model provider. The currently supported providers are `sentence-transformers`, `instructor`,
+    `openai`, or `cohere`. Chalk may add more providers in the future.
+1.  `model` (optional): The name of the model to use. Each model family has a default model, which will be used if this
+    argument is not specified.
+1.  `ttl` (optional): The duration for which the embedding will be cache. By default, the embedding vector will be
+    cached for the same TTL as the `feature`. If you would like different behavior,
+    you can specify this argument explicitly.
+
+For the complete signature, please see the [api docs](/api-docs#embedding).
+
+
+
+### Sentence Transformers
+
+Chalk supports all models that are part of the [sentence-transformers](https://www.sbert.net/) framework.
+The default model for this provider is `all-MiniLM-L6-v`. The full list of models is available
+[here](https://www.sbert.net/docs/pretrained_models.html).
+
+```python
+from chalk.features import embedding, features, Vector
+
+@features
+class Document:
+    content: str
+    embedding: Vector = embedding(
+        feature="content",
+        provider="sentence-transformers",
+        model="all-MiniLM-L6-v",  # optional, defaults to all-MiniLM-L6-v
+    )
+```
+
+### Instructor
+
+Chalk supports [INSTRUCTOR](https://github.com/xlang-ai/instructor-embedding) embedding models.
+The default model for this provider is `hkunlp/instructor-base`. The full list of models is available
+[here](https://github.com/xlang-ai/instructor-embedding#model-list).
+
+```python
+from chalk.features import embedding, features, Vector
+
+@features
+class Document:
+    content: str
+    embedding: Vector = embedding(
+        feature="content",
+        provider="instructor",
+        model="hkunlp/instructor-base",  # optional, defaults to hkunlp/instructor-base
+    )
+```
+
+### OpenAI
+
+Chalk can proxy calls to the [OpenAI Embeddings API](https://platform.openai.com/docs/guides/embeddings).
+The default model for this provider is `text-embedding-ada-002`.
+To use OpenAI, first sign up for an
+[OpenAI Account](https://openai.com/api/), and then create an [OpenAI Integration](/docs/openai) in Chalk.
+All OpenAI requests will be attributed to your API key. To minimize usage, we highly recommend specifying an
+appropriate TTL in Chalk, which will ensure that embeddings are cached.
+
+```python
+from chalk.features import embedding, features, Vector
+
+@features
+class Document:
+    content: str
+    embedding: Vector = embedding(
+        feature="content",
+        provider="openai",
+        model="text-embedding-ada-002",  # optional, defaults to text-embedding-ada-002
+        ttl="infinity",
+    )
+```
+
+### Cohere
+
+Chalk can proxy calls to [Cohere Embed](https://cohere.com/embed). The default model for this provider is `embed-english-v2.0`.
+To use this integration, first sign up for an
+[Cohere Account](https://dashboard.cohere.com/welcome/register), and then create an [Cohere Integration](/docs/cohere) in Chalk.
+All Cohere requests will be attributed to your API key. To minimize usage, we highly recommend specifying an
+appropriate TTL in Chalk, which will ensure that embeddings are cached.
+
+```python
+from chalk.features import embedding, features, Vector
+
+@features
+class Document:
+    content: str
+    embedding: Vector = embedding(
+        feature="content",
+        provider="cohere",
+        model="embed-english-v2.0",  # optional, defaults to embed-english-v2.0
+        ttl="infinity",
+    )
+```
+
+## Custom embedding functions
+
+If you would like to run your own embedding model, you can define a custom resolver to compute the embedding
+from existing features in the feature set. For performance, we recommend to store the model weights in an
+object store (such as AWS S3 or GCS) rather than including them your source code and to load the model
+using a [boot hook](/docs/generic#initializing).
+
+```python
+from chalk.features import before_all, DataFrame, embedding, features, realtime, Vector
+
+my_model = None
+
+@before_all
+def load_my_model():
+    global my_model
+    my_model = MyModel().initialize("s3://my-bucket/my-checkpoint.pt")
+
+
+@features
+class Document:
+    content: str
+    # When using a custom embedding function, the size of the vector must be specified.
+    embedding: Vector[1536]
+
+@realtime
+def my_embedding_function(content: DataFrame[Document.content]) -> DataFrame[Document.embedding]:
+    return my_model.embed(content.to_arrow()['document.content'])
+```
+
+Chalk will then call `my_embedding_function` whenever an embedding is needed.
