@@ -130,12 +130,11 @@ using a [boot hook](/docs/generic#initializing).
 ```python
 from chalk.features import before_all, DataFrame, embedding, features, realtime, Vector
 
-my_model = None
+my_model = MyModel()
 
 @before_all
 def load_my_model():
-    global my_model
-    my_model = MyModel().initialize("s3://my-bucket/my-checkpoint.pt")
+    my_model.initialize("s3://my-bucket/my-checkpoint.pt")
 
 
 @features
