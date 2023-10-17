@@ -28,6 +28,9 @@ class Book:
 
 ```
 
+
+---
+
 ## Lists and Sets
 
 Features can be lists or sets of [scalar](/docs/feature-types#scalars) or [struct](/docs/feature-types#structs) types.
@@ -44,6 +47,8 @@ class Book:
     categories: set[str]
     chapters: list[Chapter]
 ```
+
+---
 
 ## Structs
 
@@ -112,6 +117,8 @@ class Book:
 ```
 
 
+---
+
 ## Document
 
 Both [dataclass](/docs/feature-types#dataclass) and [Pydantic](/docs/feature-types#pydantic-models) 
@@ -134,6 +141,8 @@ class Book:
     title: Document[AuthorInfo]
     ...
 ```
+
+---
 
 ## Vectors
 
@@ -172,6 +181,8 @@ class Document:
     # Defines a vector with 1536 dimensions that will be persisted with 32 bit precision 
     embedding: Vector["f32", 1536]
 ```
+
+---
 
 ## Custom serializers
 

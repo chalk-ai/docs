@@ -22,6 +22,8 @@ To illustrate how to use nearest neighbor relationships, we'll walk through an e
 In this example, the feature set `SearchQuery` feature set represents an incoming request, and the `FAQDocument` feature set represents our collection
 of frequently asked questions and answers. Our goal is to return the five most relevant FAQ entries for the given search query.
 
+---
+
 ## Defining nearest neighbor relationships
 Using the `nearest` function, we can express a relationship where we want the nearest documents for each query. Chalk uses the
 `==~` operator to denote a "nearest neighbor" relationship.
@@ -85,6 +87,8 @@ class SearchQuery:
     index=None,
   )
 ```
+
+---
 
 ## Nearest neighbors as resolver inputs
 
