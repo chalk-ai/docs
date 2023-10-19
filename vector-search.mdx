@@ -73,27 +73,6 @@ class SearchQuery:
 ```
 
 
-### Indexing
-
-By default, Chalk indexes nearest-neighbor relationships with hierarchical navigable small world (HNSW) graphs.
-Compared to linear search,
-HNSW has lower algorithmic complexity and thereby significantly better performance when querying a relationship with
-many examples. However, unlike other indexing strategies,
-HNSW is trades recall for performance. If perfect recall is required, you can set the `index=None` parameter when
-defining the relationship.
-
-```py
-from chalk.features import DataFrame, features, has_many
-
-@features
-class SearchQuery:
-  nearest_documents: DataFrame[Document] = has_many(
-    lambda: SearchQuery.embedding.is_near(FAQDocument.embedding, index=None)
-  )
-```
-
----
-
 ## Nearest neighbors as resolver inputs
 
 It's possible to use this relationship as a [resolver input](/docs/resolver-inputs#vector-dependencies). The resulting
