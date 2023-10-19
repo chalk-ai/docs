@@ -53,10 +53,9 @@ class Document:
 
 ### Instructor
 
-Chalk supports [INSTRUCTOR](https://github.com/xlang-ai/instructor-embedding) embedding models. When using instructor,
-the `feature` lambda should return a tuple of (instruction, feature to encode) instead of just a single feature.
-The instruction can be a constant string or another feature. See the available models
-[here](https://github.com/xlang-ai/instructor-embedding#model-list).
+Chalk supports [INSTRUCTOR](https://github.com/xlang-ai/instructor-embedding) embedding models. When using this
+provider, the `input` lambda should return a tuple of the instruction and feature to encode.
+See the available models [here](https://github.com/xlang-ai/instructor-embedding#model-list).
 
 If the instruction is the same for every row, you can use a literal (constant) string.
 
@@ -73,8 +72,8 @@ class Document:
     )
 ```
 
-However, if we have multiple types of documents, then you can use another feature to represent the instruction,
-and a resolver to compute the instruction.
+However, if we have multiple types of documents, then you can use another feature to represent the instruction
+and define a resolver to compute the instruction.
 
 ```python
 from chalk.features import embedding, features, online, Vector
