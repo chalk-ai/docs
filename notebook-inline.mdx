@@ -1,0 +1,37 @@
+---
+title: Inline Syntax
+description: Defining features inline in notebooks
+published: true
+---
+import { TipInfo, TipGood } from '@/components/Tip'
+import { AddSnowflakeIntegration } from '@/components/shared/snowflake'
+
+---
+
+
+In notebooks, you can define features inline using the syntax shown below.
+
+Consider the following feature class definition for `RocketEngine`
+
+```python notebook.ipynb
+from chalk.features import features
+
+@features
+class RocketEngine:
+    id: int
+    mass: float
+    volume: float
+    thrust: float
+```
+
+If we wanted to define a feature inline in a notebook cell, we could do so like this:
+
+```python notebook.ipynb
+RocketEngine.density: float = RocketEngine.mass / RocketEngine.volume
+```
+
+Alternatively, we can use the Underscore syntax:
+
+```python notebook.ipynb
+RocketEngine.density: float = _.mass / _.volume
+```
