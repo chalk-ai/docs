@@ -1,0 +1,162 @@
+---
+title: Underscore
+description: Using underscore expressions to define features
+---
+
+---
+
+## Underscore expressions
+
+Underscore expressions can be used to define and
+resolve features that can be derived from operations on other features
+
+Consider the feature class `RocketEngine` define below
+
+```python
+from chalk.features import features
+
+@features
+class RocketEngine:
+    id: int
+    mass: float
+    thrust: float
+```
+
+Suppose we wanted to define a feature called `density` and resolve it as `mass / volume`,
+we can use the underscore feature definition syntax as follows
+
+```diff-py
+- from chalk.features import features
++ from chalk.features import _, features
+
+@features
+class RocketEngine:
+    id: int
+    mass: float
+    thrust: float
+
++   # Defining density using an underscore expression
++   density: float = _.mass / _.volume
+```
+
+Note that `_` is a reference to the containing feature class `RocketEngine` and should
+be used to reference features contained in the same feature class.
+
+The expression `_.mass / _.volume` is equivalent to `RocketEngine.mass / RocketEngine.volume`
+
+
+## Dataframes
+
+Underscore can also be used to define expressions with [`DataFrame`](/docs/dataframe) features.
+
+In the example below, we will define two new feature classes `Astronaut` and `RocketShip`
+
+```python
+from chalk.features import features, has_one, has_many, DataFrame
+
+@features
+class Astronaut:
+    id: int
+    name: str
+    height: float
+    mass: float
+    ship_id: int
+
+@features
+class RocketShip:
+    id: int
+    engine_id: int
+
+    # `has_one` relationship with `RocketEngine`
+    engine: RocketEngine = has_one(lambda: RocketShip.engine_id == RocketEngine.id)
+
+    # `has_many` relationship with `Astronaut`
+    astronauts: DataFrame[Astronaut] = has_many(lambda: Astronaut.ship_id == RocketShip.id)
+```
+### Projections
+
+Suppose we wanted to define a feature called `total_mass` on `RocketShip` and resolve
+it as the sum of the masses of the astronauts on the ship and the mass of the engine.
+
+Using the underscore syntax, we can define `total_mass` as follows
+
+```diff-py
+- from chalk.features import features, has_one, has_many, DataFrame
++ from chalk.features import _, features, has_one, has_many, DataFrame
+
+@features
+class Astronaut:
+    id: int
+    name: str
+    height: float
+    mass: float
+    ship_id: int
+
+@features
+class RocketShip:
+    id: int
+    engine_id: int
+
+    # `has_one` relationship with `RocketEngine`
+    engine: RocketEngine = has_one(lambda: RocketShip.engine_id == RocketEngine.id)
+
+    # `has_many` relationship with `Astronaut`
+    astronauts: DataFrame[Astronaut] = has_many(lambda: Astronaut.ship_id == RocketShip.id)
+
++   # Defining total_mass using an underscore expression
++   total_mass: float = _.engine.mass + _.astronauts[_.mass].sum()
+```
+
+Here we used the underscore syntax do a [projection](/docs/dataframe#projections) on the `mass` column on the
+astronauts `DataFrame`.
+
+
+### Filters
+
+Underscores can also be used to define [filters](/docs/dataframe#filters) on `DataFrame` features.
+
+For example, suppose we wanted to define a feature called `count_tall_astronauts` on `RocketShip`.
+We could define the feature as follows
+
+```diff-py
+@features
+class RocketShip:
+    id: int
+    engine_id: int
+
+    # `has_one` relationship with `RocketEngine`
+    engine: RocketEngine = has_one(lambda: RocketShip.engine_id == RocketEngine.id)
+
+    # `has_many` relationship with `Astronaut`
+    astronauts: DataFrame[Astronaut] = has_many(lambda: Astronaut.ship_id == RocketShip.id)
+
+    # Defining total_mass using an underscore expression
+    total_mass: float = _.engine.mass + _.astronauts[_.mass].sum()
+
++   # Filtering on the `height` column
++   count_tall_astronauts = _.astronauts[_.height > 2.0].count()
+```
+
+### Column definitions
+
+Underscore expressions can be used in conjunction with [`with_column`](/api-docs#DataFrame.with_column) to define new columns on a `DataFrame`.
+
+In the example below, we define a new column on `astronauts_df` called `bmi` which is the ratio of `mass` to `height` squared.
+
+```python
+
+astronauts_df = DataFrame(
+    {
+        "id": [1, 2, 3],
+        "name": ["Alice", "Bob", "Charlie"],
+        "height": [1.5, 1.8, 2.0],
+        "mass": [50.0, 70.0, 80.0],
+    }
+)
+
+# Defining a new column called `bmi` using an underscore expression
+astronauts_df = astronauts_df.with_column(
+    _.bmi, _.mass / _.height ** 2
+)
+```
+
