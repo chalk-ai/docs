@@ -47,7 +47,7 @@ a [`SnowflakeSource`](/api-docs#SnowflakeSource).
 If you're working on an existing project, it's likely that this
 step has already been done for you.
 
-```python
+```python notebook.ipynb
 from chalk.sql import SnowflakeSource
 
 snowflake = SnowflakeSource()
@@ -272,7 +272,7 @@ we alias `created_at` to `authorized_at` for `Authorization`
 
 We will use the [`%%resolver`](/docs/notebook-magics#resolver) magic to define SQL resolvers in our notebook.
 
-```python notebook.ipynb
+```sql notebook.ipynb
 %%resolver get_merchant_features
 -- resolves: Merchant
 -- source: snowflake
@@ -283,7 +283,7 @@ SELECT id,
 FROM merchant
 ```
 
-```python notebook.ipynb
+```sql notebook.ipynb
 %%resolver get_cardholder_features
 -- resolves: CardHolder
 -- source: snowflake
@@ -294,7 +294,7 @@ SELECT id,
 FROM cardholder
 ```
 
-```python notebook.ipynb
+```sql notebook.ipynb
 %%resolver get_authorization_features
 -- resolves: Authorization
 -- source: snowflake
@@ -308,7 +308,7 @@ SELECT id,
 FROM authorization
 ```
 
-```python notebook.ipynb
+```sql notebook.ipynb
 %%resolver get_card_features
 -- resolves: Card
 -- source: snowflake
@@ -330,7 +330,7 @@ single resolver must be from the same namespace.
 <TipGood>Requiring features from the same root namespace</TipGood>
 
 ```py
-@pffline
+@offline
 def fn(
     authorization_amount: Authorization.amount_in_cents,
     card_id: Authorization.card_id,
