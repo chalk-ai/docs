@@ -29,7 +29,7 @@ of your repo.
 project: my-project-id
 environments:
   default:
-    runtime: python310
+    runtime: python311
     requirements: ./requirements.txt
     dockerfile: Dockerfile
   prod:
@@ -58,7 +58,7 @@ image that you like, with a few requirements:
 
 - `python` must be on the path
 - `pip` must be on the path
-- The Python version can be `python310` or `python310`
+- The Python version can be `python310` or `python311`
 - There should be no folder or file at `/app`
 
 Chalk is responsible for mounting your code into
@@ -70,15 +70,13 @@ the image, and for installing your requirements with pip.
 
 The Python version for a Chalk project is set at the project level.
 The version is set with the `.chalk.yml` file in your project repo.
-Today, Chalk accepts only `python310` or `python311` as the value for `runtime`,
-but as the platform supports more runtimes, more values will
-be allowed here.
+Chalk supports both `python310` and `python311` as values for `runtime`:
 
 ```yaml
 project: my-project-id
 environments:
   default:
-    runtime: python310
+    runtime: python311
   prod:
     runtime: python310
 ```
