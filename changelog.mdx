@@ -11,11 +11,35 @@ See our [public roadmap](https://github.com/orgs/chalk-ai/projects/1) for upcomi
 
 ---
 
+## October 24th, 2023
+
+### Support for Python 3.11
+
+You can now use either of Python 3.11 or 3.10 on a per-environment basis.
+
+```chalk.yaml
+project: my-project-id
+environments:
+  default:
+    runtime: 3.10
+  develop:
+    runtime: 3.11
+```
+
+See [Python Version](/docs/docker#python-version) for more information.
+
+```
+
+---
+
 ## October 23rd, 2023
 
 ### Quality of Life Improvements
 
-- `ChalkClient.query_bulk(...)` and `multi_query` no longer require that references features be defined as Python classes, and string names for inputs and outputs can now be used instead.
+- `ChalkClient.query_bulk(...)` and `multi_query` no longer require that references features
+be defined as Python classes, and string names for inputs and outputs can now be used instead.
+
+---
 
 ## October 11th, 2023
 
@@ -58,6 +82,8 @@ that is required for the JSON format used by `query`.
 This method has been available in beta for a few months, but is now available for general use, and as part of this
 release is now supported when querying using notebooks without access to feature schemas.
 
+---
+
 ## September 26, 2023
 
 ### Improve scheduled resolver runs list
@@ -69,6 +95,8 @@ run in the current environment, based on the `environment` argument to `@online`
 
 Resolvers that are annotated with an `environment` other than the current environment are labeled with the
 environment in which they are configured to run.
+
+---
 
 ## August 23, 2023
 
@@ -106,6 +134,8 @@ KeyError: 'tags'
 KeyError('tags')
 ```
 
+---
+
 ## August 19, 2023
 
 ### Query plan trace viewer
@@ -114,6 +144,8 @@ The query plan viewer now includes a flame graph visualization of the query plan
 data is stored for every offline query by default and for online queries when the query is made with the `--explain` flag.
 
 ![Trace View:](/img/trace-viewer.png)
+
+---
 
 ## August 11, 2023
 
@@ -138,6 +170,8 @@ data is stored for every offline query by default and for online queries when th
 - `--local` for `chalk query`, combines `chalk apply --branch` and `chalk query --branch`
 - The progress indicator in the `chalk` command line tool is no longer an off-brand magenta.
 
+---
+
 ## August 5, 2023
 
 ### Chalk Python SDK Improvements
@@ -158,6 +192,8 @@ DataFrame({User.name: ["Andy"]}).to_polars(prefixed=True)
 Added: `include_meta` on `ChalkClient.query(...)`, which includes `.meta` on the response object. This metadata object
 includes useful information about the query execution, at the cost of increased network payload size and a small
 increase in latency.
+
+---
 
 ## July 25, 2023
 
@@ -185,6 +221,8 @@ def get_num_transactions(txs: Card.transactions[before(days_ago=1)]) -> Card.num
 with freeze_time(at=datetime(2020, 9, 14)):
     num_txs = get_num_transactions(txs) # num transactions before september 13th
 ```
+
+---
 
 ## July 11, 2023
 
@@ -221,6 +259,8 @@ ChalkClient().offline_query(input={User.id: [1,1,1]}, output=[User.age_in_years]
 def batch_get_age_in_years(df: DataFrame[User.id, User.birthday, Now]) -> DataFrame[User.id, User.age_in_years]:
     ...
 ```
+
+---
 
 ## June 21, 2023
 
@@ -260,6 +300,8 @@ Additional updates:
 - synthetic cache resolvers are now excluded
 - query_name is a tag on many metrics
 
+---
+
 ## June 14, 2023
 
 ### Branch deployment performance
@@ -268,6 +310,8 @@ Chalk Branch Deployments provide an excellent experience for quick iteration cyc
 Now, Chalk Branch Deployments automatically use a pool of "standby" workers, so there is less delay before
 queries can be served against a new deployment. This reduces the time it takes to run query or offline query against
 a new deployment from ~10-15 seconds to ~1-3 seconds. This impacts customers with more complex feature graphs the most.
+
+---
 
 ## June 13, 2023
 
