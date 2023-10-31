@@ -121,6 +121,14 @@ The max staleness for the resolver, e.g. <code className="dark:text-white">24h</
 The owner of the resolver.
 </Attribute>
 
+<Attribute field='fields' kind='dict[str, str]'>
+An optional mapping from SQL column to Chalk feature.
+For example, with  <code className="dark:text-white">SELECT name AS arbitrary_column_name</code>,
+we can map the <code className="dark:text-white">arbitrary_column_name</code> to a Chalk feature belonging to the
+namespace described by the <code className="dark:text-white">resolves</code> field with the mapping
+<code className="dark:text-white">arbitrary_column_name: chalk_feature_name</code>.
+</Attribute>
+
 </AttributeTable>
 
 Chalk also supports SQL file streaming resolvers:
