@@ -1,0 +1,171 @@
+---
+title: Embeddings
+description: Automatically calculate embeddings from existing features
+comingSoon: true
+---
+
+Embedding models are generally used to calculate a [vector feature](/docs/feature-types#vectors). Chalk includes
+built-in support for common embedding models, or can define your own embedding model through a resolver.
+
+
+---
+
+## Built-In Embedding Functions
+
+Chalk includes built-in support for both open-source and hosted embedding models via the `embedding` function.
+We recommend using this function when possible, as Chalk will automatically handle batching and retries,
+and you don't need to specify the vector size. The main arguments for this function are:
+
+1.  `input` (required): A lambda that returns the feature that will be embedded. If the embedding model takes multiple
+    inputs (such as with INSTRUCTOR, which requires the instruction along with the content), then this lambda should
+    return a tuple of the feature references (or a string and a feature reference, if the instruction is constant).
+    See the [INSTRUCTOR](#instructor) example below.
+
+    If you would like to use multiple features as input, you can define a [resolver](/docs/resolver-overview) to combine
+    these features into one. Then, reference this combined feature as input.
+1.  `provider` (required): The embedding model provider. The currently supported providers are `sentence-transformers`,
+    `instructor`, `openai`, or `cohere`. Chalk may add more providers in the future.
+1.  `model` (required): The name of the model to use. Each provider has a different set of models that are supported.
+1.  `max_staleness` (optional): The duration for which the embedding will be cache. By default, the embedding vector 
+    will be cached for the same duration as the `feature`. If you would like different behavior, you can specify this
+    argument explicitly.
+
+For the complete signature, please see the [api docs](/api-docs#embedding).
+
+### Sentence Transformers
+
+Chalk supports all models that are part of the [sentence-transformers](https://www.sbert.net/) framework.
+It is recommended to use the `all-MiniLM-L6-v` model, though all
+[pre-trained models](https://www.sbert.net/docs/pretrained_models.html) are supported.
+
+```python
+from chalk.features import embedding, features, Vector
+
+@features
+class Document:
+    content: str
+    embedding: Vector = embedding(
+        input=lambda: Document.content,
+        provider="sentence-transformers",
+        model="all-MiniLM-L6-v",
+    )
+```
+
+### Instructor
+
+Chalk supports [INSTRUCTOR](https://github.com/xlang-ai/instructor-embedding) embedding models. When using this
+provider, the `input` lambda should return a tuple of the instruction and feature to encode.
+See the available models [here](https://github.com/xlang-ai/instructor-embedding#model-list).
+
+If the instruction is the same for every row, you can use a literal (constant) string.
+
+```python
+from chalk.features import embedding, features, Vector
+
+@features
+class Document:
+    content: str
+    embedding: Vector = embedding(
+        input=lambda: ("Represent the Legal document: ", Document.content),
+        provider="instructor",
+        model="hkunlp/instructor-base",
+    )
+```
+
+However, if we have multiple types of documents, then you can use another feature to represent the instruction
+and define a resolver to compute the instruction.
+
+```python
+from chalk.features import embedding, features, online, Vector
+
+@features
+class Document:
+    content: str
+    document_type: str
+    instruction: str
+    embedding: Vector = embedding(
+        input=lambda: (Document.instruction, Document.content),
+        provider="instructor",
+        model="hkunlp/instructor-base",
+    )
+
+@online
+def generate_instruction(document_type: Document.document_type) -> Document.instruction:
+    return f"Represent the {document_type} document: "
+```
+
+### OpenAI
+
+Chalk can proxy calls to the [OpenAI Embeddings API](https://platform.openai.com/docs/guides/embeddings).
+It is recommended to use the `text-embedding-ada-002` model, though all OpenAI models are supported.
+If you don't already have an OpenAI account, sign up [here](https://openai.com/api/), and then create an
+[OpenAI Integration](/docs/openai) in Chalk. All OpenAI requests will be attributed to your API key.
+To minimize usage, we highly recommend specifying an appropriate max staleness in Chalk, which will ensure that
+embeddings are cached.
+
+```python
+from chalk.features import embedding, features, Vector
+
+@features
+class Document:
+    content: str
+    embedding: Vector = embedding(
+        input=lambda: Document.content,
+        provider="openai",
+        model="text-embedding-ada-002",
+        max_staleness="infinity",
+    )
+```
+
+### Cohere
+
+Chalk can proxy calls to [Cohere Embed](https://cohere.com/embed). To use this integration, first sign up for an
+[Cohere Account](https://dashboard.cohere.com/welcome/register), and then create an [Cohere Integration](/docs/cohere)
+in Chalk. All Cohere requests will be attributed to your API key. To minimize usage, we highly recommend specifying an
+appropriate max staleness in Chalk, which will ensure that embeddings are cached.
+
+```python
+from chalk.features import embedding, features, Vector
+
+@features
+class Document:
+    content: str
+    embedding: Vector = embedding(
+        input=lambda: Document.content,
+        provider="cohere",
+        model="embed-english-v2.0",
+        max_staleness="infinity",
+    )
+```
+
+---
+
+## Custom embedding functions
+
+If you would like to run your own embedding model, you can define a custom resolver to compute the embedding
+from existing features in the feature set. For performance, we recommend to store the model weights in an
+object store (such as AWS S3 or GCS) rather than including them your source code and to load the model
+using a [boot hook](/docs/generic#initializing).
+
+```python
+from chalk.features import before_all, DataFrame, embedding, features, online, Vector
+
+my_model = MyModel()
+
+@before_all
+def load_my_model():
+    my_model.initialize("s3://my-bucket/my-checkpoint.pt")
+
+
+@features
+class Document:
+    content: str
+    # When using a custom embedding function, the size of the vector must be specified.
+    embedding: Vector[1536]
+
+@online
+def my_embedding_function(content: DataFrame[Document.content]) -> DataFrame[Document.embedding]:
+    return my_model.embed(content.to_arrow()['document.content'])
+```
+
+Chalk will then call `my_embedding_function` whenever an embedding is needed.

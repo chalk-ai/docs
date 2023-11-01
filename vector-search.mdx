@@ -1,0 +1,144 @@
+---
+title: Nearest Neighbors (Vector Search)
+description: Find the nearest neighbors across a vector relationship
+comingSoon: true
+---
+
+import { TipInfo, TipBad, TipGood } from '@/components/Tip'
+
+---
+
+A feature set can be linked to the closest examples of another feature set. This functionality can be useful for search
+and retrieval applications.
+
+Nearest neighbor relationships are only supported for [vector features](/docs/feature-types#vectors).
+
+<TipInfo>
+  We recommend to first take a look through Chalk's support for <a href="/docs/feature-types#vectors">vector
+  features</a> and <a href="/docs/embeddings">embedding functions</a>.
+</TipInfo>
+
+
+To illustrate how to use nearest neighbor relationships, we'll walk through an example for Chalk can power FAQ search.
+In this example, the feature set `SearchQuery` feature set represents an incoming request, and the `FAQDocument`
+feature set represents our collection of frequently asked questions and answers. Our goal is to return the five most
+relevant FAQ entries for the given search query.
+
+---
+
+## Defining nearest neighbor relationships
+Using the `has_many` function and the `is_near` method, we can express a relationship where we want the nearest
+documents for each query.
+
+```py
+from chalk.features import DataFrame, features, embedding, has_many, Vector
+
+@features
+class SearchQuery:
+  query: str
+  product_version: int
+  embedding: Vector = embedding(...)
+  nearest_documents: DataFrame[FAQDocument] = has_many(
+      lambda: SearchQuery.embedding.is_near(
+          FAQDocument.embedding
+      )
+  )
+  response: str
+
+@features
+class FAQDocument:
+  question: str
+  product_version: int
+  question_embedding: Vector = embedding(...)
+  link: str
+```
+
+<TipInfo>
+  The <code>lambda</code> solves forward references, letting you reference <code>SearchQuery</code> and
+  <code>FAQDocument</code> before they are defined.
+</TipInfo>
+
+### Distance Measure
+
+Nearest neighbor relationships use a distance function to measure closeness. By default, Chalk uses L2 distance, though
+inner product and cosine similarity are also supported. To change the distance function, use the `distance` argument:
+
+```py
+from chalk.features import DataFrame, features, has_many
+
+@features
+class SearchQuery:
+  nearest_documents: DataFrame[Document] = has_many(
+    lambda: SearchQuery.embedding.is_near(
+      FAQDocument.embedding,
+      distance="cosine",  # or "inner product"
+    )
+  )
+```
+
+
+## Nearest neighbors as resolver inputs
+
+It's possible to use this relationship as a [has-many resolver input](/docs/resolver-inputs#has-many-dependencies). The resulting
+documents will be returned  as a [Chalk DataFrame](/docs/dataframe). Because the search is approximate, the number of
+documents to return *must* be specified via a slice expression.
+
+```py
+from chalk import online
+
+@online
+def generate_response(
+  # Query for the five most relevant documents, and select their links
+  nearest_documents: SearchQuery.nearest_documents[FAQDocument.link, :5],
+) -> SearchQuery.response:
+  return "\n".join(nearest_documents[FAQDocument.link])
+```
+
+### Filtering
+
+Inside the input argument signature, we can include filters for more accurate results. The filters will be applied
+_before_ the limit is applied.
+
+**When using a nearest neighbor relationship, do not filter within the resolver.**
+
+Filtering inside the resolver will be performed _after_ the limit is applied, which may filter out all returned neighbors
+if none of them match the filter expression.
+
+<TipBad>Don't filter like this</TipBad>
+
+```py
+from chalk import online
+
+@online
+def generate_response(
+  version: SearchQuery.product_version,
+  nearest_documents: SearchQuery.nearest_documents[
+    FAQDocument.link,
+    FAQDocument.product_version,
+    :5,
+  ],
+) -> SearchQuery.response:
+  # Don't do this! If the nearest five documents are all for a different product version,
+  # then filtered_nearest_documents will be empty
+  filtered_nearest_documents = nearest_documents[FAQDocument.product_version == version]
+  return "\n".join(filtered_nearest_documents[FAQDocument.link])
+```
+
+Instead, specify the filter conditions in the resolver signature. This will ensure that the filter is applied _before_
+the limit, meaning that the nearest five documents that much all of the filters will be returned.
+
+<TipGood>Filter like this</TipGood>
+
+```py
+from chalk import online
+
+@online
+def generate_response(
+  filtered_nearest_documents: SearchQuery.nearest_documents[
+    FAQDocument.link,
+    FAQDocument.product_version == SearchQuery.product_version,
+    :5,
+  ],
+) -> SearchQuery.response:
+  return "\n".join(filtered_nearest_documents[FAQDocument.link])
+```
