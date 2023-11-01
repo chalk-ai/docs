@@ -167,7 +167,11 @@ from chalk import features, embedding, vector
 class Document:
     content: str
     # Chalk knows that text-embedding-ada-002 has 1536 dimensions
-    embedding: Vector = embedding(feature="content", provider="openai", model="text-embedding-ada-002")
+    embedding: Vector = embedding(
+        feature="content", 
+        provider="openai", 
+        model="text-embedding-ada-002"
+    )
 ```
 
 By default, vectors are persisted as 16 bit floats for efficiency. However, Chalk also supports persisting vectors as 32-bit or 64-bit floats via the keywords

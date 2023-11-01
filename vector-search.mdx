@@ -38,7 +38,11 @@ class SearchQuery:
   query: str
   product_version: int
   embedding: Vector = embedding(...)
-  nearest_documents: DataFrame[FAQDocument] = has_many(lambda: SearchQuery.embedding.is_near(FAQDocument.embedding))
+  nearest_documents: DataFrame[FAQDocument] = has_many(
+      lambda: SearchQuery.embedding.is_near(
+          FAQDocument.embedding
+      )
+  )
   response: str
 
 @features
