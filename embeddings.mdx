@@ -21,7 +21,7 @@ and you don't need to specify the vector size. The main arguments for this funct
     return a tuple of the feature references (or a string and a feature reference, if the instruction is constant).
     See the [INSTRUCTOR](#instructor) example below.
 
-    If you would like to use multiple features as input, you can define a [resolver](/docs/resolver) to combine
+    If you would like to use multiple features as input, you can define a [resolver](/docs/resolver-overview) to combine
     these features into one. Then, reference this combined feature as input.
 1.  `provider` (required): The embedding model provider. The currently supported providers are `sentence-transformers`,
     `instructor`, `openai`, or `cohere`. Chalk may add more providers in the future.

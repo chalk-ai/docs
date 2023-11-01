@@ -33,7 +33,7 @@ class Book:
 
 ## Lists and Sets
 
-Features can be lists or sets of [scalar](/docs/feature-types#scalars) or [struct](/docs/feature-types#structs) types.
+Features can be a `list` or `set` of [scalar](/docs/feature-types#scalars) or [struct](/docs/feature-types#structs) types.
 
 ```python
 @dataclass
@@ -53,16 +53,15 @@ class Book:
 ## Structs
 
 Features can be a struct, which is a collection that maps a fixed set of keys to sub-fields. You can use
-[dataclasses](/docs/feature-types#dataclass),
-[Pydantic models](/docs/feature-types#pydantic-models), and
-[attrs classes](/docs/feature-types#attrs) to represent struct features.
+[dataclasses](/docs/feature-types#dataclass), [Pydantic models](/docs/feature-types#pydantic-models), and
+[attrs classes](/docs/feature-types#attrs) to represent struct features. Struct features can be used recursively
+within list features or other struct features.
 
+Struct types should be used for objects that don't have ids. If an object has an id, consider using [has-one](/docs/has-one).
 
 ### Dataclass
 
-You can use any `dataclass` as a struct feature.
-Struct types should be used for objects that don't have ids.
-If an object has an id, consider using [has-one](/docs/has-one).
+You can use any `dataclass` as a struct feature. 
 
 ```python
 @dataclass
@@ -79,7 +78,7 @@ class Book:
 
 ### Pydantic models
 
-If you prefer `pydantic` to `dataclass`, you can use that instead.
+Pydantic models can also be used for stucts.
 
 ```python
 from pydantic import BaseModel, constr
@@ -97,10 +96,7 @@ class Book:
 
 ### Attrs
 
-Alternatively, you can use `attrs`. Any of these struct types
-(`dataclass`, `pydantic`, and `attrs`) can be used with
-[collections](/docs/feature-types#collections) like
-`set[...]` or `list[...]`.
+Alternatively, you can use `attrs`.
 
 ```python
 import attrs
