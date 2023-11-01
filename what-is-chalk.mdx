@@ -43,8 +43,8 @@ to help your team share and re-use work.
 class User:
     id: int
     full_name: str
-    nickname: Optional[str]
-    email: Optional[str]
+    nickname: str | None
+    email: str | None
     birthday: datetime
     credit_score: float
     datawarehouse_feature: float
