@@ -14,25 +14,25 @@ Install Chalk in your notebook environment by running the following command in a
 !pip install chalkpy[all]
 ```
 
-### Generating access tokens
+### Authentication
 
-To use Chalk in a notebook, we will need to generate an access token.
+To use Chalk in a notebook, we will need to generate a client ID and secret key pair.
 
-To generate an access token, in the Chalk Dashboard, under the **Settings > Access Tokens**
-Generate an access token by clicking on **New Token** and select all necessary permissions.
+In the Chalk Dashboard, under **Settings > Access Tokens**,
+generate a client ID and secret key pair by clicking on **New Token** and selecting all necessary permissions.
 
-We will need the `CLIENT_ID` and `SECRET_KEY` of the access token we generated to initialize
+We will need the client ID and client secret we generated to initialize
 a Chalk client in our notebook.
 
 ---
 
 ## Environment Setup
 
-You can use the `ChalkClient` from any Jupiter notebook environment.
+You can use the `ChalkClient` from any Jupyter notebook environment.
 
 ### Local
 
-If you are working with a local notebook, Chalk will pick up your access token
+If you are working with a local notebook, Chalk will pick up your credentials
 generated from running `chalkpy login` in your terminal.
 
 All you need to do is initialize the client:
@@ -62,7 +62,7 @@ client = ChalkClient()
 
 ### Hex
 
-On [Hex](https://hex.tech), you can store your access tokens using [secrets](https://learn.hex.tech/docs/environment-configuration/environment-views#secrets)
+On [Hex](https://hex.tech), you can store the client ID and secret key using [secrets](https://learn.hex.tech/docs/environment-configuration/environment-views#secrets)
 
 ![Hex Secrets](/img/HexSecrets.png)
 
