@@ -24,7 +24,7 @@ export default function OverviewPage({ code }) {
             description: 'Create resolvers to compute feature values.',
           },
           {
-            href: '/docs/query',
+            href: '/docs/query-basics',
             name: 'Query',
             description: 'Fetch feature values via online query.',
           },
@@ -45,9 +45,9 @@ export default function OverviewPage({ code }) {
             description: 'Deploy your code to an ephemeral branch in <100ms.',
           },
           {
-            href: '/docs/resolver-overview',
-            name: 'Resolvers',
-            description: 'Create resolvers to compute feature values.',
+            href: '/docs/backfilling-data',
+            name: 'Backfilling',
+            description: 'Batch ingest historical feature data from bulk data sources.',
           },
           {
             href: '/docs/feature-version-tutorial',
