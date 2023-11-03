@@ -60,14 +60,14 @@ export default function OverviewPage({ code }) {
       <CloneSampleRepo
         projects={[
           {
-            title: 'Marketplaces',
-            repo: 'https://github.com/chalk-ai/',
-            description: 'Example carshare application for search and risk',
-          },
-          {
             title: 'Fraud',
             repo: 'https://github.com/chalk-ai/fraud-example',
             description: 'Build a feature pipeline for fraud detection.',
+          },
+          {
+            title: 'Rideshare',
+            repo: 'https://github.com/chalk-ai/rideshare-example',
+            description: 'Example rideshare application.',
           },
           {
             title: 'Code Snippets',
