@@ -3,6 +3,7 @@ title: Overview
 description: Fetch feature values via online query.
 ---
 
+import {ClientLibraries} from "@/components/HighlightsGrid";
 import { RequestingFeaturesOnline } from '@/components/home/RequestingFeaturesOnline'
 import {
   Attribute,
@@ -13,6 +14,27 @@ import {
 import { RequestUrl } from '@/components/RequestUrl'
 
 ---
+
+Chalk maintains several client libraries and a REST API for fetching feature values.
+
+---
+
+## Library support
+
+Chalk maintains libraries in several major languages
+for fetching online feature values. If you need support
+for a language that we don't support, let us know!
+We also support a rest API if you'd like to build your
+own.
+
+
+<ClientLibraries />
+
+<RequestingFeaturesOnline />
+
+---
+
+## REST API
 
 Chalk supports a REST API for querying online features
 and exposes this endpoint in several API clients.
@@ -223,15 +245,5 @@ These results are visible in the dashboard under the "Queries" page.
 
 For more information, read the `ChalkClient` docs [here](/api-docs#ChalkClient.query).
 
-
 ---
 
-## Library support
-
-Chalk maintains libraries in several major languages
-for fetching online feature values. If you need support
-for a language that we don't support, let us know!
-We also support a rest API if you'd like to build your
-own.
-
-<RequestingFeaturesOnline />
