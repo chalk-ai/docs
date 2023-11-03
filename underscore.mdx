@@ -138,27 +138,3 @@ class RocketShip:
 +   # Filtering on the `height` column
 +   count_tall_astronauts = _.astronauts[_.height > 2.0].count()
 ```
-
-### Column definitions
-
-Underscore expressions can be used in conjunction with [`with_column`](/api-docs#DataFrame.with_column) to define new columns on a `DataFrame`.
-
-In the example below, we define a new column on `astronauts_df` called `bmi` which is the ratio of `mass` to `height` squared.
-
-```python
-
-astronauts_df = DataFrame(
-    {
-        "id": [1, 2, 3],
-        "name": ["Alice", "Bob", "Charlie"],
-        "height": [1.5, 1.8, 2.0],
-        "mass": [50.0, 70.0, 80.0],
-    }
-)
-
-# Defining a new column called `bmi` using an underscore expression
-astronauts_df = astronauts_df.with_column(
-    _.bmi, _.mass / _.height ** 2
-)
-```
-
