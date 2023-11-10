@@ -294,3 +294,48 @@ def fn(ts: User.transfers[Transfer.account.balance]) -> ...:
     ts[Transfer.account.balance].sum()  # Ok
     ts[Transfer.account.title]          # Error! Filtered out
 ```
+
+### Has-many through has-many
+
+Has-many relationships can be required through other has-many relationships:
+
+For example, consider the following feature definitions for `User`, `Account`, and `Transaction`,
+where a user can have many accounts, each with many transactions.
+
+```py
+from chalk.features import features, has_many, DataFrame
+
+
+@features
+class Transaction:
+    id: str
+    account_id: str
+    amount: float
+
+
+@features
+class Account:
+    id: str
+    user_id: str
+    transactions: DataFrame[Transaction] = has_many(
+        lambda: Transaction.account_id == Account.id
+    )
+
+
+@features
+class User:
+    id: str
+    total_spent: float
+    accounts: DataFrame[Account] = has_many(lambda: Account.user_id == User.id)
+```
+
+We can then resolve the `total_spent` feature on `User` by computing the sum of transaction
+amounts across all of a user's accounts, as shown below.
+
+```python
+@online
+def get_total_spent(
+    txns: User.accounts.transactions[Transaction.amount]
+) -> User.total_spent:
+    return txns.sum()
+```
