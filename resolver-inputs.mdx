@@ -329,7 +329,7 @@ class User:
     accounts: DataFrame[Account] = has_many(lambda: Account.user_id == User.id)
 ```
 
-We can then resolve the `total_spent` feature on `User` by computing the sum of transaction
+We can resolve the `total_spent` feature on `User` by computing the sum of transaction
 amounts across all of a user's accounts, as shown below.
 
 ```python
