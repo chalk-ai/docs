@@ -80,6 +80,21 @@ Provides information about the time it takes to execute an online query.
 
 </Attribute>
 
+<Attribute field={'cron_run_latency_seconds'} kind={'Summary'}>
+Provides information about the time it takes to execute a cron run.
+
+<SubAttributeTable title={'Tags'}>
+  <SubAttribute field={'id'} kind={'String'}>
+    The name of the resolver executed by the cron run, for example, <code>my.company.get_user</code>
+  </SubAttribute>
+  <SubAttribute field={'quantile'} kind={'0.5 | 0.75 | 0.95 | 0.99'}>
+    Whether this latency represents the median, 75th percentile, 95th percentile, or 99th percentile
+    of the latency
+  </SubAttribute>
+</SubAttributeTable>
+
+</Attribute>
+
 <Attribute field={'feature_request'} kind={'Counter'}>
 Provides information about the number of times a feature was computed.
 
@@ -112,6 +127,35 @@ Provides information about the number of times a resolver was computed.
   </SubAttribute>
   <SubAttribute field={'resolver_type'} kind={'online | offline | stream'}>
     The type of the resolver - online, offline, or stream.
+  </SubAttribute>
+</SubAttributeTable>
+
+</Attribute>
+
+<Attribute field={'cron_run_request'} kind={'Counter'}>
+Provides information about the number of times a cron run was executed.
+
+<SubAttributeTable title={'Tags'}>
+  <SubAttribute field={'id'} kind={'String'}>
+    The name of the resolver executed by the cron run, for example, <code>my.company.get_user</code>
+  </SubAttribute>
+  <SubAttribute field={'status'} kind={'success | failure'}>
+    The status of the cron run (success or failure)
+  </SubAttribute>
+</SubAttributeTable>
+
+</Attribute>
+
+<Attribute field={'feature_value'} kind={'Summary'}>
+Provides statistical information about the value of features.
+
+<SubAttributeTable title={'Tags'}>
+  <SubAttribute field={'id'} kind={'String'}>
+    The name of the feature, for example, <code>user.age</code>
+  </SubAttribute>
+  <SubAttribute field={'quantile'} kind={'0.5 | 0.75 | 0.95 | 0.99'}>
+    Whether this value represents the median, 75th percentile, 95th percentile, or 99th percentile
+    of the feature value
   </SubAttribute>
 </SubAttributeTable>
 
