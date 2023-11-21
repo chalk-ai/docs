@@ -4,6 +4,10 @@ description: Detect and setup alerting for drift in feature values
 published: true
 ---
 
+import { TipInfo } from '@/components/Tip'
+
+---
+
 Chalk provides a simple way to monitor feature drift by running
 the [Kolmogorov-Smirnov test](https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test#Two-sample_Kolmogorov%E2%80%93Smirnov_test) for
 features values over a given time period.
@@ -17,6 +21,10 @@ are drawn from the same distribution. Chalk runs the test on
 samples from the online store and data from a given dataset to determine if the
 feature values are drawn from the same distribution.
 
+<TipInfo>
+Note that the K-S test can not be used if the feature values in the dataset are all null, if they are
+not numeric or if there is only one unique value.
+</TipInfo>
 
 ## Charts and Alerts
 
