@@ -18,3 +18,4 @@ jobs:
           repository: chalk-ai/chalk-private
           event-type: docs-update
           client-payload: '{"ref": "${{ github.ref_name }}", "sha": "${{ github.sha }}"}'
+          
