@@ -6,6 +6,9 @@ on:
 
 jobs:
   dispatch:
+    permissions:
+      contents: 'read'
+
     runs-on: ubuntu-latest
     steps:
       - name: Repository dispatch
