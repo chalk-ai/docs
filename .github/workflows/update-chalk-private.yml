@@ -11,7 +11,7 @@ jobs:
       - name: Repository dispatch
         uses: peter-evans/repository-dispatch@v2
         with:
-          token: ${{ secrets.CHALK_PRIVATE_PAT }}
+          token: ${{ secrets.CHALK_PRIVATE_TOKEN }}
           repository: chalk-ai/chalk-private
           event-type: docs-update
           client-payload: '{"ref": "${{ github.ref_name }}", "sha": "${{ github.sha }}"}'
