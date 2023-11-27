@@ -1,0 +1,66 @@
+---
+title: Debugging Queries
+description: Learn techniques for debugging online and offline queries
+---
+
+Online and offline queries can fuse data from multiple sources, and the structure of how data flows
+through queries can be complex. Chalk has a number of tools to help you debug queries.
+
+# Query Plan Visualizer
+
+The query plan visualizer is a tool that allows you to see the structure of a query, and also inspect the data that
+flows through it.
+
+To use the query plan visualizer, first execute an online or offline query:
+
+```python
+ChalkClient.query(input={User.id: 1}, output=[User.sum_transactions])
+
+# -or
+ChalkClient.offline_query(input={User.id: [1,2,3]}, output=[User.sum_transactions])
+```
+
+Then, navigate to the 'Queries' tab in the web dashboard. You should see your query appear under the
+'Online' or 'Offline' depending on which kind of query you executed.
+
+Select your query to view execution details. You should see a visualization of the query plan under the "Query Plan"
+tab.
+
+If you add the `store_plan_stages=True` kwarg to your query, Chalk will store every
+intermediate input and output of each stage of the query plan. This is very useful for debugging,
+but it will also increase the amount of data that is stored and add significant overhead to the execution, so
+it should not be used in production.
+
+```
+ChalkClient.query(..., store_plan_stages=True)
+```
+
+The query plan visualizer UI displays the first 20 rows of each stage of the query plan. If you want to see more,
+click "Download data" to download the raw parquet file.
+
+# Resolver Replay
+
+Resolver execution can be examined using the Query Plan Visualizer, but Chalk also allows you to directly
+execute your resolver on your local computer using the same arguments that were used in your query.
+
+To use the `resolver_replay` functionality:
+
+1. Run an `offline_query` with `store_plan_stages=True` to store the query plan stages, and `recompute_features=True` to allow resolver execution.
+2. On the returned dataset, call `resolver_replay` with your resolver function.
+
+Example:
+
+```python
+from chalk import ChalkClient
+
+@online
+def sum_transactions(txns: User.transactions[Transaction.amount]) -> User.sum_transactions:
+    return txns[Transaction.amount].sum()
+
+ChalkClient().offline_query(
+    input={User.id: [1,2,3]},
+    output=[User.sum_transactions],
+    store_plan_stages=True,
+    recompute_features=True
+).resolver_replay(sum_transactions)
+```
