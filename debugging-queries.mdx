@@ -13,7 +13,7 @@ in its definition, and explore various ways to debug that issue.
 
 ```python
 from datetime import datetime
-from chalk import features
+from chalk import features, has_many, DataFrame
 
 @features
 class Transaction:
@@ -26,6 +26,7 @@ class Transaction:
 class User:
     id: int
     sum_transaction_amount: float
+    transactions: DataFrame[Transaction] = has_many(lambda: Transaction.user_id == User.id)
 ```
 
 Then, we'll define simple online resolvers to ingest user and transaction data from a postgres database:
@@ -141,3 +142,25 @@ This will execute the resolver locally, using the same input data that was used 
 using your IDE (vscode, pycharm, or even pdb):
 
 ![Debugger](/img/debugging/debugging.png)
+
+You can edit the definition of the resolver locally, and re-run `resolver_replay` to see the results of your changes
+in your terminal or by stepping through with a debugger.
+
+# Using logs to debug
+
+If you're not able to use the query plan visualizer or resolver replay, you can also use the logs to debug your query.
+Use the `chalk_logger` from the `chalk.clogging` just like a standard python logger. This logger will output
+to the web interface, and to configured log sinks (i.e. your DataDog instance).
+
+```python
+from chalk.clogging import chalk_logger
+
+@online
+def sum_transaction_amount(txns: User.transaction[Transaction.amount]) -> User.sum_transaction_amount:
+    chalk_logger.info(f"Transactions: {txns}")
+    return txns[Transaction.amount].count() # this 'count' is a bug! we'll debug it shortly.
+```
+
+You can also view these logs using `resolver_replay`, where they will be emitted to your terminal:
+
+![Logs output example](/img/debugging/logs.png)
