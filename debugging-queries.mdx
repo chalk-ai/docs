@@ -1,0 +1,143 @@
+---
+title: Debugging Queries
+description: Learn techniques for debugging online and offline queries
+---
+
+Online and offline queries can fuse data from multiple sources, and the structure of how data flows
+through queries can be complex. Chalk has a number of tools to help you debug queries. In this section, we'll
+explore how to use these tools on a few simple features and resolvers.
+
+First, we'll define our feature classes. We'll work with a `User` and a `Transaction` object, representing
+users performing financial transactions. In this scenario, we'll write a simple aggregation that has a bug
+in its definition, and explore various ways to debug that issue.
+
+```python
+from datetime import datetime
+from chalk import features
+
+@features
+class Transaction:
+    id: int
+    user_id: int
+    amount: float
+    ts: datetime
+
+@features
+class User:
+    id: int
+    sum_transaction_amount: float
+```
+
+Then, we'll define simple online resolvers to ingest user and transaction data from a postgres database:
+
+```sql
+-- (users.chalk.sql)
+-- resolves: User
+-- source: postgres
+
+select id from users
+```
+
+```sql
+-- (transactions.chalk.sql)
+-- resolves: Transaction
+-- source: postgres
+
+select id, user_id, amount, ts from transactions
+```
+
+Next, we'll write a simple (buggy) aggregation resolver to compute the sum of a user's transactions:
+
+```python
+from chalk import online
+
+@online
+def sum_transaction_amount(txns: User.transaction[Transaction.amount]) -> User.sum_transaction_amount:
+    return txns[Transaction.amount].count() # this 'count' is a bug! we'll debug it shortly.
+```
+
+Notice that we've defined this aggregation with a bug! We're actually computing the `count` of the User's
+Transactions, rather than the `sum` of their amounts.
+
+Let's run a query --
+
+```python
+data = ChalkClient().query(input={User.id: 1}, output=[User.sum_transaction_amount])
+
+print(data.get_value(User.sum_transaction_amount))
+
+# Outputs 100!!
+```
+
+Whoops! Because we have prior knowledge of our data, we know that `100` is the wrong value for User `1`s transaction sum.
+Let's debug this issue.
+
+# Query Plan Visualizer
+
+The query plan visualizer is a tool that allows you to see the structure of a query, and also inspect the data that
+flows through it.
+
+To make full use of the query plan visualizer, we can re-execute the previous query with the `store_plan_stages=True` kwarg.
+This stores all of the data that passes through each stage of the query plan.
+
+```python
+ChalkClient.query(input={User.id: 1}, output=[User.sum_transactions], store_plan_stages=True)
+
+# -or to debug multiple users at once-
+ChalkClient.offline_query(input={User.id: [1,2,3]}, output=[User.sum_transactions], store_plan_stages=True)
+```
+
+Then, we navigate to the 'Queries' tab in the web dashboard. Our query appear under the
+'Online' or 'Offline' tab depending on which kind of query. Here we'll take a look at the online query, and we
+can see the structure of the query:
+
+![Query Plan Visualizer](./debuggging/query_plan_1.png)
+
+The query plan visualizer shows us the structure of the query. Note that the `transaction` resolver is executed
+to fetch the transactions for each user, and then the `sum_transaction_amount` resolver is executed to compute
+the sum.
+
+We can also see the data that flows through the query. Clicking on the `transaction` resolver shows us the output
+of the resolver:
+
+![Transaction Output](./debuggging/query_plan_2.png)
+
+Notice that the sum of the transaction amounts is definitely not `100`! By inspecting the `transaction.amount` column
+we notice that the sum should be much larger. If we were paying attention, we'd probably notice that our (incorrect) output
+`100` happens to be identical to the `count` summary of the transaction resolver, which would be a good hint that
+our aggregation is actually computing the `count` of the transactions, rather than the `sum` of their amounts.
+
+However, if we're having a slow day and don't notice that the aggregation happens to match the count, we have more
+tools we can use to debug. The next section will walk through how to execute the aggregation locally using
+the raw input data so we can use a debugger.
+
+(Note: the query plan visualizer UI displays the first 20 rows of each stage of the query plan in the preview areas.
+If you want to see more, click "Download data" to download the raw parquet file.)
+
+# Resolver Replay
+
+Resolver execution can be examined using the Query Plan Visualizer, but Chalk also allows you to directly
+execute your resolver on your local computer using the same arguments that were used in your query.
+
+To use the `resolver_replay` functionality:
+
+1. Run an `offline_query` with `store_plan_stages=True` to store the query plan stages, and `recompute_features=True` to allow resolver execution.
+2. On the returned dataset, call `resolver_replay` with your resolver function.
+
+Example:
+
+```python
+from chalk import ChalkClient
+
+ChalkClient().offline_query(
+    input={User.id: [1]},
+    output=[User.sum_transactions],
+    store_plan_stages=True,
+    recompute_features=True
+).resolver_replay(sum_transaction_amount)
+```
+
+This will execute the resolver locally, using the same input data that was used in the query. This allows you to debug
+using your IDE (vscode, pycharm, or even pdb):
+
+![Debugger](./debuggging/debugging.png)
