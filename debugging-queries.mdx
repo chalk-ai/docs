@@ -72,7 +72,9 @@ print(data.get_value(User.sum_transaction_amount))
 Whoops! Because we have prior knowledge of our data, we know that `100` is the wrong value for User `1`s transaction sum.
 Let's debug this issue.
 
-# Query Plan Visualizer
+---
+
+## Query Plan Visualizer
 
 The query plan visualizer is a tool that allows you to see the structure of a query, and also inspect the data that
 flows through it.
@@ -109,12 +111,14 @@ our aggregation is actually computing the `count` of the transactions, rather th
 
 However, if we're having a slow day and don't notice that the aggregation happens to match the count, we have more
 tools we can use to debug. The next section will walk through how to execute the aggregation locally using
-the raw input data so we can use a debugger.
+the raw input data, so we can use a debugger.
 
 (Note: the query plan visualizer UI displays the first 20 rows of each stage of the query plan in the preview areas.
 If you want to see more, click "Download data" to download the raw parquet file.)
 
-# Resolver Replay
+---
+
+## Resolver Replay
 
 Resolver execution can be examined using the Query Plan Visualizer, but Chalk also allows you to directly
 execute your resolver on your local computer using the same arguments that were used in your query.
