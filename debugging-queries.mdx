@@ -91,7 +91,7 @@ Then, we navigate to the 'Queries' tab in the web dashboard. Our query appear un
 'Online' or 'Offline' tab depending on which kind of query. Here we'll take a look at the online query, and we
 can see the structure of the query:
 
-![Query Plan Visualizer](./debuggging/query_plan_1.png)
+![Query Plan Visualizer](/img/debugging/query_plan_1.png)
 
 The query plan visualizer shows us the structure of the query. Note that the `transaction` resolver is executed
 to fetch the transactions for each user, and then the `sum_transaction_amount` resolver is executed to compute
@@ -100,7 +100,7 @@ the sum.
 We can also see the data that flows through the query. Clicking on the `transaction` resolver shows us the output
 of the resolver:
 
-![Transaction Output](./debuggging/query_plan_2.png)
+![Transaction Output](/img/debugging/query_plan_2.png)
 
 Notice that the sum of the transaction amounts is definitely not `100`! By inspecting the `transaction.amount` column
 we notice that the sum should be much larger. If we were paying attention, we'd probably notice that our (incorrect) output
@@ -140,4 +140,4 @@ ChalkClient().offline_query(
 This will execute the resolver locally, using the same input data that was used in the query. This allows you to debug
 using your IDE (vscode, pycharm, or even pdb):
 
-![Debugger](./debuggging/debugging.png)
+![Debugger](/img/debugging/debugging.png)
