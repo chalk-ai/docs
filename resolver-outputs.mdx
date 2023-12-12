@@ -43,7 +43,7 @@ def resolve(u: User.id) -> User.name:
 
 ### Multiple outputs
 
-To return multiple feature sets, return an
+To return multiple features, return an
 [instance of the feature class](/docs/features#constructing-feature-classes).
 In the type signature, specify
 the `Features[...]` class, parameterized
@@ -131,11 +131,12 @@ def get_events() -> DataFrame[Transfer.uuid, Transfer.amount, Transfer.ts]:
 
 For more info on how to load batch data,
 see the [Data Sources](/docs/sql) sections.
+`DataFrame`-returning resolvers don't need inputs.
 
 
 ### All features
 
-To return all features of a class,
+To return all features of a class in a DataFrame,
 use `DataFrame[...]` class around the feature class:
 
 ```py
@@ -148,3 +149,35 @@ def get_all_users() -> DataFrame[User]:
         )
     ])
 ```
+
+### Other DataFrame-returning resolvers
+
+Imagine a scalar feature you'd like to backfill over many thousands of pkeys and historical times.
+`DataFrame`-returning resolvers can dramatically reduce the computation time due to its vectorized handling.
+
+```py
+@offline
+def get_new_feature_as_dataframe(
+    df: DataFrame[Transaction.id, ...]
+) -> DataFrame[Transaction.id, Transaction.new_feature]:
+```
+
+The above resolver runs faster on a thousand rows
+than the equivalent scalar resolver ran a thousand times.
+
+Chalk also supports relationship-returning resolvers that enable users to
+return a `DataFrame` belonging to a has-many relationship.
+
+```py
+@offline
+def relationship_returning_resolver(
+    df: User.transactions[Transaction.id, Transaction.amount, Transaction.description],
+    user_type: User.type
+) -> User.transactions[Transaction.id, Transaction.transaction_type]:
+```
+
+Just make sure that the return `DataFrame`s do not have duplicate rows.
+That means no two rows should have the same primary key, or primary key & timestamp combinations if the
+feature time is also returned.
+
+

@@ -124,12 +124,13 @@ id, age, <= 2022-01-02
 output: 6
 ```
 
-### Explicitly time-dependent resolvers
+### Now: Explicitly time-dependent resolvers
 
 Chalk supports resolvers that are explicitly time-dependent. This is useful for performing backfills which
-compute values that depend on values that are semantically similar to `datetime.now()`.
+compute values that depend on timestamps that are semantically similar to `datetime.now()`.
 
-You can express time-dependency by declaring a dependency on a special feature called `Now`:
+You can express time-dependency by declaring a dependency on a special feature called `Now`,
+which gets converted into a `datetime` within resolvers:
 
 ```py
 @online
@@ -139,9 +140,9 @@ def get_age_in_years(birthday: User.birthday, now: Now) -> User.age_in_years:
     return (now - birthday).years
 ```
 
-In online query, (i.e. with `ChalkClient().query`), `Now` is `datetime.now()`. In offline query contexts,
-`now` will be set to the appropriate `input_time` value for the calculation. This allows you to backfill
-a feature for a single entity at many different historical time points:
+In online query, (i.e. with `ChalkClient().query`), `Now` is `datetime.now()` if the `now` parameter is unused.
+In offline query contexts, `now` will be set to the appropriate `input_time` value for the calculation.
+This allows you to backfill a feature for a single entity at many different historical time points:
 
 ```py
 ChalkClient().offline_query(input={User.id: [1,1,1]}, output=[User.age_in_years], input_times=[
