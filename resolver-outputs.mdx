@@ -43,7 +43,7 @@ def resolve(u: User.id) -> User.name:
 
 ### Multiple outputs
 
-To return multiple features, return an
+To return multiple feature sets, return an
 [instance of the feature class](/docs/features#constructing-feature-classes).
 In the type signature, specify
 the `Features[...]` class, parameterized
@@ -131,12 +131,11 @@ def get_events() -> DataFrame[Transfer.uuid, Transfer.amount, Transfer.ts]:
 
 For more info on how to load batch data,
 see the [Data Sources](/docs/sql) sections.
-`DataFrame`-returning resolvers don't need inputs.
 
 
 ### All features
 
-To return all features of a class in a DataFrame,
+To return all features of a class,
 use `DataFrame[...]` class around the feature class:
 
 ```py
