@@ -13,9 +13,9 @@ arguments to the resolver function.
 
 ## Scalar dependencies
 
-To depend on a feature from a [Feature Set](/docs/features),
-you give your resolver an argument with that feature as the type.
-You can then use that argument in the body of your resolver to
+To depend on features from a [Feature Set](/docs/features),
+label your resolver arguments with your features as the types.
+You can then use those arguments in the body of your resolver to
 compute your [output features](/docs/resolver-outputs).
 If you're running our [editor plugin](/docs/editor-setup),
 your editor will see the type of each variable as the type
@@ -31,7 +31,7 @@ class User:
     email_domain: str
 
 @online
-def get_domain(a: User.email) -> User.email_domain:
+def get_domain(email: User.email) -> User.email_domain:
     # type(email) == str
     return email.split('@')[1].lower()
 ```
@@ -211,7 +211,7 @@ which supports
 [aggregations](/docs/dataframe#aggregations),
 among other operations.
 
-### Limiting data fetching
+### Projections
 
 By default, Chalk will materialize all scalar features
 on the `Transfer` feature set before calling your resolver.
@@ -231,6 +231,19 @@ def fn(transfers: User.transfers[Transfer.amount, Transfer.memo]) -> ...:
 The error above is surfaced statically
 by our [editor plugin](/docs/editor-setup).
 
+You can also select columns through has-one relationships that would not normally materialize.
+
+```py
+@online
+def fn(transfers: User.transfers[Transfer.amount, Transfer.bank.name]) -> ...:
+```
+
+In the above example, if there was a has-one relationship between `Transfer` and `Bank`,
+we can fetch any scalar feature from `Bank` as well for the `DataFrame`.
+Note that the `Bank.name` column would _not_ materialize with the simple `transfers: User.transfers` typing,
+since this typing only materializes scalar features in the root namespace.
+
+
 ### Filtering
 
 You can apply filters to the has-many inputs of resolvers:
@@ -242,12 +255,21 @@ def fn(transfers: User.transfers[Transfer.amount > 100]) -> ...:
 
 [Filters](/docs/dataframe#filters) can be composed with
 [projections](/docs/dataframe#projections) following the semantics
-of the [Chalk DataFrame](/docs/dataframe#composing-projections-and-filters).
+of the Chalk `DataFrame`.
 
 ```py
 @online
 def fn(transfers: User.transfers[Transfer.amount > 100, Transfer.memo]) -> ...:
 ```
+
+Filters can also be used on features through has-one relationships.
+
+```py
+@online
+def fn(transfers: User.transfers[Transfer.amount, Transfer.bank.location == "USA"]) -> ...:
+```
+
+More on projection and filtering [here](/docs/dataframe#composing-projections-and-filters)
 
 ### Has-many through has-one
 
