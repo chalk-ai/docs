@@ -38,7 +38,7 @@ def get_domain(email: User.email) -> User.email_domain:
 
 You can require multiple features in a resolver.
 However, all feature dependencies in a single resolver
-need to originate at the same root namespace:
+need to originate in the same root namespace:
 
 <TipGood>Requiring features from the same root namespace</TipGood>
 
@@ -231,18 +231,6 @@ def fn(transfers: User.transfers[Transfer.amount, Transfer.memo]) -> ...:
 The error above is surfaced statically
 by our [editor plugin](/docs/editor-setup).
 
-You can also select columns through has-one relationships that would not normally materialize.
-
-```py
-@online
-def fn(transfers: User.transfers[Transfer.amount, Transfer.bank.name]) -> ...:
-```
-
-In the above example, if there was a has-one relationship between `Transfer` and `Bank`,
-we can fetch any scalar feature from `Bank` as well for the `DataFrame`.
-Note that the `Bank.name` column would _not_ materialize with the simple `transfers: User.transfers` typing,
-since this typing only materializes scalar features in the root namespace.
-
 
 ### Filtering
 
@@ -300,22 +288,17 @@ either be `None` or a [Chalk DataFrame](/docs/dataframe).
 
 ### Has-one through has-many
 
-```py
-@online
-def fn(ts: User.transfers[Transfer.account, Transfer.amount]) -> ...:
-    ts[Transfer.account.balance].sum()  # Ok
-    ts[Transfer.amount].sum()           # Ok
-    ts[Transfer.memo]                   # Error! Filtered out
-```
-
-You can also refine the types pulled from the nested has-one:
+You can also select columns through nested has-one relationships that would not normally materialize.
 
 ```py
 @online
-def fn(ts: User.transfers[Transfer.account.balance]) -> ...:
-    ts[Transfer.account.balance].sum()  # Ok
-    ts[Transfer.account.title]          # Error! Filtered out
+def fn(transfers: User.transfers[Transfer.amount, Transfer.bank.name]) -> ...:
 ```
+
+In the above example, if there was a has-one relationship between `Transfer` and `Bank`,
+we can fetch any scalar feature from `Bank` as well for the `DataFrame`.
+Note that the `Bank.name` column would _not_ materialize with the simple `transfers: User.transfers` typing,
+since this typing only materializes scalar features in the root namespace.
 
 ### Has-many through has-many
 

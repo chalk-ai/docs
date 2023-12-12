@@ -65,6 +65,8 @@ def fn(transfers: User.transfers[before(days_ago=7)]) -> ...:
 You can also combine `before` and `after`.
 In this example, we return the transfers made over a week ago,
 but less than two weeks ago.
+These filters can also be combined with other filters and projections
+as described [here](/docs/dataframe#composing-projections-and-filters).
 
 ```py
 from chalk.features import before, after, ...
