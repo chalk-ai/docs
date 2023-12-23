@@ -1,5 +1,6 @@
 ---
-title: GCP Cloud Deployment IAM Requirements
+title: GCP Cloud Deployment
+description: How to deploy Chalk to GCP.
 ---
 
 import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
@@ -21,18 +22,24 @@ data for machine learning applications. Chalk then serves this data
 back to customer applications for online inference and to customer
 data teams for training set generation.
 
+---
+
 ## Architecture Diagram
 
 <ServiceDiagramSwitcher default_option={"GCP"} />
+
+---
 
 ## IAM Requirements
 
 Chalk requires certain IAM permissions to manage infrastructure in your cloud account.
 Typically, Chalk recommends:
 
-- creating a new project in your GCP organization
-- creating a new role in your root GCP organization with the permissions in this document
-- granting Chalk's customer-scoped management service account the custom role
+- Creating a new project in your GCP organization
+- Creating a new role in your root GCP organization with the permissions in this document
+- Granting Chalk's customer-scoped management service account the custom role
+
+---
 
 ## Setup permissions
 
@@ -871,6 +878,8 @@ vpcaccess.connectors.list
 vpcaccess.locations.list
 vpcaccess.operations.get
 ```
+
+---
 
 ## Ongoing permissions
 
