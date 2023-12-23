@@ -3,14 +3,11 @@ title: GitHub Actions
 description: Deploy feature pipelines in GitHub Actions
 ---
 
-import { PyEditor } from '@/components/Editor'
-import { highlightedCode as integrationTest } from '@/samples/features/integration_test.py?highlight=py'
-
 ---
 
-Chalk provides official support for GitHub actions.
+Chalk provides official support for GitHub Actions.
 You can install the Chalk CLI and create deployments
-(preview and production) from pre-built GitHub actions
+(preview and production) from pre-built GitHub Actions.
 
 ---
 
@@ -32,7 +29,7 @@ This step supports the following inputs:
 ### Example
 
 ```yaml
-- uses: chalk-ai/cli-action@v1
+- uses: chalk-ai/cli-action@v2
   with:
     client-id: ${{secrets.CHALK_CLIENT_ID}}
     client-secret: ${{secrets.CHALK_CLIENT_SECRET}}
@@ -44,29 +41,31 @@ This step supports the following inputs:
     api-host: https://custom.deployment.com/
 ```
 
-For more information, see the [chalk-ai/cli-action](https://github.com/chalk-ai/cli-action) repository
-or see a complete GitHub Action at [chalk-ai/examples](https://github.com/chalk-ai/examples).
+For more information, see the [chalk-ai/cli-action](https://github.com/marketplace/actions/chalk-cli)
+on the GitHub Marketplace,
+or see a complete example at [chalk-ai/examples](https://github.com/chalk-ai/examples).
 
 ---
 
 ## Deploying to Chalk
 
 You can deploy to Chalk by first installing the CLI, as in the section above.
-Or, you can use the [chalk-ai/deploy-action](https://github.com/chalk-ai/cli-action) step.
+Or, you can use the [chalk-ai/deploy-action](https://github.com/marketplace/actions/chalk-apply) step.
 This step supports the following inputs:
 
 - `client-id`: The Chalk Client ID from the tokens page in your settings.
 - `client-secret`: The Chalk Client Secret from the tokens page in your settings.
+- `branch` (optional): By default, Chalk will deploy to your production environment. With `branch`, your pipelines will deploy to a Chalk branch.
 - `await` (optional): Should this step block until it completes? Defaults to true.
-- `no-promote` (optional): By default, Chalk will deploy to your production environment. With no-promote, your pipelines will deploy to a preview environment.
 - `version` (optional): The version of `chalk` to install, defaulting to `latest`.
 - `api-host` (optional): If you're using a self-hosted deployment, the API host where Chalk is hosted.
 - `environment` (optional): The Chalk environment to use. Your token is typically scoped to a single environment, and you won't need to use this parameter.
+- `no-promote` (deprecated): By default, Chalk will deploy to your production environment. With no-promote, your pipelines will deploy to a preview environment.
 
 ### Example
 
 ```yaml
-- uses: chalk-ai/deploy-action@v1
+- uses: chalk-ai/deploy-action@v2
   with:
     client-id: ${{secrets.CHALK_CLIENT_ID}}
     client-secret: ${{secrets.CHALK_CLIENT_SECRET}}
