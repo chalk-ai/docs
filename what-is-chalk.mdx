@@ -49,7 +49,9 @@ class User:
     credit_score: float
     datawarehouse_feature: float
 
-    transactions = has_many(lambda: Transaction.user_id == User.id)
+    transactions: DataFrame[Transaction] = has_many(
+        lambda: Transaction.user_id == User.id
+    )
 ```
 
 ### Resolvers
