@@ -29,7 +29,7 @@ This step supports the following inputs:
 ### Example
 
 ```yaml
-- uses: chalk-ai/cli-action@v1
+- uses: chalk-ai/cli-action@v2
   with:
     client-id: ${{secrets.CHALK_CLIENT_ID}}
     client-secret: ${{secrets.CHALK_CLIENT_SECRET}}
@@ -41,15 +41,16 @@ This step supports the following inputs:
     api-host: https://custom.deployment.com/
 ```
 
-For more information, see the [chalk-ai/cli-action](https://github.com/chalk-ai/cli-action) repository
-or see a complete GitHub Action at [chalk-ai/examples](https://github.com/chalk-ai/examples).
+For more information, see the [chalk-ai/cli-action](https://github.com/marketplace/actions/chalk-cli)
+on the GitHub Marketplace,
+or see a complete example at [chalk-ai/examples](https://github.com/chalk-ai/examples).
 
 ---
 
 ## Deploying to Chalk
 
 You can deploy to Chalk by first installing the CLI, as in the section above.
-Or, you can use the [chalk-ai/deploy-action](https://github.com/marketplace/actions/github-action-for-deploying-to-chalk) step.
+Or, you can use the [chalk-ai/deploy-action](https://github.com/marketplace/actions/chalk-apply) step.
 This step supports the following inputs:
 
 - `client-id`: The Chalk Client ID from the tokens page in your settings.
