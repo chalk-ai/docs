@@ -29,19 +29,25 @@ as many features change less frequently than they are sampled
 Chalk uses the column store
 [Timescale](https://timescale.com) or the data warehouse [BigQuery](https://cloud.google.com/bigquery)for this data.
 
+In addition, offline queries write their output to a [parquet file](https://parquet.apache.org/)
+in cloud storage (S3/GCS), whereas online queries write their results to database.
+
 [//]: # 'More detail [Chalk architecture](/docs/architecture)'
 
 ## Querying
 
-Online data is used to receive information about a single entity.
+Online queries are used to receive information about a single entity.
 For example, you might be looking to compute the features of a
 credit model for a single user, or decide what products to suggest
-to a customer. You can use our [API client](/docs/query-basics)
-to pull this information.
+to a customer. Thus, online queries are designed to be as quick as possible -
+within milliseconds. You can use our [API client](/docs/query-basics) to pull this information.
 
-Offline data is used to query historical data about one or more entities
-at specific points in time.
-Offline data is used to train models or do investigative work.
+Offline queries are used to sample historical data about many entities
+at specific points in time for model training or investigation.
+When you execute an offline query, Chalk will kick off a job that acquires the requested data for
+every primary key/timestamp combination presented. This could take a few seconds!
+Since offline queries often lookup data for thousands of
+rows, they are not designed to be used to make millisecond-level decisions.
 See our guide on [querying training data](/docs/training-client)
 for a more in-depth treatment.
 
