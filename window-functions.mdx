@@ -34,7 +34,7 @@ after(minutes_ago=5, seconds_ago=10)
 
 You can use these operators to filter out rows of a `DataFrame`:
 
-## Before
+## After
 
 To compute the number of transfers a user made in the
 last seven days, you can use the `after(...)` function:
@@ -47,13 +47,13 @@ def fn(transfers: User.transfers[after(days_ago=7)]) -> ...:
     return transfers.count()
 ```
 
-## After
+## Before
 
 Alternatively, if you wanted to compute the number of transfers
 a user made more than seven days ago, you would write:
 
 ```py
-from chalk.features import after, ...
+from chalk.features import before, ...
 
 @online
 def fn(transfers: User.transfers[before(days_ago=7)]) -> ...:
