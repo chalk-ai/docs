@@ -119,19 +119,16 @@ We can do this by adding a `user` field to the `Account` class.
 @features
 class Account:
     id: int
-    user_id: int
+-   user_id: int
++   user_id: User.id
     balance: float
 
 +   # The user that owns this account.
-+   user: User = has_one(lambda: User.id == Account.user_id)
++   user: User
 ```
 
-We define the relationship between users and accounts
-with the [`has_one`](/docs/has-one) function, in much
-the same way that we would define a relationship in
-an SQL object relational mapper. The first and only
-argument to `has_one` is a predicate that defines
-the join between the two classes.
+This denotes that each account has one user, and that the
+`Account.user_id` and the `User.id` are equal and of type `int`.
 
 Once we've defined the relationship on one side of the
 join, we can define the inverse relationship on the
@@ -172,7 +169,7 @@ transaction is linked to a single account. We'll define the
 +    id: int
 +
 +    # The id of the account that this transaction belongs to.
-+    account_id: int
++    account_id: "Account.id"
 +
 +    # The amount of the transaction, in dollars.
 +    amount: float
@@ -186,14 +183,21 @@ transaction is linked to a single account. We'll define the
 +    account: "Account"
 
 @features
+class User:
+    id: int
+    name: str
+    email: str
+
+    # The account that this user owns.
+    account: "Account"
+
+@features
 class Account:
     id: int
-    user_id: int
+    user_id: User.id
     balance: float
-    user: User = has_one(lambda: User.id == Account.user_id)
-+   transactions: DataFrame[Transaction] = has_many(
-+       lambda: Account.id == Transaction.account_id
-+   )
+    user: User
++   transactions: DataFrame[Transaction]
 ```
 
 This is the first time we're seeing the [`DataFrame`](/docs/dataframe) type.

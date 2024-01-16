@@ -15,9 +15,28 @@ A feature set can be linked to many examples of a different feature set
 via the function `has_many`, where the first argument specifies a
 function returning how to join the tables.
 
-## Example
+##Recommended Implementation
 
-In the example below, users have many transfers:
+Specified below is the simplest way to demonstrate a has-many relationship and its join.
+
+```py
+from chalk.features import DataFrame, ...
+
+@features
+class Transfer:
+    ...
+    user_id: str
+    amount: float
+
+@features
+class User:
+    ...
+    uid: Transfer.user_id
+    transfers: DataFrame[Transfer]
+```
+
+This denotes that a user has many transactions, and that `User.uid` is of type `str` and equals `Transfer.user_id`.
+The following example, which explicitly sets the join, is equivalent.
 
 ```py
 from chalk.features import has_many, DataFrame, ...
@@ -34,10 +53,6 @@ class User:
     uid: str
     transfers: DataFrame[Transfer] = has_many(lambda: Transfer.user_id == User.uid)
 ```
-
-<TipInfo>
-  The `lambda` solves forward references, letting you reference `User` before it is defined.
-</TipInfo>
 
 Now, you can reference the transfers for a user through the user.
 The `has_many` function returns a [chalk.DataFrame](/docs/dataframe),
