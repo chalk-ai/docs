@@ -12,16 +12,39 @@ import { TipInfo } from '@/components/Tip'
 
 In a one-to-one relationship, two feature sets have at most one
 feature set on both sides of the relation.
-One-to-one relationships are specified via the function
-`has_one`, where the first argument specifies a function returning
-how to join the tables.
 
-## Example
+## Recommended Implementation
 
-In the example below, users have an associated profile:
+Specified below is the simplest way to demonstrate a join for a has-one relationship.
+Here, users have an associated profile:
 
 ```py
-from chalk.features import has_one, ...
+from chalk.features import features
+
+@features
+class Profile:
+    ...
+    user_id: str
+    email_age_years: float
+
+@features
+class User:
+    ...
+    uid: Profile.user_id
+    profile: Profile
+```
+
+This specifies that `User.uid` is of type `str` and `User.profile` is a has-one feature
+through the join `User.uid == Profile.user_id`.
+
+
+### Explicit Join
+
+The following snippet, in which the join is explicitly defined,
+is equivalent to the recommended implementation.
+
+```py
+from chalk.features import features, has_one, ...
 
 @features
 class Profile:
@@ -40,6 +63,25 @@ class User:
   The `lambda` solves forward references, letting you reference `User` before it is defined.
 </TipInfo>
 
+You can also reference the join from the foreign feature class, if you prefer.
+The following is equivalent to the two examples above.
+
+```py
+from chalk.features import features
+
+@features
+class Profile:
+    ...
+    user_id: "User.uid"
+    email_age_years: float
+
+@features
+class User:
+    ...
+    uid: str
+    profile: Profile
+```
+
 Now, you can reference features on `Profile` through `User`. For example:
 
 ```py
@@ -53,7 +95,7 @@ user_email_age = User.profile.email_age_years
 ### One-to-one
 
 You can also add the back-reference to `User` from `Profile`.
-You don't have to explicitly use `has_one` again on `Profile`, however.
+You don't have to explicitly set the join on `Profile`, however.
 Instead, the join condition is assumed to be symmetric and copied over.
 Building on the above example, all you need to do
 to complete the one-to-one relationship is to add a `User` to
