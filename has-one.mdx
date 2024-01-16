@@ -12,13 +12,11 @@ import { TipInfo } from '@/components/Tip'
 
 In a one-to-one relationship, two feature sets have at most one
 feature set on both sides of the relation.
-One-to-one relationships are specified via the function
-`has_one`, where the first argument specifies a function returning
-how to join the tables.
 
 ## Recommended Implementation
 
 Specified below is the simplest way to demonstrate a join for a has-one relationship.
+Here, users have an associated profile:
 
 ```py
 from chalk.features import features
@@ -39,9 +37,11 @@ class User:
 This specifies that `User.uid` is of type `str` and `User.profile` is a has-one feature
 through the join `User.uid == Profile.user_id`.
 
-The above is equivalent to the following, where the join is explicity specified.
 
-In the example below, users have an associated profile:
+### Explicit Join
+
+The following snippet, in which the join is explicitly defined,
+is equivalent to the recommended implementation.
 
 ```py
 from chalk.features import features, has_one, ...
@@ -95,7 +95,7 @@ user_email_age = User.profile.email_age_years
 ### One-to-one
 
 You can also add the back-reference to `User` from `Profile`.
-You don't have to explicitly use `has_one` again on `Profile`, however.
+You don't have to explicitly set the join on `Profile`, however.
 Instead, the join condition is assumed to be symmetric and copied over.
 Building on the above example, all you need to do
 to complete the one-to-one relationship is to add a `User` to

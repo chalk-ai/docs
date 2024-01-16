@@ -12,15 +12,15 @@ import { TipInfo } from '@/components/Tip'
 ---
 
 A feature set can be linked to many examples of a different feature set
-via the function `has_many`, where the first argument specifies a
-function returning how to join the tables.
+via has-many relationships. Like has-one relationships, you must set a join condition to link
+the two feature sets.
 
-##Recommended Implementation
+## Recommended Implementation
 
 Specified below is the simplest way to demonstrate a has-many relationship and its join.
 
 ```py
-from chalk.features import DataFrame, ...
+from chalk.features import features, DataFrame, ...
 
 @features
 class Transfer:
@@ -36,7 +36,10 @@ class User:
 ```
 
 This denotes that a user has many transactions, and that `User.uid` is of type `str` and equals `Transfer.user_id`.
-The following example, which explicitly sets the join, is equivalent.
+
+### Explicit Join
+
+The following example, which explicitly sets the join, is equivalent to the above.
 
 ```py
 from chalk.features import has_many, DataFrame, ...
@@ -54,8 +57,8 @@ class User:
     transfers: DataFrame[Transfer] = has_many(lambda: Transfer.user_id == User.uid)
 ```
 
-Now, you can reference the transfers for a user through the user.
-The `has_many` function returns a [chalk.DataFrame](/docs/dataframe),
+Now, you can reference the transfers for a user through the user namespace.
+The `has_many` feature returns a [chalk.DataFrame](/docs/dataframe),
 which supports many helpful aggregate operations:
 
 ```py
@@ -80,7 +83,7 @@ User.transfers[
 
 One-to-many is defined by a [has_one](/docs/has-one) relationship
 on the other side of the relation.
-However, you don't have to explicitly use [has_one](/docs/has-one).
+However, you don't have to explicitly set the join a second time.
 Instead, the join condition is assumed to be symmetric and copied over.
 Building on the above example, all you need to do
 to complete the one-to-many relationship is to add a `User` to
@@ -88,17 +91,20 @@ the `Transfer` class:
 
 <PyDiffEditor html={manyToOneDiff} />
 
-<TipInfo>Here you need to use quotes around `User` to use a forward reference.</TipInfo>
+<TipInfo>Here, you need to use quotes around `User` to use a forward reference.</TipInfo>
 
-Alternatively, you could define the join condition on the [has_one](/docs/has-one)
-side, and add the [DataFrame](/docs/dataframe) to the `User` class:
+[//]: # (Alternatively, you could define the join condition on the same)
 
-<PyDiffEditor html={oneToManyDiff} />
-<TipInfo>Again, you need to use quotes around `User` deal with forward references.</TipInfo>
+[//]: # (side, and add the [DataFrame]&#40;/docs/dataframe&#41; to the `User` class:)
+
+[//]: # ()
+[//]: # (<PyDiffEditor html={oneToManyDiff} />)
+
+[//]: # (<TipInfo>Again, you need to use quotes around `User` deal with forward references.</TipInfo>)
 
 ### Many-to-many
 
-Many-to-many is defined by a `has_many` relationship
+Many-to-many is defined by a has-many relationship
 on the both sides of the relation.
 As before, you don't need to specify the join condition a second time
 so long as the join condition is symmetric.
