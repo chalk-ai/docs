@@ -11,6 +11,49 @@ See our [public roadmap](https://github.com/orgs/chalk-ai/projects/1) for upcomi
 
 ---
 
+## Jan 22, 2024
+
+### `required_resolver_tags` for queries
+
+You can now specify `required_resolver_tags` when querying. This allows you to ensure that a query only considers a
+resolver if it has a certain tag. This is useful for guaranteeing that a query only uses resolvers that are
+cost-efficient, or for enforcing certain compliance workflows.
+
+In this example:
+
+```py
+@offline()
+def fetch_credit_scores() -> DataFrame[User.id, User.credit_score]:
+    """
+    Call bureaus to get credit scores; costs money for each record retrieved.
+    """
+
+    return requests.post(...)
+
+@offline(tags=["low-cost"])
+def fetch_previously_ingested_credit_scores() -> DataFrame[User.id, User.credit_score]:
+    """
+    Pull previously retrieved credit scores from Snowflake only
+    """
+
+    return snowflake.query_string("select user_id as id, credit_score from ...").all()
+```
+
+querying with `required_resolver_tags` can be used to enforce that only 'low-cost' resolvers are executed --
+
+```py
+# This query is guaranteed to /never/ run any resolver that isn't tagged "low-cost".
+
+dataset = ChalkClient().offline_query(
+    input={User.id:[1,2,3]},
+    output=[
+        User.credit_score
+    ],
+    recompute_features=True,
+    required_resolver_tags=["low-cost"]
+)
+```
+
 ## October 24th, 2023
 
 ### Support for Python 3.11
