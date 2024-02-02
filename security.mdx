@@ -3,10 +3,7 @@ title: Security Overview
 description: How Chalk protects your data.
 ---
 
-import {
-  DeploymentArchitectureDiagram,
-  NetworkArchitectureDiagram,
-} from '@/components/DeploymentArchitectureDiagram'
+import { ServiceDiagramSwitcher, NetworkArchitectureDiagram } from "@/components/ArchitectureDiagram"
 
 ---
 
@@ -125,7 +122,7 @@ tools to verify that the principle of least privilege is followed, and we
 use granular service accounts to enforce separation of duties. Access
 privileges are reviewed at least quarterly.
 
-<DeploymentArchitectureDiagram />
+<ServiceDiagramSwitcher />
 
 ### Data retention and disposal
 
