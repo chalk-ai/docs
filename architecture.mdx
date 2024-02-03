@@ -10,10 +10,9 @@ import { ArchitectureDiagram, ServiceDiagramSwitcher } from '@/components/Archit
 Chalk integrates with your _data sources_, transforms data with _feature pipelines_,
 stores this data in _online_ and _offline storage_, and provides _monitoring_ on feature computation and distributions.
 
-<ArchitectureDiagram />
+---
 
 ## Service Architecture
-
 
 Chalk offers a hosted model ("Chalk Cloud"), or a customer-hosted model ("Customer Cloud").
 
@@ -30,7 +29,11 @@ These components are organized as follows:
 
 <ServiceDiagramSwitcher />
 
+---
+
 ## Online Computation and Serving
+
+<ArchitectureDiagram />
 
 Let's explore Chalk's architecture by examining how the pieces work together to compute & serve **[Features](/docs/features)** online. Suppose that you want to compute a set of features for making a decision about a request from a user:
 
@@ -44,9 +47,11 @@ Chalk's online query serving platform is designed to fetch data from a variety o
 
 - Automatic parallel execution of concurrent pipeline stages
 - Vectorization of pipeline stages that are written using scalar syntax
-- Low-latency key/value stores (like Redis, Cloud Memorystore, or DynamoDB) to minimize cached feature fetch time
+- Low-latency key/value stores (like [Redis](https://redis.com/), [BigTable](https://cloud.google.com/bigtable), or [DynamoDB](https://aws.amazon.com/dynamodb/)) to minimize cached feature fetch time
 - Statistics-informed join planning
 - JIT transformation of Python code into native code
+
+---
 
 ## Offline Computation and Serving
 
@@ -58,31 +63,54 @@ training sets or perform batch offline inference.
 3. Chalk's Compute Engine pulls [point-in-time correct](/docs/temporal-consistency) feature values from Offline Storage.
 4. Chalk returns a dataframe of features to you.
 
-Chalk's **Offline Storage** is optimized for batch querying of temporally consistent data. Chalk uses columnar storage backends (like TimescaleDB or BigQuery) to ingest massive amounts of data from a variety of data sources and query it efficiently. Note that data ingested
-into the Offline Store can be trivially made available for use in an online querying context using [Reverse ETL](/docs/reverse-etl).
+Chalk's **Offline Storage** is optimized for batch querying of temporally consistent data.
+Chalk uses columnar storage backends ([Snowflake](https://snowflake.com/),
+[Delta Lake](https://delta.io/), or [BigQuery](https://cloud.google.com/bigquery))
+to ingest massive amounts of data from a variety of data sources and query it efficiently.
+Note that data ingested into the Offline Store can be trivially made available for use
+in an online querying context using [Reverse ETL](/docs/reverse-etl).
 
-You can see a list of supported ingestion sources in the **Integrations** section of these docs.
+You can see a list of supported ingestion sources in the [Integrations](/docs/integrations) section of these docs.
+
+---
 
 ## Storage
 
 Chalk uses different storage technologies to support online and offline use cases.
 
-The online store is optimized for serving the latest version of any given feature for any given entity with the minimum possible latency. Behind the scenes, Chalk uses key-value stores for this purpose. Chalk can be configured to use Redis or Cloud Memory Store for smaller resident data sets with high latency requirements, or DynamoDB when horizontal scalability is required.
+The online store is optimized for serving the latest version of any given feature for any
+given entity with the minimum possible latency. Behind the scenes, Chalk uses key-value
+stores for this purpose. Chalk can be configured to use Redis or Cloud Memory Store for
+smaller resident data sets with high latency requirements, or DynamoDB when horizontal
+scalability is required.
 
-The offline store is optimized for storing all historical feature values, serving point-in-time correct queries, and tracking provenance of features. Chalk supports a variety of storage backends depending on data scale and latency requirements. Typically, Chalk uses TimescaleDB or BigQuery.
+The offline store is optimized for storing all historical feature values, serving
+point-in-time correct queries, and tracking provenance of features. Chalk supports
+a variety of storage backends depending on data scale and latency requirements.
+Typically, Chalk uses [Snowflake](https://snowflake.com/), [Delta Lake](https://delta.io/),
+or [BigQuery](https://cloud.google.com/bigquery).
+
+---
 
 ## Monitoring
 
-Chalk supports not only robust monitoring of pipeline execution, but of the feature values themselves as well. Monitoring machine learning data infrastructure is just as important as monitoring application availability, but is often overlooked.
+Chalk supports not only robust monitoring of pipeline execution, but of the feature values
+themselves as well. Monitoring machine learning data infrastructure is just as important as
+monitoring application availability, but is often overlooked.
 
-Each time a query is served, Chalk assigns a unique "trace id" for the request. Chalk tracks all emitted logs on both a per-resolver basis and a per-trace basis.
-This enables you to debug problems and track fine-grained performance metrics pertaining to specific features and resolvers.
-Leveraging this helps answer common questions such as how often certain features are computed and how long the computation takes.
+Each time a query is served, Chalk assigns a unique "trace id" for the request. Chalk
+tracks all emitted logs on both a per-resolver basis and a per-trace basis.
+This enables you to debug problems and track fine-grained performance metrics
+pertaining to specific features and resolvers. Leveraging this helps answer common
+questions such as how often certain features are computed and how long the computation takes.
 
-Like many traditional application monitoring platforms, Chalk supports alerting on performance or availability issues via integrations with [PagerDuty](https://www.pagerduty.com/) and [Slack](https://slack.com/).
+Like many traditional application monitoring platforms, Chalk supports alerting
+on performance or availability issues via integrations with [PagerDuty](https://www.pagerduty.com/) and [Slack](https://slack.com/).
 
-In addition to performance and request metrics for computation, Chalk supports alerting on feature values themselves. You can specify a variety of threshold requirements and drift tolerance tests to help spot issues such as:
+In addition to performance and request metrics for computation, Chalk supports
+alerting on feature values themselves. You can specify a variety of threshold
+requirements and drift tolerance tests to help spot issues such as:
 
-- feature drift
-- mismatches between offline/online pipelines
-- format changes with external data sources
+- Feature drift
+- Mismatches between offline/online pipelines
+- Format changes with external data sources
