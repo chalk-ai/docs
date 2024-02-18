@@ -49,7 +49,17 @@ select email, full_name from user_table where id=${user.id}
 
 Here, the `${user.id}` variable defines the inputs of the query, and `user_table`
 matches the PostgreSQL table name. The comments are `yaml`-parsed to provide other metadata for
-Chalk to decide how to design the resolver. 
+Chalk to decide how to design the resolver.
+
+SQL file resolvers can also return multiple rows for aggregation operations, offline query, and more.
+
+```sql get_users.chalk.sql
+-- type: online
+-- resolves: user
+-- source: PG
+select email, full_name from user_table
+```
+
 The following are supported keys to be included in `.chalk.sql` file comments.
 
 <AttributeTable title={"SQL File Resolvers"}>
