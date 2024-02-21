@@ -51,7 +51,8 @@ Here, the `${user.id}` variable defines the inputs of the query, and `user_table
 matches the PostgreSQL table name. The comments are `yaml`-parsed to provide other metadata for
 Chalk to decide how to design the resolver.
 
-SQL file resolvers can also return multiple rows for aggregation operations, offline query, and more.
+SQL file resolvers can also return multiple rows for aggregation operations, offline queries, and more.
+Notice below the omission of the `count` argument and the `where` clause of the SQL query.
 
 ```sql get_users.chalk.sql
 -- type: online
@@ -59,6 +60,20 @@ SQL file resolvers can also return multiple rows for aggregation operations, off
 -- source: PG
 select email, full_name from user_table
 ```
+
+It's possible to use `SELECT *` in a SQL file resolver, but be careful!
+
+```sql get_all_columns_users.chalk.sql
+-- type: online
+-- resolves: user
+-- source: PG
+select * from user_table
+```
+
+Implicitly, this tries to align every scalar feature from the `User` feature set to a column name in
+`user_table`. If a feature name is misnamed or absent from the table, you'll get a "missing columns" error.
+
+## Configuration
 
 The following are supported keys to be included in `.chalk.sql` file comments.
 
