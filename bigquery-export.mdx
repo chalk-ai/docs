@@ -1,0 +1,62 @@
+---
+title: Bigquery Export
+description: Configuration for feature export to Bigquery
+---
+
+
+## Background
+
+Chalk store structured logs of all features computed or ingested by the platform.
+Chalk can export these logs to a BigQuery dataset in your GCP project so that you can
+perform custom analysis and reporting on the data.
+
+---
+
+## Setup Steps
+
+### 1. Create a BigQuery Dataset
+
+Feature logs are stored per-environment. You will need to create one or more BigQuery datasets to
+receive the exported features. We typically recommend creating one dataset per Chalk environment
+to keep the data organized.
+
+### 2. Grant Chalk Access to the Dataset
+
+Chalk Support will provide the ID of a "management" service account originating from the GCP project that
+stores your feature logs. You will need to grant this service account permission to manipulate schemas
+and execute queries in the relevant datasets.
+
+The IAM permissions required are:
+
+```
+bigquery.datasets.get
+bigquery.jobs.create
+bigquery.jobs.delete
+bigquery.jobs.get
+bigquery.tables.create
+bigquery.tables.createIndex
+bigquery.tables.delete
+bigquery.tables.deleteIndex
+bigquery.tables.export
+bigquery.tables.get
+bigquery.tables.getData
+bigquery.tables.getIamPolicy
+bigquery.tables.list
+bigquery.tables.setCategory
+bigquery.tables.setIamPolicy
+bigquery.tables.update
+bigquery.tables.updateData
+bigquery.tables.updateTag
+```
+
+Note: the `bigquery.tables.*` permissions and `bigquery.datasets.get` permission are only required on the datasets
+created in step #1.
+
+### 3. Configure the Export
+
+You will need to provide Chalk with the following information to configure the export:
+
+- The GCP project ID where the BigQuery dataset is located
+- The BigQuery dataset ID
+
+Chalk will then configure the export and begin sending feature logs to the dataset.
