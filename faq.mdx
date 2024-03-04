@@ -1,0 +1,108 @@
+---
+title: Frequently Asked Questions
+description: A collection of questions frequently asked by customers
+---
+
+
+### What is the difference between an `online` and `offline` resolver?
+
+Not much! The *only* difference is in which contexts the resolvers are executed.
+A few key scenarios:
+
+- in "online query" (i.e. queries submitted via `.query`, `.query_bulk`, `multi_query`), offline resolvers never execute.
+- in "offline query" (i.e. queries submitted via `.offline_query`), offline resolvers are _preferred_, taking precedence over online resolvers that compute the same features.
+- in offline query, `online` resolvers are permitted to execute
+
+`@offline` is intended to be used for resolvers whose backing data sources are too slow or expensive
+to fulfill online query requests -- i.e. data warehouses or certain API sources, but
+if your `query` requests can tolerate the latency of one of these slow sources, you can mark resolvers
+using those datasources `@online` to query them on-the-fly.
+
+On the other hand, if your `query` requests can't tolerate the latency of the underlying data store,
+evaluate using scheduled ingestion or streaming resolvers in order to ensure that fresh
+data is available in the online store.
+
+### What is the difference between the online store and the offline store?
+
+The online store is intended to store features for low-latency retrieval in online query.
+Typically, the online store is implemented using redis, dynamodb, or (in some cases) postgres.
+
+The offline store is intended to store historical logs of all previously ingested or computed
+features. It is used to compute large historical training sets. It is typically implemented using
+BigQuery, Snowflake, or other data warehouses.
+
+### How do I force certain resolvers to execute in my query?
+
+Make use of `tags=[...]`. If a resolver is marked with a `tag`, it is only eligible to execute in
+queries that have a matching tag. An even stricter variant of this concept is available with the
+`required_resolver_tags` argument to `query` and `offline_query` which allows you to force *all*
+resolvers to have a particular tag.
+
+### Can I upload features into the online store with an API endpoint?
+
+Yes! In addition to streaming and scheduled bulk ingests of features, you can submit requests using
+the `upload_features` sdk endpoints to synchronously ingest features into the online or offline stores
+using API clients.
+
+### Can I query for two different feature classes in a single query?
+
+We recommend creating a "root" feature class that models the interaction between the two entities -- i.e.
+if need "customer" and "business" features for a transaction fraud model, you might create a class like this:
+
+```py
+@features
+class AuthQuery:
+    id: str
+    """
+    A unique ID that represents this interaction; may be randomly generated if you have
+    no natural ID in your system.
+    """
+
+    customer_id: str
+    customer: Customer = has_one(lambda: Customer.id == AuthQuery.customer_id)
+    """
+    A reference to the relevant customer.
+    """
+
+    business_id: str
+    business: Business = has_one(lambda: Business.id == AuthQuery.business_id)
+    """
+    A reference to the relevant business.
+    """
+```
+
+Then, queries can be submitted using:
+
+```py
+ChalkClient().query(
+    input={
+        AuthQuery.id: ..., AuthQuery.customer_id: ..., AuthQuery.business_id: ...
+    },
+    output=[AuthQuery.customer, AuthQuery.business]
+)
+```
+
+### How do I query for multiple entities at the same time?
+
+Use the `.query_bulk` SDK method instead of `.query`. For example, to query features for multiple `Hospital` entities, you might use:
+
+```py
+result = ChalkClient().query_bulk(
+    input={Hospital.id: [1,2,3,4,5]}
+    output=[Hospital.current_waiting_time, Hospital.has_trauma_bay, Hospital.has_er, Hospital.has_mri]
+)
+
+df = result[0].to_pandas()
+```
+
+### How do I get a list of primary keys from the offline store?
+
+```py
+df = ChalkClient().offline_query(
+    output=[YourFeatureClass.id],
+    max_samples=1000,
+    lower_bound=datetime.now() - timedelta(weeks=1),
+).to_polars()
+
+ids = df[str(YourFeatureClass.id)].to_list()
+```
