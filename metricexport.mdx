@@ -146,6 +146,20 @@ Provides information about the number of times a cron run was executed.
 
 </Attribute>
 
+<Attribute field={'cron_feature_writes'} kind={'Counter'}>
+Provides information about the number of features computed by cron written to online / offline store.
+
+<SubAttributeTable title={'Tags'}>
+    <SubAttribute field={'id'} kind={'String'}>
+        The name of the resolver executed by the cron run, for example, <code>my.company.get_user</code>
+    </SubAttribute>
+    <SubAttribute field={'context'} kind={'String'}>
+        Whether the features were written to online or offline store.
+    </SubAttribute>
+</SubAttributeTable>
+
+</Attribute>
+
 <Attribute field={'feature_value'} kind={'Summary'}>
 Provides statistical information about the value of features.
 
