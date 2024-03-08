@@ -11,6 +11,28 @@ See our [public roadmap](https://github.com/orgs/chalk-ai/projects/1) for upcomi
 
 ---
 
+## Mar 8, 2024
+
+### Bugfixes and improvements
+
+- A persistent issue with `chalk drop` has been resolved. Now, `chalk drop` will allow you to reset a feature whose
+deletion has been deployed to the active deployment, which will allow you to re-deploy the feature. Previously,
+it was possible to get into a state that was impossible to recover from without support.
+
+- `tags(...)` allows you to extract the `tags` of a `@features` class or a property (`Feature`) of that class.
+
+- `DataSet.to_polars()/to_pandas()` now raises an error if the dataset computation had errors. This
+prevents the user from accidentally using a dataset that was not computed correctly. If you wish to use the dataset
+anyway, you can use `DataSet.to_polars(ignore_errors=True)`.
+
+## Mar 1 2024
+
+### Support for custom SQL sampling in offline query
+
+You can now specify a custom SQL sampling query for offline queries. This allows you to use a native SQL query
+to compute the query's entity spine for offline queries. This is useful when you have a complicated sampling policy
+(i.e. class-based sampling). Additional non-primary key features can be provided as well.
+
 ## Jan 22, 2024
 
 ### `required_resolver_tags` for queries
