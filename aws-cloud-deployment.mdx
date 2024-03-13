@@ -1,11 +1,12 @@
 ---
 title: AWS Cloud Deployment IAM Requirements
+description: Deploying Chalk to your AWS account.
+published: true
 ---
 
 import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
 
-
-## Background
+---
 
 Chalk enables innovative machine learning teams to focus on building
 the unique products and models that make their business stand
@@ -16,14 +17,18 @@ Chalk is both a framework and a platform — developers can write code
 using familiar Python packages, and deploy that code to Chalk’s
 platform. In the Customer Cloud deployment, Chalk runs & administers its platform
 on the customer’s cloud account. Chalk's managed infrastructure then executes-customer defined pipelines to compute
-“[feature](<https://en.wikipedia.org/wiki/Feature_(machine_learning)>)”
+[feature](/docs/features)
 data for machine learning applications. Chalk then serves this data
 back to customer applications for online inference and to customer
 data teams for training set generation.
 
-## Architecture Diagram
+---
 
-<ServiceDiagramSwitcher default_option={"AWS"} />
+## Architecture
+
+<ServiceDiagramSwitcher default_option={"AWS"} hideSwitch={true} />
+
+---
 
 ## IAM Requirements
 
@@ -34,19 +39,24 @@ Typically, Chalk recommends:
 - creating a new role in your root AWS organization with the permissions in this document
 - granting Chalk's management role AssumeRole on the role you created
 
+---
+
 ## Setup permissions
 
-Chalk recommends creating a custom "role" in your organization with the following permissions granted.
+Chalk recommends creating a custom [role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html)
+in your organization with the following permissions granted.
 At a high level, Chalk needs the ability to provision the key components of your infrastructure:
 
 - Storage resources (buckets for dataset storage and bulk insertion into offline storage)
 - Networking resources (LBs, VPCs, etc.)
 - IAM resources (e.g. creating service accounts for workload identity, etc.)
 - Kubernetes resources (EKS)
-- Online storage (RDS, or Elasticache, or Dynamo)
+- Online storage ([RDS](https://aws.amazon.com/rds/), or [Elasticache](https://aws.amazon.com/elasticache/), or [Dynamo](https://aws.amazon.com/dynamodb/))
 - Offline storage (typically Snowflake or Redshift)
 
-```txt
+The following IAM policy is sufficient for Chalk to provision a deployment:
+
+```json
 {
     "Statement": [
         {
@@ -127,29 +137,127 @@ At a high level, Chalk needs the ability to provision the key components of your
 }
 ```
 
-## What are these permissions for?
+### What are these permissions for?
 
 - `cloudwatch`: The metrics viewer in the web UI
 - `logs`: Logs for the web UI
 - `acm`: Provisioning SSL certs for client&lt;&gt;server encryption
-- `rds`: RDS Onlinestore
+- `rds`: RDS Online store
 - `redshift`: Redshift offline store
 - `redshift-data`: Redshift offline store
 - `redshift-serverless`: Redshift offline store
 - `kafka`: Asynchronous persistence queues for metrics & feature storage
 - `kafka-cluster`: Asynchronous persistence queues for metrics & feature storage
-- `dynamodb`: Dynamodb onlinestore
-- `dax`: Dynamodb onlinestore
-- `application-autoscaling`: Dynamodb onlinestore, if autosacling is required
+- `dynamodb`: DynamoDB online store
+- `dax`: DynamoDB online store
+- `application-autoscaling`: [DynamoDB](https://aws.amazon.com/dynamodb/) online store, if auto-scaling is required
 - `ec2`: ALB and EKS node pool management
 - `ecr`: ECR image management for deployments
-- `eks`: EKS cluster management for running featurte engineering worklods
+- `eks`: EKS cluster management for running feature engineering workloads
 - `kms`: Encryption keys for secrets
 - `secretsmanager`: Encrypting datasource secrets from the web UI
+
+---
 
 ## Ongoing permissions
 
 Chalk's support team will work with you to scope permissions down to what are needed for ongoing maintenance.
 The precise details depend on the level of ongoing support that your team needs and your compliance requirements.
-In principal, Chalk does not require ongoing access to data, or to the ability to edit IAM permissions,
+In principle, Chalk does not require ongoing access to data, or to the ability to edit IAM permissions,
 but Chalk requires ongoing access to update the software deployed in your environment.
+
+
+### Kubernetes Permissions
+
+Chalk requires the following Kubernetes permissions to manage the resources in your cluster:
+
+```yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: chalk-cluster-management-role
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes # required to track usage
+    verbs:
+      - get
+      - list
+      - watch
+
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: chalk-management-role
+  namespace: <your namespace>
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+      - pods
+      - services
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - patch
+      - watch
+  - apiGroups:
+      - "extensions"
+      - "networking.k8s.io"
+    resources:
+      - ingresses
+      - ingresses/status
+      - ingressclasses
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "extensions"
+      - "networking.k8s.io"
+    resources:
+      - ingresses # can be self-managed if necessary
+    verbs:
+      - get
+      - create
+      - update
+      - list
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - "apps"
+    resources:
+      - replicasets
+      - statefulsets
+      - deployments
+      - daemonsets
+    verbs:
+      - get
+      - list
+      - update
+      - patch
+      - create
+```
