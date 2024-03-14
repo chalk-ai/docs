@@ -1,0 +1,74 @@
+---
+title: Query Scheduling
+description: Create and ingest datasets on a schedule
+---
+
+---
+
+Once you have defined features and resolvers in Chalk, you can schedule queries to run at regular intervals. This is
+useful for ingesting data from external sources, or for precomputing features that are expensive to compute in real-time.
+
+## Scheduling a Query
+
+Query scheduling looks very similar to `offline_query`'s usage. Imagine that we want to precompute the average
+temperature for each city in the world every day. First, we define a feature class for the temperature readings, and a
+feature class for the cities:
+
+```py
+@features
+class TemperatureReading:
+    id: int
+    city: City.id
+    temperature: float
+    ts: datetime
+
+@features(max_staleness="1d", etl_offline_to_online=True)
+class City:
+    id: str
+    name: str
+    average_temperature: float
+
+    temperature_readings: DataFrame[TemperatureReading]
+```
+
+Then, we define a resolver that fetches the temperature readings for each city:
+
+```sql
+-- resolves: TemperatureReading
+-- source: snowflake
+SELECT
+    id,
+    city,
+    temperature,
+    ts
+FROM
+    temperature_readings
+```
+
+Then, we define a resolver to compute the average temperature for each city:
+
+```py
+@offline
+def compute_average_temperature(temps: City.temperature_readings[TemperatureReading.temperature, after(days_ago=1)]) -> City.average_temperature:
+    return temps.mean()
+```
+
+Finally, we schedule the query to run every day at midnight:
+
+```py
+ScheduledQuery(
+    name="average_temperature",
+    outputs=[City.average_temperature],
+    schedule="0 0 * * *",
+    store_online=True
+)
+```
+
+Each day, this query will execute and cache the average temperature for each city in the world. This data will be
+available for real-time queries:
+
+```py
+client.query(input={City.id: 713}, output=[City.average_temperature])
+
+# 58
+```
