@@ -46,6 +46,8 @@ ChalkClient().offline_query(
 
 This is useful when you have a large number of features that you want to recompute, but only a few that you want to sample.
 
+- `ChalkClient.offline_query` now accepts `run_asynchronously: bool` to explicitly opt a query into running on an isolated worker.
+- `DataSet.to_polars()/.to_pandas()` now accept `output_ts: str` and `output_id: str` to customize the name of the timestamp and id columns in the output dataframe.
 
 ## Mar 8, 2024
 
