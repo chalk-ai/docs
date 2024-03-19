@@ -11,6 +11,42 @@ See our [public roadmap](https://github.com/orgs/chalk-ai/projects/1) for upcomi
 
 ---
 
+## Mar 19, 2024
+
+### Scheduled Queries
+
+Chalk now supports executing an `offline_query` on a schedule. Effectively, this extends the existing "scheduled resolver"
+functionality and allows you to execute more complicated data ingestion or caching workflows without needing to
+use Airflow or other external schedulers to orchestrate resolver execution.
+
+Here's an example of a scheduled query that caches the number of transactions a user has made in the last 24 hours into
+the online store:
+
+```py
+ScheduledQuery(
+    output=[User.num_transactions_last_24h],
+    schedule="0 0 * * *", # every day at midnight
+    persist_online=True # cache this computed value in the online store
+)
+```
+
+### Bugfixes and improvements
+
+- `offline_query(...)` now accepts `sample_features: list[Feature]` as an argument. This works in conjunction
+with `recompute_features`, and allows you to write something like:
+
+```py
+ChalkClient().offline_query(
+    input={User.id: [...]},
+    output=[User.full_name],
+    recompute_features=True,                          # means "recompute all features
+    sample_features=[User.first_name, User.last_name] # but sample these features from the offline store
+)
+```
+
+This is useful when you have a large number of features that you want to recompute, but only a few that you want to sample.
+
+
 ## Mar 8, 2024
 
 ### Bugfixes and improvements
