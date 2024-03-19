@@ -48,6 +48,8 @@ This is useful when you have a large number of features that you want to recompu
 
 - `ChalkClient.offline_query` now accepts `run_asynchronously: bool` to explicitly opt a query into running on an isolated worker.
 - `DataSet.to_polars()/.to_pandas()` now accept `output_ts: str` and `output_id: str` to customize the name of the timestamp and id columns in the output dataframe.
+- Feature and resolver discovery during `chalk apply` is roughly twice as fast as of `chalkpy v2.33.9`.
+- Dataset downloads no longer have any dependency on locally registered features, which resolves crashes for certain dataset management workflows.
 
 ## Mar 8, 2024
 
