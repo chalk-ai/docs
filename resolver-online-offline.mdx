@@ -51,6 +51,12 @@ rows, they are not designed to be used to make millisecond-level decisions.
 See our guide on [querying training data](/docs/training-client)
 for a more in-depth treatment.
 
+|                  | online query                                                                                                                       | offline query                                                                                                                                                                                                                                                                           |
+|------------------|------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| online resolver  | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolver will run        | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolver will run if there is no <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver with the same definition |
+| offline resolver | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver will never run | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver will run                                                                                                                                                            |
+
+
 ## Scheduling
 
 Both offline and online resolvers [support scheduled runs](/docs/resolver-cron).
@@ -93,3 +99,13 @@ when you tolerate stale data in online inference and
 have a data source in the offline environment that doesn't
 have a direct replacement in the online environment.
 More details are provided in the section [Reverse ETL](/docs/reverse-etl).
+
+## Summary
+
+| Online query                                                                                                                  | Offline query                                                                                                                                                                                                                                |
+|-------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Runs only <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolvers | Runs both <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> and <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolvers |
+| Returns one row of data about one entity                                                                                      | Returns a dataframe of many rows of historical data corresponding to multiple entities point-in-time                                                                                                                                         |
+| Designed to return data immediately in milliseconds                                                                           | Blocks until computation is complete, not designed for millisecond-level computation                                                                                                                                                         |
+| Queries the online store, which caches recent data from online queries for quick retrieval                                    | Queries the offline store (Timescale), which stores all data from both online and offline queries                                                                                                                                            |
+| Writes output data to online store database and offline store database                                                        | Writes output to offline store database and a parquet file containing results to cloud storage. Only writes to online store if specified.                                                                                                    |
