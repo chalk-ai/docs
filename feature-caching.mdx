@@ -57,7 +57,7 @@ assumes the max-staleness of `0s`, forcing it to be recomputed on every request.
 By default, features are not cached, and instead are recomputed for every online request.
 In effect, you can think of `max_staleness` as being `0` except where otherwise specified.
 
-In an online environment, all feature values are taken from past runs or historical tables,
+In an offline environment, all feature values are taken from past runs or historical tables,
 where `max_staleness` does not apply.
 
 ## Overriding default caching
