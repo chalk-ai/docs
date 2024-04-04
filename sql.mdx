@@ -526,3 +526,50 @@ lower bound for the next query. By default, Chalk sets this value to the time at
 If your resolver returns a [FeatureTime](/docs/time) feature, Chalk will update the "max timestamp" value
 to the "max" `FeatureTime` value that is returned instead. This allows you to control the incremental
 behavior more precisely.
+
+
+
+## Tagged SQL sources
+
+Chalk supports applying [tags](/docs/resolver-tags) to sql sources. This allows you to define a single resolver that routes traffic
+to multiple different backing databases depending on tags supplied at query time. This is useful for limiting
+the blast-radius of traffic from different use-cases.
+
+First, define a SQL source group:
+
+```py
+from chalk.sql import SQLSourceGroup, PostgreSQLSource
+
+sql_group = SQLSourceGroup(
+    name='primary_group',
+    default=PostgreSQLSource(name="default_replica"),
+    sources={
+        'risk': PostgreSQLSource(name='risk_replica'),
+        'analytics': PostgreSQLSource(name='analytics_replica'),
+    }
+)
+```
+
+Then, define a resolver that uses the group:
+
+```py
+@online
+def users() -> DataFrame[User]:
+    return sql_group.query_string("select id, name from users").all()
+```
+
+Then, when you submit queries, the query tags will control which datasource is used to execute the query:
+
+```py
+c = ChalkClient()
+
+# This query uses the risk datasource
+c.query(input={User.id: 1}, output=[User.name], tags=['risk'])
+
+# This query uses the analytics datasource
+
+c.query(input={User.id: 1}, output=[User.name], tags=['analytics'])
+
+# This query uses the default datasource
+c.query(input={User.id: 1}, output=[User.name])
+```
