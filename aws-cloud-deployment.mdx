@@ -8,15 +8,17 @@ import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
 
 ---
 
-Chalk enables innovative machine learning teams to focus on building
-the unique products and models that make their business stand
-out. Behind the scenes Chalk seamlessly handles data infrastructure
-with a best-in-class developer experience.
+Chalk's feature platform with best-in-class developer experience enables
+machine learning teams to focus on building the unique products and models
+that make their business stand out. Chalk provides a feature store so that
+you can deploy production machine learning pipelines for real time data
+in minutes.
 
 Chalk is both a framework and a platform — developers can write code
-using familiar Python packages, and deploy that code to Chalk’s
-platform. In the Customer Cloud deployment, Chalk runs & administers its platform
-on the customer’s cloud account. Chalk's managed infrastructure then executes-customer defined pipelines to compute
+using familiar Python packages, and deploy their feature and data pipeline definitions
+to Chalk’s platform. In the Customer Cloud deployment, Chalk runs &
+administers its platform on the customer’s cloud account. Chalk's managed
+infrastructure then executes the customer defined pipelines to compute
 [feature](/docs/features)
 data for machine learning applications. Chalk then serves this data
 back to customer applications for online inference and to customer
@@ -30,22 +32,11 @@ data teams for training set generation.
 
 ---
 
-## IAM Requirements
+## IAM Role Permissions
 
-Chalk requires certain IAM permissions to manage infrastructure in your cloud account.
-Typically, Chalk recommends:
-
-- creating a new account in your AWS organization
-- creating a new role in your root AWS organization with the permissions in this document
-- granting Chalk's management role AssumeRole on the role you created
-
----
-
-## Setup permissions
-
-Chalk recommends creating a custom [role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html)
-in your organization with the following permissions granted.
-At a high level, Chalk needs the ability to provision the key components of your infrastructure:
+In order to manage infrastructure in your cloud account, Chalk requires certain
+IAM permissions. At a high level, Chalk needs the ability
+to provision the key components of your infrastructure:
 
 - Storage resources (buckets for dataset storage and bulk insertion into offline storage)
 - Networking resources (LBs, VPCs, etc.)
@@ -54,7 +45,16 @@ At a high level, Chalk needs the ability to provision the key components of your
 - Online storage ([RDS](https://aws.amazon.com/rds/), or [Elasticache](https://aws.amazon.com/elasticache/), or [Dynamo](https://aws.amazon.com/dynamodb/))
 - Offline storage (typically Snowflake or Redshift)
 
-The following IAM policy is sufficient for Chalk to provision a deployment:
+## Setup Instructions
+
+We typically recommend the following steps for enabling Chalk to manage AWS
+infrastructure in your cloud account:
+
+- Create a new account in your AWS organization.
+- Create a new [role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) in your root AWS organization that enables Chalk's server
+  to perform actions in this account. Ensure that AssumeRole is granted.
+- Create an IAM policy using the JSON document below and attach this IAM policy
+  to the created role.
 
 ```json
 {
@@ -126,9 +126,9 @@ The following IAM policy is sufficient for Chalk to provision a deployment:
                 "ec2:*",
                 "cloudwatch:*",
                 "autoscaling:*",
-                "application-autoscaling:*"
+                "application-autoscaling:*",
                 "dynamodb:*",
-                "dax:*",
+                "dax:*"
             ],
             "Effect": "Allow"
         }
