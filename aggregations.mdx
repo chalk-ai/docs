@@ -34,13 +34,16 @@ class User:
 Here, the `num_failed_logins` feature supports three windows:
 the number of failed logins in the last 10 minutes, 30 minutes, and 1 day.
 
-A windowed feature can be referenced in a query by the desired window.
-For example:
+A windowed feature can be referenced in a query or a resolver in the following, equivalent ways. Each
+column below shows the possible syntax variants for a given time window.
 
 ```py
-User.num_failed_logins("**10m**")
-User.num_failed_logins("**30m**")
-User.num_failed_logins("**1d**")
+# Note: The last value for each list is the time converted to seconds
+User.num_failed_logins("**10m**")    User.num_failed_logins("**1d**")    User.num_failed_logins("**1h30m**")
+User.num_failed_logins["**10m**"]    User.num_failed_logins["**1d**"]    User.num_failed_logins["**1h30m**"]
+User.num_failed_logins_10m           User.num_failed_logins_1d           User.num_failed_logins_1h30m
+User.num_failed_logins__10m__        User.num_failed_logins__1d__        User.num_failed_logins__1h30m__
+User.num_failed_logins__600__        User.num_failed_logins__86400__     User.num_failed_logins__5400__
 ```
 
 Windowed features support much of the same functionality as a normal feature.
