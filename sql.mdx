@@ -543,7 +543,7 @@ from chalk.sql import SQLSourceGroup, PostgreSQLSource
 sql_group = SQLSourceGroup(
     name='primary_group',
     default=PostgreSQLSource(name="default_replica"),
-    sources={
+    tagged_sources={
         'risk': PostgreSQLSource(name='risk_replica'),
         'analytics': PostgreSQLSource(name='analytics_replica'),
     }
