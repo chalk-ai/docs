@@ -22,6 +22,87 @@ a best-in-class developer experience. Here’s how it works.
 
 ---
 
+Companies are increasingly built not only on data, but on data transformation. Machine Learning models
+are the most concrete example of this: they take transformed data (engineered features), and further
+"transform" them into outputs—predictions, embeddings, etc. Beyond modeling, companies often need to calculate
+metrics and features on the fly—for their users or for monitoring purposes (maybe an example here).
+
+This is a incredibly challenging problem. 1). tremendous amount of data,  2). running feature pipelines can be
+an expensive operation and doing it in real time is hard, 3). engineered features are often treated
+as temporary values and are discarded after creation—which is costly, makes it hard to debug errors,
+increases the surface space for potential errors,
+
+Chalk
+is a platform that makes this more fluid, though increasingly ubiquitous,
+
+Chalk is a declarative data inteface which enables:
+- rapid engineering and testing of new features,
+- querying with feature-freshness guarentees,
+- querying with point-in-time correctness,
+- blazingly fast response times,
+- latency monitoring,
+
+Essentially, Chalk is an interface that you place on top of your data layer,
+configure with an incredibly simple python interface,
+
+We will expand on what each of these means, but at a high level
+
+both high speed and guaranteed freshness, monitor traffic, latency,
+and
+point-in-time  consistent features.
+Chalk lets you declaratively specify an interface for your data in simple idiomatic python.
+This interface provides and unparalleled real time data access, traceability, and guaranteed feature freshness,
+Chalk Primer
+
+A chalk data interface can be specified in python through the [chalk python library](link to chalk python library). This python code is pushed to the Chalk Cloud system (or a customer cloud in self-hosted instances), which creates the cloud architecture optimized for the specified interface.
+
+The python code that chalk requires is incredibly simple, but very flexible: it is composed of features and feature resolvers.
+What are Features
+
+Features are queryable datasets—you can think of them as tables in in the database that Chalk stitches together based on the declarative specifications of your chalk code.
+
+For instance, a "Parks" Feature derived from the national parks api, might look like the following.
+
+from chalk.features import feature
+
+@features
+class Park:
+  id: int
+  full_name: str
+
+Essentially, Features specify what you want your data to look like. They are define what you can query through chalk's clients. Features are complemented by Feature Resolvers.
+What are Feature Resolvers
+
+Resolvers specify how a feature is derived. Feature resolvers are incredibly versatile: they can can pull features directly from a database, they can create features from the outputs of other resolvers, they can invoke arbitrary python transformations.
+
+Feature resolvers also specify the desired characteristics of a feature, such as the max staleness of its values—this is where chalk shines; it provides a clean interface for specifying feature characteristics with high granularity. Feature resolvers are python functions that take zero or more Features (or Feature subsets) as inputs and output new features. Below is an example of a feature resolver that takes no inputs and populates the "Park" feature.
+
+    Note
+
+    The feature resolver returns a DataFrame of Parks. DataFrames are how chalk specifies feature resolvers that return multiple rows of a feature.
+
+    Note The decorator on the get_parks feature resolver specifies that whenever an end user queries the features table, the function needs to be rerun—get_parks cannot rely on cached data.
+
+from chalk.features import DataFrame
+@online
+def get_parks() -> DataFrame[Park]:
+  return [
+    Park(id=2, fullName='Yellowstone'),
+    Park(id=3, fullName='Yosemite'),
+    Park(id=4, fullName='Zion'),
+  ]
+
+Building a Simple Chalk Data Interface
+
+To build a simple chalk data interface for the national parks API, we will:
+
+    Download and setup the chalk toolkit,
+    Write a Feature,
+    Write a Feature Resolver,
+    Push our code to chalk.
+
+We will go through a couple iterations of the last few steps to incrementally understand how chalk works.
+
 ## Develop
 
 Chalk makes it simple to develop feature pipelines for machine
