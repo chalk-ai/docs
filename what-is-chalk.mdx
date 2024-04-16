@@ -28,26 +28,44 @@ are the most concrete example of this: they take transformed data (engineered fe
 metrics and features on the fly (what is perhaps dramatically referred to as "real-time") for their users
 or for monitoring purposes, and they need to combine information from heterogenous data sources.
 
-Making transformed features production-grade—that is making them consistent, debuggable, monitorable, quick—and handling
-the interplay between increasingly complex and interoperating datasources, is a hard problem, but failing to address
-it can cause a lot problems, including: slow model deployment, high query latency,  inefficient and excessive recomputation
-of expensive features, diverging implementations of feature processing code, feature drift that goes unnoticed, high storage
-overhead, difficulty or inability recovering historic dataset, difficulty versioning features, and difficultly
-spotting model performance degradation.
+Handling the interplay between an increasingly complex mix of data sources and making transformed features
+production-grade—that is making them consistent, debuggable, monitorable, and quick—is a hard problem,
+but failing to address causes a lot problems:
+- high query latency, (?)[link to how chalk addresses this problem]
+- slow model deployment (?)[link to how chalk addresses this problem]
+- inefficient and excessive recomputation of expensive features  (?)[link to how chalk addresses this problem]
+- diverging implementations of feature processing code, unnoticed feature drift, (?)[link to how chalk addresses this problem]
+- high storage overhead, (?)[link to how chalk addresses this problem]
+- unrecoverable datasets based on historic data, (?)[link to how chalk addresses this problem]
+- lack of feature versioning,  (?)[link to how chalk addresses this problem]
+- difficultly spotting model performance degradation. (?)[link to how chalk addresses this problem]
 
 The abstraction that is typically used to "productionize features" is a Feature Store: we will elaborate
-later on [what feature storess are](what is a feature store) and [how Chalk is implemented](how chalk works), but
-at a high level Chalk, does two things. It centralizes and remembers every feature you've ever computed and it
+later on [what Feature Stores are](what is a feature store) and [how Chalk is implemented](how chalk works), but
+at a high level Chalk, does two things: 1). it centralizes and remembers every feature you've ever computed, and it
 allows recently calcuated data to be queried in real time with point-in-time correctness guarentees.
 
 Essentially, with Chalk, through a simple python API, you:
 1). define your features,
+```python
+@features
+User:
+  id: str
+  name: str
+  age: int
+  birthday: datetime
+  is_birthday: bool
+```
 2). connect upstream data sources,
 3). specify the desired properties of your features (for instance, Chalk lets you specify [the freshness of a feature](link to feature freshness)
 4). write your feature transformation.
+```python
+@online
+def is_birthday(user: User) -> bool:
+  User.birthday == datetime.today()
+```
 
-Chalk uses the code you write to remembers every computed feature and serves the latest values
-for all your features with insane quickness and point-in-time correctness guarentees.
+You can think of this as Version Control and Continuous Integration for your data.
 
 ## What is Declarative? And Why Use A Declarative Approach So Good for Feature Storage?
 
