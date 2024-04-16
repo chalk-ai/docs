@@ -22,15 +22,53 @@ a best-in-class developer experience. Here’s how it works.
 
 ---
 
-Companies are increasingly built not only on data, but on data transformation. Machine Learning models
+Companies are increasingly built not only on data, but on data transformations. Machine Learning models
 are the most concrete example of this: they take transformed data (engineered features), and further
 "transform" them into outputs—predictions, embeddings, etc. Beyond modeling, companies often need to calculate
-metrics and features on the fly—for their users or for monitoring purposes (maybe an example here).
+metrics and features on the fly (what is perhaps dramatically referred to as "real-time") for their users
+or for monitoring purposes, and they need to combine information from heterogenous data sources.
 
-This is a incredibly challenging problem. 1). tremendous amount of data,  2). running feature pipelines can be
-an expensive operation and doing it in real time is hard, 3). engineered features are often treated
-as temporary values and are discarded after creation—which is costly, makes it hard to debug errors,
-increases the surface space for potential errors,
+Making transformed features production-grade—that is making them consistent, debuggable, monitorable, quick—and handling
+the interplay between increasingly complex and interoperating datasources, is a hard problem, but failing to address
+it can cause a lot problems, including: slow model deployment, high query latency,  inefficient and excessive recomputation
+of expensive features, diverging implementations of feature processing code, feature drift that goes unnoticed, high storage
+overhead, difficulty or inability recovering historic dataset, difficulty versioning features, and difficultly
+spotting model performance degradation.
+
+The abstraction that is typically used to "productionize features" is a Feature Store: we will elaborate
+later on [what feature storess are](what is a feature store) and [how Chalk is implemented](how chalk works), but
+at a high level Chalk, does two things. It centralizes and remembers every feature you've ever computed and it
+allows recently calcuated data to be queried in real time with point-in-time correctness guarentees.
+
+Essentially, with Chalk, through a simple python API, you:
+1). define your features,
+2). connect upstream data sources,
+3). specify the desired properties of your features (for instance, Chalk lets you specify [the freshness of a feature](link to feature freshness)
+4). write your feature transformation.
+
+Chalk uses the code you write to remembers every computed feature and serves the latest values
+for all your features with insane quickness and point-in-time correctness guarentees.
+
+## What is Declarative? And Why Use A Declarative Approach So Good for Feature Storage?
+
+SQL and CSS are two of the most clear examples of declarative programming. In both lanugages,
+the desired output not the computation is specified. This allows for a lot of optimization
+to happen in the backend to make feature serving wildly fast
+
+  For most comapnies, feature transformation involves some of the following:
+- multiple teams writing feature transformation code (for example, data scientists and machine learning
+  engineers writing code to preprocess and engineer),
+- Batch jobs that are run overnight to generate expensive features,
+-
+
+Companies operate on tremendous quantities of data, iterate quickly,
+often have multiple teams responsible for engineering features operation and doing it in real time is hard. On top o f 3).
+engineered features are often treated as temporary values and are discarded after creation—which is
+costly, makes it hard to debug errors, increases the surface space for potential errors. But doing
+this right, is critical:
+
+Here are some common pitfalls: features are generating through batch load jobs
+are run once a day, which means
 
 Chalk
 is a platform that makes this more fluid, though increasingly ubiquitous,
