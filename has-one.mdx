@@ -82,6 +82,14 @@ to the `Profile` class:
 
 ### Optional relationships
 
-You can define optional relationships by using the `typing.Optional[...]` keyword:
+When a has-one relationship is specified, the default behavior is to treat the linked Feature
+as required. Following the example above, specifying a `User` without a `Profile` and
+querying for a `User`'s profile or using the `User.profile` in a resolver raises an
+error.
+
+To define optional relationships, use the `typing.Optional[...]` keyword:
 
 <PyDiffEditor html={hasOneOptionalDiff} />
+
+Note, resolvers that take optional features as inputs need to handle the `None` case. This is
+covered in more detail in [the resolver docs](https://docs.chalk.ai/docs/resolver-inputs#optional-has-one).
