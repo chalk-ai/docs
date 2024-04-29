@@ -66,25 +66,6 @@ class User:
   The `lambda` solves forward references, letting you reference `User` before you defined it.
 </TipInfo>
 
-You can also reference the join from the foreign feature class, if you prefer.
-The following is equivalent to the two examples above:
-
-```py
-from chalk.features import features
-
-@features
-class Profile:
-    ...
-    user_id: "User.uid"
-    email_age_years: float
-
-@features
-class User:
-    ...
-    uid: str
-    profile: Profile
-```
-
 ---
 
 ## Back-references
