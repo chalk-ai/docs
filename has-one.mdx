@@ -73,9 +73,8 @@ class User:
 You can also add a back-reference to `User` from `Profile`.
 However, you don't have to explicitly set the join on `Profile`.
 Instead, the join condition is assumed to be symmetric and copied over.
-Building on the above example, all you need to do
-to complete the one-to-one relationship is to add a `User` to
-the `Profile` class:
+To complete the one-to-one relationship from our example,  add a `User`
+to the `Profile` class:
 
 <PyDiffEditor html={oneToOneDiff} />
 

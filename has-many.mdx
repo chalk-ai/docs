@@ -82,9 +82,9 @@ User.transfers[
 
 In the reverse direction, a one-to-many relation is defined by a [has_one](/docs/has-one)
 relation (following the above example, a user has many transfers but a transfer has a
-single user). With Chalk, you don't have to explicitly set the join a second time. Instead,
-the join condition is assumed to be symmetric and copied over. All you need to do to complete
-the one-to-many relationship is to add a `User` to the `Transfer` class:
+single user). However, you don't have to explicitly set the join a second time. Instead,
+the join condition is assumed to be symmetric and copied over. To complete the one-to-many
+relationship from our example, add a `User` to the `Transfer` class:
 
 <PyDiffEditor html={manyToOneDiff} />
 
