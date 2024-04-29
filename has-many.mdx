@@ -62,13 +62,13 @@ which supports many helpful aggregation operations:
 
 ```py
 # Number of transfers made by a user
-user.transfers.count()
+User.transfers.count()
 
 # Total amount of transfers made by the user
-user.transfers[Transfer.amount].sum()
+User.transfers[Transfer.amount].sum()
 
 # Total amount of the transfers made by the user that were returned
-user.transfers[
+User.transfers[
     Transfer.status == "returned",
     Transfer.amount
 ].sum()
@@ -80,12 +80,11 @@ user.transfers[
 
 ### One-to-many
 
-A One-to-many is defined by a [has_one](/docs/has-one) relationship
-on the other side of the relation (following the above example, a user has
-many transfers, but a transfer has a single user). With Chalk, you don't have
-to explicitly set the join a second time. Instead, the join condition is assumed
-to be symmetric and copied over. All you need to do to complete the one-to-many
-relationship is to add a `User` to the `Transfer` class:
+In the reverse direction, a one-to-many relation is defined by a [has_one](/docs/has-one)
+relation (following the above example, a user has many transfers, but a transfer has a
+single user). With Chalk, you don't have to explicitly set the join a second time. Instead,
+the join condition is assumed to be symmetric and copied over. All you need to do to complete
+the one-to-many relationship is to add a `User` to the `Transfer` class:
 
 <PyDiffEditor html={manyToOneDiff} />
 
