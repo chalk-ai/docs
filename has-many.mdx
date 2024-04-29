@@ -11,8 +11,7 @@ import { TipInfo } from '@/components/Tip'
 
 ---
 
-Has-many relationships link a feature set to many examples of a different feature set. Like has-one
-relationships, you must set a join condition to link the two feature sets.
+Has-many relationships link a feature to many instances of another feature
 
 ## Recommended Implementation
 
@@ -25,8 +24,10 @@ from chalk.features import features, DataFrame, ...
 @features
 class Transfer:
     id: str
-    user_id: "User.id" # (note, the annotation is a string reference)
-    amount: float
+    # note, the annotation must be a string reference because User is
+    # defined after Transfer.
+
+    user_id: "User.id"     amount: float
 
 @features
 class User:
@@ -79,7 +80,7 @@ user.transfers[
 
 ### One-to-many
 
-One-to-many is defined by a [has_one](/docs/has-one) relationship
+A One-to-many is defined by a [has_one](/docs/has-one) relationship
 on the other side of the relation (following the above example, a user has
 many transfers, but a transfer has a single user). With Chalk, you don't have
 to explicitly set the join a second time. Instead, the join condition is assumed
