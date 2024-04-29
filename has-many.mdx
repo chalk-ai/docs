@@ -12,34 +12,33 @@ import { TipInfo } from '@/components/Tip'
 ---
 
 A feature set can be linked to many examples of a different feature set
-via has-many relationships. Like has-one relationships, you must set a join condition to link
-the two feature sets.
+via has-many relationships. Like has-one relationships, you must set a join
+condition to link the two feature sets.
 
 ## Recommended Implementation
 
-Specified below is the simplest way to demonstrate a has-many relationship and its join.
+Below is the simplest way to specify a join for a has-many relationship. In the example below,
+a `User` is linked to potentially multiple `Transfer`s.
 
 ```py
 from chalk.features import features, DataFrame, ...
 
 @features
 class Transfer:
-    ...
-    user_id: str
+    id: str
+    user_id: "User.id"
+    user: "User" # (optional, if you need to access the user through transaction)
     amount: float
 
 @features
 class User:
-    ...
-    uid: Transfer.user_id
+    id: str
     transfers: DataFrame[Transfer]
 ```
 
-This denotes that a user has many transfers, and that `User.uid` is of type `str` and equals `Transfer.user_id`.
-
 ### Explicit Join
 
-The following example, which explicitly sets the join, is equivalent to the above.
+The following example, which explicitly sets the join, is equivalent to the above:
 
 ```py
 from chalk.features import has_many, DataFrame, ...

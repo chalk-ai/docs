@@ -15,56 +15,59 @@ feature set on both sides of the relation.
 
 ## Recommended Implementation
 
-Specified below is the simplest way to demonstrate a join for a has-one relationship.
-Here, users have an associated profile:
+Below is the simplest way to specify a join for a has-one relationship. In the example below,
+a `User` is linked to their `Profile`.
+one associated profile:
 
 ```py
 from chalk.features import features
 
 @features
 class Profile:
-    ...
-    user_id: str
+    id: str
+    user_id: "User.id"
     email_age_years: float
 
 @features
 class User:
-    ...
-    uid: Profile.user_id
+    id: str
     profile: Profile
 ```
 
-This specifies that `User.uid` is of type `str` and `User.profile` is a has-one feature
-through the join `User.uid == Profile.user_id`.
+With a has-one relationship established, you can reference features on `Profile` through
+`User`. For example:
 
+```py
+user_email_age = User.profile.email_age_years
+```
 
-### Explicit Join
+## Explicit Join
 
-The following snippet, in which the join is explicitly defined,
-is equivalent to the recommended implementation.
+In the following snippet, the has-one join is explicitly defined. This is functionally
+equivalent to the recommended implementation.
 
 ```py
 from chalk.features import features, has_one, ...
 
 @features
 class Profile:
-    ...
+    id: str
     user_id: str
     email_age_years: float
 
 @features
 class User:
-    ...
+    id: str
     uid: str
     profile: Profile = has_one(lambda: Profile.user_id == User.uid)
 ```
 
 <TipInfo>
-  The `lambda` solves forward references, letting you reference `User` before it is defined.
+  The `lambda` solves forward references, letting you reference `User` before you defined it.
 </TipInfo>
 
 You can also reference the join from the foreign feature class, if you prefer.
-The following is equivalent to the two examples above.
+The following is equivalent to the two examples above:
 
 ```py
 from chalk.features import features
@@ -80,12 +83,6 @@ class User:
     ...
     uid: str
     profile: Profile
-```
-
-Now, you can reference features on `Profile` through `User`. For example:
-
-```py
-user_email_age = User.profile.email_age_years
 ```
 
 ---
@@ -107,7 +104,6 @@ the `Profile` class:
 
 ### Optional relationships
 
-You can define optional relationships simply by
-using the `typing.Optional[...]` keyword:
+You can define optional relationships by using the `typing.Optional[...]` keyword:
 
 <PyDiffEditor html={hasOneOptionalDiff} />
