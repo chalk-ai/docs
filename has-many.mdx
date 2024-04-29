@@ -11,14 +11,13 @@ import { TipInfo } from '@/components/Tip'
 
 ---
 
-A feature set can be linked to many examples of a different feature set
-via has-many relationships. Like has-one relationships, you must set a join
-condition to link the two feature sets.
+Has-many relationships link a feature set to many examples of a different feature set. Like has-one
+relationships, you must set a join condition to link the two feature sets.
 
 ## Recommended Implementation
 
-Below is the simplest way to specify a join for a has-many relationship. In the example below,
-a `User` is linked to potentially multiple `Transfer`s.
+The recommended way to specify a join for a has-many relationship is implicitly. In the
+example below, a `User` is linked to potentially multiple `Transfer`s.
 
 ```py
 from chalk.features import features, DataFrame, ...
@@ -26,8 +25,7 @@ from chalk.features import features, DataFrame, ...
 @features
 class Transfer:
     id: str
-    user_id: "User.id"
-    user: "User" # (optional, if you need to access the user through transaction)
+    user_id: "User.id" # (note, the annotation is a string reference)
     amount: float
 
 @features
@@ -36,40 +34,41 @@ class User:
     transfers: DataFrame[Transfer]
 ```
 
-### Explicit Join
+## Explicit Join
 
 The following example, which explicitly sets the join, is equivalent to the above:
 
 ```py
-from chalk.features import has_many, DataFrame, ...
+from chalk.features import has_many, DataFrame
 
 @features
 class Transfer:
-    ...
+    id: str
     user_id: str
     amount: float
 
 @features
 class User:
-    ...
-    uid: str
-    transfers: DataFrame[Transfer] = has_many(lambda: Transfer.user_id == User.uid)
+    id: str
+    transfers: DataFrame[Transfer] = has_many(lambda: Transfer.user_id == User.id)
 ```
 
-Now, you can reference the transfers for a user through the user namespace.
-The `has_many` feature returns a [chalk.DataFrame](/docs/dataframe),
-which supports many helpful aggregate operations:
+## Aggregations on References
+
+Having established a has-many relationship, you can now reference the transfers for
+a user through the user namespace. The `has_many` feature returns a [chalk.DataFrame](/docs/dataframe),
+which supports many helpful aggregation operations:
 
 ```py
 # Number of transfers made by a user
-User.transfers.count()
+user.transfers.count()
 
 # Total amount of transfers made by the user
-User.transfers[Transfer.amount].sum()
+user.transfers[Transfer.amount].sum()
 
 # Total amount of the transfers made by the user that were returned
-User.transfers[
-    Transfer.status = "returned",
+user.transfers[
+    Transfer.status == "returned",
     Transfer.amount
 ].sum()
 ```
@@ -81,12 +80,11 @@ User.transfers[
 ### One-to-many
 
 One-to-many is defined by a [has_one](/docs/has-one) relationship
-on the other side of the relation.
-However, you don't have to explicitly set the join a second time.
-Instead, the join condition is assumed to be symmetric and copied over.
-Building on the above example, all you need to do
-to complete the one-to-many relationship is to add a `User` to
-the `Transfer` class:
+on the other side of the relation (following the above example, a user has
+many transfers, but a transfer has a single user). With Chalk, you don't have
+to explicitly set the join a second time. Instead, the join condition is assumed
+to be symmetric and copied over. All you need to do to complete the one-to-many
+relationship is to add a `User` to the `Transfer` class:
 
 <PyDiffEditor html={manyToOneDiff} />
 
@@ -103,8 +101,7 @@ the `Transfer` class:
 
 ### Many-to-many
 
-Many-to-many is defined by a has-many relationship
-on the both sides of the relation.
+Many-to-many is defined by a has-many relationship on both sides of the relation.
 As before, you don't need to specify the join condition a second time
 so long as the join condition is symmetric.
 
