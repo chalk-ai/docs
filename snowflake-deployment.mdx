@@ -8,7 +8,7 @@ import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
 
 ---
 
-Chalk's feature platform with best-in-class developer experience enables
+Chalk's feature platform enables
 machine learning teams to focus on building the unique products and models
 that make their business stand out. Chalk provides a feature store so that
 you can deploy production machine learning pipelines for real time data
@@ -34,40 +34,62 @@ data teams for training set generation.
 
 ## Database Setup
 
-To use Snowflake as your offline store, we require within your Snowflake instance
+To use Snowflake as your offline store, we require
 a warehouse, a database, a schema within that database, and a user with a role that
 has `OWNER` on that database. To provision all of these, you can run the following
 commands in a Snowflake worksheet or console. Be sure to change the password, and
-you can share the password with us either through DM in plaintext, or more securely,
-send us an encrypted message following [these directions here](/docs/public-key).
+you can share the password with us securely via an encrypted message following [using GPG](/docs/public-key).
 
 ```
+-- input variables (feel free to change these)
 SET WAREHOUSE_NAME='CHALK_WAREHOUSE';
 SET WAREHOUSE_SIZE='XSMALL';
 SET ROLE_NAME='CHALK_ROLE';
 SET USER_NAME='CHALK_USER';
 SET DB_NAME='CHALK';
 SET SCHEMA_NAME='SANDBOX';
-SET PASSWORD={CHANGE THIS PASSWORD!}
 
+-- **** NOTE: Choose a secure password ****
+SET PASSWORD=<change this password>;
+
+
+-- derived variables
+SET QUALIFIED_SCHEMA_NAME=concat($DB_NAME, '.', $SCHEMA_NAME);
+
+-- Create a warehouse for Chalk
 CREATE WAREHOUSE IF NOT EXISTS IDENTIFIER($WAREHOUSE_NAME) WITH WAREHOUSE_SIZE=$WAREHOUSE_SIZE;
+
+-- Create a user and role for Chalk
 CREATE USER IF NOT EXISTS IDENTIFIER($USER_NAME) PASSWORD=$PASSWORD;
 CREATE ROLE IF NOT EXISTS IDENTIFIER($ROLE_NAME);
+
+-- Allow Chalk to create storage integrations for bulk loads from cloud object storage
 GRANT CREATE INTEGRATION ON ACCOUNT TO IDENTIFIER($ROLE_NAME);
 
+-- Create the database + schema
 CREATE DATABASE IF NOT EXISTS IDENTIFIER($DB_NAME);
 USE DATABASE IDENTIFIER($DB_NAME);
 CREATE SCHEMA IF NOT EXISTS IDENTIFIER($SCHEMA_NAME);
 
+-- Allow Chalk to create internal/external stages for bulk loading
+GRANT CREATE STAGE ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO IDENTIFIER($ROLE_NAME);
+
+-- Grant Chalk owner on the db/schema and usage on the warehouse
+GRANT OWNERSHIP ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO IDENTIFIER($ROLE_NAME) REVOKE CURRENT GRANTS;
 GRANT USAGE ON WAREHOUSE IDENTIFIER($WAREHOUSE_NAME) TO IDENTIFIER($ROLE_NAME);
 GRANT OWNERSHIP ON DATABASE IDENTIFIER($DB_NAME) TO IDENTIFIER($ROLE_NAME);
+
+-- Grant the Chalk role to the Chalk user
 GRANT ROLE IDENTIFIER($ROLE_NAME) TO USER IDENTIFIER($USER_NAME);
 ```
 
 ## Storage Integration Setup
 
-Once we have created the warehouse, database, schema, user, and role, then the next step
-is to create storage integration(s). The storage integration will create an IAM entity
+Once we have created the warehouse, database, schema, user, and role, the next step
+is to create storage integration(s). If you have granted the `CREATE INTEGRATION` privilege to the
+Chalk Role, Chalk can manage this creation. Otherwise, you will need to create the integration.
+
+The storage integration will create an IAM entity
 along with allowed or blocked storage locations that will allow Chalk to securely load
 and unload data from the offline store.
 
@@ -78,7 +100,7 @@ creating the storage integrations,* but it should look something like this:
 CREATE STORAGE INTEGRATION "s3-integration-chalk-{organization}-dataset-bucket"
 TYPE = EXTERNAL_STAGE
 STORAGE_PROVIDER='s3'
-STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::891377258527:role/snowflake-chalk-{organization}-dataset-bucket'
+STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::<your aws account id>:role/snowflake-chalk-{organization}-dataset-bucket'
 ENABLED = true
 STORAGE_ALLOWED_LOCATIONS = ( 's3://chalk-{organization}-dataset-bucket/');
 
