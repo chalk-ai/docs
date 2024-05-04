@@ -1,0 +1,82 @@
+---
+title: Snowflake Offline Store
+description: Configure Snowflake as a Customer Cloud Offline Store
+---
+
+Chalk supports Snowflake as an Offline Store. Chalk stores computed features in a Snowflake database and schema
+of your choice, and delegates certain dataset computation operations to your Snowflake warehouse.
+
+## Creating a Snowflake Offline Store
+
+To use Snowflake as an offline store, Chalk needs:
+
+- a Snowflake account identifier
+- a warehouse name
+- a user
+- a role
+- a database
+- a schema
+
+Assuming you already have a Snowflake account, you can create the necessary resources using the following SQL script:
+
+```sql
+-- input variables (feel free to change these)
+SET WAREHOUSE_NAME='CHALK_WAREHOUSE';
+SET WAREHOUSE_SIZE='XSMALL';
+SET ROLE_NAME='CHALK_ROLE';
+SET USER_NAME='CHALK_USER';
+SET DB_NAME='CHALK';
+SET SCHEMA_NAME='SANDBOX';
+
+-- **** NOTE: Choose a secure password ****
+SET PASSWORD=<change this password>;
+
+
+-- derived variables
+SET QUALIFIED_SCHEMA_NAME=concat($DB_NAME, '.', $SCHEMA_NAME);
+
+-- Create a warehouse for Chalk
+CREATE WAREHOUSE IF NOT EXISTS IDENTIFIER($WAREHOUSE_NAME) WITH WAREHOUSE_SIZE=$WAREHOUSE_SIZE;
+
+-- Create a user and role for Chalk
+CREATE USER IF NOT EXISTS IDENTIFIER($USER_NAME) PASSWORD=$PASSWORD;
+CREATE ROLE IF NOT EXISTS IDENTIFIER($ROLE_NAME);
+
+-- Allow Chalk to create storage integrations for bulk loads from cloud object storage
+GRANT CREATE INTEGRATION ON ACCOUNT TO IDENTIFIER($ROLE_NAME);
+
+-- Create the database + schema
+CREATE DATABASE IF NOT EXISTS IDENTIFIER($DB_NAME);
+USE DATABASE IDENTIFIER($DB_NAME);
+CREATE SCHEMA IF NOT EXISTS IDENTIFIER($SCHEMA_NAME);
+
+-- Allow Chalk to create internal/external stages for bulk loading
+GRANT CREATE STAGE ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO IDENTIFIER($ROLE_NAME);
+
+-- Grant Chalk owner on the db/schema and usage on the warehouse
+GRANT OWNERSHIP ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO IDENTIFIER($ROLE_NAME) REVOKE CURRENT GRANTS;
+GRANT USAGE ON WAREHOUSE IDENTIFIER($WAREHOUSE_NAME) TO IDENTIFIER($ROLE_NAME);
+GRANT OWNERSHIP ON DATABASE IDENTIFIER($DB_NAME) TO IDENTIFIER($ROLE_NAME);
+
+-- Grant the Chalk role to the Chalk user
+GRANT ROLE IDENTIFIER($ROLE_NAME) TO USER IDENTIFIER($USER_NAME);
+```
+
+Chalk can also use an existing warehouse or database, but we do not recommend using an existing schema. The above
+script grants Chalk owner on a schema, but if you prefer to limit permissions, Chalk needs the following permissions:
+
+```
+CREATE STAGE
+CREATE VIEW
+CREATE TABLE
+```
+
+Once these objects have been created, please provide the following information to your Chalk representative:
+
+- Snowflake account identifier (`select CURRENT_ACCOUNT_NAME()`)
+- Warehouse name
+- User name
+- User password
+- Role name
+- Database name
+- Schema name
