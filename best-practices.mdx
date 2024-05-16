@@ -2,13 +2,11 @@
 
 ## Data Sources/Integrations
 
-### Test your Datasource connections
-
-Use the test datasource button in the chalk UI to test your datasources after they've been communicating
+### Test Your Datasource Connections
 
 Define integrations through the chalk dashboard and check that they're connecting properly using the test datasource button.
 
-### Avoid Naming Your Datasources by Their "type", e.g. calling a Postgres datasource "postgres"
+### Avoid Naming Your Datasources by Their "type", e.g. Don't Call Your Postgres Datasource "Postgres"
 
 Though this works, it can lead to ambiguity in SQL file resolvers if you ever add a secondary datasources of the same type: if you have a single datasource of a specific type, [Chalk lets you refer to that data source by it's type](resolvers name section)
 
@@ -105,7 +103,7 @@ Don't worry about converting the Chalk DataFrame to pandas or polars: transforma
 
 ## Querying
 
-### Run simple online queries through the chalk CLI, but for flexibility use one of chalk's clients.
+### Run Simple Queries With The Chalk CLI, For More Flexibility Use One of Chalk's Clients
 
 ### Use a Chalk Client to execute Offline_queries
 
@@ -123,7 +121,7 @@ this will make them easier to track,
 
 ### Code changes should be tested and queried on the branch server.
 
-### Environment variables and data sources are picked up by new deployments or by reactivating the branch server.
+The branch server should be used to test that your deployments and new featuers are behaving as expected.
 
 ### Use the same codebase for dev, staging, and prod. Distinct functionality between the three can be handled via decorators and resolvers that operate in only one feature space.
 
@@ -139,7 +137,7 @@ Monitoring will help you catch tricky bugs early and increase your confidence in
 
 ### Unit test your resolvers to make sure they're functioning as expected
 
-[unit tested] your resolvers!
+[unit test](link to unit testing) your resolvers!
 
 ## Security
 
