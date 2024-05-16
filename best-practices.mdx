@@ -1,0 +1,146 @@
+# Best Practices
+
+## Data Sources/Integrations
+
+### Test your Datasource connections
+
+Use the test datasource button in the chalk UI to test your datasources after they've been communicating
+
+Define integrations through the chalk dashboard and check that they're connecting properly using the test datasource button.
+
+### Avoid Naming Your Datasources by Their "type", e.g. calling a Postgres datasource "postgres"
+
+Though this works, it can lead to ambiguity in SQL file resolvers if you ever add a secondary datasources of the same type: if you have a single datasource of a specific type, [Chalk lets you refer to that data source by it's type](resolvers name section)
+
+## Features
+
+### Start by defining your features first,
+
+Features fully specify what you want your data to look like—once you have an understanding of the inner relations, writing resolvers for your features becomes easier. While you'll definitely iterate on your features as you integrate Chalk into your s
+
+### Avoid Enum Feature Types, Use Seperate Features Sets or Unpack the Data Instead
+
+While Chalk allows for Enum and dataclass feature types, they should be avoided. They don't always play nicely with serialization and can cause tough to debug errors. We recommend either unpacking the nested class into basic types or defining and joining an additionally Chalk Feature if the nested component is truly a separate complete entity. By defining a separate Feature, it also becomes easier to monitoring and test the nested feature and its values.
+
+### Tag and annotate your features
+
+We strongly recommend that you annotate and tag your features as you are developing them. This is done by adding comments above a feature, like so:
+
+```python
+from chalk import features
+from datetime import datetime
+
+@features
+class User:
+  id: str
+
+  # the user's fullname
+  # :owner: mary.shelley@aol.com
+  # :tags: team:identity, priority:high
+  name: str
+
+  # the user's birthdate
+  # :owner: mary.shelley@aol.com
+  # :tags: team:identity, priority:high
+  birthday: datetime
+```
+
+If you want to apply a tag or owner to all tags in a feature set, this should be done in the featuer decorator, like so:
+
+```python
+from chalk import features
+from datetime import datetime
+
+@features(owner="ada.lovelace@aol.com", tags=['group:risk'])
+class User:
+  id: str
+
+  # the user's fullname.
+  name: str
+```
+
+You can also apply restrictions or enforce feature annotation for your project. For instance, you can prevent deployment if features are not tagged or described.
+
+### Add validations for your features
+
+Validations for your feature can prevent bad data from incorrect written to the offline store. Besides monitoring, it can be an even stricter way of ensuring that nothing is going wrong with the feature you are calculating.
+
+### Use implicit join syntax
+
+Joins between feature sets can be specified in a number of different ways. We recommend using an implicit join syntax, which we go over in the join section of the docs.
+
+### Keep feature definitions separated from resolvers
+
+Features should be defined in separate files from resolvers (with the exception of underscore features).
+
+## Resolvers
+
+### Use underscore resolvers for very simple resolver definitions
+
+Underscore resolvers should be used for relatively simple resolvers. Ideally your underscore resolver definitions should fit on a single line.
+
+### Use SQL file resolvers to read data from your raw datasets
+
+While python resolvers, can be used to read data from your data sources, SQL File resolvers should be preferred.
+
+### Explicity list columns in a select statement for sql file resolvers
+
+Select statements in SQL file resolvers should be explicit: avoid using the \* syntax.
+
+### Make sure your resolvers operate inside a single feature space
+
+Resolver inputs and outputs must belong to the same feature class, but joins can allow resolvers to connect data between feature sets.
+
+### To run an API request on multiple features at the same time, you can return a DataFrame
+
+To pool API requests, we recommend using a DataFrame to DataFrame resolver. For instance, if you're trying to
+
+### Specifying resolvers as @offline should be done only for resolvers whose backing data sources are too slow or expensive to fulfill online query requests
+
+— i.e. data warehouses or certain API sources, but if your query requests can tolerate the latency of one of these slow sources, you can mark resolvers using those datasources @online to query them on-the-fly.
+
+### When to use pandas vs polars transformation.
+
+Don't worry about converting the Chalk DataFrame to pandas or polars: transformation in a python resolver—the transformation is cheap: we use arrow (and so do pandas, and polars ) so moving data from a chalk dataframe to either is close to free
+
+## Querying
+
+### Run simple online queries through the chalk CLI, but for flexibility use one of chalk's clients.
+
+### Use a Chalk Client to execute Offline_queries
+
+Offline queries can only be executed through one of the chalk clients
+
+### Created named queries for your commonly executed queries
+
+this will make them easier to track,
+
+### Create and share datasets with offline queries
+
+### poll triggered queries to make sure they've executed successfully.
+
+## Deployment
+
+### Code changes should be tested and queried on the branch server.
+
+### Environment variables and data sources are picked up by new deployments or by reactivating the branch server.
+
+### Use the same codebase for dev, staging, and prod. Distinct functionality between the three can be handled via decorators and resolvers that operate in only one feature space.
+
+### To get started, we recommend the following repository structure:
+
+### To access custom files in your deployments use the TARGET_ROOT environment variable. If you want to make sure a globally defined variable is accessible before any of your resolvers run, use the before_all decorator.
+
+## Observability / Testing
+
+### Set up monitoring on your most important features and resolvers, early
+
+Monitoring will help you catch tricky bugs early and increase your confidence in the data you are generating and serving.
+
+### Unit test your resolvers to make sure they're functioning as expected
+
+[unit tested] your resolvers!
+
+## Security
+
+### Generate and use access token to set and restrict the permissions for your different users.
