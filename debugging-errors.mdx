@@ -30,7 +30,7 @@ the root cause of the error. If you are struggling to debug this or find any oth
 
 The 502 status code means `bad gateway`, which usually indicates `timeout` or `not enough servers`. We'd recommend
 looking at CPU utilization on your cluster to determine if you need to modify the cloud resource configurations. You
-can do so in the `Settings > Resources` page in the Chalk console by modifying and applying resource configuration JSON
+can do so in the `Settings > Resources` page in the Chalk dashboard by modifying and applying resource configuration JSON
 changes under `Advanced Resource Configuration`. However, we'd also encourage reaching out to us for discussion on how
 to optimize resource configuration for your situation!
 
@@ -38,16 +38,17 @@ to optimize resource configuration for your situation!
 
 If you are running a query from a notebook or somewhere locally, the polling for query status might have a shorter
 timeout, so if the query times out before completion, we'd recommend verifying whether the query is still running in the
-console by looking at the query run page and validating that there is a pod in the cluster running the query. Otherwise
+dashboard by looking at the query run page and validating that there is a pod in the cluster running the query. Otherwise
 your query may have also completed after the polling timeout, in which case you can also view query status in the
-console.
+dashboard.
 
 ### Please double check that all features have resolvers and resolvers do not have circular dependencies.
 
 The first thing to validate is that all features have resolvers. If all features have resolvers, then you might see
 this error message if Chalk is unable to construct a dependency graph for resolving the features that you are
-querying. This is usually a result of a join that cannot be processed. Please identify which feature(s) is triggering
-the circular dependency error and reach out to us with this context!
+querying. This is usually a result of a join that cannot be processed. Please reduce the number of output
+features in your query until you have identified a minimal set that reproduces the circular dependency error and
+reach out to us with this context!
 
 ### Duplicate Resolver Shortname
 
@@ -58,9 +59,9 @@ error message can also sometimes be an indicator of a missing import.
 
 ### branch server might still be starting
 
-You would usually encounter this error when running `chalk apply --branch`. In the Chalk console under `Branches`, you
+You would usually encounter this error when running `chalk apply --branch`. In the Chalk dashboard under `Branches`, you
 can check the status of the branch server. If you are concerned that there are lingering processes on branches, such
-as queries on branches that you would like to kill, you can also stop and restart the branch server in the console to
+as queries on branches that you would like to kill, you can also stop and restart the branch server in the dashboard to
 kill any processes in progress on the branch server.
 
 ### Unable to load dashboards after deploy
