@@ -1,28 +1,33 @@
 # Best Practices
 
+With Chalk, the same solution can be implemented in a number of different ways. Below are some guidelines
+illustrating recommended patterns for building and maintaining your Chalk solution!
+
 ## Data Sources/Integrations
 
-### Test Your Datasource Connections
+### Test your datasource connections
 
 Define integrations through the chalk dashboard and check that they're connecting properly using the test datasource button.
 
-### Avoid Naming Your Datasources by Their "type", e.g. Don't Call Your Postgres Datasource "Postgres"
+### Avoid naming your datasources by their "type", e.g. don't call your postgres datasource "postgres"
 
-Though this works, it can lead to ambiguity in SQL file resolvers if you ever add a secondary datasources of the same type: if you have a single datasource of a specific type, [Chalk lets you refer to that data source by it's type](resolvers name section)
+Though this works, it can lead to ambiguity in SQL file resolvers if you add multiple data sources of the same type: when you have only one instance of a data source type, [Chalk lets you refer to that data source by it's type instead of its name](resolvers name section)
 
 ## Features
 
-### Start by defining your features first,
+### Start by defining your features
 
-Features fully specify what you want your data to look like—once you have an understanding of the inner relations, writing resolvers for your features becomes easier. While you'll definitely iterate on your features as you integrate Chalk into your s
+Features fully specify what you want your data to look like—once you have an understanding of the inner relations, writing resolvers for your features becomes easier.
 
-### Avoid Enum Feature Types, Use Seperate Features Sets or Unpack the Data Instead
+### Avoid dataclass feature types, instead use seperate features sets or unpack the data
 
-While Chalk allows for Enum and dataclass feature types, they should be avoided. They don't always play nicely with serialization and can cause tough to debug errors. We recommend either unpacking the nested class into basic types or defining and joining an additionally Chalk Feature if the nested component is truly a separate complete entity. By defining a separate Feature, it also becomes easier to monitoring and test the nested feature and its values.
+While Chalk allows for dataclass feature types, they should be avoided. They don't always play nicely with serialization and can cause tough to debug errors. We recommend
+either unpacking the nested class into basic types or defining and joining an additionally Chalk feature set if the nested component is truly a separate entity. Defining a
+separate feature set, also makes the underlying data easier to monitor and test.
 
 ### Tag and annotate your features
 
-We strongly recommend that you annotate and tag your features as you are developing them. This is done by adding comments above a feature, like so:
+We strongly recommend that you tag and annotate your features as you are developing them. This is done by adding comments above a feature, like so:
 
 ```python
 from chalk import features
@@ -43,7 +48,7 @@ class User:
   birthday: datetime
 ```
 
-If you want to apply a tag or owner to all tags in a feature set, this should be done in the featuer decorator, like so:
+If you want to apply a tag or owner to all features in a feature set, this should be done in the featuer decorator, like so:
 
 ```python
 from chalk import features
@@ -57,29 +62,35 @@ class User:
   name: str
 ```
 
-You can also apply restrictions or enforce feature annotation for your project. For instance, you can prevent deployment if features are not tagged or described.
-
-### Add Validations For Your Features
-
-Validations for your feature can prevent bad data from incorrect written to the offline store. Besides monitoring, it can be an even stricter way of ensuring that nothing is going wrong with the feature you are calculating.
-
-### Use implicit join syntax
-
-Joins between feature sets can be specified in a number of different ways. We recommend using an implicit join syntax, which we go over in the join section of the docs.
+You can also apply restrictions or enforce feature annotation for your entire project. For instance, you can block deployment if features are not tagged or described.
 
 ### Keep feature definitions separated from resolvers
 
 Features should be defined in separate files from resolvers (with the exception of underscore features).
 
+### Define All Your Features in the Same File
+
+Although it can get a little lengthy, we recommend defining your features in a single file. This makes expressing joins between features easier, and prevent circular
+dependencies.
+
+### Add Validations For Your Features
+
+Validations for your features can prevent bad data from being written to your offline store. They can provide an even stricter complement to monitoring, ensuring that nothing
+is going wrong with the feature you are calculating.
+
+### Use implicit join syntax
+
+Joins between feature sets can be specified in a number of different ways. We recommend using an implicit join syntax, which [we cover in the join section of the docs](join link).
+
 ## Resolvers
 
 ### Use underscore resolvers for very simple resolver definitions
 
-Underscore resolvers should be used for relatively simple resolvers. Ideally your underscore resolver definitions should fit on a single line.
+Underscore resolvers should be used for relatively simple resolvers: your underscore resolver definitions should fit inline.
 
 ### Use SQL file resolvers to read data from your raw datasets
 
-While python resolvers, can be used to read data from your data sources, SQL File resolvers should be preferred.
+While python resolvers can be used to read data from your data sources, SQL File resolvers are preferred.
 
 ### Explicity list columns in a select statement for sql file resolvers
 
@@ -87,33 +98,32 @@ Select statements in SQL file resolvers should be explicit: avoid using the \* s
 
 ### Make sure your resolvers operate inside a single feature space
 
-Resolver inputs and outputs must belong to the same feature class, but joins can allow resolvers to connect data between feature sets.
+Resolver inputs and outputs must belong to the same feature set, but joins can allow resolvers to connect data between feature sets.
 
 ### To run an API request on multiple features at the same time, you can return a DataFrame
 
 To pool API requests, we recommend using a DataFrame to DataFrame resolver. For instance, if you're trying to
 
-### Specifying resolvers as @offline should be done only for resolvers whose backing data sources are too slow or expensive to fulfill online query requests
+### Resolvers should be specified as @offline when their backing data sources is too slow or expensive to fulfill online query requests
 
-— i.e. data warehouses or certain API sources, but if your query requests can tolerate the latency of one of these slow sources, you can mark resolvers using those datasources @online to query them on-the-fly.
 
 ### When to use pandas vs polars transformation.
 
-Don't worry about converting the Chalk DataFrame to pandas or polars: transformation in a python resolver—the transformation is cheap: we use arrow (and so do pandas, and polars ) so moving data from a chalk dataframe to either is close to free
+Don't worry about converting Chalk DataFrames to pandas or polars in a python resolver—the transformation is cheap. We use arrow (and so do pandas and polars ) so moving data from a chalk dataframe to either is close to free
 
 ## Querying
 
 ### Run Simple Queries With The Chalk CLI, For More Flexibility Use One of Chalk's Clients
 
-The chalk cli should only be used to run simple online queries. For more complex use cases, you should use one of Chalk's clients.
+The Chalk cli should only be used to run simple online queries. For more complex use cases, you should use one of Chalk's clients.
 
 ### Use a Chalk Client to execute Offline_queries
 
-Offline queries can only be executed through one of the chalk clients
+Offline queries can only be executed through one of the Chalk clients
 
 ### Created named queries for your commonly executed queries
 
-[Naming queries](link to naming queries) makes it easier to evaluate and track the performance of a specific queries over time,
+[Naming queries](link to naming queries) makes it easier to evaluate and track the performance of specific queries over time.
 
 ## Deployment
 
@@ -124,20 +134,31 @@ The branch server should be used to test that your deployments and new featuers 
 ### To get started, we recommend the following repository structure:
 
 ```
-chalk_repo/
+company_chalk/
+├── src/
+│  ├── resolvers/
+│  │  ├── .../
+│  │  ├── __init__.py
+│  │  └── pipelines.py
+│  ├── __init__.py
+│  ├── datasources.py
+│  └── feature_sets.py
+├── .chalkignore
 ├── chalk.yaml
-├── features.py
-├── model.joblib
-└── resolvers.py
+├── README.md
+└── requirements.txt
 ```
+
+Your `.chalkignore` file should include any of your scripts or notebooks: anything that you are not actively using in your deployment should be put there so that
+non-deployment code does not clutter or interfere with your deployment.
 
 ### To access custom files in your deployments use the TARGET_ROOT environment variable. If you want to make sure a globally defined variable is accessible before any of your resolvers run, use the before_all decorator.
 
 Global setup for resolver should be done through a function decorated with the [@before_all decorator](). This also allows for unique setups for different environments.
 
-### Custom Files Such As Models Should Be Accessed With The TARGET_ROOT Environment Variable
+### Custom files such as machine learning models are accessed with the TARGET_ROOT environment variable
 
-Additionally to access files packaged in your chalk deployments, use the TARGET_ROOT environment variable to fully specify the path to your files.
+To access files packaged in your chalk deployments, use the TARGET_ROOT environment variable to fully specify the path to your files.
 
 For instance, if you have the following directory which you are deploying to Chalk:
 ```
@@ -147,6 +168,7 @@ example/
 ├── model.joblib
 └── resolvers.py
 ```
+
 You would access the model.joblib file as follows:
 ```python
 model_file_path=f"{os.environ['TARGET_ROOT']}/model.joblib"
@@ -156,7 +178,8 @@ model_file_path=f"{os.environ['TARGET_ROOT']}/model.joblib"
 
 ### Set up monitoring on your most important features and resolvers, early
 
-Monitoring will help you catch tricky bugs early and increase your confidence in the data you are generating and serving.
+Monitoring helps you catch tricky bugs early and gives you guarentees about the data you are generating and serving. You should configure monitoring for your
+important features and resolvers early in your implementation.
 
 ### Unit test your resolvers to make sure they're functioning as expected
 
