@@ -8,6 +8,8 @@ and their most common root causes. If you are still struggling to debug, please 
 
 ## Query Errors
 
+These are errors you would encounter when running queries, either manual or orchestrated. 
+
 ### Unexpected query results
 
 If you're receiving either 0 rows when you expect a non-zero query result, or if the feature values that you're seeing
@@ -24,7 +26,7 @@ to verify that your token has been provisioned for the right environment.
 ### Unexpected Chalk server error with status code 500
 
 The 500 status code means `internal server error`. This should usually come with another message with more details on
-the root cause of the error. If you are struggling to debug this or find any other clues, please reach out to us!
+the root cause of the error. If you are struggling to debug this, please reach out to us!
 
 ### Unexpected Chalk server error with status code 502
 
@@ -58,12 +60,13 @@ changes required an import, you can use a linting tool to find out, such as [pyl
 
 ## `chalk apply` Errors
 
-### branch server might still be starting
+These are errors you would encounter when running `chalk apply` or `chalk apply --branch`.
+
+### Branch server might still be starting
 
 You would usually encounter this error when running `chalk apply --branch`. In the Chalk dashboard under `Branches`, you
-can check the status of the branch server. If you are concerned that there are lingering processes on branches, such
-as queries on branches that you would like to kill, you can also stop and restart the branch server in the dashboard to
-kill any processes in progress on the branch server.
+can check the status of the branch server. You can also kill lingering processes on branches, such as long-running
+queries, by stopping and restarting the branch server in the dashboard.
 
 ### Could not connect to server when running `chalk apply`
 
@@ -73,7 +76,7 @@ have within the Chalk environment. The `developer` role can only run `chalk appl
 ## Deployed Errors
 
 These are errors that you might observe through metrics monitors on deployed and orchestrated features and resolvers,
-as opposed to errors you would encounter in local development. 
+as opposed to errors you would encounter in local development.
 
 ### Elevated number of errors (e.g. 502/504's)
 
