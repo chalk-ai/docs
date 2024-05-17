@@ -1,0 +1,120 @@
+---
+title: Debugging
+description: Learn techniques for debugging different elements of Chalk.
+---
+
+We've compiled some of the common errors that people come across, as well as some approaches to debug these errors
+and the most common root causes. If you are still struggling to debug, please reach out in your support channel!
+
+## Query Errors
+
+### Unexpected query results
+
+If you're receiving either 0 rows when you expect a non-zero query result, or if the feature values that you're seeing
+in your query results do not match what you're expecting, we recommend that you follow the steps in
+[our guide for debugging queries](https://docs.chalk.ai/docs/debugging-queries). This includes some common tips and
+tricks, such as using `store_plan_stages` and stepping through the query plan.
+
+### Unexpected Chalk server error with status code 401
+
+The 401 status code means `unauthenticated`. We'd recommend verifying that the token you're using to run the query is
+correct. To refresh your token, you can also run `chalk login` from the terminal using our CLI and then `chalk config`
+to verify that your token has been provisioned for the right environment.
+
+### Unexpected Chalk server error with status code 500
+
+The 500 status code means `internal server error`. This should usually come with another error with more details on
+the root cause of the error. If you are struggling to debug this or find any other clues, please reach out to us!
+
+### Unexpected Chalk server error with status code 502
+
+The 502 status code means `bad gateway`, which usually indicates `timeout` or `not enough servers`. We'd recommend
+looking at CPU utilization on your cluster to determine if you need to modify the cloud resource configurations. You
+can do so in the `Settings > Resources` page in the Chalk console by modifying and applying resource configuration JSON
+changes under `Advanced Resource Configuration`. However, we'd also encourage reaching out to us for discussion on how
+to optimize resource configuration for your situation!
+
+### Query Timeout / Unclear Failure
+
+If you are running a query from a notebook or somewhere locally, the polling for query status might have a shorter
+timeout, so if the query times out before completion, we'd recommend verifying whether the query is still running in the
+console by looking at the query run page and validating that there is a pod in the cluster running the query. Otherwise
+your query may have also completed after the polling timeout, in which case you can also view query status in the
+console.
+
+### Please double check that all features have resolvers and resolvers do not have circular dependencies.
+
+The first thing to validate is that all features have resolvers. If all features have resolvers, then you might see
+this error message if Chalk is unable to construct a dependency graph for resolving the features that you are
+querying. This is usually a result of a join that cannot be processed. Please identify which feature(s) is triggering
+the circular dependency error and reach out to us with this context!
+
+### Duplicate Resolver Shortname
+
+The first thing to check is whether there actually are duplicate resolvers by the same name. If there are not, this
+error message can also sometimes be an indicator of a missing import.
+
+## `chalk apply` Errors
+
+### branch server might still be starting
+
+You would usually encounter this error when running `chalk apply --branch`. In the Chalk console under `Branches`, you
+can check the status of the branch server. If you are concerned that there are lingering processes on branches, such
+as queries on branches that you would like to kill, you can also stop and restart the branch server in the console to
+kill any processes in progress on the branch server.
+
+### Unable to load dashboards after deploy
+
+This usually means that there was an error on the Chalk servers in parsing the code uploaded in the latest deploy. A
+common cause of this is if you deploy code with `ChalkClient.query()` or `ChalkClient.offline_query()` in your code
+that is not nested within another function.
+
+For example, say you have a file like this within your source code that you deploy to Chalk
+
+```python
+from chalk import ChalkClient
+
+ChalkClient().offline_query(
+    input={User.id: [1]},
+    output=[User.sum_transactions],
+    store_plan_stages=True,
+    recompute_features=True
+).resolver_replay(sum_transaction_amount)
+```
+
+You would instead want to wrap the query in a function so that Chalk does not try to parse the query code as a
+function or resolver.
+
+```python
+from chalk import ChalkClient
+
+if __name__=='__main__':
+    ChalkClient().offline_query(
+        input={User.id: [1]},
+        output=[User.sum_transactions],
+        store_plan_stages=True,
+        recompute_features=True
+    ).resolver_replay(sum_transaction_amount)
+```
+
+### Could not connect to server when running `chalk apply`
+
+If you've verified that you have a token and are properly authenticated, then you should also verify what role you
+have within the Chalk environment. The `developer` role can only run `chalk apply --branch` rather than `chalk apply`.
+
+## Deployed Errors
+
+These are some errors that you might see in features/resolvers that you've deployed that are fully orchestrated,
+as opposed to features/resolvers that you might be actively iterating on.
+
+### Elevated number of errors (e.g. 502/504's)
+
+Typically these errors are an indication of a misalignment in load and resource configuration. Please reach out to us
+in your support channels with context on data scale and current resource configurations and we can help you identify
+mitigation strategies to avoid these errors!
+
+### Returning stale features
+
+If you're seeing stale features, we'd recommend ensuring that you have
+[max_staleness](https://docs.chalk.ai/docs/feature-caching) set for the features to configure the maximum staleness
+allowed for the features, so that Chalk will know to recompute fresh values as specified.
