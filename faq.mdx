@@ -7,8 +7,84 @@ description: A collection of questions frequently asked by customers
 
 ## Getting support
 
-Don't see your question answered? Please reach out via your support channel and we will
-be happy to help.
+The questions are sorted by category. Don't see your question answered? Please reach out via your support channel
+and we will be happy to help!
+
+## Data Sources and Infrastructure
+
+### What is the difference between the online store and the offline store?
+
+The online store is intended to store features for low-latency retrieval in online query.
+Typically, the online store is implemented using Redis, DynamoDB, or (in some cases) Postgres.
+
+The offline store is intended to store historical logs of all previously ingested or computed
+features. It is used to compute large historical training sets. It is typically implemented using
+BigQuery, Snowflake, or other data warehouses.
+
+### Can we do RBAC (Role Based Access Control) within Chalk?
+
+Yes! Within the dashboard you can assign roles with different permissions to different users. The default roles
+available are  shown below.
+
+![rbac](./img/rbac.png  "RBAC")
+
+### What are the necessary steps for us to get Chalk in our system?
+
+Please reach out via your support channel and we'd be happy to walk you through how to get Chalk setup running
+on your cloud infrastructure!
+
+### We use Okta SCIM provisioning. Can we import these roles to be used in Chalk?
+
+Yes! You can set up Okta to automatically provision and deprovision Chalk users. For more information on how,
+see [here](https://docs.chalk.ai/docs/okta-scim).
+
+### How should I set up secrets to be accessible in our deployed environments?
+
+You can configure secrets as environment variables in the `Secrets` tab of `Settings` in your Chalk dashboard, and
+these secrets would then be available on the next deploy in the environments that you've specified, and on all
+branches in those environments!
+
+## Features
+
+### Does Chalk have a feature catalog?
+
+Yes! You can view all the features for all namespaces deployed in your environments, along with some metadata
+on recent activity and updates.
+
+### How should I use feature versioning?
+
+You can define versions for features if, for example, you are iterating on feature definitions. We'd recommend
+setting a default feature version for ensuring consistency across feature references. For more information, please
+see [this tutorial on feature versions](https://docs.chalk.ai/docs/feature-versions)
+
+### How does FeatureTime work? Should I override FeatureTime with timestamps from existing data sources?
+
+Feature times act as observation timestamps for a set of feature values, which is important when working with
+staleness guarantees, and incrementally loading data. Chalk provides two default methods of loading feature times.
+The first is a feature annotation `FeatureTime` that serves as a `datetime.datetime` with `typing.Annotation` applied.
+The second is that if you define a feature named `ts` with a type of `datetime.datetime` in a feature set, then it will
+be treated as a feature time. You can override the feature time by supplying values for the `ts` feature if you
+would like to use the timestamps from your existing data sources as the observation timestamps for the feature.
+For more information on how feature times work, [see here](https://docs.chalk.ai/docs/time).
+
+### How should I structure my windowed features? What kind of windows can I use?
+
+We recommend writing [windowed features](https://docs.chalk.ai/docs/aggregations) for aggregated computations over
+different time periods. You can define the different windows in terms of weeks, days, hours, minutes,
+or even seconds (weeks="w", days="d", hours="h", minutes="m", seconds="s"). Under the hood, we normalize the
+time representations into durations in seconds, so you would have multiple syntactical options for accessing
+different windows for features. We recommend setting default values for windowed features in case there are
+windows with no events during the specified time period. Otherwise, you can write resolvers defining how
+your windowed features should be computed and pass windowed features as inputs into resolvers just like normal
+features!
+
+### Can I upload features into the online store with an API endpoint?
+
+Yes! In addition to streaming and scheduled bulk ingests of features, you can submit requests using
+the `upload_features` SDK endpoints to synchronously ingest features into the online or offline stores
+using API clients.
+
+## Resolvers
 
 ### What is the difference between an `online` and `offline` resolver?
 
@@ -28,15 +104,6 @@ On the other hand, if your `query` requests can't tolerate the latency of the un
 evaluate using scheduled ingestion or streaming resolvers in order to ensure that fresh
 data is available in the online store.
 
-### What is the difference between the online store and the offline store?
-
-The online store is intended to store features for low-latency retrieval in online query.
-Typically, the online store is implemented using redis, dynamodb, or (in some cases) postgres.
-
-The offline store is intended to store historical logs of all previously ingested or computed
-features. It is used to compute large historical training sets. It is typically implemented using
-BigQuery, Snowflake, or other data warehouses.
-
 ### How do I force certain resolvers to execute in my query?
 
 Make use of `tags=[...]`. If a resolver is marked with a `tag`, it is only eligible to execute in
@@ -44,11 +111,30 @@ queries that have a matching tag. An even stricter variant of this concept is av
 `required_resolver_tags` argument to `query` and `offline_query` which allows you to force *all*
 resolvers to have a particular tag.
 
-### Can I upload features into the online store with an API endpoint?
+### How do I know when my resolver will run and when it will timeout?
 
-Yes! In addition to streaming and scheduled bulk ingests of features, you can submit requests using
-the `upload_features` sdk endpoints to synchronously ingest features into the online or offline stores
-using API clients.
+You can set [cron schedules](https://docs.chalk.ai/docs/resolver-cron) for your resolvers, which will be parsed in
+your local system's timezone. You can also set customized [timeouts for resolvers](https://docs.chalk.ai/docs/timeout).
+Chalk currently has a max timeout of 18 hours for resolvers, but if this does not suit your needs, please reach out
+to us in your support channel with a description of your compute needs for your resolver!
+
+### How do I know if my resolver is still running?
+
+The best way to check if your resolver is still running is to see if there are still resources provisioned to run
+your resolver. For scheduled resolver runs, you can view an overview of `Run History` as well as a view of `Cloud
+Resources` dedicated to scheduled resolver runs under the `Runs` tab on the menu sidebar. For triggered resolver
+runs, you can also find which pod is running your resolver on the run page. Finally, if you navigate to
+`Settings > Resources` you can view all pods currently running in your cluster, whether for resolver runs or
+queries.
+
+### How should I work with dataframes in my resolvers?
+
+You can define resolvers with DataFrame inputs or outputs, which uses the
+[Chalk DataFrame structure.](https://docs.chalk.ai/docs/dataframe) You can do some aggregations and projections
+using the Chalk DataFrame, but you can also convert the Chalk DataFrames into Pandas or Polars using `.to_pandas()`
+and `.to_polars()` for more data manipulation.
+
+## Querying
 
 ### Can I query for two different feature classes in a single query?
 
@@ -100,15 +186,50 @@ result = ChalkClient().query_bulk(
 
 df = result[0].to_pandas()
 ```
+### How do I tell if my offline query is still running if it shows as In Progress in the UI?
 
-### How do I get a list of primary keys from the offline store?
+The first thing to check is whether there is a pod in your cluster running your offline query. You can verify this
+by viewing the pods running under `Settings > Resources`. If you're running an offline query from a notebook, then
+the polling may timeout even if the offline query is still running, so the best way to verify the status of your
+offline query is a combination of checking the query run in dashboard and the status of pods in the cluster. For more
+visibility, you can also add the `run_asynchronously=True` argument to `ChalkClient.offline_query` to explicitly run
+your offline query on an isolated worker so you can use the worker status as a query status.
 
-```py
-df = ChalkClient().offline_query(
-    output=[YourFeatureClass.id],
-    max_samples=1000,
-    lower_bound=datetime.now() - timedelta(weeks=1),
-).to_polars()
+## Deployment
 
-ids = df[str(YourFeatureClass.id)].to_list()
-```
+### How are resources provisioned for my Chalk cluster, and can I modify the configuration?
+
+We have default resource configurations for general environments.
+You can modify the configuration for your project's cloud resources by modifying the specs under
+`Settings > Resources  > Advanced Resource Configuration`. You must hit `Save and Apply Changes` in order for
+your configuration changes to go through. If you are not sure how you should configure your cloud resources,
+please reach out to us in your support channel!
+
+### Can I suspend or delete branches when they are not in use?
+
+You cannot currently suspend or delete branches, but stale branches do not consume resources, so there is no cost
+or performance impact from old branches.
+
+## Observability and Testing
+
+### Is my (resolver / query) running?
+
+See answers above under `Resolvers` and `Querying` respectfully!
+
+### How do I setup a sensor so that I can run something else after a resolver run?
+
+If you are triggering a resolver run as part of an orchestrated pipeline, we usually see customers using the
+built-in sensors from the orchestrators (e.g. Airflow or Dagster) to poll for resolver completion. You can
+also customize this polling using [an API to query run status.](https://docs.chalk.ai/docs/runs#query-run-status)
+[See here](https://github.com/chalk-ai/examples/tree/main/13_airflow#polling-the-resolver-run) for an example
+of how to set up Airflow orchestration to trigger and poll a resolver run.
+
+## Roadmap
+
+### What have the people at Chalk been working on?
+
+To get a glimpse of recently released features, take a look at our [changelog!](https://docs.chalk.ai/docs/changelog)
+
+### I want to request a feature!
+
+Feel free to reach out to us with feature requests or questions about feature requests in your support channel!
