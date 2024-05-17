@@ -23,7 +23,7 @@ BigQuery, Snowflake, or other data warehouses.
 
 ### Can we do RBAC (Role Based Access Control) within Chalk?
 
-Yes! Within the web console you can assign roles with different permissions to different users. The default roles
+Yes! Within the dashboard you can assign roles with different permissions to different users. The default roles
 available are  shown below.
 
 ![rbac](./img/rbac.png  "RBAC")
@@ -40,7 +40,7 @@ see [here](https://docs.chalk.ai/docs/okta-scim).
 
 ### How should I set up secrets to be accessible in our deployed environments?
 
-You can configure secrets as environment variables in the `Secrets` tab of `Settings` in your Chalk console, and
+You can configure secrets as environment variables in the `Secrets` tab of `Settings` in your Chalk dashboard, and
 these secrets would then be available on the next deploy in the environments that you've specified, and on all
 branches in those environments!
 
@@ -191,7 +191,7 @@ df = result[0].to_pandas()
 The first thing to check is whether there is a pod in your cluster running your offline query. You can verify this
 by viewing the pods running under `Settings > Resources`. If you're running an offline query from a notebook, then
 the polling may timeout even if the offline query is still running, so the best way to verify the status of your
-offline query is a combination of checking the query run in console and the status of pods in the cluster. For more
+offline query is a combination of checking the query run in dashboard and the status of pods in the cluster. For more
 visibility, you can also add the `run_asynchronously=True` argument to `ChalkClient.offline_query` to explicitly run
 your offline query on an isolated worker so you can use the worker status as a query status.
 
