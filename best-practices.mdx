@@ -94,13 +94,13 @@ Joins between feature sets can be specified in a number of different ways. We re
 
 [Underscore resolvers](/underscore) should be used for relatively simple calculations: your underscore resolver definitions should fit inline.
 
-### Use SQL file resolvers to read data from your raw datasets
+### Use SQL resolvers to read data from your raw datasets
 
 While python resolvers can be used to read data from your data sources, SQL File resolvers are preferred.
 
 ### Explicity list columns in a select statement for sql file resolvers
 
-Select statements in SQL file resolvers should be explicit: avoid using the \* syntax.
+Select statements in SQL resolvers should be explicit: avoid using the \* syntax.
 
 ### Make sure your resolvers operate inside a single feature space
 
@@ -108,13 +108,13 @@ Resolver inputs and outputs must belong to the same feature set, but joins can a
 
 ### When to use pandas vs polars transformation.
 
-Don't worry about converting Chalk DataFrames to pandas or polars in a python resolver—the transformation is cheap. We use arrow (and so do pandas and polars ) so moving data from a chalk dataframe to either is close to free
+Don't worry about converting Chalk DataFrames to pandas or polars in a python resolver—the transformation is cheap. We use arrow (and so do pandas and polars) so moving data from a chalk dataframe to either is close to free
 
 ## Querying
 
-### Run Simple Queries With The Chalk CLI, For More Flexibility Use One of Chalk's Clients
+### Run simple queries with the Chalk CLI, for more flexibility use one of Chalk's API clients
 
-The Chalk CLI should only be used to run simple online queries. For more complex use cases, you should use one of Chalk's clients.
+The Chalk CLI should only be used to run simple online queries. For more complex use cases, you should use one of Chalk's API clients.
 
 ### Created named queries for your commonly executed queries
 
@@ -150,9 +150,9 @@ company_chalk/
 Your `.chalkignore` file should include any of your scripts, notebooks, tests: anything that you are not actively using in your deployment should be put there so that
 non-deployment code does not clutter or interfere with your deployment.
 
-### To access custom files in your deployments use the TARGET_ROOT environment variable. If you want to make sure a globally defined variable is accessible before any of your resolvers run, use the before_all decorator.
+### Use the `@before_all` decorateor to configure global variables for your resolvers
 
-Global setup for resolver should be done through a function decorated with the [@before_all decorator](generic#initializing). This also allows for unique setups for different environments.
+Global setup for resolvers should be done through a function decorated with the [@before_all decorator](generic#initializing). This also allows for unique setups for different environments.
 
 ### Custom files such as machine learning models are accessed with the TARGET_ROOT environment variable
 
@@ -181,7 +181,7 @@ important features and resolvers early in your implementation.
 
 ### Unit test your resolvers to make sure they're functioning as expected
 
-[unit test](/unit-tests) your resolvers!
+[Unit test](/unit-tests) your resolvers!
 
 ## Security
 
