@@ -1,0 +1,167 @@
+---
+title: How Do I Chalk?
+description: Customizing your Chalk solution.
+---
+
+---
+
+## Introduction
+
+Chalk is a feature store that enables data engineers and data scientists on production machine learning teams to
+collaborate efficiently and effectively.
+
+In this tutorial, we will guide you step by step through customizing your Chalk solution to help you achieve all of
+your data goals.
+
+---
+
+## Creating your Chalk Project
+
+1. If you don't already have a Github repository in which you will store your Chalk code, create one. Then, pick a
+local directory in which to work on Chalk code, and clone the Github repository there. Then `cd` inside of the
+directory.
+2. If you haven't already, install Python. You can do this through [Homebrew](https://brew.sh/) as follows:
+```bash Terminal
+# Install Homebrew
+$ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# Use Homebrew to install python3
+$ brew install python
+```
+3. Install the [Chalk command line tool](https://docs.chalk.ai/cli). The Chalk CLI allows you to create, update, and
+manage your feature pipelines directly from your terminal
+```bash
+curl -s -L https://api.chalk.ai/install.sh | sh
+```
+4. Create a Python virtual environment within your repository root directory and activate it
+```bash
+$ python3.10 -m venv .venv
+$ source .venv/bin/activate
+```
+You can run `source .venv/bin/activate` to activate the virtual environment, and `deactivate` to deactivate.
+5. Login by typing [`chalk login`](/cli/login). If you're using a dedicated environment, make sure you use the
+[`--api-host`](/cli/chalk#api-host) flag. Type `y` when prompted and login in the browser.
+6. Run [`chalk init`](/cli/init) to initialize your project files. This will initialize a directory structure with an
+empty `src` directory and three files--`chalk.yaml`, `README.md`, and `requirements.txt`.
+```
+root_directory/
+├── src/
+├── chalk.yaml
+├── README.md
+└── requirements.txt
+```
+The first file, `chalk.yaml`, stores configuration information about your project. You can edit this so it
+contains the following
+   ```
+   project: {YOUR_PROJECT_NAME}
+   environments:
+     default:
+       requirements: requirements.txt
+       runtime: python310
+   ```
+
+The second file, `README.md`, contains some basic commands you can use with the Chalk CLI.
+The third file, `requirements.txt` should look something like this:
+   ```
+    requests
+    chalkpy[runtime]
+    ```
+
+   This contains your project dependencies.
+   You can add a file `.chalkignore` which will act just like a `.gitignore` file.
+7. Within your virtual environment, install the project requirements.
+```bash Terminal
+$ pip3 install -r requirements.txt
+```
+
+Now, you should have a virtual environment with all project dependencies installed and a basic project structure upon
+which we will build in the next step.
+
+## Configure Datasources
+
+Having set up a basic project directory, we want to configure the data sources from which we will load data to
+compute our features. We can do so in the Chalk dashboard.
+
+1. In the same directory from before, login or signup with Chalk directly from the command line. The
+[`chalk login`](https://docs.chalk.ai/cli/login) command will open your browser and create an
+API token for your local development, as well as redirect you to your dashboard. If you are not
+redirected you can also find the dashboard at [https://chalk.ai/projects](https://chalk.ai/projects).
+You will automatically see all of the environments in which the email you used to login has been
+provisioned as a user.
+ 2. Within the dashboard, navigate to `Data Sources` in the side bar and add all data sources that you will
+be working with here. After you have saved a data source, you can also use the `Test Data Source` button
+in the upper right hand corner of the Data Source configuration view to verify that your connection is
+valid.
+ 3. Within the working directory, we'll add a `datasources.py` file under our `src` folder to reference the
+data sources that we've added in the dashboard.
+ ```
+ root_directory/
+ ├── src/
+ │  ├── __init__.py
+ │  └── datasources.py
+ ├── chalk.yaml
+ ├── README.md
+ └── requirements.txt
+ ```
+
+Say we added a PostgreSQL data source, then our `datasources.py` might look something like this:
+```python
+pg = PostgreSQLSource(name='PG')
+```
+
+For more details on setting up data sources, [see here.](https://docs.chalk.ai/docs/integrations)
+
+##  Define Feature Sets and Resolvers
+
+Having set up our data sources, we now want to define the registry for this feature store by writing our
+feature sets and resolvers. Each *feature set* is a Python class of features, and a *resolver* tells Chalk
+how to compute the values for different features. Each feature that we write should correspond to a resolver output.
+
+We recommend starting with a minimal feature set and building up iteratively to easily test your code along the way.
+After writing some feature sets, resolvers, and tests, we would expect to see a directory structure like this:
+```
+root_directory/
+├── src/
+│  ├── resolvers/
+│  │  ├── .../
+│  │  ├── __init__.py
+│  │  └── pipelines.py
+│  ├── __init__.py
+│  ├── datasources.py
+│  └── feature_sets.py
+├── tests/
+│  └── ...
+├── .chalkignore
+├── chalk.yaml
+├── README.md
+└── requirements.txt
+```
+
+You can read more in our docs about the [different kinds of features](https://docs.chalk.ai/docs/features) and the
+[different kinds of resolvers](https://docs.chalk.ai/docs/resolver-overview) that you can write. If you would like
+guidance on how to structure your featuresets and resolvers, please reach out in your support channel!
+
+## Deploy and Query
+
+Having defined features and resolvers, the next step is to deploy your pipelines. You can deploy to production by
+using the [`chalk apply`](https://docs.chalk.ai/cli/apply) command. During development, we recommend that you use
+`chalk apply --branch {BRANCH_NAME}` to deploy to the [branch server](https://docs.chalk.ai/docs/branches), which allows
+multiple people to work concurrently in one environment, and also enables more performant deploys.
+
+Once you have deployed your code, then you can query your features directly from the command line using the
+[`chalk query`](https://docs.chalk.ai/cli/query) command or from within a notebook using the
+[ChalkClient](https://docs.chalk.ai/api-docs#ChalkClient) to run `ChalkClient.query()` or `ChalkClient.offline_query()`.
+
+This is the primary workflow for iterating on features and resolvers! Write, deploy, and query to verify whether the
+feature values that you receive are the expected values. Once you have finalized your feature set and resolver
+definitions, then the final step is frequently orchestration.
+
+## Orchestration
+
+Once you have verified that your feature and resolver definitions are correct, then the next step is to determine how
+you want to use the corresponding feature values within your larger machine learning platform. Some users [trigger
+resolvers](https://docs.chalk.ai/docs/runs) and run queries from within other orchestrated pipelines, such as Airflow.
+Some users define [cron schedules](https://docs.chalk.ai/docs/resolver-cron)for their resolvers,
+and [set staleness values](https://docs.chalk.ai/docs/feature-caching) on different features to
+ensure that the data they query falls within their requirements for freshness. The data world is your oyster!
+
+But, as always, if you would like guidance on how to configure that oyster, please reach out in your support channel! 
