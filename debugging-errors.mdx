@@ -8,7 +8,7 @@ and their most common root causes. If you are still struggling to debug, please 
 
 ## Query Errors
 
-These are errors you would encounter when running queries, either manual or orchestrated. 
+These are errors you would encounter when running queries, either manual or orchestrated.
 
 ### Unexpected query results
 
@@ -39,7 +39,7 @@ to optimize resource configuration for your environment!
 ### Query Timeout / Unclear Failure
 
 If you are executing a long-running query from a notebook or somewhere locally, the client's polling for query status
-might have a timeout shorter than the query's runtime, so if the query times out before completion, we'd recommend
+might have a timeout shorter than the query's runtime. If the query times out before completion, we'd recommend
 verifying whether the query is still running in the dashboard by looking at the query run page and validating that there
 is a pod in the cluster running the query. It's possible that your query may also complete after the polling timeout,
 in which case you can view the query status in the dashboard.
