@@ -1,3 +1,7 @@
+---
+title: Best Practices
+description: Learn about our best practices for building and maintaining your Chalk solution
+---
 # Best Practices
 
 With Chalk, the same solution can be implemented in a number of different ways. Below are some guidelines
@@ -12,7 +16,7 @@ Define integrations through the Chalk dashboard and check that they're connectin
 
 ### Avoid naming your datasources by their "type", e.g. don't call your postgres datasource "postgres"
 
-Though this works, it can lead to ambiguity in SQL file resolvers if you add multiple data sources of the same type: when you have only one instance of a data source type, [Chalk lets you refer to that data source by it's type instead of its name](/fraud-3#online-data)
+Though this works, it can lead to ambiguity in SQL resolvers when you have multiple data sources of the same type. This occurs because only one instance of a data source type, [Chalk lets you refer to that data source by it's type instead of its name](/fraud-3#online-data)
 
 ## Features
 
