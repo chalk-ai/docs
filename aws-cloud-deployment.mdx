@@ -185,6 +185,59 @@ rules:
       - get
       - list
       - watch
+  # For allowing the web UI to manage cluster scaling
+  - apiGroups:
+      - "karpenter.sh"
+    resources:
+      - nodepools
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - patch
+      - delete
+  - apiGroups:
+      - "karpenter.k8s.aws"
+    resources:
+      - ec2nodeclasses
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - patch
+      - delete
+
+  # For read/list access to Karpenter NodeClaims
+  - apiGroups:
+      - "karpenter.sh"
+    resources:
+      - nodeclaims
+    verbs:
+      - get
+      - list
+
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumes
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - patch
+      - watch
+      - delete
+
+  - apiGroups:
+      - "storage.k8s.io"
+    resources:
+      - storageclasses
+    verbs:
+      - get
+      - list
 
 ---
 kind: Role
@@ -302,19 +355,11 @@ rules:
       - patch
       - watch
       - delete
-  #
-  - apiGroups:
-      - "storage.k8s.io"
-    resources:
-      - storageclasses
-    verbs:
-      - get
-      - list
+
   # For durable storage management.
   - apiGroups:
       - ""
     resources:
-      - persistentvolumes
       - persistentvolumeclaims
     verbs:
       - get
@@ -338,29 +383,6 @@ rules:
       - patch
       - watch
       - delete
-  # For allowing the web UI to manage cluster scaling
-  - apiGroups:
-      - "karpenter.sh"
-    resources:
-      - nodepools
-      - nodeclasses
-    verbs:
-      - get
-      - list
-      - create
-      - update
-      - patch
-      - watch
-      - delete
-
-  # For read/list access to Karpenter NodeClaims
-  - apiGroups:
-      - "karpenter.sh"
-    resources:
-      - nodeclaims
-    verbs:
-      - get
-      - list
 
   # OPTIONAL: For showing thread dumps & profiling for batch backfills + some support use-cases.
   - apiGroups:
