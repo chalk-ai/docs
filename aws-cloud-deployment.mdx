@@ -191,7 +191,7 @@ kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: chalk-management-role
-  namespace: <your namespace>
+  namespace: ns-tmnmc9beyujew
 rules:
   - apiGroups:
       - ""
@@ -206,6 +206,16 @@ rules:
       - update
       - patch
       - watch
+
+  # For support w/ debugging & rendering logs in the dashboard.
+  - apiGroups:
+      - ""
+    resources:
+      - pods/log
+    verbs:
+      - get
+      - list
+      - watch
   - apiGroups:
       - "extensions"
       - "networking.k8s.io"
@@ -217,6 +227,9 @@ rules:
       - get
       - list
       - watch
+      - delete
+      - update
+      - create
   - apiGroups:
       - "extensions"
       - "networking.k8s.io"
@@ -225,6 +238,7 @@ rules:
     verbs:
       - get
       - create
+      - delete
       - update
       - list
       - patch
@@ -239,6 +253,7 @@ rules:
       - create
       - patch
       - update
+      - delete
   - apiGroups:
       - ""
     resources:
@@ -260,4 +275,118 @@ rules:
       - update
       - patch
       - create
+      - delete
+  - apiGroups:
+      - "batch"
+    resources:
+      - cronjobs
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - patch
+      - watch
+      - delete
+
+  # For managing Jobs
+  - apiGroups:
+      - "batch"
+    resources:
+      - jobs
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - patch
+      - watch
+      - delete
+  #
+  - apiGroups:
+      - "storage.k8s.io"
+    resources:
+      - storageclasses
+    verbs:
+      - get
+      - list
+  # For durable storage management.
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumes
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - patch
+      - watch
+      - delete
+  # For managing KEDA objects for autoscaling.
+  - apiGroups:
+      - keda.sh
+    resources:
+      - scaledobjects
+      - scaledjobs
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - patch
+      - watch
+      - delete
+  # For allowing the web UI to manage cluster scaling
+  - apiGroups:
+      - "karpenter.sh"
+    resources:
+      - nodepools
+      - nodeclasses
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - patch
+      - watch
+      - delete
+
+  # For read/list access to Karpenter NodeClaims
+  - apiGroups:
+      - "karpenter.sh"
+    resources:
+      - nodeclaims
+    verbs:
+      - get
+      - list
+
+  # OPTIONAL: For showing thread dumps & profiling for batch backfills + some support use-cases.
+  - apiGroups:
+      - ""
+    resources:
+      - pods/exec
+    verbs:
+      - create
+      - get
+
+  # OPTIONAL: For support with debugging k8s rbac, grant read-only access to this namespaces' rbac configuration.
+  - apiGroups: ["", "rbac.authorization.k8s.io"]
+    resources: ["roles", "serviceaccounts", "rolebindings"]
+    verbs: ["get", "list"]
+```
+
+Additionally, Chalk workload service accounts require the following role to be able to manage batch workloads:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: chalk-job-reader
+  namespace: <namespace>  # replace <namespace> with your actual namespace
+rules:
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["get", "list", "watch"]
 ```
