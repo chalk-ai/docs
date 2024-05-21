@@ -17,7 +17,7 @@ your data goals.
 
 ## Creating your Chalk Project
 
-1. If you don't already have a Github repository in which you will store your Chalk code, create one. Then, pick a
+1. If you don't already have a Github repository where you will store your Chalk code, create one. Then, pick a
 local directory in which to work on Chalk code, and clone the Github repository there. Then `cd` inside of the
 directory.
 2. If you haven't already, install Python. You can do this through [Homebrew](https://brew.sh/) as follows:
@@ -61,13 +61,13 @@ contains the following
 
 The second file, `README.md`, contains some basic commands you can use with the Chalk CLI.
 The third file, `requirements.txt` should look something like this:
-   ```
-    requests
-    chalkpy[runtime]
-    ```
-
-   This contains your project dependencies.
-   You can add a file `.chalkignore` which will act just like a `.gitignore` file.
+```
+requests
+chalkpy[runtime]
+```
+This contains your project dependencies.
+You can add a file `.chalkignore` which will act just like a `.gitignore` file, and exclude the specified files from
+deploys when you run `chalk apply` (more on this later).
 7. Within your virtual environment, install the project requirements.
 ```bash Terminal
 $ pip3 install -r requirements.txt
@@ -78,17 +78,18 @@ which we will build in the next step.
 
 ## Configure Datasources
 
-Having set up a basic project directory, we want to configure the data sources from which we will load data to
+Having set up a basic project directory, next we'll want to configure the data sources from which we will load data to
 compute our features. We can do so in the Chalk dashboard.
 
 1. In the same directory from before, login or signup with Chalk directly from the command line. The
 [`chalk login`](https://docs.chalk.ai/cli/login) command will open your browser and create an
 API token for your local development, as well as redirect you to your dashboard. If you are not
-redirected you can also find the dashboard at [https://chalk.ai/projects](https://chalk.ai/projects).
+redirected you can also find the dashboard at [https://chalk.ai/projects](https://chalk.ai/projects)
+or run the `chalk dashboard` command.
 You will automatically see all of the environments in which the email you used to login has been
 provisioned as a user.
  2. Within the dashboard, navigate to `Data Sources` in the side bar and add all data sources that you will
-be working with here. After you have saved a data source, you can also use the `Test Data Source` button
+be working with here. After you have saved a data source, you can use the `Test Data Source` button
 in the upper right hand corner of the Data Source configuration view to verify that your connection is
 valid.
  3. Within the working directory, we'll add a `datasources.py` file under our `src` folder to reference the
@@ -108,15 +109,15 @@ Say we added a PostgreSQL data source, then our `datasources.py` might look some
 pg = PostgreSQLSource(name='PG')
 ```
 
-For more details on setting up data sources, [see here.](https://docs.chalk.ai/docs/integrations)
+For more details on setting up data sources, [see here](https://docs.chalk.ai/docs/integrations).
 
 ---
 
 ##  Define Feature Sets and Resolvers
 
-Having set up our data sources, we now want to define the registry for this feature store by writing our
-feature sets and resolvers. Each *feature set* is a Python class of features, and a *resolver* tells Chalk
-how to compute the values for different features. Each feature that we write should correspond to a resolver output.
+Next, we'll define our feature sets and resolvers. Each *feature set* is a Python class of features, and each *resolver*
+tells Chalk how to compute the values for different features. Each feature that we write should correspond to a
+resolver output.
 
 We recommend starting with a minimal feature set and building up iteratively to easily test your code along the way.
 After writing some feature sets, resolvers, and tests, we would expect to see a directory structure like this:
@@ -140,30 +141,31 @@ root_directory/
 
 You can read more in our docs about the [different kinds of features](https://docs.chalk.ai/docs/features) and the
 [different kinds of resolvers](https://docs.chalk.ai/docs/resolver-overview) that you can write. If you would like
-guidance on how to structure your featuresets and resolvers, please reach out in your support channel!
+guidance on how to structure your feature sets and resolvers, please reach out in your support channel!
 
 ---
 
 ## Deploy and Query
 
-Having defined features and resolvers, the next step is to deploy your pipelines. You can deploy to production by
+Now, you can deploy the features and resolvers that you wrote! You can deploy to production by
 using the [`chalk apply`](https://docs.chalk.ai/cli/apply) command. During development, we recommend that you use
 `chalk apply --branch {BRANCH_NAME}` to deploy to the [branch server](https://docs.chalk.ai/docs/branches), which allows
 multiple people to work concurrently in one environment, and also enables more performant deploys.
 
 Once you have deployed your code, then you can query your features directly from the command line using the
-[`chalk query`](https://docs.chalk.ai/cli/query) command or from within a notebook using the
-[ChalkClient](https://docs.chalk.ai/api-docs#ChalkClient) to run `ChalkClient.query()` or `ChalkClient.offline_query()`.
+[`chalk query`](https://docs.chalk.ai/cli/query) command, or by calling one of our Chalk Clients in code.
+Chalk has a [Python client](https://github.com/chalk-ai/chalk), [Go client](https://github.com/chalk-ai/chalk-go),
+[Java client](https://github.com/chalk-ai/chalk-java), and a [Typescript client](https://github.com/chalk-ai/chalk-ts).
 
 This is the primary workflow for iterating on features and resolvers! Write, deploy, and query to verify whether the
-feature values that you receive are the expected values. Once you have finalized your feature set and resolver
-definitions, then the final step is frequently orchestration.
+feature values that you receive are the values you expect. Once you have finalized your feature set and resolver
+definitions, the final step is frequently orchestration.
 
 ---
 
 ## Orchestration
 
-Once you have verified that your feature and resolver definitions are correct, then the next step is to determine how
+Having verified that your feature and resolver definitions are correct, the next step is to determine how
 you want to use the corresponding feature values within your larger machine learning platform. Some users [trigger
 resolvers](https://docs.chalk.ai/docs/runs) and run queries from within other orchestrated pipelines, such as Airflow.
 Some users define [cron schedules](https://docs.chalk.ai/docs/resolver-cron)for their resolvers,
