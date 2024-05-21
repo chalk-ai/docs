@@ -390,3 +390,24 @@ rules:
   resources: ["jobs"]
   verbs: ["get", "list", "watch"]
 ```
+
+If you use in-cluster docker image building powered by koniko and Argo, Chalk requires this role on the namespace
+where the docker image building is happening:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: argo-workflows-role
+  namespace: <namespace>  # replace <namespace> with your actual namespace
+rules:
+- apiGroups: ["argoproj.io"]
+  resources: ["workflows"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+```
+
+This role must be granted to the management service account that Chalk uses to manage the cluster, and to the workload
+service account that runs the docker image building.
