@@ -19,15 +19,25 @@ easy to pre-compute + cache features when necessary.
 
 ## What to read next
 
-Check out some of Chalk's integrations:
+Chalk enables integration with any data source, in addition to some more customized
+logic for common data sources. For some of our out-of-the-box solutions for popular
+storage providers, find more below:
 
+* **[AWS](/docs/aws)** -
+Integrate with Amazon Web Services to read from data sources such as **[Redshift](/docs/redshift)**,
+**[S3](/docs/s3)**, and **[Kinesis](/docs/stream-sources)**.
+* **[GCP](/docs/gcp)** -
+Integrate with Google CLoud Platform to read from data sources such as **[BigQuery](/docs/bigquery)** and
+**[Cloud Storage](/docs/s3)**.
 - **[SQL Integrations](/docs/sql)** -
-  Chalk has special support for [SQLAlchemy](https://www.sqlalchemy.org/) and can push down filters into SQL queries for more efficient data fetching.
+Chalk has special support for [SQLAlchemy](https://www.sqlalchemy.org/) and can push down filters into SQL
+queries for more efficient data fetching.
+- **[Snowflake](/docs/snowflake)** -
+Chalk offers custom support for Snowflake as a SQL source.
+- **[Databricks](/docs/databricks)** -
+Chalk provides out-of-the-box support for Databricks as a SQL source.
+- **[MySQL](/docs/mysql)** - Read from your MySQL data sources.
+- **[PostgreSQL](/docs/postgresql)** - Integrate your PostgreSQL data sources.
 - **[Custom Data Sources](/docs/generic)** -
   Chalk offers extra optimizations for some data sources, but you don't need Chalk to officially support a data source to use it!
-- **[Blob Storage](/docs/s3)** -
-  Read .csv and .parquet files in resolvers.
-- **[Dockerfile Base](/docs/docker)** -
-  Customize the base Docker image for your feature pipelines.
-- **[Pip Dependencies](/docs/docker#extra-pip-dependencies)** -
-  Install extra dependencies with pip.
+
