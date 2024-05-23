@@ -42,7 +42,9 @@ resolvers, [how to specify outputs](#outputs), and [how to specify run conditons
 SQL resolvers do not take Feature Sets as inputs. Instead, they require a
 data source, which the SQL query defined in the resolver runs against. As
 seen in the example above, the datasource for the sql resolver is specified
-using a comment, like so: `-- source: pg_user`. If you have only a single
+using a comment, like so: `-- source: pg_user`.
+
+If you have only a single
 data source of a specific type (for instance, postgres in this example) you
 can also use the type of the data source as its source, like so: `-- source: postgres`.
 
@@ -51,6 +53,10 @@ can also use the type of the data source as its source, like so: `-- source: pos
 To specify the output of a SQL resolver, you also use a comment, like so:
 `--resolves: ChalkUser`. You can either use Pascal Case or snake_case for
 the feature set name: `--resolves: chalk_user` would also work.
+
+A SQL resolver does not need to output all features in a feature set. You
+can specify as many as you want. However, the names of your output columns
+must match the names of your features.
 
 ## Run Conditions
 
