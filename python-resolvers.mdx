@@ -1,0 +1,110 @@
+---
+title: Python Resolvers
+description: What are python resolvers.
+---
+
+While feature sets define what your data looks like (e.g. the types of your features,
+their relationships, and their properties), resolvers define how your feature values
+are computed. Resolvers take zero or more features as inputs and return one or more
+features as their output.
+
+You can think of the inputs to a resolver as the information a resolver needs
+to know to compute its output features. For instance, if we were using a resolver
+to compute a user's age, we would need to know the user's birthday and the current
+date. To know a users name and birthday, we might not need any concrete features—
+we might just need a connection to the user table of an upstream database.
+
+> Info
+>
+> if you haven't read the section on feature sets, you are strongly encourage to
+> do so. Understanding feature sets will help you undertand resolvers.
+
+Chalk allows you to write resolvers in three different ways:
+- as sql queries with comments specifying data sources and output features,
+- as python functions: with type annotations specifying the input and output features
+- inline in your feature definitions, with the underscore module.
+
+### A Quick Example
+
+Some of the data you're pulling into chalk might already exists in your data sources:
+you have a postgres data source with a users and books table. The users table has the
+id name and birthday columns for your users. The books table has the id, title, and author.
+
+
+```python
+@features
+class User:
+  id: str
+  name: str
+  birthday: int
+
+  age: int
+  user_books: "DataFrame[UserBook]"
+  books: "DataFrame[Books]"
+  total_words_read: int
+
+@features UserBook
+  id: str
+  book_id: str
+  user_id: str
+
+@features
+class Book:
+  id: str
+  title: str
+  author: str
+  length_in_words: int
+```
+
+### Resolvers are Declarative
+
+A question that often crops up at this point, is: ok, I have defined a resolver, but how do
+I make it run?
+
+Just like features, the idea behind resolvers is that they are declarative. Resolvers
+don't run when you define them and they don't run exhaustively over your data. They run
+only when they are needed, or when they are explicity asked to run. In general, this
+means that they will run in response to "queries". A query is just a request for data.
+Chalk takes a query and determines which resolvers it needs to run and parallalizes your
+code, providing you with a response, quickly. In the next section, we'll dive into queries,
+completing.
+
+We will go into more detail about these three different resolver variants and their
+particualar use cases, in the next section.
+
+## Python
+
+Python resolvers are python functions perform transformations on your features,
+or groups of your features.
+
+### Decorators
+
+## SQL
+
+SQL file resolvers let you pull your data using SQL from your upstream data sources.
+
+> Warning
+>
+> SQL resolvers look different from python resolvers, in that they look as though they operate on
+> entire tables of your datasource. Python
+
+## Underscore
+
+Underscore, lets you define very sucinct python resolvers directly in your
+feature definitions.
+
+## DataFrame
+
+### Namespaces
+
+### Examples
+
+### Making an API Request
+
+### Running a Model Prediction
+
+### Pooling API Requests
+
+### Resolving Features Through a Join
+
+### Calculating Windowed Features
