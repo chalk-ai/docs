@@ -1,6 +1,6 @@
 ---
-title: Notebook Setup
-description: Set up Chalk in your notebook of choice.
+title: Notebook Development
+description: Use Chalk in your notebook of choice.
 published: true
 ---
 
@@ -92,4 +92,60 @@ Setting `switch=True` will point your client to the newly created branch.
 
 ```python notebook.ipynb
 client.create_branch("my-branch", switch=True)
+```
+
+## Cell Magics
+
+Chalk provides a set of [IPython magics](https://ipython.readthedocs.io/en/stable/interactive/magics.html) to improve the experience of defining resolvers in notebooks.
+
+### %%resolver
+
+You can define a SQL resolver in a notebook cell using the `%%resolver` magic. The magic will parse the cell contents
+and upload your resolver to your current working branch.
+
+`%%resolver` needs to be followed by a resolver name, e.g. `root_authorization_resolver` as shown below.
+
+Refer to the section on [SQL Resolvers](/docs/sql#sql-file-resolvers) to learn more about how to define resolvers.
+
+```sql notebook.ipynb
+%%resolver root_authorization_resolver
+-- resolves: Authorization
+-- source: snowflake
+SELECT
+    id,
+    amount_in_cents,
+    card_id,
+    merchant_id,
+    created_at as authorized_at
+FROM authorizations
+```
+
+Chalk lines up the names of your target SQL columns with the names of your features.
+In this case, we have an `Authorization` feature class that contains a features called `authorized_at`.
+However, our Snowflake table has a column called `created_at` that we want to use to populate the `authorized_at` feature.
+So, we use the `as` keyword to rename the column in our resolver.
+
+## Inline Syntax
+
+
+In notebooks, you can define features inline using the syntax shown below.
+
+Consider the following feature class definition for `RocketEngine`
+
+```python notebook.ipynb
+from chalk.features import features
+
+@features
+class RocketEngine:
+    id: int
+    mass: float
+    volume: float
+    thrust: float
+```
+
+If we wanted to define a feature inline in a notebook cell, we could do so using the underscore syntax below:
+
+
+```python notebook.ipynb
+RocketEngine.density: float = _.mass / _.volume
 ```
