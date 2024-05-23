@@ -25,14 +25,15 @@ we recommend using key-value pairs, but the choice is yours.
 There are two ways to specify tags on resolvers:
 
 - **<code className="before:content-none after:content-none">"key"</code>** -
-  As a single scalar string.
+As a single scalar string.
 - **<code className="before:content-none after:content-none">"key:value"</code>** -
-  As a string value representing a key-value pair.
+As a string value representing a key-value pair.
 
 Resolvers take one or many tags, all of which need to match for the
 resolver to run. For example, you may want to test with
 a sandboxed vendor, and also be able to set a constant value
-for a particular feature.
+for a particular feature. For instructions on how to set tags on SQL file resolvers,
+see the SQL file resolvers [docs](https://docs.chalk.ai/docs/sql#proper-comment-formatting)
 
 ```py
 @online(tags=["**api:mock**", "**fraud**"])

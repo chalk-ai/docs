@@ -4,12 +4,12 @@ description: Integrate with SQL-like sources.
 ---
 
 import {
-  Attribute,
-  AttributeTable,
-  SubAttribute,
-  SubAttributeTable,
+    Attribute,
+    AttributeTable,
+    SubAttribute,
+    SubAttributeTable,
 } from '@/components/AttributeTable'
-import { RequestUrl } from '@/components/RequestUrl'
+import {RequestUrl} from '@/components/RequestUrl'
 
 ---
 
@@ -22,8 +22,8 @@ incrementally.
 
 ## Basic queries
 
-There are multiple ways to construct resolvers using SQL. 
-It's up to you to decide which best fits your workflow. 
+There are multiple ways to construct resolvers using SQL.
+It's up to you to decide which best fits your workflow.
 
 Here, instead of creating a session and engine,
 you use a `PostgreSQLSource`
@@ -36,7 +36,7 @@ pg = PostgreSQLSource(name='PG')
 ```
 
 ### SQL File Resolvers
-This is the preferred method of specifying a resolver. 
+This is the preferred method of specifying a resolver.
 Only a single `.chalk.sql` SQL file is needed: no Python required!
 
 ```sql get_user.chalk.sql
@@ -79,82 +79,133 @@ The following are supported keys to be included in `.chalk.sql` file comments.
 
 <AttributeTable title={"SQL File Resolvers"}>
 
-<Attribute field='resolves' kind='str'>
-Describes the namespace to which the outputs belong. 
-In the above example, <code className="dark:text-white">user.email</code>
-and <code className="dark:text-white">user.full_name</code> are the outputs.
-</Attribute>
+    <Attribute field='resolves' kind='str'>
+        Describes the namespace to which the outputs belong.
+        In the above example, <code className="dark:text-white">user.email</code>
+        and <code className="dark:text-white">user.full_name</code> are the outputs.
+    </Attribute>
 
-<Attribute field='source' kind='str'>
-Describes the database by name, as in the above example, or
-the type if there is only one database of that type. Thus, if you have 
-one PostgreSQL source, you can also write <code className="dark:text-white">source: postgresql</code>.
-Supported sources are <code className="dark:text-white">['snowflake', 'postgres', 'postgresql', 'mysql', 'bigquery', 'cloudsql', 'redshift', 'sqlite', 'kafka']</code>.
-</Attribute>
+    <Attribute field='source' kind='str'>
+        Describes the database by name, as in the above example, or
+        the type if there is only one database of that type. Thus, if you have
+        one PostgreSQL source, you can also write <code className="dark:text-white">source: postgresql</code>.
+        Supported sources are <code className="dark:text-white">['snowflake', 'postgres', 'postgresql', 'mysql',
+        'bigquery', 'cloudsql', 'redshift', 'sqlite', 'kafka']</code>.
+    </Attribute>
 
-<Attribute field='type' kind='"online" | "offline" | "streaming" | null'>
-The type of resolver. If not specified, <code className="dark:text-white">online</code> is the default.
-</Attribute>
+    <Attribute field='type' kind='"online" | "offline" | "streaming" | null'>
+        The type of resolver. If not specified, <code className="dark:text-white">online</code> is the default.
+    </Attribute>
 
-<Attribute field='incremental' kind='dict[str, str]'>
-Parameters for incremental queries. For more information, see the <a href='/docs/sql#incremental-queries'>below</a> section on incremental queries.
+    <Attribute field='incremental' kind='dict[str, str]'>
+        Parameters for incremental queries. For more information, see the <a
+        href='/docs/sql#incremental-queries'>below</a> section on incremental queries.
 
-<SubAttributeTable title='incremental query parameters'>
+        <SubAttributeTable title='incremental query parameters'>
 
-<SubAttribute field='mode' kind='"row" | "group" | "parameter"'>
-The incrementalization mode decides how to ingest new data.
-</SubAttribute>
+            <SubAttribute field='mode' kind='"row" | "group" | "parameter"'>
+                The incrementalization mode decides how to ingest new data.
+            </SubAttribute>
 
-<SubAttribute field='lookback_period' kind='string'>
-The length of the window from the last observed row that Chalk will re-ingest, e.g. <code className="dark:text-white">1h</code>.
-</SubAttribute>
+            <SubAttribute field='lookback_period' kind='string'>
+                The length of the window from the last observed row that Chalk will re-ingest, e.g. <code
+                className="dark:text-white">1h</code>.
+            </SubAttribute>
 
-<SubAttribute field='incremental_column' kind='string'>
-The timestamp column in the underlying table to use as the basis for incrementalization.
-Must be supplied in <code className="dark:text-white">row</code> and <code className="dark:text-white">group</code> modes.
-</SubAttribute>
+            <SubAttribute field='incremental_column' kind='string'>
+                The timestamp column in the underlying table to use as the basis for incrementalization.
+                Must be supplied in <code className="dark:text-white">row</code> and <code
+                className="dark:text-white">group</code> modes.
+            </SubAttribute>
 
-</SubAttributeTable>
-</Attribute>
+            <SubAttribute field='incremental_timestamp' kind='"feature_time" | "resolver_execution_time"'>
+                The timestamp used for timedelta calculations. Defaults to <code
+                className="dark:text-white">feature_time</code>
+            </SubAttribute>
 
-<Attribute field='count' kind='"1" | null'>
-Returns one. Equivalent to the common query finalizer <code className="dark:text-white">.one()</code>.
-</Attribute>
+        </SubAttributeTable>
+    </Attribute>
 
-<Attribute field='timeout' kind='Duration | null'>
-The maximum time to wait before timing out the query.
-See [Duration](/api-docs#Duration) for more details.
-</Attribute>
+    <Attribute field='count' kind='"1" | null'>
+        Returns one. Equivalent to the common query finalizer <code className="dark:text-white">.one()</code>.
+    </Attribute>
 
-<Attribute field='tags' kind='list[str] | null'>
-The user tags associated with this resolver. For online and offline resolvers.
-</Attribute>
+    <Attribute field='timeout' kind='Duration | null'>
+        The maximum time to wait before timing out the query.
+        See [Duration](/api-docs#Duration) for more details.
+    </Attribute>
 
-<Attribute field='environment' kind='list[str] | null'>
-The environments associated with this resolver.
-</Attribute>
+    <Attribute field='tags' kind='list[str] | null'>
+        The user tags associated with this resolver. For online and offline resolvers.
+    </Attribute>
 
-<Attribute field='cron' kind='str | null'>
-The schedule for a cron run, e.g. <code className="dark:text-white">1h</code>.
-</Attribute>
+    <Attribute field='environment' kind='list[str] | null'>
+        The environments associated with this resolver.
+    </Attribute>
 
-<Attribute field='max_staleness' kind='str | null'>
-The max staleness for the resolver, e.g. <code className="dark:text-white">24h</code>.
-</Attribute>
+    <Attribute field='cron' kind='str | null'>
+        The schedule for a cron run, e.g. <code className="dark:text-white">1h</code>.
+    </Attribute>
 
-<Attribute field='owner' kind='str | null'>
-The owner of the resolver.
-</Attribute>
+    <Attribute field='max_staleness' kind='str | null'>
+        The max staleness for the resolver, e.g. <code className="dark:text-white">24h</code>.
+    </Attribute>
 
-<Attribute field='fields' kind='dict[str, str]'>
-An optional mapping from SQL column to Chalk feature.
-For example, with  <code className="dark:text-white">SELECT name AS arbitrary_column_name</code>,
-we can map the <code className="dark:text-white">arbitrary_column_name</code> to a Chalk feature belonging to the
-namespace described by the <code className="dark:text-white">resolves</code> field with the mapping
-<code className="dark:text-white">arbitrary_column_name: chalk_feature_name</code>.
-</Attribute>
+    <Attribute field='owner' kind='str | null'>
+        The owner of the resolver.
+    </Attribute>
+
+    <Attribute field='fields' kind='dict[str, str]'>
+        An optional mapping from SQL column to Chalk feature.
+        For example, with <code className="dark:text-white">SELECT name AS arbitrary_column_name</code>,
+        we can map the <code className="dark:text-white">arbitrary_column_name</code> to a Chalk feature belonging to
+        the
+        namespace described by the <code className="dark:text-white">resolves</code> field with the mapping
+        <code className="dark:text-white">arbitrary_column_name: chalk_feature_name</code>.
+    </Attribute>
 
 </AttributeTable>
+
+### Proper comment formatting
+
+All comments must be inserted before the body of the sql query. Each comment line is parsed as
+either a yaml-formatted line describing the resolver or a docstring. Below, the last comment
+will appear as a docstring since it is not in `key:value` format.
+
+```sql get_all_columns_users.chalk.sql
+-- type: online
+-- resolves: user
+-- source: PG
+-- This comment is not in yaml format, so it will be parsed as a docstring
+select * from user_table
+```
+
+For field values that can be lists or dictionaries, such as `tags` or 'incremental` settings,
+we can either enumerate the values inline or with an extra indentation.
+Remember, if your values include a colon, you must use quotes around your value in order for
+the line to be valid YAML format.
+
+Both of the following formats are valid and equivalent.
+
+```sql get_all_columns_users.chalk.sql
+-- type: online
+-- resolves: user
+-- source: PG
+-- tags: ["single:1", "double:2"]
+select * from user_table
+```
+
+```sql get_all_columns_users.chalk.sql
+-- type: online
+-- resolves: user
+-- source: PG
+-- tags:
+--    - single:1
+--    - double:2
+select * from user_table
+```
+
+### Streaming SQL File Resolvers
 
 Chalk also supports SQL file streaming resolvers:
 
@@ -273,7 +324,7 @@ pg.query_string(
 
 ### Python resolvers with SQL Sources (.sql files)
 
-Finally, if you want to join your sql files with Python resolvers, 
+Finally, if you want to join your sql files with Python resolvers,
 you can use the `query_sql_file` function.
 
 For example, if you have a sql query defined in `query.sql`:
