@@ -35,7 +35,7 @@ export default function OverviewPage({ code }) {
         title={'Guides'}
         links={[
           {
-            href: '/docs/feature-dev',
+            href: '/docs/lifecycle',
             name: 'Create a new feature',
             description: 'Create and backfill a new feature.',
           },

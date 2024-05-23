@@ -105,8 +105,8 @@ that we would like to have.
 There are a few things to note here. First, all our feature
 classes need to have a unique `id` field. By default, this
 is the field named `id`. However, if you want to use a
-different field as the primary key, you can specify it
-using the `Primary` argument to `@features`.
+different feature name as the primary key, you can specify it
+by describing the primary key feature with the `Primary` type.
 
 ```diff-py src/user.py
 from chalk.features import features
@@ -121,7 +121,7 @@ class User:
 
 ### Tags, Descriptions, & Owners
 
-In our features below, we've added some comments and
+In our features above, we've added some comments and
 annotations to our features. These are optional, but
 can be useful for documentation and for setting alerting
 policies. For example, you may wish to send [Pagerduty alerts](/docs/pagerduty)
@@ -221,6 +221,9 @@ transaction is linked to a single account. We'll define the
 +    id: int
 +
 +    # The id of the account that this transaction belongs to, set to a join.
++    # We refer to features and feature sets defined further down in the file
++    # using quotation marks, so Chalk will recognize that it is a valid
++    # feature reference to be processed later.
 +    account_id: "Account.id"
 +
 +    # The amount of the transaction, in dollars.
@@ -293,7 +296,7 @@ A primary source of data for many companies is a SQL database. Chalk can
 automatically ingest data from SQL databases and map it to feature classes.
 
 In our example application, we have two databases: PostgreSQL and Snowflake.
-Our PostgreSQL database is the primary database used elsewhere in our
+Our PostgreSQL database is the primary database used in our
 codebase, and our Snowflake database is used for analytics, with tables
 populated from DBT views and batch jobs.
 
@@ -474,7 +477,7 @@ we wrote for the `User` feature class.
 First, we've added a `type` key to the header. This tells Chalk
 that this resolver should be used to ingest data into the offline store.
 If we didn't include this key, Chalk would assume that this resolver
-could be queried in realtime.
+could be [queried in realtime](/docs/query-basics).
 
 Second, we've added a [`cron`](/docs/resolver-cron) key to the header. This tells Chalk
 to run this resolver on a schedule. In this case, we're telling Chalk

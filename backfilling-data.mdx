@@ -71,7 +71,7 @@ Resolvers that use [incremental ingest](/docs/sql), don't re-process data from b
 Chalk lets you reset the maximum observed timestamp of incremental resolvers to a specific timestamp,
 or re-ingest all historical data.
 
-Chalk uses the [`chalk migrate`](/cli/migrate) command to perform this operation. Suppose that you want to add a new column,
+Chalk uses [offline queries](docs/training-client) to perform this operation. Suppose that you want to add a new column,
 `favorite_color`, to this existing batch SQL resolver:
 
 ```py
@@ -88,16 +88,24 @@ If you have been running this resolver in production for a long time, then simpl
 running [`chalk apply`](/cli/apply) will not ingest historical color preferences because the `incremental` timestamp
 lower bound will prevent the query from returning "old" rows which include these historical `favorite_color` observations.
 
-Instead, run a migration and override the default incremental behavior:
+Instead, run an offline query to obtain a dataset of the feature values you want to ingest and then call
+`.ingest` to either [store online or offline](/api-docs#DatasetRevision.ingest).
 
-```
-chalk migrate --resolver your.module.path.ingest_preferences --reset-incremental
-# or
-chalk migrate --resolver your.module.path.ingest_preferences --incremental-lower-bound 2022-01-01T00:00:00.000Z
-```
+```py
+from chalk.client import ChalkClient
 
-The first variant will ingest all available historical data. The second will ingest data newer (inclusive)
-than the lower bound that you specify with an ISO8601 timestamp.
+dataset = ChalkClient().offline_query(
+    input={
+        User.id: [i for i in range(1000)],
+    },
+    output=[
+        User.favorite_color
+    ],
+)
+
+dataset.recompute(features=['user.favorite_color'])
+dataset.ingest(store_offline=True)
+```
 
 ---
 
@@ -126,11 +134,14 @@ def reverse_name(name: User.name) -> User.reversed_name:
     return name[::-1]
 ```
 
-Chalk can automatically compute this feature using historically observed values of `User.name`. To do this, you
-use the [`chalk`](/cli/) CLI tool to plan and execute a "migration":
+
+Chalk can automatically compute this feature using historically observed values of `User.name`.
+To do so, you can either use an offline query with `recompute_features=True` and ingest the
+computed feature values as we did above, or you can use the  [`chalk`](/cli/) CLI tool to
+trigger a resolver run.
 
 ```
-chalk migrate --resolver your.module.path.reverse_name
+chalk trigger --resolver your.module.path.reverse_name --lower-bound 2024-05-05T12:00:00+00:00 --persist-offline=True
 ```
 
 In this example, Chalk will query the offline store to sample all combinations of:
@@ -139,6 +150,7 @@ In this example, Chalk will query the offline store to sample all combinations o
 | user.id | user.name | observed_at |
 ```
 
-and then invoke your resolver. For each sampled tuple `(id, name, observed_at)`, Chalk will write
+where observed_at is later than the ISO8601 timestamp passed in as the `lower_bound` and then invoke your resolver.
+For each sampled tuple `(id, name, observed_at)`, Chalk will write
 `(id, reverse_name(name), observed-at)` back to the offline store, and to the online store if
 the new feature is marked with non-zero `max_staleness` and `etl_offline_to_online=True`.
