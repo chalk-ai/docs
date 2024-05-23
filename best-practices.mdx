@@ -28,7 +28,7 @@ Features fully specify what you want your data to look like. Once you have an un
 ### Avoid dataclass feature types, instead use seperate features sets or unpack the data
 
 While Chalk allows for dataclass feature types, they should be avoided. They don't always play nicely with serialization and can cause tough to debug errors. We recommend
-either unpacking the nested class into basic types or defining and joining an additionally Chalk feature set if the nested component is truly a separate entity. Defining a
+either unpacking the nested class into basic types or defining and joining an additional Chalk feature set if the nested component is truly a separate entity. Defining a
 separate feature set, also makes the underlying data easier to monitor and test.
 
 ### Tag and annotate your features
