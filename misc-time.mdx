@@ -1,0 +1,57 @@
+---
+title: Time
+description: Introspect and override feature resolution timestamps.
+---
+
+---
+
+By default, features are timestamped with the execution time of their resolver.
+However, [you can override this behavior by providing timestamps from your data
+source](/docs/features#overriding-output-time).
+
+## Interaction with the online store
+
+Features with overriden observation timestamps are treated specially when inserted into the online store.
+In particular, Chalk will always check for existing "newer" feature values in the online store
+before inserting historically dated feature values. This means that you can safely ingest large quantities
+of backdated features without accidentally ingesting stale data into the online store.
+
+Additionally, once features are inserted into the online store, Chalk tracks the source observation timestamps
+when these feature values are returned as part of online queries. Chalk uses these source timestamps
+to compute the "feature staleness" metric. Staleness in this context is defined as "query time - observation time".
+
+---
+
+## Interaction with the offline store
+
+Features with overriden observation timestamps are inserted into the offline store with the timestamp that you
+specify. The observation timestamp works like an "effective as of" timestamp, so if you insert something like this:
+
+```
+| id | feature | value | timestamp            |
+|---------------------------------------------|
+| 1  | age     | 7     | 2022-02-01T00:00:00Z |
+```
+
+into an offline store that already contained these observations:
+
+```
+| id | feature | value | timestamp            |
+|---------------------------------------------|
+| 1  | age     | 6     | 2022-01-01T00:00:00Z |
+| 1  | age     | 8     | 2022-03-01T00:00:00Z |
+```
+
+then the observation will be interleaved "in between" the existing observations, and you would see the following query
+results:
+
+```
+id, age, <= 2022-02-01
+output: 7
+
+id, age, <= 2022-03-02
+output: 8
+
+id, age, <= 2022-01-02
+output: 6
+```

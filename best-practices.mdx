@@ -12,12 +12,13 @@ illustrating recommended patterns for building and maintaining your Chalk soluti
 
 ### Test your datasource connections
 
-Define integrations through the Chalk dashboard and check that they're connecting properly using the test datasource button.
+Define integrations through the Chalk dashboard and check that they're connecting properly using the `test datasource` button.
 ![Test Datasource](/img/test-datasource.png)
 
 ### Avoid naming your datasources by their "type", e.g. don't call your postgres datasource "postgres"
 
-Though this works, it can lead to ambiguity in SQL resolvers when you have multiple data sources of the same type. This occurs because only one instance of a data source type, [Chalk lets you refer to that data source by it's type instead of its name](/fraud-3#online-data)
+Though this works, it can lead to ambiguity in SQL resolvers when you add multiple data sources of the same type. This occurs
+because [Chalk lets you refer to "single copy" data sources by either their type or their name](/fraud-3#online-data).
 
 ## Features
 
@@ -33,7 +34,9 @@ separate feature set, also makes the underlying data easier to monitor and test.
 
 ### Tag and annotate your features
 
-We strongly recommend that you tag and annotate your features as you are developing them. This is done by adding comments above a feature, like so:
+We strongly recommend annotating your features as you are developing them. Your feature annotations show up in the Chalk
+dashboard and are a good way of documenting your code. You can also add tags and owners to your features, which can
+be used for aggregation and filtering in the Chalk Dashboard.
 
 ```python
 from chalk import features
@@ -54,7 +57,7 @@ class User:
   birthday: datetime
 ```
 
-If you want to apply a tag or owner to all features in a feature set, this should be done in the featuer decorator, like so:
+If you want to apply a tag or owner to all features in a feature set, this should be done in the feature decorator, like so:
 
 ```python
 from chalk import features
@@ -96,7 +99,7 @@ Joins between feature sets can be specified in a number of different ways. We re
 
 ### Use SQL resolvers to read data from your raw datasets
 
-While python resolvers can be used to read data from your data sources, SQL File resolvers are preferred.
+While python resolvers can be used to read data from your data sources, SQL resolvers are preferred.
 
 ### Explicity list columns in a select statement for sql file resolvers
 

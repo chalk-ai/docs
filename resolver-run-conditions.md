@@ -1,18 +1,18 @@
 ---
-title: Online / Offline
-description: Predict and train.
+title: Run Conditions (Online / Offline)
+description: How to specify run conditions for different resolvers
 ---
 
----
+Each Chalk resolver you write has run conditions. The most fundamental of 
+these, and the main focus of this section, will be the online/offline
+condition. However, there are additional ways of optionally specifying 
+further conditions on when a resolver runs: these include environment, 
+tags, and scheduling.
 
-Chalk supports online and offline resolvers.
-Online resolvers produce features for online inference,
-and offline resolvers produce offline training data.
+## Offline vs. Online
 
-## Storage
-
-Online and offline resolvers have different read/write needs.
-Your online environment stores data that you want to cache
+Online and offline resolvers have different read/write needs. Your online 
+environment stores data that you want to cache
 for the period you'd like to cache it.
 While this is usually a small amount of data,
 you want exceptionally fast reads.
@@ -32,9 +32,9 @@ Chalk uses the column store
 In addition, offline queries write their output to a [parquet file](https://parquet.apache.org/)
 in cloud storage (S3/GCS), whereas online queries write their results to database.
 
-[//]: # 'More detail [Chalk architecture](/docs/architecture)'
+[//]: # "More detail [Chalk architecture](/docs/architecture)"
 
-## Querying
+### Querying
 
 Online queries are used to receive information about a single entity.
 For example, you might be looking to compute the features of a
@@ -52,73 +52,9 @@ See our guide on [querying training data](/docs/training-client)
 for a more in-depth treatment.
 
 |                  | online query                                                                                                                       | offline query                                                                                                                                                                                                                                                                           |
-|------------------|------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | online resolver  | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolver will run        | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolver will run if there is no <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver with the same definition |
 | offline resolver | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver will never run | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver will run                                                                                                                                                            |
-
-
-## Scheduling
-
-Both offline and online resolvers [support scheduled runs](/docs/resolver-cron).
-However, you're likely to consider scheduling more frequently with offline resolvers.
-Every offline resolver pulls in data from your underlying source to
-Chalk's feature store on a schedule.
-Chalk will determine the frequency at which to poll your data sources,
-or you can choose to provide a custom [duration](/docs/duration) on which
-to pull the data.
-
-Online resolvers can also be scheduled, although they don't _necessarily_
-run on a schedule as offline resolvers do.
-
-Both online and offline scheduled resolvers may take arguments,
-and you have
-[control over the sets of arguments](/docs/resolver-cron#filtering-examples)
-to run.
-
----
-
-## Interaction
-
-### Online-to-Offline
-
-After an online resolver runs, its values are copied into the [offline store](#storage).
-When you [query the offline store](/docs/training-client),
-you will receive data from both records of online runs and offline-specific resolvers.
-Which data you receive depends on which data was closest to the point-in-time
-that you queried.
-For more information, see [temporal consistency](/docs/temporal-consistency).
-
-### Offline-to-online
-
-In contrast, data from the offline environment _does not_
-reach the online store by default.
-However, you can choose to ETL the data from an offline
-resolver into the online store.
-This can be helpful, for example,
-when you tolerate stale data in online inference and
-have a data source in the offline environment that doesn't
-have a direct replacement in the online environment.
-More details are provided in the section [Reverse ETL](/docs/reverse-etl).
-
-## Summary
-
-| Online query                                                                                                                  | Offline query                                                                                                                                                                                                                                |
-|-------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Runs only <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolvers | Runs both <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> and <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolvers |
-| Returns one row of data about one entity                                                                                      | Returns a dataframe of many rows of historical data corresponding to multiple entities point-in-time                                                                                                                                         |
-| Designed to return data immediately in milliseconds                                                                           | Blocks until computation is complete, not designed for millisecond-level computation                                                                                                                                                         |
-| Queries the online store, which caches recent data from online queries for quick retrieval                                    | Queries the offline store (Timescale), which stores all data from both online and offline queries                                                                                                                                            |
-| Writes output data to online store database and offline store database                                                        | Writes output to offline store database and a parquet file containing results to cloud storage. Only writes to online store if specified.                                                                                                    |
-
-
-Tags allow you to scope requests within an environment.
-Both tags and environment need to match for a resolver to
-be a candidate to execute.
-
-You might consider using tags, for example, to change out
-whether you want to use a sandbox environment for a vendor,
-or to bypass the vendor and return constant values in a
-`staging` environment.
 
 ## Restricting Resolver Execution By Environment
 
@@ -128,7 +64,7 @@ For example, you may wish to interact with a vendor via an API call
 in the `production` environment, and opt to return a constant value
 in a `staging` environment.
 
-## Specifying environments
+### Specifying environments
 
 You can choose to scope resolvers to a restricted set of environments.
 Resolvers optionally take a keyword argument named `environment`
@@ -138,7 +74,7 @@ that can take one of three types:
 - **String value** - The resolver will run _only_ in this environment.
 - **List of strings** - The resolver will run in _any_ of the specified environments and no other environments.
 
-## Example
+### Example
 
 Say your fraud models needed to interact with a fraud vendor that you wanted
 to mock out in staging. We can scope the environments as follows:
@@ -215,12 +151,12 @@ chosen for a given set of tags.
 | <span className="font-mono text-accent-teal"> [api:mock, fraud] </span> | <span className="font-mono text-pink-500"> simulate_fraud </span>    |
 | <span className="font-mono text-accent-teal"> api:mock </span>          | <span className="font-mono text-pink-500"> simulate_no_fraud </span> |
 | <span className="font-mono text-accent-teal"> api:sandbox </span>       | <span className="font-mono text-pink-500"> sandbox_score </span>     |
-| <span className="font-mono text-accent-teal"> &lt;otherwise&gt; </span>       | <span className="font-mono text-pink-500"> real_score </span>        |
+| <span className="font-mono text-accent-teal"> &lt;otherwise&gt; </span> | <span className="font-mono text-pink-500"> real_score </span>        |
 
 Note that these resolvers don't need to take the same set of inputs,
 and don't need to return the same types.
 
-## When tagged resolvers run
+### When tagged resolvers run
 
 Like [Environments](/docs/resolver-environments), tags control when resolvers run
 based on the
@@ -247,7 +183,7 @@ the resolver will be eligible to run. For example:
 | <span className="font-mono text-accent-teal"> api:live </span>               | <span className="font-mono text-pink-500"> api </span>                    | No       |
 | <span className="font-mono text-accent-teal"> api:fixture </span>            | <span className="font-mono text-pink-500"> api:live </span>               | No       |
 
-## Example
+### Example
 
 Frequently, you'll want to combine tags and [Environments](/docs/resolver-environments),
 as below.
