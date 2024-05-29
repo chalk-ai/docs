@@ -11,11 +11,12 @@ values for your feature sets, requesting a set of historical data
 for your feature sets, or running a backfill or batch job.
 
 The first use case is accomplished through **online queries**, which try to
-return values for a single feature set as quickly as possible: taking
+return values for a single feature set as quickly as possible, taking
 advantage of caching and distributed execution.
 
 The latter use cases are accomplished through offline queries which execute
-over the offline store and can return multiple instances of a feature set.
+over the offline store and can return multiple instances of a feature set
+for multiple primary keys or timepoints.
 
 ## What are Queries
 
@@ -45,8 +46,7 @@ An offline query returns all requested computed features for all requested ids.
 For instance, say you've computed the number of transactions (`num_transactions`)
 for a User with id 1 every day over the past week. Making an offline query
 with `user.id=1` as an input and `user.num_transactions` as an output would
-return all seven of the previously computed feature `num_transaction` feature
-values.
+return all seven of the previously computed values for `num_transactions`.
 
 Offline queries are often restricted by lower and upper bound timestamps
 which constrain the outputs to a specific temporal range.
@@ -80,7 +80,7 @@ clients.
 Online Queries can be run using the chalk CLI:
 
 ```bash
-chalk query --in user.id=1 --in user.name=mary --out user
+chalk query --in user.id=1 --out user.name
 ```
 
 or one of our API Clients:
@@ -119,4 +119,6 @@ client.offline_query(
 
 ### Scheduled and Triggered Resolver Run
 
-Specific resolvers can also be [scheduled](/docs/resolver-cron) or [triggered](/docs/runs) (for instance as part of engineering pipelines like airflow). Functionally, triggers and schedules can be thought of as queries, which execute on large portions of your data.
+Specific resolvers can also be [scheduled](/docs/resolver-cron) or [triggered](/docs/runs) (for instance as part of engineering pipelines like airflow). Functionally, triggers and schedules can be thought of as queries which execute on large portions of your data. Both scheduled and triggered runs pull inputs from the offline store or external data sources and compute new feature values.
+
+Like for online and offline queries, these computed features are written to the offline store and also, if requested, to the online one.

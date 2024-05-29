@@ -12,7 +12,7 @@ their relationships, and their properties), resolvers define how your feature va
 are computed.
 
 <TipInfo>
-if you haven't read the section on feature sets, you are strongly encourage to do so. Understanding feature sets will help you understand resolvers.
+If you haven't read the section on feature sets, you are strongly encourage to do so. Understanding feature sets will help you understand resolvers.
 </TipInfo>
 
 Resolvers have four main components: inputs, outputs, code, and run conditions.
@@ -100,16 +100,22 @@ def get_is_runner(
 
 ## When Do Resolvers Run
 
-A question that often crops up at this point, is: ok, I have defined a resolver, but how do
-I make it run?
+A question that often crops up at this point, is: "I have defined a resolver, but how do
+I make it run?"
 
 Just like features, the idea behind resolvers is that they are declarative. Resolvers
 don't run when you define them and they don't run exhaustively over your data. They run
 only in response to a request for the features that they are responsible for computing. In
 practice, this means that they run in response to "queries".
 
+<TipInfo>
+Resolvers can also be run on a schedule or triggered. Either approach causes them
+to: 1). excecute, in batch-job fashion, over all the data they find in your upstream
+data sources, and 2). write computed features to your offline store.
+</TipInfo>
+
 A query is just a request for data. Chalk takes a query and determines which resolvers it
 needs to run, optimizes the execution order, and provides you with a response. For now, we'll
-hold off on discussing queries further, but definitely feel free to skip ahead and
-get a sense of [what Chalk queries are and how they work](/docs/query-basics), before diving
+hold off on discussing queries further, but feel free to skip ahead and
+get a sense of [what Chalk queries are and how they work](/docs/query-overview), before diving
 deeper into resolvers.
