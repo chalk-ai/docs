@@ -23,8 +23,9 @@ The last component, run conditions, is a little more nuanced. At a high level,
 Chalk is optimized for two different access patterns: online and offline. In online
 access, information about a single entity is being requested and features must be
 computed quickly and cached. In offline access, a large chunk of historical
-feature data is being requested (you can think of this as creating a dataset for model
-training or running an analytic query).
+feature data is being requested, must be gathered quickly, and must return the
+same values in response to the same query—that is, it must be consistent (you
+can think of this as creating a dataset for model training or running an analytic query).
 
 Resolvers are always specified as either online or offline. We go into more detail
 about what this means in the next section where we talk about run conditions, but for now it

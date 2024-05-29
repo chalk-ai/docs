@@ -507,15 +507,16 @@ def batch_get_age_in_years(df: DataFrame[User.id, User.birthday, Now]) -> DataFr
 
 ## Outputs
 
-SQL Resolvers specify the type of their outputs in comments:
-
-Resolvers declare the features that they resolve through a
-[Python type annotation](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html#functions)
+Resolvers declare the features that they resolve through a [Python type annotation](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html#functions)
 on the return value of the function.
 
-## Scalar output
+Python resolvers can return the following types of outputs:
+- single features,
+- multiple features,
+- feature sets,
+- multiple features sets.
 
-### Single output
+### Single features
 
 To return a single feature from a resolver,
 set the return type annotation to the feature you
@@ -544,15 +545,15 @@ def resolve(u: User.id) -> User.name:
 +   return User(name="Jennifer Doudna")
 ```
 
-### Multiple outputs
+### Multiple features
 
-To return multiple features, return an
-[instance of the feature class](/docs/features#constructing-feature-classes).
-In the type signature, specify
-the `Features[...]` class, parameterized
+To return multiple features, return an [instance of the feature class](/docs/features#constructing-feature-classes).
+In the type signature, specify the `Features[...]` class, parameterized
 by the features that you pass to the feature class.
 
 ```diff-py
+from chalk.features import Features
+
 @online
 def resolve(u: User.id) -> Features[User.name, User.employer]:
     return User(
@@ -561,64 +562,42 @@ def resolve(u: User.id) -> Features[User.name, User.employer]:
     )
 ```
 
-You only need to pass
-[a subset of the features](/docs/features#constructing-feature-classes)
+You only need to pass [a subset of the features](/docs/features#constructing-feature-classes)
 to the constructor for the feature class.
-
-The [editor plugin](/docs/editor-setup) will check
-that the type annotation you assign to the resolver
-matches subset of features passed to the constructor
-of the feature set.
 
 ### All features
 
-To return all features of a class,
-use `Features[...]` around the feature class.
+To return all features of a class, you can just use feature set as your output,
+like so:
 
 ```py
 @online
-def get_user(u: User.id) -> Features[User]:
+def get_user(u: User.id) -> User:
     return User(
         name="Jennifer Doudna",
         employer="University of California, Berkeley"
     )
 ```
 
-If your resolver takes input features, those features are not
-considered as part of the output features.
+### Almost All Features
 
-Note that the `id` feature is not returned from the function.
-
-This definition is equivalent to:
-
-```diff-py
-@online
-- def get_user(u: User.id) -> Features[User]:
-+ def get_user(u: User.id) -> Features[User.name, User.employer]:
-    return User(
-        name="Jennifer Doudna",
-        employer="University of California, Berkeley"
-    )
-```
-
-However, you may want to return _almost_ all features of a class.
+You may want to return _almost_ all features of a class.
 Writing out all the features can be tedious and error-prone.
 You can subtract features from a feature class
 using the `-` operator:
 
 ```py
-from chalk.features import Features, ...
+from chalk import online
+from chalk.features import Features
 
 @online
-def get_all_users(id: User.id) -> Features[User] - User.name:
-    return User(employer="University of California, Berkeley")
+def get_all_users() -> Features[User] - User.name:
+    return User(id=5, employer="University of California, Berkeley")
 ```
 
-Here, both the `id` feature and the `name` feature are not returned,
-which leaves only the `employer` feature.
+However, here, only the `name` feature is not returned, which leaves both the
+`employer` and id feature.
 
-
----
 
 ## DataFrame output
 
@@ -709,50 +688,7 @@ and you have
 to run.
 
 
----
-
-## Interaction
-
-### Online-to-Offline
-
-After an online resolver runs, its values are copied into the [offline store](#storage).
-When you [query the offline store](/docs/training-client),
-you will receive data from both records of online runs and offline-specific resolvers.
-Which data you receive depends on which data was closest to the point-in-time
-that you queried.
-For more information, see [temporal consistency](/docs/temporal-consistency).
-
-### Offline-to-online
-
-In contrast, data from the offline environment _does not_
-reach the online store by default.
-However, you can choose to ETL the data from an offline
-resolver into the online store.
-This can be helpful, for example,
-when you tolerate stale data in online inference and
-have a data source in the offline environment that doesn't
-have a direct replacement in the online environment.
-More details are provided in the section [Reverse ETL](/docs/reverse-etl).
-
-## Summary
-
-| Online query                                                                                                                  | Offline query                                                                                                                                                                                                                                |
-|-------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Runs only <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolvers | Runs both <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> and <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolvers |
-| Returns one row of data about one entity                                                                                      | Returns a dataframe of many rows of historical data corresponding to multiple entities point-in-time                                                                                                                                         |
-| Designed to return data immediately in milliseconds                                                                           | Blocks until computation is complete, not designed for millisecond-level computation                                                                                                                                                         |
-| Queries the online store, which caches recent data from online queries for quick retrieval                                    | Queries the offline store (Timescale), which stores all data from both online and offline queries                                                                                                                                            |
-| Writes output data to online store database and offline store database                                                        | Writes output to offline store database and a parquet file containing results to cloud storage. Only writes to online store if specified.                                                                                                    |
-
-
-Tags allow you to scope requests within an environment.
-Both tags and environment need to match for a resolver to
-be a candidate to execute.
-
-You might consider using tags, for example, to change out
-whether you want to use a sandbox environment for a vendor,
-or to bypass the vendor and return constant values in a
-`staging` environment.
+staging` environment.
 
 ## Restricting Resolver Execution By Environment
 
@@ -903,4 +839,108 @@ def fraud_score_sandbox(email: UserFeatures.email) -> UserFeatures.fraud_score:
 @online(environment="production")
 def fraud_score_prod(email: UserFeatures.email) -> UserFeatures.fraud_score:
     return api_vendor_live.fraud_score(email)
+```
+
+## Resolver crons
+
+You can schedule resolvers to run on a pre-determined schedule
+via the `cron` argument to resolver decorators.
+
+```py
+@online(cron="**90d**")
+def fn() -> DataFrame[User.id, User.name]:
+    return ...
+```
+
+The `cron` keyword arguments takes a [duration](/docs/duration)
+to determine the schedule on which to run.  For more fine-grained control,
+you can alternatively specify a [crontab](https://man7.org/linux/man-pages/man5/crontab.5.html).
+
+```py
+@online(cron="***/5 * * * ***")
+def region_average(
+    houses: DataFrame[
+        House.city, House.rent_price
+    ]
+) -> DataFrame[Region.name, Region.average_price]:
+    return houses.group_by(
+        group={Region.name: House.city},
+        agg={
+            Region.average_price: op.mean(House.rent_price),
+        },
+    )
+```
+
+---
+
+## Scheduling with arguments
+
+Scheduled resolvers can also take arguments.
+Chalk gives you control over which arguments should be
+provided for each run of the schedule.
+
+### All examples (default)
+
+Chalk calls the resolver with
+all unique argument names that could have called the function.
+Consider a scheduled resolver that takes in
+`Feature 1` and `Feature 2`:
+
+<ScheduleSampling />
+
+In this example, we compute two points to sample:
+(1, 5) and (1, 7). These two values will be given
+to the resolver on the specified cron schedule.
+
+### Filtering examples
+
+You can choose to filter down the set of all examples to run.
+The `cron` keyword argument alternatively takes a `Cron` class.
+By specifying a function from features to boolean,
+you can tell Chalk which of the [default examples](#all-examples-default)
+to run, and which to skip:
+
+```py
+def filter_examples(bank_id: User.bank_account.balance) -> bool:
+    return balance > 100
+
+@online(cron=Cron(schedule="1d", filter=filter_examples))
+def fn(balance: User.bank_account.balance) -> ...:
+```
+
+The arguments to the filter function all need to be rooted in the
+same entity as the features in the scheduled resolver,
+but there is no requirement that the filter function take a subset
+of the scheduled resolver's arguments:
+
+```py
+def filter_examples(status: User.bank_account.status) -> bool:
+    return status == "opened"
+
+@online(cron=Cron(schedule="1d", filter=filter_examples))
+def fn(balance: User.bank_account.balance) -> ...:
+```
+
+### Custom examples
+
+Finally, you can pick exactly the examples that you'd like to run.
+
+```py
+def pull_examples() -> DataFrame[User.id]:
+    return DataFrame.read_csv(...)
+
+@online(cron=Cron(schedule="1d", samples=pull_examples))
+def fn(uid: User.id) -> ...:
+```
+
+In the above example, we provide all arguments to the resolver function.
+However, you may also choose to provide only a subset of the arguments,
+and Chalk will sample the other arguments.
+
+```py
+def pull_examples() -> DataFrame[User.id]:
+    return DataFrame.read_csv(...)
+
+@online(cron=Cron(schedule="1d", samples=pull_examples))
+def fn(uid: User.id, balance: User.account.balance) -> ...:
 ```
