@@ -1,59 +1,79 @@
 ---
 title: Overview
-description: Fetch feature values via online query.
+description: Fetch feature values via queries.
 ---
 
 ---
 
 To request or compute data with Chalk, you'll use **queries**. In general,
-when you run a Chalk query, you are either requesting the most up-to-date
-values for your feature sets or requesting a set of historical data
-for your users, or running an expensive backfill or batch job.
+when you run a Chalk query, you are either: requesting the most up-to-date
+values for your feature sets, requesting a set of historical data
+for your feature sets, or running a backfill or batch job.
 
-In the first case, you will be **running online** queries, which try to
+The first use case is accomplished through **online queries**, which try to
 return values for a single feature set as quickly as possible: taking
 advantage of caching and distributed execution.
 
-In the later cases, you will be running offline queries which execute
-over the offline store (which contains all features that Chalk has
-computed) and can return multiple feature sets.
+The later use cases are accomplished through offline queries which execute
+over the offline store and can return multiple instances of a feature set.
 
 ## What are Queries
 
 At a high level, a query specifies input features and output features.
-Inputs differ for online queries and offline queries, but in both
+Inputs differ slightly for online queries and offline queries, but in both
 cases the input must contain the primary key of your requested feature set.
 
-For an online query, the input might be the id of a user for which you want to
-compute output features. You can also specify additionally features
-that "overwrite" the features your resolver might otherwise compute. For instance,
-you could run an online query passing one of your user's ids, but also
-a hard coded name. Using Chalk's cli, this would look like the following:
+For example, for an online query, the input could be the id of a user for
+which you want to compute output features. You can also specify additional
+features that "overwrite" the features your resolver would otherwise compute.
+For instance, you could run an online query passing one of your user's ids but also
+a hard coded name. Using Chalk's CLI, this would look like the following:
 
 ```sh
 chalk query --in user.id=1 --in user.name=mary --out user
 ```
 
 For offline queries, the input is a list of ids for one of your feature
-sets and, like online queries, equally long lists containing values
+sets and (similar to online queries) equally long lists containing values
 for any other feature from the same namespace.
 
-Where online and offline queries most differ is in their output. An online
+Online and offline queries differ most in their output. An online
 query only ever returns one value for each requested output feature, which
-it retrieves either from the cache or by executing the necessary resolvers.
-An offline query returns all computed features for all requested ids. For instance,
-if you've computed the number of transactions for a User with id 1 every day
-over the past week, including `user.id=1` as an input to your offline query
-would return all seven of those feature values.
+it retrieves either from the cache or by executing resolvers.
 
-Offline queries are typically bounded by lower bound and upper bound timestamps
+An offline query returns all requested computed features for all requested ids.
+For instance, say you've computed the number of transactions (`num_transactions`)
+for a User with id 1 every day over the past week. Making an offline query
+with `user.id=1` as an input and `user.num_transactions` as an output would
+return all seven of the previously computed feature `num_transaction` feature
+values.
+
+Offline queries are often restricted by lower and upper bound timestamps
 which constrain the outputs to a specific temporal range.
+
+## Query Side Effects
+
+Chalk queries return and write data. This is an essential part of
+Chalk: every time you compute a feature, either through an online or offline
+query, the output is written down in the offline store. This makes it easy to:
+
+- create datasets from your previously computed features,
+- monitor and track your computed features over time.
+
+| Online query                                                                               | Offline query                                                                                                                             |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Returns one row of data about one entity                                                   | Returns a dataframe of many rows of historical data corresponding to multiple entities point-in-time                                      |
+| Designed to return data immediately in milliseconds                                        | Blocks until computation is complete, not designed for millisecond-level computation                                                      |
+| Queries the online store, which caches recent data from online queries for quick retrieval | Queries the offline store (Timescale), which stores all data from both online and offline queries                                         |
+| Writes output data to online store database and offline store database                     | Writes output to offline store database and a parquet file containing results to cloud storage. Only writes to online store if specified. |
 
 ---
 
 ## Running Queries
 
-Queries are executed against deployments or branches.
+Queries are executed against deployments or branches. The easiest way to execute
+a query is either: 1). with the Chalk CLI, or 2). with one of Chalk's API
+clients.
 
 ### Running Online Queries
 
@@ -97,7 +117,6 @@ client.offline_query(
 )
 ```
 
-### Scheduled and Triggered Resolver Runs
+### Scheduled and Triggered Resolver Run
 
-Specific resolvers can also be scheduled or triggered as part of engineering
-pipelines like airflow. Behind the scenes, Chalk treats both of these as queries.
+Specific resolvers can also be [scheduled](/docs/resolver-cron) or [triggered](/docs/runs) (for instance as part of engineering pipelines like airflow). Functionally, triggers and schedules can be thought of as queries, which execute on large portions of your data.
