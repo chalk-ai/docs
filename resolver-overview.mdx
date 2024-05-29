@@ -30,11 +30,11 @@ feature data is being requested (you can think of this as creating a dataset for
 training or running an analytic query).
 
 Resolvers are always specified as either online or offline. We go into more detail
-about what this means in the next section where we talk about run conditions, but for now it
-is important to note that: 1). every resolver is either online or offline, and 2). different
+about what this means in the [next section where we talk about run conditions](/docs/resolver-online-offline),
+but for now it is important to note that: 1). every resolver is either online or offline, and 2). different
 resolvers run depending on how you are requesting data from Chalk.
 
-## Writing Resolver
+## Writing Resolvers
 
 Chalk allows you to write resolvers in three different ways:
 - as sql queries, with comments specifying data sources and output features,
@@ -52,9 +52,7 @@ We will cover them at the end of the resolver section.
 
 Below, we provide an example of how to write SQL and python resolvers in Chalk
 for a `User` feature set. In this example, we assume that a Postgres data source
-called `pg_users` has been configured and connected to Chalk. We will go into a
-lot more detail on the capabilities of each variant in the [SQL resolver] and [Python
-resolver] sections of the docs.
+called `pg_users` has been configured and connected to Chalk.
 
 First, let's define our `User` feature set:
 
@@ -95,8 +93,7 @@ from chalk import online
 
 @online
 def get_is_runner(
-    name: User.full_name,
-    account_name: User.bank_account.title
+    name: User.hobbies
 ) -> User.account_name_match_score:
     return "runner" in hobbies
 ```
@@ -114,4 +111,5 @@ practice, this means that they run in response to "queries".
 A query is just a request for data. Chalk takes a query and determines which resolvers it
 needs to run, optimizes the execution order, and provides you with a response. For now, we'll
 hold off on discussing queries further, but definitely feel free to skip ahead and
-get a sense of what chalk queries are and how they work, before diving deeper into resolvers.
+get a sense of [what Chalk queries are and how they work](/docs/query-basics), before diving
+deeper into resolvers.
