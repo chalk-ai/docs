@@ -1,12 +1,12 @@
 ---
 title: Best Practices
-description: Learn about our best practices for building and maintaining your Chalk solution
+description: Learn our best practices for building and maintaining your Chalk solution
 ---
 
 # Best Practices
 
 With Chalk, the same solution can be implemented in a number of different ways. Below are some guidelines
-illustrating recommended patterns for building and maintaining your Chalk solution!
+and recommended patterns for building and maintaining your Chalk solution!
 
 ## Data Sources/Integrations
 
@@ -109,15 +109,15 @@ Select statements in SQL resolvers should be explicit: avoid using the \* syntax
 
 Resolver inputs and outputs must belong to the same feature set, but joins can allow resolvers to connect data between feature sets.
 
-### When to use pandas vs polars transformation.
+### Transform your Chalk DataFrame to pandas or polars
 
-Don't worry about converting Chalk DataFrames to pandas or polars in a python resolver—the transformation is cheap. We use arrow (and so do pandas and polars) so moving data from a chalk dataframe to either is close to free
+Don't worry about converting Chalk DataFrames to pandas or polars in a python resolver—the transformation is cheap. We use arrow (and so do pandas and polars) so moving data from a Chalk DataFrame to either is close to free
 
 ## Querying
 
 ### Run simple queries with the Chalk CLI, for more flexibility use one of Chalk's API clients
 
-The Chalk CLI should only be used to run simple online queries. For more complex use cases, you should use one of Chalk's API clients.
+The Chalk CLI should be used to run simple online queries. For more complex use cases, you should use one of Chalk's API clients.
 
 ### Created named queries for your commonly executed queries
 
@@ -128,9 +128,9 @@ parameter in the query functions of your client of choice.
 
 ### Code changes should be tested and queried on the branch server.
 
-Use the [branch server](branches) to test that your deployments and new features are behaving as expected.
+Use the [branch server](/docs/branches) to test that your deployments and new features are behaving as expected.
 
-### To get started, we recommend the following repository structure:
+### To get started, we recommend the following repository structure
 
 ```
 company_chalk/
@@ -144,13 +144,15 @@ company_chalk/
 │  └── feature_sets.py
 ├── tests/
 │  └── ...
+├── notebooks/
+│  └── ...
 ├── .chalkignore
 ├── chalk.yaml
 ├── README.md
 └── requirements.txt
 ```
 
-Your `.chalkignore` file should include any of your scripts, notebooks, tests: anything that you are not actively using in your deployment should be put there so that
+Your `.chalkignore` file should include your scripts, notebooks, and tests: anything that you are not actively using in your deployment should be put there so that
 non-deployment code does not clutter or interfere with your deployment.
 
 ### Use the `@before_all` decorateor to configure global variables for your resolvers
@@ -183,6 +185,13 @@ model_file_path=f"{os.environ['TARGET_ROOT']}/model.joblib"
 important features and resolvers early in your implementation.
 
 ### Unit test your resolvers to make sure they're functioning as expected
+
+[Unit test](/unit-tests) your resolvers!
+
+### Add CI/CD to your Chalk repository using our Github Actions workflow
+
+Chalk has a [GitHub Actions integration](/docs/github-actions)—you can use it to create branch deployments or run queries
+as part of your code development cycle.
 
 [Unit test](/unit-tests) your resolvers!
 
