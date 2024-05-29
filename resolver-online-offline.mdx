@@ -11,23 +11,21 @@ and offline resolvers produce offline training data.
 
 ## Storage
 
-Online and offline resolvers have different read/write needs.
+Online and offline resolvers have different read and write needs.
 Your online environment stores data that you want to cache
-for the period you'd like to cache it.
-While this is usually a small amount of data,
+according to the cache policies you set on [your features](/docs/feature-caching) or
+on [your queries](/docs/query-caching). While this is usually a small amount of data,
 you want exceptionally fast reads.
-These access patterns fit well
+These access patterns align
 with the performance characteristics of [Redis](https://redis.com) or [BigTable](https://cloud.google.com/bigtable),
-where Chalk stores your online data.
+which Chalk uses to store your online data.
 
 The offline environment stores far more data than the online environment.
 It keeps a record of [all online runs](#online-to-offline)
 and indexes all data brought in from your offline data sources.
-This timeseries data is highly compressible,
-as many features change less frequently than they are sampled
-(for example, users on your platform might very rarely change their names.)
-Chalk uses the column store
-[Timescale](https://timescale.com) or the data warehouse [BigQuery](https://cloud.google.com/bigquery) for this data.
+Chalk offers a number of different data warehouse systems for our large-scale
+offline storage depending on customer needs and deployment type,
+including BigQuery, Snowflake, and Redshift.
 
 In addition, offline queries write their output to a [parquet file](https://parquet.apache.org/)
 in cloud storage (S3/GCS), whereas online queries write their results to database.
