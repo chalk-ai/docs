@@ -1,0 +1,193 @@
+---
+title: Best Practices
+description: Learn about our best practices for building and maintaining your Chalk solution
+---
+
+# Best Practices
+
+With Chalk, the same solution can be implemented in a number of different ways. Below are some guidelines
+illustrating recommended patterns for building and maintaining your Chalk solution!
+
+## Data Sources/Integrations
+
+### Test your datasource connections
+
+Define integrations through the Chalk dashboard and check that they're connecting properly using the `test datasource` button.
+![Test Datasource](/img/test-datasource.png)
+
+### Avoid naming your datasources by their "type", e.g. don't call your postgres datasource "postgres"
+
+Though this works, it can lead to ambiguity in SQL resolvers when you add multiple data sources of the same type. This occurs
+because [Chalk lets you refer to "single copy" data sources by either their type or their name](/fraud-3#online-data).
+
+## Features
+
+### Start by defining your features
+
+Features fully specify what you want your data to look like. Once you have an understanding of the inner relations, writing resolvers for your features becomes easier.
+
+### Avoid dataclass feature types, instead use seperate features sets or unpack the data
+
+While Chalk allows for dataclass feature types, they should be avoided. They don't always play nicely with serialization and can cause tough to debug errors. We recommend
+either unpacking the nested class into basic types or defining and joining an additional Chalk feature set if the nested component is truly a separate entity. Defining a
+separate feature set, also makes the underlying data easier to monitor and test.
+
+### Tag and annotate your features
+
+We strongly recommend annotating your features as you are developing them. Your feature annotations show up in the Chalk
+dashboard and are a good way of documenting your code. You can also add tags and owners to your features, which can
+be used for aggregation and filtering in the Chalk Dashboard.
+
+```python
+from chalk import features
+from datetime import datetime
+
+@features
+class User:
+  id: str
+
+  # the user's fullname
+  # :owner: mary.shelley@aol.com
+  # :tags: team:identity, priority:high
+  name: str
+
+  # the user's birthdate
+  # :owner: mary.shelley@aol.com
+  # :tags: team:identity, priority:high
+  birthday: datetime
+```
+
+If you want to apply a tag or owner to all features in a feature set, this should be done in the feature decorator, like so:
+
+```python
+from chalk import features
+from datetime import datetime
+
+@features(owner="ada.lovelace@aol.com", tags=['group:risk'])
+class User:
+  id: str
+
+  # the user's fullname.
+  name: str
+```
+
+You can also [apply restrictions or enforce feature annotation for your entire project](/validation#feature-validation-requirements). For instance, you can block deployment if features are not tagged or described.
+
+### Keep feature definitions separated from resolvers
+
+Features should be defined in separate files from resolvers (with the exception of underscore features).
+
+### Define All Your Features in the Same File
+
+Although it can get a little lengthy, we recommend defining your features in a single file. This makes expressing joins between features easier and prevents circular
+dependencies.
+
+### Add Validations For Your Features
+
+[Validations for your features](/validation#feature-values) can prevent incorrect data from being written to your offline store. They can provide an even stricter complement to monitoring, ensuring that nothing
+is going wrong with the feature you are calculating.
+
+### Use implicit join syntax
+
+Joins between feature sets can be specified in a number of different ways. We recommend using an implicit join syntax, which [we cover in the join section of the docs](/has-one#recommended-implementation).
+
+## Resolvers
+
+### Use underscore resolvers for very simple resolver definitions
+
+[Underscore resolvers](/underscore) should be used for relatively simple calculations: your underscore resolver definitions should fit inline.
+
+### Use SQL resolvers to read data from your raw datasets
+
+While python resolvers can be used to read data from your data sources, SQL resolvers are preferred.
+
+### Explicity list columns in a select statement for sql file resolvers
+
+Select statements in SQL resolvers should be explicit: avoid using the \* syntax.
+
+### Make sure your resolvers operate inside a single feature space
+
+Resolver inputs and outputs must belong to the same feature set, but joins can allow resolvers to connect data between feature sets.
+
+### When to use pandas vs polars transformation.
+
+Don't worry about converting Chalk DataFrames to pandas or polars in a python resolver—the transformation is cheap. We use arrow (and so do pandas and polars) so moving data from a chalk dataframe to either is close to free
+
+## Querying
+
+### Run simple queries with the Chalk CLI, for more flexibility use one of Chalk's API clients
+
+The Chalk CLI should only be used to run simple online queries. For more complex use cases, you should use one of Chalk's API clients.
+
+### Created named queries for your commonly executed queries
+
+Naming queries makes it easier to evaluate and track the performance of specific queries over time. This can be done using the `query_name`
+parameter in the query functions of your client of choice.
+
+## Deployment
+
+### Code changes should be tested and queried on the branch server.
+
+Use the [branch server](branches) to test that your deployments and new features are behaving as expected.
+
+### To get started, we recommend the following repository structure:
+
+```
+company_chalk/
+├── src/
+│  ├── resolvers/
+│  │  ├── .../
+│  │  ├── __init__.py
+│  │  └── pipelines.py
+│  ├── __init__.py
+│  ├── datasources.py
+│  └── feature_sets.py
+├── tests/
+│  └── ...
+├── .chalkignore
+├── chalk.yaml
+├── README.md
+└── requirements.txt
+```
+
+Your `.chalkignore` file should include any of your scripts, notebooks, tests: anything that you are not actively using in your deployment should be put there so that
+non-deployment code does not clutter or interfere with your deployment.
+
+### Use the `@before_all` decorateor to configure global variables for your resolvers
+
+Global setup for resolvers should be done through a function decorated with the [@before_all decorator](generic#initializing). This also allows for unique setups for different environments.
+
+### Custom files such as machine learning models are accessed with the TARGET_ROOT environment variable
+
+To access files packaged in your chalk deployments, use the TARGET_ROOT environment variable to fully specify the path to your files.
+
+For instance, if you have the following directory which you are deploying to Chalk:
+```
+example/
+├── chalk.yaml
+├── features.py
+├── model.joblib
+└── resolvers.py
+```
+
+You would access the model.joblib file as follows:
+```python
+model_file_path=f"{os.environ['TARGET_ROOT']}/model.joblib"
+```
+
+## Observability / Testing
+
+### Set up monitoring on your most important features and resolvers, early
+
+[Monitoring](/metricmonitor) helps you catch tricky bugs early and gives you guarentees about the data you are generating and serving. You should configure monitoring for your
+important features and resolvers early in your implementation.
+
+### Unit test your resolvers to make sure they're functioning as expected
+
+[Unit test](/unit-tests) your resolvers!
+
+## Security
+
+### Generate and use access token to set and restrict the permissions for your different users.
+
+Chalk user permssions should be scoped with the help of [access tokens](online-authentication): these can be programatically generated through Chalk Clients or in the web UI. Give your users only the permissions they need.

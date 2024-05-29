@@ -3,50 +3,115 @@ title: Overview
 description: Create resolvers to compute feature values.
 ---
 
+import { TipInfo } from '@/components/Tip'
+
 ---
 
-Resolvers define how to compute your feature values.
-Resolvers [take as input](/docs/resolver-inputs)
-features that they need to know to run, and
-[resolve the values](/docs/resolver-outputs)
-of one or more features.
-In both cases, you use
-[Python type annotations](https://docs.python.org/3/library/typing.html)
-to define these dependencies and outputs.
+While feature sets define what your data looks like (e.g. the types of your features,
+their relationships, and their properties), resolvers define how your feature values
+are computed.
 
-Resolvers run [online or offline](/docs/resolver-online-offline)
-and are declared with the decorators `@online` and `@offline`.
-Let's take a look at a resolver that computes whether
-a user is titled on a bank account:
+<TipInfo>
+if you haven't read the section on feature sets, you are strongly encourage to do so. Understanding feature sets will help you understand resolvers.
+</TipInfo>
 
-```py
+Resolvers have four main components: inputs, outputs, code, and run conditions.
+
+The first three of these are rather straightforward. The **inputs** to a resolver
+are the features it uses to compute its output. The **outputs** of a resolver
+are the features that it computes. The code of the resolver is the logic that
+transforms your input features into your output features.
+
+The last component, run conditions, is a little more nuanced. At a high level,
+Chalk is optimized for two different access patterns: online and offline. In online
+access, information about a single entity is being requested and features must be
+computed quickly and cached. In offline access, a large chunk of historical
+feature data is being requested (you can think of this as creating a dataset for model
+training or running an analytic query).
+
+Resolvers are always specified as either online or offline. We go into more detail
+about what this means in the next section where we talk about run conditions, but for now it
+is important to note that: 1). every resolver is either online or offline, and 2). different
+resolvers run depending on how you are requesting data from Chalk.
+
+## Writing Resolver
+
+Chalk allows you to write resolvers in three different ways:
+- as sql queries, with comments specifying data sources and output features,
+- as python functions, with type annotations specifying the input and output features,
+- inline in your feature definitions, with the underscore module.
+
+<TipInfo>
+You will likely write mostly python and sql resolvers, so most of our examples
+will be for these two variants. However, underscore resolvers are a succint and
+optimized way to write resolvers, which can be quite practical in certain cases.
+We will cover them at the end of the resolver section.
+</TipInfo>
+
+## A Quick Example
+
+Below, we provide an example of how to write SQL and python resolvers in Chalk
+for a `User` feature set. In this example, we assume that a Postgres data source
+called `pg_users` has been configured and connected to Chalk. We will go into a
+lot more detail on the capabilities of each variant in the [SQL resolver] and [Python
+resolver] sections of the docs.
+
+First, let's define our `User` feature set:
+
+```python src/user.py
+from chalk.features import features
+
+@features
+class User:
+  id: str
+  name: str
+  age: int
+  hobbies: list[str]
+
+  is_runner: bool  # computed feature
+```
+
+Now we define our resolvers:
+
+We resolve the `id`, `name`, `age`, and `hobbies` features for our users from the
+`users` table of a `pg_users` data source. When reading data from your data
+sources, you should use a sql resolver:
+
+```sql src/get_user.chalk.sql
+-- The features given to us by the user.
+-- resolves: user
+-- type: online
+-- source: pg_users
+select id, name, age, hobbies
+from users;
+```
+
+We now use a python resolver to compute the `is_runner` feature for our users.
+Is runner takes the `hobbies` feature as an input and computes a new feature:
+`is_runner`.
+
+```python
+from chalk import online
+
 @online
-def name_match(
+def get_is_runner(
     name: User.full_name,
     account_name: User.bank_account.title
 ) -> User.account_name_match_score:
-    if name.lower() == account_name.lower():
-        return 1.
-    return 0.
+    return "runner" in hobbies
 ```
 
-This resolver has _dependencies_ on `User.full_name`
-and `User.bank_account.title`. It _resolves_ the feature
-value `User.account_name_match_score`.
-The logic for resolving this function is given in the body
-of the function definition.
+## When Do Resolvers Run
 
----
+A question that often crops up at this point, is: ok, I have defined a resolver, but how do
+I make it run?
 
-## What to read next
+Just like features, the idea behind resolvers is that they are declarative. Resolvers
+don't run when you define them and they don't run exhaustively over your data. They run
+only in response to a request for the features that they are responsible for computing. In
+practice, this means that they run in response to "queries".
 
-Resolvers support many workflows and common orchestration patterns:
-
-- **[Environments](/docs/resolver-environments)** -
-  Swap out the functionality of a resolver in development, staging, or production.
-- **[Tags](/docs/resolver-tags)** -
-  Provide custom functionality within an environment based on tags.
-- **[Scheduled runs](/docs/resolver-cron)** -
-  Schedule periodic runs of resolvers.
-- **[Reverse ETL](/docs/reverse-etl)** -
-  Move features from your data warehouses to production.
+A query is just a request for data. Chalk takes a query and determines which resolvers it
+needs to run, optimizes the execution order, and provides you with a response. For now, we'll
+hold off on discussing queries further, but definitely feel free to skip ahead and
+get a sense of what chalk queries are and how they work, before diving deeper into resolvers.
