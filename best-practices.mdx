@@ -163,7 +163,7 @@ non-deployment code does not clutter or interfere with your deployment.
 
 ### Use the `@before_all` decorator to configure global variables for your resolvers
 
-Global setup for resolvers should be done through a function decorated with the [@before_all decorator](generic#initializing). This also allows for unique setups for different environments.
+Global setup for resolvers should be done through a function decorated with the [@before_all decorator](/docs/generic#initializing). This also allows for unique setups for different environments.
 
 ### Custom files such as machine learning models are accessed with the TARGET_ROOT environment variable
 
@@ -187,7 +187,7 @@ model_file_path=f"{os.environ['TARGET_ROOT']}/model.joblib"
 
 ### Set up monitoring on your most important features and resolvers early
 
-[Monitoring](/metricmonitor) helps you catch tricky bugs early and gives you guarantees about the data you are generating and serving. You should configure monitoring for your
+[Monitoring](/docs/metricmonitor) helps you catch tricky bugs early and gives you guarantees about the data you are generating and serving. You should configure monitoring for your
 important features and resolvers early in your implementation.
 
 ### Unit test your resolvers to make sure they're functioning as expected
