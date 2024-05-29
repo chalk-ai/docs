@@ -72,7 +72,7 @@ class User:
 Now we define our resolvers:
 
 We resolve the `id`, `name`, `age`, and `hobbies` features for our users from the
-`users` table of a `pg_users` data source. When reading data from your data
+`users` table of our `pg_users` data source. When reading data from your data
 sources, you should use a sql resolver:
 
 ```sql src/get_user.chalk.sql
@@ -85,8 +85,8 @@ from users;
 ```
 
 We now use a python resolver to compute the `is_runner` feature for our users.
-Is runner takes the `hobbies` feature as an input and computes a new feature:
-`is_runner`.
+The `get_is_runner` resolver takes the `hobbies` feature as an input and computes
+a new feature: `is_runner`.
 
 ```python
 from chalk import online

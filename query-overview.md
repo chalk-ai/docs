@@ -14,7 +14,7 @@ The first use case is accomplished through **online queries**, which try to
 return values for a single feature set as quickly as possible: taking
 advantage of caching and distributed execution.
 
-The later use cases are accomplished through offline queries which execute
+The latter use cases are accomplished through offline queries which execute
 over the offline store and can return multiple instances of a feature set.
 
 ## What are Queries
@@ -34,8 +34,8 @@ chalk query --in user.id=1 --in user.name=mary --out user
 ```
 
 For offline queries, the input is a list of ids for one of your feature
-sets and (similar to online queries) equally long lists containing values
-for any other feature from the same namespace.
+sets and, optionally, any number of lists containing values for any other
+feature from the same namespace.
 
 Online and offline queries differ most in their output. An online
 query only ever returns one value for each requested output feature, which

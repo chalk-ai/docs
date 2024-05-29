@@ -105,6 +105,10 @@ While python resolvers can be used to read data from your data sources, SQL reso
 
 Select statements in SQL resolvers should be explicit: avoid using the \* syntax.
 
+### Give your python resolver functions (or, equivalently, sql file resolver filnames) clear names
+
+Resolver names are used in the Chalk dashboard to identify resolvers. They should be clear and concise.
+
 ### Make sure your resolvers operate inside a single feature space
 
 Resolver inputs and outputs must belong to the same feature set, but joins can allow resolvers to connect data between feature sets.
