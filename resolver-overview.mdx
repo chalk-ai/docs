@@ -20,6 +20,8 @@ Let's take a look at a resolver that computes whether
 a user is titled on a bank account:
 
 ```py
+from chalk import online
+
 @online
 def name_match(
     name: User.full_name,
