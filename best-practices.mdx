@@ -10,12 +10,12 @@ and recommended patterns for building and maintaining your Chalk solution!
 
 ## Data Sources/Integrations
 
-### Test your datasource connections
+### Test your data source connections
 
-Define integrations through the Chalk dashboard and check that they're connecting properly using the `test datasource` button.
-![Test Datasource](/img/test-datasource.png)
+Define integrations through the Chalk dashboard and check that they're connecting properly using the `Test Data Source` button.
+![Test Data Source](/img/test-datasource.png)
 
-### Avoid naming your datasources by their "type", e.g. don't call your postgres datasource "postgres"
+### Avoid naming your data sources by their "type", e.g. don't call your postgres data source "postgres"
 
 Though this works, it can lead to ambiguity in SQL resolvers when you add multiple data sources of the same type. This occurs
 because [Chalk lets you refer to "single copy" data sources by either their type or their name](/fraud-3#online-data).
@@ -26,7 +26,7 @@ because [Chalk lets you refer to "single copy" data sources by either their type
 
 Features fully specify what you want your data to look like. Once you have an understanding of the inner relations, writing resolvers for your features becomes easier.
 
-### Avoid dataclass feature types, instead use seperate features sets or unpack the data
+### Avoid dataclass feature types, instead use separate features sets or unpack the data
 
 While Chalk allows for dataclass feature types, they should be avoided. They don't always play nicely with serialization and can cause tough to debug errors. We recommend
 either unpacking the nested class into basic types or defining and joining an additional Chalk feature set if the nested component is truly a separate entity. Defining a
@@ -101,11 +101,11 @@ Joins between feature sets can be specified in a number of different ways. We re
 
 While python resolvers can be used to read data from your data sources, SQL resolvers are preferred.
 
-### Explicity list columns in a select statement for sql file resolvers
+### Explicitly list columns in a select statement for SQL file resolvers
 
 Select statements in SQL resolvers should be explicit: avoid using the \* syntax.
 
-### Give your python resolver functions (or, equivalently, sql file resolver filnames) clear names
+### Give your python resolver functions (or, equivalently, SQL resolver filenames) clear names
 
 Resolver names are used in the Chalk dashboard to identify resolvers. They should be clear and concise.
 
@@ -192,7 +192,7 @@ important features and resolvers early in your implementation.
 
 [Unit test](/unit-tests) your resolvers!
 
-### Add CI/CD to your Chalk repository using our Github Actions workflow
+### Improve CI/CD in your Chalk repository using our GitHub Actions workflow
 
 Chalk has a [GitHub Actions integration](/docs/github-actions)—you can use it to create branch deployments or run queries
 as part of your code development cycle.
@@ -201,6 +201,6 @@ as part of your code development cycle.
 
 ## Security
 
-### Generate and use access token to set and restrict the permissions for your different users.
+### Generate and use access tokens to set and restrict the permissions for your different users
 
-Chalk user permssions should be scoped with the help of [access tokens](online-authentication): these can be programatically generated through Chalk Clients or in the web UI. Give your users only the permissions they need.
+Scope your Chalk user permissions with [access tokens](/docs/online-authentication): these can be programatically generated through Chalk Clients or in the dashboard. Give your users only the permissions they need.

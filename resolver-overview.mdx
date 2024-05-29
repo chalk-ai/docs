@@ -37,13 +37,13 @@ resolvers run depending on how you are requesting data from Chalk.
 ## Writing Resolvers
 
 Chalk allows you to write resolvers in three different ways:
-- as sql queries, with comments specifying data sources and output features,
+- as SQL queries, with comments specifying data sources and output features,
 - as python functions, with type annotations specifying the input and output features,
 - inline in your feature definitions, with the underscore module.
 
 <TipInfo>
-You will likely write mostly python and sql resolvers, so most of our examples
-will be for these two variants. However, underscore resolvers are a succint and
+You will likely write mostly python and SQL resolvers, so most of our examples
+will be for these two variants. However, underscore resolvers are a succinct and
 optimized way to write resolvers, which can be quite practical in certain cases.
 We will cover them at the end of the resolver section.
 </TipInfo>
@@ -73,7 +73,7 @@ Now we define our resolvers:
 
 We resolve the `id`, `name`, `age`, and `hobbies` features for our users from the
 `users` table of our `pg_users` data source. When reading data from your data
-sources, you should use a sql resolver:
+sources, you should use a SQL resolver:
 
 ```sql src/get_user.chalk.sql
 -- The features given to us by the user.
