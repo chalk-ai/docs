@@ -186,8 +186,8 @@ that have common root causes:
 ### Request error
 
 Request errors are raised before your resolver code executes.
-They may occur due to invalid feature names in the
-input or a request that cannot be satisfied by the resolvers you
+They are often caused by invalid feature names in the
+input or by requests that cannot be satisfied by the resolvers you
 have defined.
 
 
@@ -198,7 +198,7 @@ for a particular field.
 For this type of error, you'll find a `feature` and `resolver`
 attribute in the [error type](#chalkerror).
 
-When a feature resolver crashes, you will receive `null` value
+When a resolver crashes, you will receive `null` value
 in the response.
 To differentiate from a resolver returning a `null` value and
 a failure in the resolver, you need to check the error schema.
@@ -206,7 +206,7 @@ a failure in the resolver, you need to check the error schema.
 ### Network error
 
 Network errors are thrown outside your resolvers.
-For example, your request was unauthenticated,
+They can be caused by unauthenticated requests,
 connection failed, or an error occurred within Chalk.
 
 ---
