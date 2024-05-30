@@ -3,6 +3,15 @@ title: Debugging Queries
 description: Learn techniques for debugging online and offline queries
 ---
 
+import {
+    Attribute,
+    AttributeTable,
+    SubAttribute,
+    SubAttributeTable,
+} from '@/components/AttributeTable'
+
+---
+
 Online and offline queries can fuse data from multiple sources, and the structure of how data flows
 through queries can be complex. Chalk has a number of tools to help you debug queries. In this section, we'll
 explore how to use these tools on a few simple features and resolvers.
@@ -168,3 +177,123 @@ def sum_transaction_amount(txns: User.transaction[Transaction.amount]) -> User.s
 You can also view these logs using `resolver_replay`, where they will be emitted to your terminal:
 
 ![Logs output example](/img/debugging/logs.png)
+
+## Query Error Categories
+
+In using the debugging techniques above, you may encounter a few different categories of errors
+that have common root causes:
+
+### Request error
+
+Request errors are raised before your resolver code executes.
+They are often caused by invalid feature names in the input or by requests that
+cannot be satisfied by the resolvers you have defined.
+
+### Feature error
+
+Feature errors are raised when a specific resolver that maps to a feature fails.
+For this type of error, you'll find a `feature` and `resolver`
+attribute in the [error type](#chalkerror).
+
+When a resolver crashes, you will receive `null` value in the response.
+To differentiate from a resolver returning a `null` value and
+a failure in the resolver, you need to check the error schema.
+
+### Network error
+
+Network errors are thrown outside your resolvers.
+They can be caused by unauthenticated requests or other connection failures.
+
+---
+
+## Error schema
+
+The online query interface for resolvers returns the following schema:
+
+### Response Schema
+
+<AttributeTable>
+    <Attribute field={'data'} kind={<a href={'/docs/query-basics'}>FeatureResult[]</a>}>
+        The outputs features and any query metadata (discussed in detail at{' '}
+        <a href={'/docs/query-basics'}>Query Basics</a>.)
+    </Attribute>
+    <Attribute field={'errors'} kind={<a href={'#chalk-error'}>ChalkError[]?</a>}>
+        Errors encountered while running the resolvers. Each element in the list is a{' '}
+        <a href={'#chalk-error'}>ChalkError</a>. If no errors were encountered, this field is empty.
+    </Attribute>
+</AttributeTable>
+
+### <a id="chalkerror"></a> ChalkError
+
+<AttributeTable>
+    <Attribute field={'code'} kind={<a href={'#error-code'}>ErrorCode</a>}>
+        The type of error, matching one of the <a href={'#error-code'}>error codes</a>.
+    </Attribute>
+    <Attribute field={'category'} kind={<a href={'#error-code'}>ErrorCode.kind</a>}>
+        The category of the error, given in the type field for the{' '}
+        <a href={'#error-code'}>error codes</a>. This will be one of{' '}
+        <a href={'#request-error'}>"REQUEST"</a>, <a href={'#network-error'}>"NETWORK"</a>, and{' '}
+        <a href={'#field-error'}>"FIELD"</a>.
+    </Attribute>
+    <Attribute field={'message'} kind={'string'}>
+        A readable description of the error message.
+    </Attribute>
+    <Attribute field={'exception'} kind={'object?'}>
+        The exception that caused the failure, if applicable.
+        <SubAttributeTable>
+            <SubAttribute field={'kind'} kind={'string'}>
+                The name of the class of the exception.
+            </SubAttribute>
+            <SubAttribute field={'message'} kind={'string'}>
+                The message taken from the exception.
+            </SubAttribute>
+            <SubAttribute field={'stacktrace'} kind={'string'}>
+                The stacktrace produced by the code.
+            </SubAttribute>
+        </SubAttributeTable>
+    </Attribute>
+    <Attribute field={'feature'} kind={'string?'}>
+        The fully qualified name of the failing feature, eg.
+        <code>user.identity.has_voip_phone</code>.
+    </Attribute>
+    <Attribute field={'resolver'} kind={'string?'}>
+        The fully qualified name of the failing resolver, eg.
+        <code>my.project.get_fraud_score</code>.
+    </Attribute>
+</AttributeTable>
+
+### Error codes
+
+<AttributeTable title={"Values"}>
+    <Attribute field={'PARSE_FAILED'} kind={<a href={"#request-error"}>REQUEST</a>}>
+        The query contained features that do not exist.
+    </Attribute>
+    <Attribute field={'RESOLVER_NOT_FOUND'} kind={<a href={'#request-error'}>REQUEST</a>}>
+        A resolver was required as part of running the dependency graph that could not be found.
+    </Attribute>
+    <Attribute field={'INVALID_QUERY'} kind={<a href={'#request-error'}>REQUEST</a>}>
+        The query is invalid. All supplied features need to be rooted in the same top-level entity.
+    </Attribute>
+    <Attribute field={'VALIDATION_FAILED'} kind={<a href={'#field-error'}>FIELD</a>}>
+        A feature value did not match the expected schema (eg. `incompatible type "int"; expected "str"`)
+    </Attribute>
+    <Attribute field={'RESOLVER_FAILED'} kind={<a href={'#field-error'}>FIELD</a>}>
+        The resolver for a feature errored.
+    </Attribute>
+    <Attribute field={'RESOLVER_TIMED_OUT'} kind={<a href={'#field-error'}>FIELD</a>}>
+        The resolver for a feature timed out.
+    </Attribute>
+    <Attribute field={'UPSTREAM_FAILED'} kind={<a href={"#field-error"}>FIELD</a>}>
+        A crash in a resolver that was to produce an input for the resolver crashed, and so the resolver
+        could not run crashed, and so the resolver could not run.
+    </Attribute>
+    <Attribute field={'UNAUTHENTICATED'} kind={<a href={'#network-error'}>NETWORK</a>}>
+        The request was submitted with an invalid authentication header.
+    </Attribute>
+    <Attribute field={'UNAUTHORIZED'} kind={<a href={'#network-error'}>NETWORK</a>}>
+        The request has credentials that do not provide the required authorization to execute an operation.
+    </Attribute>
+    <Attribute field={'INTERNAL_SERVER_ERROR'} kind={<a href={'#network-error'}>NETWORK</a>}>
+        An unspecified error occurred.
+    </Attribute>
+</AttributeTable>
