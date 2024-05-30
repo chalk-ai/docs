@@ -186,28 +186,23 @@ that have common root causes:
 ### Request error
 
 Request errors are raised before your resolver code executes.
-They are often caused by invalid feature names in the
-input or by requests that cannot be satisfied by the resolvers you
-have defined.
+They are often caused by invalid feature names in the input or by requests that
+cannot be satisfied by the resolvers you have defined.
 
+### Feature error
 
-### Field error
-
-Field errors are raised while running a feature resolver
-for a particular field.
+Feature errors are raised when a specific resolver that maps to a feature fails.
 For this type of error, you'll find a `feature` and `resolver`
 attribute in the [error type](#chalkerror).
 
-When a resolver crashes, you will receive `null` value
-in the response.
+When a resolver crashes, you will receive `null` value in the response.
 To differentiate from a resolver returning a `null` value and
 a failure in the resolver, you need to check the error schema.
 
 ### Network error
 
 Network errors are thrown outside your resolvers.
-They can be caused by unauthenticated requests,
-connection failed, or an error occurred within Chalk.
+They can be caused by unauthenticated requests or other connection failures.
 
 ---
 
