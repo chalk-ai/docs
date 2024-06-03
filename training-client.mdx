@@ -7,17 +7,36 @@ import { JupyterNotebook } from '@/components/home/Jupyter'
 
 ---
 
-Chalk supports a Python client for sampling offline data for use in training or feature development.
-This client can be used directly in a Jupyter notebook:
+Offline queries pull data from the offline store or calculate features through
+[resolvers that are marked as offline](/docs/resolver-offline-online).
+
+In an offline query you can request multiple instances of a feature set—additionally,
+by default, an offline query returns all matches for a primary key in the offline store.
+So, if for instance, you requested the `num_transactions` feature for users with id's
+of `1`, `2`, or `3`, you could receive multiple rows for each user if you'd calculated
+the `num_transactions` feature for each user multiple times.
+
+```python
+from chalk.client import ChalkClient
+client = ChalkClient()
+client.offline_query(
+  input={'User.id': [1,2,3]},
+  output=['User.num_transactions']
+)
+```
+
+The main two use cases for offline queries are: assembling datasets and running batch jobs.
+
+Chalk supports a number of client that can run offline queries. In this section, our examples
+use our python client.
 
 <JupyterNotebook />
 
-The client for querying offline data largely mirrors the
-contract for [querying data online](/docs/query-basics).
-Here, however, we return many rows of data instead of data
-for a single example.
+## How do Offline Queries Work?
 
-## API
+O
+
+## Making Offline Queries
 
 Offline data is accessed via the class
 `chalk.ChalkClient`.
@@ -122,22 +141,6 @@ The user can specify
 or [branch](/docs/branches)
 as parameters to `offline_query` in the same fashion
 as [online query](/docs/query-basics).
-
-### Query Explanation
-
-Chalk offers support for the user for when queries don't work.
-The first step is always to check to see the response contains any `errors`.
-Often, the error message will directly point to the failure.
-
-In the case of more complicated queries, queries can be sent with `explain=True`.
-This will return a representation of the query plan in the `meta` return attribute.
-The user can use this information to verify the resolvers and operators ran during execution.
-Beware, this will result in slower execution times.
-
-Some queries that involve multiple operations might need additional tracking.
-Users can supply `store_plan_stages=True` to store intermediate outputs at all operations of the query.
-This will dramatically slow things down, so use wisely!
-These results are visible in the dashboard under the "Queries" page.
 
 ### Return Value
 

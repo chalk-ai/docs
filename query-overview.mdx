@@ -64,7 +64,7 @@ query, the output is written down in the offline store. This makes it easy to:
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | Returns one row of data about one entity                                                   | Returns a DataFrame of many rows of historical data corresponding to multiple entities point-in-time                                      |
 | Designed to return data immediately in milliseconds                                        | Blocks until computation is complete, not designed for millisecond-level computation                                                      |
-| Queries the online store, which caches recent data from online queries for quick retrieval | Queries the offline store (Timescale), which stores all data from both online and offline queries                                         |
+| Queries the online store, which caches recent data from online queries for quick retrieval | Queries the offline store which stores all data from both online and offline queries                                         |
 | Writes output data to online store database and offline store database                     | Writes output to offline store database and a parquet file containing results to cloud storage. Only writes to online store if specified. |
 
 ---
