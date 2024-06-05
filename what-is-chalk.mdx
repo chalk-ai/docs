@@ -40,6 +40,16 @@ You can define schemas, specify relationships, and add metadata
 to help your team share and re-use work.
 
 ```py
+from datetime import datetime
+from chalk.features import features, DataFrame
+
+@features
+class Transaction:
+    id: int
+    amount: float
+    user_id: "User.id"
+    user: User
+
 @features
 class User:
     id: int
@@ -49,10 +59,7 @@ class User:
     birthday: datetime
     credit_score: float
     datawarehouse_feature: float
-
-    transactions: DataFrame[Transaction] = has_many(
-        lambda: Transaction.user_id == User.id
-    )
+    transactions: DataFrame[Transaction]
 ```
 
 ### Resolvers
@@ -97,6 +104,8 @@ Add a caching policy with one line of code in your feature definition:
 Optionally warm feature caches by executing resolvers on a schedule:
 
 ```py
+from chalk import online
+
 @online(cron="**1d**")
 def fn(id: User.id) -> User.credit_score:
   return redshift.query(...).all()
@@ -106,7 +115,9 @@ Or override staleness tolerances at query time when you need fresher
 data for your models:
 
 ```py
-chalk.query(
+from chalk.client import ChalkClient
+
+ChalkClient().query(
     ...,
     outputs: [User.fraud_score],
     max_staleness: { User.fraud_score: "1m" }
