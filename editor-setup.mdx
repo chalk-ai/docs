@@ -51,25 +51,25 @@ the [Mypy Plugin](https://plugins.jetbrains.com/plugin/11086-mypy).
 
 ```python
 @features
-class UserFeatures:
+class User:
     name: str
     bday: str
     age: int
 
 
-def incomplete_set() -> Features[UserFeatures.name, UserFeatures.age]:
+def incomplete_set() -> Features[User.name, User.age]:
     # We're omitting `age` and returning only `name` and `bday`
-    return UserFeatures(name="joseph", age=34)
+    return User(name="joseph", age=34)
 ```
 
 Chalk allows you to return only a subset of the fields
 for a particular feature set.
-In the above example, `UserFeatures` contains three fields,
+In the above example, `User` contains three fields,
 but our resolver returns only two of them.
 Our plugin converts
 
-- `UserFeatures(name=..., bday=...)` to
-- `Features[UserFeatures.name, UserFeatures.bday]`
+- `User(name=..., bday=...)` to
+- `Features[User.name, User.bday]`
 
 ---
 
@@ -78,14 +78,14 @@ Our plugin converts
 <TipGood>Specified the returned features in any order.</TipGood>
 
 ```python
-def unordered_output() -> Features[UserFeatures.age, UserFeatures.name]:
+def unordered_output() -> Features[User.age, User.name]:
     # Order of arguments need not line up. `Features` is treated as a set.
-    return UserFeatures(name="joseph", age=34)
+    return User(name="joseph", age=34)
 ```
 
 In this example, we have flipped the order of the arguments
 in the type signature from the order of the arguments given to
-`UserFeatures`. Because the plugin sorts the types before comparing,
+`User`. Because the plugin sorts the types before comparing,
 this example is also valid.
 
 ---
@@ -95,9 +95,9 @@ this example is also valid.
 <TipBad>Recognize when you're returning the wrong features.</TipBad>
 
 ```python
-def name_age_bad() -> Features[UserFeatures.name, UserFeatures.age]:
+def name_age_bad() -> Features[User.name, User.age]:
     # We're getting Features[name, bday] and expected Features[name, age]
-    return UserFeatures(name="4", bday="")
+    return User(name="4", bday="")
 ```
 
 Chalk can check that the subset of features returned from a function
@@ -110,9 +110,9 @@ error: Incompatible return value type:
          Expected: Features[age,  name]
 ```
 
-Here, we're returning the `UserFeatures.name` and `UserFeatures.bday`
-features, but we expected to have the `UserFeatures.age` feature
-instead of the `UserFeatures.bday` feature.
+Here, we're returning the `User.name` and `User.bday`
+features, but we expected to have the `User.age` feature
+instead of the `User.bday` feature.
 
 ---
 
@@ -121,18 +121,18 @@ instead of the `UserFeatures.bday` feature.
 <TipBad>Check that feature values receive correct types.</TipBad>
 
 ```python
-def name_bad_type() -> Features[UserFeatures.name]:
+def name_bad_type() -> Features[User.name]:
     # Knows that name should be a string, not an int
-    return UserFeatures(name=4)
+    return User(name=4)
 ```
 
 Mypy surfaces the following error for this example:
 
 ```bash
-error: Argument "name" to "UserFeatures" has incompatible type "int"; expected "str"
+error: Argument "name" to "User" has incompatible type "int"; expected "str"
 ```
 
-Here, `UserFeatures.name` should be given as a `string`,
+Here, `User.name` should be given as a `string`,
 but we have instead supplied an `int`.
 
 ### Constructor arguments
@@ -140,14 +140,14 @@ but we have instead supplied an `int`.
 <TipBad>Check arguments to constructor of feature sets.</TipBad>
 
 ```python
-UserFeatures(bogus_field=4)
+User(bogus_field=4)
 ```
 
 Mypy surfaces the following error for this example:
 
 ```bash
-error: Unexpected keyword argument "bogus_field" for "UserFeatures"
+error: Unexpected keyword argument "bogus_field" for "User"
 ```
 
-`UserFeatures.bogus_field` is not a feature on the `UserFeatures`
+`User.bogus_field` is not a feature on the `User`
 class, and so cannot be used in the `__init__` method.
