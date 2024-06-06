@@ -78,92 +78,73 @@ Implicitly, this tries to align every scalar feature from the `User` feature set
 The following are supported keys to be included in `.chalk.sql` file comments.
 
 <AttributeTable title={"SQL File Resolvers"}>
-
-    <Attribute field='resolves' kind='str'>
-        Describes the namespace to which the outputs belong.
-        In the above example, <code className="dark:text-white">user.email</code>
-        and <code className="dark:text-white">user.full_name</code> are the outputs.
-    </Attribute>
-
-    <Attribute field='source' kind='str'>
-        Describes the database by name, as in the above example, or
-        the type if there is only one database of that type. Thus, if you have
-        one PostgreSQL source, you can also write <code className="dark:text-white">source: postgresql</code>.
-        Supported sources are <code className="dark:text-white">['snowflake', 'postgres', 'postgresql', 'mysql',
-        'bigquery', 'cloudsql', 'redshift', 'sqlite', 'kafka']</code>.
-    </Attribute>
-
-    <Attribute field='type' kind='"online" | "offline" | "streaming" | null'>
-        The type of resolver. If not specified, <code className="dark:text-white">online</code> is the default.
-    </Attribute>
-
-    <Attribute field='incremental' kind='dict[str, str]'>
-        Parameters for incremental queries. For more information, see the <a
-        href='/docs/sql#incremental-queries'>below</a> section on incremental queries.
-
-        <SubAttributeTable title='incremental query parameters'>
-
-            <SubAttribute field='mode' kind='"row" | "group" | "parameter"'>
-                The incrementalization mode decides how to ingest new data.
-            </SubAttribute>
-
-            <SubAttribute field='lookback_period' kind='string'>
-                The length of the window from the last observed row that Chalk will re-ingest, e.g. <code
-                className="dark:text-white">1h</code>.
-            </SubAttribute>
-
-            <SubAttribute field='incremental_column' kind='string'>
-                The timestamp column in the underlying table to use as the basis for incrementalization.
-                Must be supplied in <code className="dark:text-white">row</code> and <code
-                className="dark:text-white">group</code> modes.
-            </SubAttribute>
-
-            <SubAttribute field='incremental_timestamp' kind='"feature_time" | "resolver_execution_time"'>
-                The timestamp used for timedelta calculations. Defaults to <code
-                className="dark:text-white">feature_time</code>
-            </SubAttribute>
-
-        </SubAttributeTable>
-    </Attribute>
-
-    <Attribute field='count' kind='"1" | null'>
-        Returns one. Equivalent to the common query finalizer <code className="dark:text-white">.one()</code>.
-    </Attribute>
-
-    <Attribute field='timeout' kind='Duration | null'>
-        The maximum time to wait before timing out the query.
-        See [Duration](/api-docs#Duration) for more details.
-    </Attribute>
-
-    <Attribute field='tags' kind='list[str] | null'>
-        The user tags associated with this resolver. For online and offline resolvers.
-    </Attribute>
-
-    <Attribute field='environment' kind='list[str] | null'>
-        The environments associated with this resolver.
-    </Attribute>
-
-    <Attribute field='cron' kind='str | null'>
-        The schedule for a cron run, e.g. <code className="dark:text-white">1h</code>.
-    </Attribute>
-
-    <Attribute field='max_staleness' kind='str | null'>
-        The max staleness for the resolver, e.g. <code className="dark:text-white">24h</code>.
-    </Attribute>
-
-    <Attribute field='owner' kind='str | null'>
-        The owner of the resolver.
-    </Attribute>
-
-    <Attribute field='fields' kind='dict[str, str]'>
-        An optional mapping from SQL column to Chalk feature.
-        For example, with <code className="dark:text-white">SELECT name AS arbitrary_column_name</code>,
-        we can map the <code className="dark:text-white">arbitrary_column_name</code> to a Chalk feature belonging to
-        the
-        namespace described by the <code className="dark:text-white">resolves</code> field with the mapping
-        <code className="dark:text-white">arbitrary_column_name: chalk_feature_name</code>.
-    </Attribute>
-
+<Attribute field='resolves' kind='str'>
+    Describes the namespace to which the outputs belong.
+    In the above example, <code className="dark:text-white">user.email</code>
+    and <code className="dark:text-white">user.full_name</code> are the outputs.
+</Attribute>
+<Attribute field='source' kind='str'>
+    Describes the database by name, as in the above example, or
+    the type if there is only one database of that type. Thus, if you have
+    one PostgreSQL source, you can also write <code className="dark:text-white">source: postgresql</code>.
+    Supported sources are <code className="dark:text-white">['snowflake', 'postgres', 'postgresql', 'mysql',
+    'bigquery', 'cloudsql', 'redshift', 'sqlite', 'kafka']</code>.
+</Attribute>
+<Attribute field='type' kind='"online" | "offline" | "streaming" | null'>
+    The type of resolver. If not specified, <code className="dark:text-white">online</code> is the default.
+</Attribute>
+<Attribute field='incremental' kind='dict[str, str]'>
+    Parameters for incremental queries. For more information, see the <a
+    href='/docs/sql#incremental-queries'>below</a> section on incremental queries.
+    <SubAttributeTable title='incremental query parameters'>
+        <SubAttribute field='mode' kind='"row" | "group" | "parameter"'>
+            The incrementalization mode decides how to ingest new data.
+        </SubAttribute>
+        <SubAttribute field='lookback_period' kind='string'>
+            The length of the window from the last observed row that Chalk will re-ingest, e.g. <code
+            className="dark:text-white">1h</code>.
+        </SubAttribute>
+        <SubAttribute field='incremental_column' kind='string'>
+            The timestamp column in the underlying table to use as the basis for incrementalization.
+            Must be supplied in <code className="dark:text-white">row</code> and <code
+            className="dark:text-white">group</code> modes.
+        </SubAttribute>
+        <SubAttribute field='incremental_timestamp' kind='"feature_time" | "resolver_execution_time"'>
+            The timestamp used for timedelta calculations. Defaults to <code
+            className="dark:text-white">feature_time</code>
+        </SubAttribute>
+    </SubAttributeTable>
+</Attribute>
+<Attribute field='count' kind='"1" | null'>
+    Returns one. Equivalent to the common query finalizer <code className="dark:text-white">.one()</code>.
+</Attribute>
+<Attribute field='timeout' kind='Duration | null'>
+    The maximum time to wait before timing out the query.
+    See [Duration](/api-docs#Duration) for more details.
+</Attribute>
+<Attribute field='tags' kind='list[str] | null'>
+    The user tags associated with this resolver. For online and offline resolvers.
+</Attribute>
+<Attribute field='environment' kind='list[str] | null'>
+    The environments associated with this resolver.
+</Attribute>
+<Attribute field='cron' kind='str | null'>
+    The schedule for a cron run, e.g. <code className="dark:text-white">1h</code>.
+</Attribute>
+<Attribute field='max_staleness' kind='str | null'>
+    The max staleness for the resolver, e.g. <code className="dark:text-white">24h</code>.
+</Attribute>
+<Attribute field='owner' kind='str | null'>
+    The owner of the resolver.
+</Attribute>
+<Attribute field='fields' kind='dict[str, str]'>
+    An optional mapping from SQL column to Chalk feature.
+    For example, with <code className="dark:text-white">SELECT name AS arbitrary_column_name</code>,
+    we can map the <code className="dark:text-white">arbitrary_column_name</code> to a Chalk feature belonging to
+    the
+    namespace described by the <code className="dark:text-white">resolves</code> field with the mapping
+    <code className="dark:text-white">arbitrary_column_name: chalk_feature_name</code>.
+</Attribute>
 </AttributeTable>
 
 ### Proper comment formatting
