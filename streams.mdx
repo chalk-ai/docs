@@ -103,7 +103,7 @@ Possible use cases include
 - Optionally skipping resolver execution for certain messages.
 - Re-keying for windowed stream aggregations.
 
-The parse function runs before the resolver, and can transform the message into a format that the 
+The parse function runs before the resolver, and can transform the message into a format that the
 stream resolver understands. If the parse function returns `None`, the resolver will be skipped.
 
 A simple parse function can ingest bytes into a `BaseModel`, which will be used as input for the streaming resolver.
@@ -126,7 +126,7 @@ def stream_resolver(message: Message) -> Features[StreamFeature.id, StreamFeatur
 ```
 
 In the below example, only `UserEventMessage`s which have a `click_event` property will be processed by `resolve_clicks`.
-Those where it is equal to `None` will not be processed.
+Those where it is equal to `None` will not be processed, and skipped entirely.
 
 ```py
 # Child messages
@@ -136,13 +136,13 @@ class UserLoginEvent(BaseModel):
 class UserClickEvent(BaseModel):
     ...
 
-#Parent message contains one of the child message types
+# Parent message contains one of the child message types
 class UserEventMessage(BaseModel):
     login_event: Optional[UserLoginEvent] = None
     click_event: Optional[UserClickEvent] = None
 
-def get_click_event(event: UserEventMessage) -> UserClickEvent:
-    return event.click_event
+def get_click_event(event: UserEventMessage) -> UserClickEvent | None:
+    return event.click_event # can be None
 
 @stream(source=str_source, parse=get_click_event)
 def resolve_clicks(message: UserClickEvent) -> Features[...]:
