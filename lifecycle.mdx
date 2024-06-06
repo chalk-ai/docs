@@ -130,30 +130,13 @@ chalk query --in user.id=1 --out user.name_email_match_score
 The `user.name_email_match_score` feature is live!
 But historically, this feature did not exist,
 and you won't be able to sample its values at previous times
-until you run a migration.
-
-A migration re-runs a resolver by sampling all possible
-previous calls to the resolver.
-You can also choose exactly which values to re-run with
-additional arguments to the [`chalk migrate`](/cli/migrate) command.
-
-### Planning the migration
-
-Before you run the migration, you can optionally determine the
-expected impact of our changes with the [`--plan`](/cli/apply#plan) flag:
+until you backfill the values, which you can do with the ['chalk trigger'](cli/trigger) command.
 
 ```bash
-chalk migrate --resolver example.name_email_match_scorer --plan
+chalk trigger --resolver example.name_email_match_scorer --lower-bound 2020-05-05T12:00:00+00:00 --persist-offline=True
 ```
 
-### Running the migration
-
-Once you're happy with the migration plan,
-you can execute the migration with [`chalk migrate`](/cli/migrate):
-
-```bash
-chalk migrate --resolver example.name_email_match_scorer --parallelism 4
-```
+This command will backfill historical values for the `user.name_email_match_score` feature.
 
 ### Offline training
 
