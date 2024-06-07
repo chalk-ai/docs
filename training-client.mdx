@@ -3,57 +3,66 @@ title: Offline Queries
 description: Fetch offline feature values.
 ---
 
-import { JupyterNotebook } from '@/components/home/Jupyter'
+import {JupyterNotebook} from '@/components/home/Jupyter'
+import {TipInfo} from '@/components/Tip'
 
 ---
 
-Chalk supports a Python client for sampling offline data for use in training or feature development.
-This client can be used directly in a Jupyter notebook:
+Offline queries pull data from the offline store or calculate features through
+[resolvers that are marked as offline](/docs/resolver-offline-online).
 
-<JupyterNotebook />
+<TipInfo>
+    Offline queries can also execute online resolvers if no offline resolver is available for a
+    requested feature.
+</TipInfo>
 
-The client for querying offline data largely mirrors the
-contract for [querying data online](/docs/query-basics).
-Here, however, we return many rows of data instead of data
-for a single example.
+In an offline query you can request features for multiple entities at distinct time points.
+By default, an offline query returns a row for each primary key containing the most recent
+computed value for each requested output feature. The main use case for offline queries is
+creating datasets.
 
-## API
+Chalk supports a number of clients that can run offline queries. In this section, our examples
+focus on our python client, which integrates nicely with jupyter notebooks.
 
-Offline data is accessed via the class
-`chalk.ChalkClient`.
-Authentication is handled by the Chalk CLI tool.
-So long as the machine you're using is authenticated
-to Chalk, no API tokens or client secrets are needed
-for use in a notebook.
+<JupyterNotebook/>
 
-The `ChalkClient` exposes a method
-`offline_query`,
-which takes in
-input features (`input`),
-desired features to compute (`output`), and
-information about the environment (`environment`),
-and returns a [Dataset](/docs/datasets)
-which includes the requested features.
-For more information, see the documentation for Chalk's [Python Client](/api-docs#ChalkClient.offline_query).
+## Making Offline Queries
+
+As mentioned earlier, offline queries can be made through one of Chalk's API clients.
+
+```python
+from chalk.client import ChalkClient
+from datetime import datetime
+
+client = ChalkClient()
+client.offline_query(
+  input={'user.id': [1,2,3,4]},         # Input
+  output=['user.name'],                 # Output
+  # tags=['test'],                      # Environment
+  # branch='branch',
+  # recompute_features=True,            # Run Resolvers
+  # run_asynchronously=True,            # Run Configuration
+  # max_samples = 10,
+  # lower_bound=datetime(2024, 10, 12), # Bounds
+  # upper_bound=datetime(2024, 10, 20),
+)
+```
+
+In the Python client, offline queries return Chalk `Dataset`s, which we cover, in detail, in the
+next [section](/docs/datasets). However, at a high level, Chalk `Dataset`s are flexible wrappers
+around the results of your offline query that can be converted to pandas or polars—this makes them
+easy to use for downstream ML tasks.
 
 ### Input
 
 As [input](/api-docs#ChalkClient.offline_query.input), `offline_query` takes a
-[chalk.DataFrame](/docs/dataframe)
-or
-[pandas.DataFrame](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html)
-with one column for each known feature in the input, and one column
-with the heading of `chalk.features.timestamp`.
+[chalk.DataFrame](/docs/dataframe) or [pandas.DataFrame](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html)
+with one column for each known feature in the input.
 The primary key feature must be included among the inputs.
-
-The values of the `chalk.features.timestamp` field should be of type
-`datetime.datetime`. If the timestamp column is omitted, it is defaulted to `datetime.now()`.
-More discussion about the timestamp inputs
-can be found in the [temporal consistency](/docs/temporal-consistency) section.
 
 Alternatively, instead of a `DataFrame`, users can pass a mapping from features to a list of values for each feature.
 
-```py
+```python
 input={
     User.id: ['id1', 'id2'],
     User.age: [23, 40]
@@ -122,24 +131,3 @@ The user can specify
 or [branch](/docs/branches)
 as parameters to `offline_query` in the same fashion
 as [online query](/docs/query-basics).
-
-### Query Explanation
-
-Chalk offers support for the user for when queries don't work.
-The first step is always to check to see the response contains any `errors`.
-Often, the error message will directly point to the failure.
-
-In the case of more complicated queries, queries can be sent with `explain=True`.
-This will return a representation of the query plan in the `meta` return attribute.
-The user can use this information to verify the resolvers and operators ran during execution.
-Beware, this will result in slower execution times.
-
-Some queries that involve multiple operations might need additional tracking.
-Users can supply `store_plan_stages=True` to store intermediate outputs at all operations of the query.
-This will dramatically slow things down, so use wisely!
-These results are visible in the dashboard under the "Queries" page.
-
-### Return Value
-
-The return value for `offline_query` is a Chalk `Dataset`,
-which is described in the next [section](/docs/datasets).

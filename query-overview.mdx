@@ -53,19 +53,26 @@ which constrain the outputs to a specific temporal range.
 
 ## Query Side Effects
 
-Chalk queries return and write data. This is an essential part of
-Chalk: every time you compute a feature, either through an online or offline
-query, the output is written down in the offline store. This makes it easy to:
+Chalk queries can also write data. This is an essential part of
+Chalk: every time you compute a feature through an online query the
+output is written down in the offline store. This makes it easy to:
 
 - create datasets from your previously computed features,
 - monitor and track your computed features over time.
 
-| Online query                                                                               | Offline query                                                                                                                             |
-| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| Returns one row of data about one entity                                                   | Returns a DataFrame of many rows of historical data corresponding to multiple entities point-in-time                                      |
-| Designed to return data immediately in milliseconds                                        | Blocks until computation is complete, not designed for millisecond-level computation                                                      |
-| Queries the online store, which caches recent data from online queries for quick retrieval | Queries the offline store (Timescale), which stores all data from both online and offline queries                                         |
-| Writes output data to online store database and offline store database                     | Writes output to offline store database and a parquet file containing results to cloud storage. Only writes to online store if specified. |
+Though not the default, offline queries can also write data to the
+offline store and the online store—this can be useful when backfilling
+data from slow data sources or when performing expensive feature computation that
+would otherwise significantly impact the latency of your online queries.
+
+| Online query                                                                                                                  | Offline query                                                                                                                                                                                                                                |
+|-------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Runs only <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolvers | Runs both <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> and <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolvers |
+| Returns one row of data about one entity                                                                                      | Returns a DataFrame of many rows of historical data corresponding to multiple entities point-in-time                                                                                                                                         |
+| Designed to return data immediately in milliseconds                                                                           | Blocks until computation is complete, not designed for millisecond-level computation                                                                                                                                                         |
+| Queries the online store and calls `@online` resolvers for quick retrieval                                                      | Queries the offline store which stores all data from online queries, unless `recompute_features=True` in which case `@offline` and `@online` resolvers are used to resolve the outputs
+| Writes output data to online store database and offline store database                                                        | Writes output to a parquet file containing results to cloud storage. Only writes to online store or offline store if specified.
+
 
 ---
 
@@ -119,6 +126,6 @@ client.offline_query(
 
 ### Scheduled and Triggered Resolver Run
 
-Specific resolvers can also be [scheduled](/docs/resolver-cron) or [triggered](/docs/runs) (for instance as part of engineering pipelines like airflow). Functionally, triggers and schedules can be thought of as queries which execute on large portions of your data. Both scheduled and triggered runs pull inputs from the offline store or external data sources and compute new feature values.
-
-Like for online and offline queries, these computed features are written to the offline store and also, if requested, to the online one.
+Specific resolvers can also be [scheduled](/docs/resolver-cron) or [triggered](/docs/runs) (for instance as part of engineering pipelines like airflow).
+Specific queries can [also be scheduled](/docs/changelog#scheduled-queries). Functionally, triggers and schedules are effective ways of pulling data from
+"slow" data sources into your offline and online store.
