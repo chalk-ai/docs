@@ -16,11 +16,11 @@ Offline queries pull data from the offline store or calculate features through
   requested feature.
 </TipInfo>
 
-In an offline query you can request multiple instances of a feature set—additionally,
-by default, an offline query returns all matches for a primary key in the offline store.
-For instance, if you requested the `num_transactions` feature for users with id's
-`1`, `2`, or `3`, you could receive multiple rows for each user if you've computed
-the `num_transactions` feature for each user multiple times.
+In an offline query you can request multiple instances of a feature set. Additionally, by default,
+an offline query returns all matches for a primary key in the offline store. For instance, if you
+requested the `num_transactions` feature for users with id's `1`, `2`, or `3`, you could receive
+multiple rows for each user if you've computed the `num_transactions` feature for each user multiple
+times.
 
 The main use cases for offline queries is creating datasets.
 
