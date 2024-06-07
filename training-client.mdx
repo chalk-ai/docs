@@ -4,12 +4,17 @@ description: Fetch offline feature values.
 ---
 
 import { JupyterNotebook } from '@/components/home/Jupyter'
+import { TipInfo } from '@/components/Tip'
 
 ---
 
 Offline queries pull data from the offline store or calculate features through
-[resolvers that are marked as offline](/docs/resolver-offline-online). The default
-behavior for offline queries is to only read ouputs from the offline store.
+[resolvers that are marked as offline](/docs/resolver-offline-online).
+
+<TipInfo>
+  Offline queries can also execute online resolvers if no offline resolver is available for a
+  features
+</TipInfo>
 
 In an offline query you can request multiple instances of a feature set—additionally,
 by default, an offline query returns all matches for a primary key in the offline store.
@@ -17,10 +22,10 @@ For instance, if you requested the `num_transactions` feature for users with id'
 `1`, `2`, or `3`, you could receive multiple rows for each user if you've computed
 the `num_transactions` feature for each user multiple times.
 
-The main two use cases for offline queries are: assembling datasets and running batch jobs.
+The main use cases for offline queries is creating datasets.
 
-Chalk supports a number of client that can run offline queries. In this section, our examples
-focus on our python client, which integrates nicely with jupyter notebooks.
+Chalk supports a number of client that can run offline queries. In this section, our examples focus
+on our python client, which integrates nicely with jupyter notebooks.
 
 <JupyterNotebook />
 
@@ -49,6 +54,11 @@ client.offline_query(
   # upper_bound=datetime(2024, 10, 20),
 )
 ```
+
+In the Python client, offline queries return Chalk `Dataset`s, which we cover, in detail, in the
+next [section](/docs/datasets). However, at a high level, Chalk `Dataset`s are flexible wrappers
+around the results of your offline query that can be converted to pandas or polars and used for
+downstream ML tasks.
 
 ### Input
 
@@ -136,6 +146,3 @@ as parameters to `offline_query` in the same fashion
 as [online query](/docs/query-basics).
 
 ### Return Value
-
-The return value for `offline_query` is a Chalk `Dataset`,
-which is described in the next [section](/docs/datasets).

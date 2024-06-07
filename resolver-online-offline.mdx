@@ -2,12 +2,15 @@
 title: Online / Offline
 description: Predict and train.
 ---
-
 ---
 
-Chalk supports online and offline resolvers.
-Online resolvers produce features for online inference,
-and offline resolvers produce offline training data.
+Chalk is composed of an online and an offline store. The online store is a cache used to make
+realtime requests for data incredibly fast, while the offline store is a data warehouse that stores
+all the features that you've computed—enabling monitoring, and dataset generation for training.
+
+Two of the core components in Chalk—resolvers, queries—have online and offline variants. Both
+offline queries pull data from the offline store. Offline resolvers run in response to offline
+queries and can be made to pull data into the offline store.
 
 ## Storage
 
@@ -30,7 +33,16 @@ including BigQuery, Snowflake, and Redshift.
 In addition, offline queries write their output to a [parquet file](https://parquet.apache.org/)
 in cloud storage (S3/GCS), whereas online queries write their results to database.
 
-[//]: # 'More detail [Chalk architecture](/docs/architecture)'
+| writes to the offline store                                            | writes to the online store                                                          |
+|------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
+| an online query writes all features not read from the online store     | online query which computes features with `max_staleness != 0`                      |
+| A triggered resolver runs with `store_offline=True` (default behavior) | A triggered resolver runs with `store_online=True` (default behavior)               |
+|                                                                        |An offline query with `recompute_features=True` that calculates a feature set with `etl_offline_to_online=True` |
+| scheduled queries with `recompute_features=True` and `store_offline=True (default behavior) | scheduled query with `store_online != False` (default)         |
+| Ingesting a dataset to the offline store: `dataset.ingest(store_offline=True)` | Ingesting a dataset to the online store: `dataset.ingest(store_online=True)`|
+| An online or offline scheduled resolver: `@online(cron="*/5 * * * *")`            | An online scheduled resolver: `@online(cron="*/5 * * * *")`                         |
+| A streaming resolvers `@stream`                                        | A streaming resolver `@stream`                                                      |
+
 
 ## Querying
 
@@ -59,27 +71,7 @@ for a more in-depth treatment.
 | offline resolver | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver will never run | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver will run                                                                                                                                                            |
 
 
-## Scheduling
-
-Both offline and online resolvers [support scheduled runs](/docs/resolver-cron).
-However, you're likely to consider scheduling more frequently with offline resolvers.
-Every offline resolver pulls in data from your underlying source to
-Chalk's feature store on a schedule.
-Chalk will determine the frequency at which to poll your data sources,
-or you can choose to provide a custom [duration](/docs/duration) on which
-to pull the data.
-
-Online resolvers can also be scheduled, although they don't _necessarily_
-run on a schedule as offline resolvers do.
-
-Both online and offline scheduled resolvers may take arguments,
-and you have
-[control over the sets of arguments](/docs/resolver-cron#filtering-examples)
-to run.
-
----
-
-## Interaction
+## Online/Offline Interaction
 
 ### Online-to-Offline
 
@@ -110,4 +102,4 @@ More details are provided in the section [Reverse ETL](/docs/reverse-etl).
 | Returns one row of data about one entity                                                                                      | Returns a DataFrame of many rows of historical data corresponding to multiple entities point-in-time                                                                                                                                         |
 | Designed to return data immediately in milliseconds                                                                           | Blocks until computation is complete, not designed for millisecond-level computation                                                                                                                                                         |
 | Queries the online store, which caches recent data from online queries for quick retrieval                                    | Queries the offline store which stores all data from both online and offline queries                                                                                                                                            |
-| Writes output data to online store database and offline store database                                                        | Writes output to offline store database and a parquet file containing results to cloud storage. Only writes to online store if specified.                                                                                                    |
+| Writes output data to online store database and offline store database                                                        | Writes output to a parquet file containing results to cloud storage. Only writes to online store or offline store if specified.
