@@ -30,7 +30,7 @@ in cloud storage (S3/GCS), whereas online queries write their results to databas
 
 | writes to the offline store                                            | writes to the online store                                                          |
 |------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
-| an online query writes all features not read from the online store     | online query which computes features with `max_staleness != 0`                      |
+| an online query writes all features not read from the online store     | an online query which computes features with `max_staleness != 0`                      |
 | A triggered resolver runs with `store_offline=True` (default behavior) | A triggered resolver runs with `store_online=True` (default behavior)               |
 |                                                                        |An offline query with `recompute_features=True` that calculates a feature set with `etl_offline_to_online=True` |
 | scheduled queries with `recompute_features=True` and `store_offline=True (default behavior) | scheduled query with `store_online != False` (default)         |
