@@ -6,15 +6,10 @@ description: Predict and train.
 
 Chalk is composed of an online and an offline store. The online store is a cache used to make
 realtime requests for data incredibly fast, while the offline store is a data warehouse that stores
-all the features that you've computed—enabling monitoring, and dataset generation for training.
-
-Two of the core components in Chalk—resolvers, queries—have online and offline variants. Both
-offline queries pull data from the offline store. Offline resolvers run in response to offline
-queries and can be made to pull data into the offline store.
+all the features that you've computed—enabling monitoring and dataset generation for training.
 
 ## Storage
 
-Online and offline resolvers have different read and write needs.
 Your online environment stores data that you want to cache
 according to the cache policies you set on [your features](/docs/feature-caching) or
 on [your queries](/docs/query-caching). While this is usually a small amount of data,
