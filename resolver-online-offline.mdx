@@ -35,7 +35,7 @@ in cloud storage (S3/GCS), whereas online queries write their results to databas
 |                                                                        |An offline query with `recompute_features=True` that calculates a feature set with `etl_offline_to_online=True` |
 | scheduled queries with `recompute_features=True` and `store_offline=True (default behavior) | scheduled query with `store_online != False` (default)         |
 | Ingesting a dataset to the offline store: `dataset.ingest(store_offline=True)` | Ingesting a dataset to the online store: `dataset.ingest(store_online=True)`|
-| An `@online` or `@offline` scheduled resolver                          | An @online or @offline scheduled resolver if it computes features with `max_staleness!=0` and `etl_offline_to_online=True` |
+| An `@online` or `@offline` scheduled resolver                          | An @online or @offline scheduled resolver that computes features with `max_staleness!=0` and `etl_offline_to_online=True` |
 | A streaming resolvers `@stream`                                        | A streaming resolver `@stream`                                                      |
 
 
