@@ -43,25 +43,15 @@ Only a single `.chalk.sql` SQL file is needed: no Python required!
 -- type: online
 -- resolves: user
 -- source: PG
--- count: 1
-select email, full_name from user_table where id=${user.id}
+select id, email, full_name from user_table
 ```
 
-Here, the `${user.id}` variable defines the inputs of the query, and `user_table`
-matches the PostgreSQL table name. The comments are `yaml`-parsed to provide other metadata for
-Chalk to decide how to design the resolver.
+Here, we define an online resolver that returns some features for the `User` feature set
+from the `user_table` table in the PostgreSQL source `PG`. The comments are `yaml`-parsed
+to provide other metadata for Chalk to decide how to design the resolver. SQL file resolvers
+can return multiple rows for aggregation operations, offline queries, and more.
 
-SQL file resolvers can also return multiple rows for aggregation operations, offline queries, and more.
-Notice below the omissions of the `count` argument and the `where` clause of the SQL query.
-
-```sql get_users.chalk.sql
--- type: online
--- resolves: user
--- source: PG
-select email, full_name from user_table
-```
-
-It's possible to use `SELECT *` in a SQL file resolver, but be careful!
+It's also possible to use `SELECT *` in a SQL file resolver, but be careful!
 
 ```sql get_all_columns_users.chalk.sql
 -- type: online
