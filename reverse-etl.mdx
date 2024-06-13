@@ -11,11 +11,10 @@ operational systems. In the context of
 our data warehouse is the offline data store
 ([Timescale](https://timescale.com) or [BigQuery](https://cloud.google.com/bigquery/docs/))
 and our operational system is the online data store
-([Redis](https://redis.com), [Cloud Memorystore](https://cloud.google.com/memorystore), or [DynamoDB](https://aws.amazon.com/dynamodb/)).
-The online data store is queried by
-one our our [API clients](/docs/query-basics),
-while the offline data store queried by
-our [bulk API](/docs/training-client).
+([Redis](https://redis.com), [Cloud Memorystore](https://cloud.google.com/memorystore), or
+[DynamoDB](https://aws.amazon.com/dynamodb/)). The online data store is queried by one of our [API
+clients](/docs/query-basics), while the offline data store queried by our [bulk
+API](/docs/training-client).
 
 Data from online resolvers is always loaded into the offline store
 and made available for training.
