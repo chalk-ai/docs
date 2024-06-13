@@ -9,34 +9,30 @@ description:  Execute resolvers that connect to external systems
 
 Many resolvers generate features by connecting to external, production-like systems (e.g. databases and APIs).
 It can be challenging to validate these resolvers since they involve communication between several systems.
-This guide will help you execute resolvers that communicate with those external systems on your local environment. 
+This guide will help you execute resolvers that communicate with those external systems on your local environment.
 
 ---
 
 ## Setup Environment Variables
 
-Chalk's [datasource integrations](/docs/integrations) operate by assuming certain environment variables exist which provide integration information (such as urls, passwords, etc.) to the python code.
-When executing these resolvers locally, you'll need to replicate those environment variables.  For the following guide lets assume a single [Postgres datasource](/docs/postgresql) named "PG".
+Chalk's [data source integrations](/docs/integrations) operate by assuming certain environment
+variables exist which provide integration information (such as urls, passwords, etc.) to the python
+code. When executing these resolvers locally, you'll need to replicate those environment variables.
+For the following guide lets assume a single [Postgres data source](/docs/postgresql) named "PG".
 
-1. The first env var lists all your datasources by name.
-```
-_CHALK_AVAILABLE_INTEGRATIONS=["PG"]
-```
+1. The first env var lists all your data sources by name. ``` _CHALK_AVAILABLE_INTEGRATIONS=["PG"]
+   ```
 
-2. Then you should set environment variables for datasource.  These environment variables should be pre-fixed with the datasource name.  You should have a env var for each field in 
-```
-PG_PGHOST=database-1.myproject.us-west-1.rds.amazon.com 
-PG_PGPORT=5432
-PG_PGDATABASE=db
-PG_PGUSER=postgres
-PG_PGPASSWORD=password
-```
+2. Then you should set environment variables for data source. These environment variables should be
+   pre-fixed with the data source name. You should have a env var for each field in ```
+PG_PGHOST=database-1.myproject.us-west-1.rds.amazon.com PG_PGPORT=5432 PG_PGDATABASE=db
+PG_PGUSER=postgres PG_PGPASSWORD=password ```
 
 ---
 
 ## Exercise your resolvers
 
-Once the environment variables are setup correctly, you can execute your resolver like any python code.  
+Once the environment variables are setup correctly, you can execute your resolver like any python code.
 For example if the file `chalkproject/resolvers.py` includes a resolver like `get_transactions_from_snowflake`, you can execute it any python environment.
 ```bash
 $ source .venv/bin/activate

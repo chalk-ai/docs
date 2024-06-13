@@ -15,7 +15,7 @@ and recommended patterns for building and maintaining your Chalk solution!
 Define integrations through the Chalk dashboard and check that they're connecting properly using the `Test Data Source` button.
 ![Test Data Source](/img/test-datasource.png)
 
-### Avoid naming your data sources by their "type", e.g. don't call your postgres data source "postgres"
+### Avoid naming your data sources by their "type", e.g. don't call your Postgres data source "postgres"
 
 Though this works, it can lead to ambiguity in SQL resolvers when you add multiple data sources of the same type. This occurs
 because Chalk lets you refer to data sources by their type if you've only linked one data source of that type to Chalk. In
@@ -78,7 +78,7 @@ You can also [apply restrictions or enforce feature annotation for your entire p
 
 Features should be defined in separate files from resolvers (with the exception of underscore features).
 
-### When starting your Chalk implementaiton, define all your feature sets in the same file
+### When starting your Chalk implementation, define all your feature sets in the same file
 
 Although it can get a bit lengthy, we recommend starting by defining your features in a single file.
 This makes expressing joins between features easier and prevents circular dependencies.

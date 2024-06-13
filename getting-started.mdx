@@ -10,7 +10,7 @@ description: Your first time with Chalk
 Chalk's platform is a powerful tool that allows data engineers
 and data scientists to collaborate efficiently and effectively.
 
-In this project we'll create features related to `Users`and their credit scores.  We'll combine data from an
+In this project we'll create features related to `Users`and their credit scores. We'll combine data from an
 API and a database to help us decide whether we should issue
 new loans.
 
@@ -314,7 +314,7 @@ $ curl -X POST https://experian.chalk.dev/bureau_score \
        -d '{"name": "Riley Siebel", "email": "riley@chalk.ai"}'
 ```
 
-If you do this right, you should be able to run the below query, even though the experian api takes an email as input.  How do you think that works!?
+If you do this right, you should be able to run the below query, even though the experian API takes an email as input. How do you think that works!?
 
 ```python Jupyter
 client.query(input={User.id: 'u_a8fU4zT0Y8'}, output=[User.experian_score])
@@ -322,4 +322,4 @@ client.query(input={User.id: 'u_a8fU4zT0Y8'}, output=[User.experian_score])
 
 ### Combine 2 features
 
-Now create another feature to average the 2 credit scores.  The user with id: 'u_a8fU4zT0Y8' should have an average credit score of ~18.8.
+Now create another feature to average the 2 credit scores. The user with id: 'u_a8fU4zT0Y8' should have an average credit score of ~18.8.
