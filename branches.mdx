@@ -10,28 +10,36 @@ When working in a branch users have a number of useful capabilities, including:
 
 - Chalk can automatically watch your files and deploy any changes
 - Updates to your project are deployed in seconds
-- Adjust and create features and resolvers inside a Jupyter Notebook
 - Quickly `recompute` datasets to see the effects of changes
 - Branches have a consistent name across deployments
 
----
 
 ## Create a Branch Deployment
 
 To create a branch, simply run [`chalk apply --branch <branch_name>`](/cli/chalk#branch). Chalk will create a new branch in the environment that you can interact with. Now, you can make queries against your branch with `chalk query --branch`.
-If you're using the Python API, you can set the branch when creating your [client](/api-docs#ChalkClient), and all subsequent commands will execute against your branch.
+
+If you're using the Python API, you can set the branch when creating your [client](/api-docs#ChalkClient), and all subsequent commands will execute against your branch:
+
+```python
+from chalk.cient import ChalkClient
+
+client = ChalkClient(branch="<branch_name>")
+```
 
 ### Continuously Deploy Changes
 
 You can ask the Chalk CLI to continuously deploy changes to your branch using the [`watch`](cli/apply#watch) flag.
-Chalk will automatically keep the branch up to date as you make changes locally.
+Chalk will automatically keep the branch up to date as you make changes locally:
 
----
+```sh
+chalk apply --branch <branch_name> --watch
+```
 
 ## Develop in a Notebook
 
 One of the major advantages of branch deployments is the flexibility they offer when working in notebooks.
 Once you've deployed a branch, you can iteratively edit features and resolvers and see the effects of these updates in a dataset.
+
 Create a chalk client and set the `branch` parameter equal to your branch. Then, any time you execute a cell that contains a class annotated with `@features` it will automatically be updated in your branch.
 Similarly, executing cells that contain a function annotated with `@online` or `@offline` will automatically deploy the resolver to your branch.
 
@@ -61,7 +69,7 @@ When used in conjunction with the ability to adjust your features and resolvers 
 
 In the following example we add an `oversize` feature to an existing dataset of loans.
 
-We start out with a dataset. We may have produced this dataset manually, by calling an external API, or by executing offline_query.
+We start out with a dataset. We may have produced this dataset manually, by calling an external API, or by executing an offline query.
 
 ```python
 dataset
@@ -83,7 +91,7 @@ shape: (786, 3)
 └───────────────┴──────────────┴─────────────────────────┘
 ```
 
-In our Jupyter Notebook, we can execute this in a cell to setup our notebook to point to our branch, then update our branch with the new feature and resolver.
+In our Jupyter Notebook, we can execute the following in a cell to setup our notebook to point to our branch, then update our branch with the new feature and resolver.
 
 ```python
 client = ChalkClient(branch="<our_branch>")
