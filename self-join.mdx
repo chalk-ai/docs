@@ -64,7 +64,7 @@ To create a `has_many` self join:
 If you were linking a book to all other books in the same series, this might look something like the following:
 
 <TipInfo>
-  Note, in the example below the books linked through the SeriesLink would include the source Book: for example,
+  Note, in the example below the books linked through the `SeriesLink` would include the source `Book`: for example,
   if books with ids `{1, 2, 3}` are part of the same series and you query for the book with id `1`
   (`chalk query --input book.id=1 --output book.series`) then all three books would be returned: `{1, 2, 3}`.
 </TipInfo>
