@@ -1,0 +1,75 @@
+---
+title: Self Join
+description: Defining a self join in a feature set
+---
+
+import { TipInfo } from '@/components/Tip'
+
+---
+
+Self Joins in Chalk are done via intermediary feature sets
+
+## Recommended Implementation
+
+To implement a self join, add a new feature set, containing a join to your initial feature—this can be either a has_many [DataFrame](/docs/)
+
+<TipInfo>
+  In both the cases below you will need to resolve the primary key of the linking feature set. This can be done through a SQL resolver that pulls
+  in the Primary key of the feature. For example, for the `has-one` join below, you could create a SQL resolver that resolves `PrequelLink`
+  by running a query like: `SELECT id, prequel_id FROM books`.
+</TipInfo>
+
+### Has-one self-join
+
+To specify a `has_one` self-join:
+1). Create a new feature set,
+2). Link your new feature set back to the original one through a [has-one](/docs/has-one) join.
+
+```python
+from typing import Optional
+from chalk.features import features, DataFrame, has_one
+from chalk import online
+
+@features
+class Author:
+	id: int
+	name: str
+	books: "DataFrame[Book]"
+
+@features
+class PrequelLink:
+    id: int
+    prequel_id: int
+    book: "Book" = has_one(
+        lambda:  Book.id==PrequelLink.prequel_id
+    )
+
+@features
+class Book:
+    id: int
+    title: str
+    author_id: Author.id
+    prequel_id: Optional[PrequelLink.id]
+    prequel: PrequelLink | None = has_one(lambda: Book.id==PrequelLink.prequel_id)
+```
+
+### Has-many self-join
+
+To create a `has_many` self-join:
+1). Create a new feature set,
+2). Link your new feature set back to the original one through a [has-many](/docs/has-many) join.
+
+```python
+@features
+class SeriesLink:
+    id: int
+    books: "Book" = has_many(lambda: SeriesLink.id == Book.series_id)
+
+
+@features
+class Book:
+    id: int
+    title: str
+    series_id: SeriesLink.id | None
+    series: SeriesLink = has_one(lambda: SeriesLink.id == Book.series_id)
+```
