@@ -19,9 +19,9 @@ To implement a self join, add a new feature set, which joins back to your initia
   by running a query like: `SELECT id, prequel_id FROM books`.
 </TipInfo>
 
-### Has-one self-join
+### Has-one self join
 
-To specify a `has_one` self-join:
+To specify a `has_one` self join:
 1). Create a new feature set,
 2). Link your new feature set back to the original one through a [has-one](/docs/has-one) join.
 
@@ -55,14 +55,13 @@ class Book:
     prequel: PrequelLink | None = has_one(lambda: Book.id==PrequelLink.prequel_id)
 ```
 
-### Has-many self-join
+### Has-many self join
 
-To create a `has_many` self-join:
+To create a `has_many` self join:
 1). Create a new feature set,
 2). Link your new feature set back to the original one through a [has-many](/docs/has-many) join.
 
-If you were linking a book to all other books in the same series, this might look something
-like the following:
+If you were linking a book to all other books in the same series, this might look something like the following:
 
 <TipInfo>
   Note, in the example below the books linked through the SeriesLink would include the source Book: for example,
