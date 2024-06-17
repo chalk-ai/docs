@@ -38,7 +38,7 @@ class User:
     transactions: DataFrame[Transaction] = has_many(lambda: Transaction.user_id == User.id)
 ```
 
-Then, we'll define simple online resolvers to ingest user and transaction data from a postgres database:
+Then, we'll define simple online resolvers to ingest user and transaction data from a Postgres database:
 
 ```sql
 -- (users.chalk.sql)
@@ -151,8 +151,8 @@ ChalkClient().offline_query(
 ).resolver_replay(sum_transaction_amount)
 ```
 
-This will execute the resolver locally, using the same input data that was used in the query. This
-allows you to debug using your IDE (VS Code, PyCharm, or even pdb):
+This will execute the resolver locally, using the same input data that was used in the query. This allows you to debug
+using your IDE (VS Code, PyCharm, or even pdb):
 
 ![Debugger](/img/debugging/debugging.png)
 
@@ -162,8 +162,8 @@ in your terminal or by stepping through with a debugger.
 ## Using logs to debug
 
 If you're not able to use the query plan visualizer or resolver replay, you can also use the logs to debug your query.
-Use the `chalk_logger` from the `chalk.clogging` just like a standard python logger. This logger
-will output to the web interface, and to configured log sinks (for example, your DataDog instance).
+Use the `chalk_logger` from the `chalk.clogging` just like a standard python logger. This logger will output
+to the web interface, and to configured log sinks (i.e. your DataDog instance).
 
 ```python
 from chalk.clogging import chalk_logger
@@ -247,12 +247,20 @@ The online query interface for resolvers returns the following schema:
             <SubAttribute field={'message'} kind={'string'}>
                 The message taken from the exception.
             </SubAttribute>
-            <SubAttribute field={'stacktrace'} kind={'string'}> The stack trace produced by the
-      code. </SubAttribute> </SubAttributeTable> </Attribute> <Attribute field={'feature'}
-  kind={'string?'}> The fully qualified name of the failing feature, for example:
-  <code>user.identity.has_voip_phone</code>. </Attribute> <Attribute field={'resolver'}
-  kind={'string?'}> The fully qualified name of the failing resolver, for example:
-  <code>my.project.get_fraud_score</code>. </Attribute> </AttributeTable>
+            <SubAttribute field={'stacktrace'} kind={'string'}>
+                The stacktrace produced by the code.
+            </SubAttribute>
+        </SubAttributeTable>
+    </Attribute>
+    <Attribute field={'feature'} kind={'string?'}>
+        The fully qualified name of the failing feature, eg.
+        <code>user.identity.has_voip_phone</code>.
+    </Attribute>
+    <Attribute field={'resolver'} kind={'string?'}>
+        The fully qualified name of the failing resolver, eg.
+        <code>my.project.get_fraud_score</code>.
+    </Attribute>
+</AttributeTable>
 
 ### Error codes
 
@@ -266,17 +274,26 @@ The online query interface for resolvers returns the following schema:
     <Attribute field={'INVALID_QUERY'} kind={<a href={'#request-error'}>REQUEST</a>}>
         The query is invalid. All supplied features need to be rooted in the same top-level entity.
     </Attribute>
-    <Attribute field={'VALIDATION_FAILED'} kind={<a href={'#field-error'}>FIELD</a>}> A feature
-    value did not match the expected schema (for example, `incompatible type "int"; expected
-    "str"`) </Attribute> <Attribute field={'RESOLVER_FAILED'} kind={<a
-    href={'#field-error'}>FIELD</a>}> The resolver for a feature errored. </Attribute> <Attribute
-    field={'RESOLVER_TIMED_OUT'} kind={<a href={'#field-error'}>FIELD</a>}> The resolver for a
-    feature timed out. </Attribute> <Attribute field={'UPSTREAM_FAILED'} kind={<a
-    href={"#field-error"}>FIELD</a>}> A crash in a resolver that was to produce an input for the
-    resolver crashed, and so the resolver could not run crashed, and so the resolver could not run.
-    </Attribute> <Attribute field={'UNAUTHENTICATED'} kind={<a href={'#network-error'}>NETWORK</a>}>
-    The request was submitted with an invalid authentication header. </Attribute> <Attribute
-    field={'UNAUTHORIZED'} kind={<a href={'#network-error'}>NETWORK</a>}> The request has
-    credentials that do not provide the required authorization to execute an operation. </Attribute>
-    <Attribute field={'INTERNAL_SERVER_ERROR'} kind={<a href={'#network-error'}>NETWORK</a>}> An
-    unspecified error occurred. </Attribute> </AttributeTable>
+    <Attribute field={'VALIDATION_FAILED'} kind={<a href={'#field-error'}>FIELD</a>}>
+        A feature value did not match the expected schema (eg. `incompatible type "int"; expected "str"`)
+    </Attribute>
+    <Attribute field={'RESOLVER_FAILED'} kind={<a href={'#field-error'}>FIELD</a>}>
+        The resolver for a feature errored.
+    </Attribute>
+    <Attribute field={'RESOLVER_TIMED_OUT'} kind={<a href={'#field-error'}>FIELD</a>}>
+        The resolver for a feature timed out.
+    </Attribute>
+    <Attribute field={'UPSTREAM_FAILED'} kind={<a href={"#field-error"}>FIELD</a>}>
+        A crash in a resolver that was to produce an input for the resolver crashed, and so the resolver
+        could not run crashed, and so the resolver could not run.
+    </Attribute>
+    <Attribute field={'UNAUTHENTICATED'} kind={<a href={'#network-error'}>NETWORK</a>}>
+        The request was submitted with an invalid authentication header.
+    </Attribute>
+    <Attribute field={'UNAUTHORIZED'} kind={<a href={'#network-error'}>NETWORK</a>}>
+        The request has credentials that do not provide the required authorization to execute an operation.
+    </Attribute>
+    <Attribute field={'INTERNAL_SERVER_ERROR'} kind={<a href={'#network-error'}>NETWORK</a>}>
+        An unspecified error occurred.
+    </Attribute>
+</AttributeTable>
