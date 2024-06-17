@@ -7,15 +7,15 @@ import { TipInfo } from '@/components/Tip'
 
 ---
 
-Self Joins in Chalk are done via intermediary feature sets
+Self joins in Chalk are done via intermediary feature sets.
 
 ## Recommended Implementation
 
-To implement a self join, add a new feature set, containing a join to your initial feature—this can be either a has_many [DataFrame](/docs/)
+To implement a self join, add a new feature set, which joins back to your initial feature set—this can be either a [has-many](/docs/has-many) or a [has-one](/docs/has-one) join.
 
 <TipInfo>
   In both the cases below you will need to resolve the primary key of the linking feature set. This can be done through a SQL resolver that pulls
-  in the Primary key of the feature. For example, for the `has-one` join below, you could create a SQL resolver that resolves `PrequelLink`
+  in the primary key of the feature. For example, for the `has-one` join below, you could create a SQL resolver that resolves `PrequelLink`
   by running a query like: `SELECT id, prequel_id FROM books`.
 </TipInfo>
 
@@ -24,6 +24,8 @@ To implement a self join, add a new feature set, containing a join to your initi
 To specify a `has_one` self-join:
 1). Create a new feature set,
 2). Link your new feature set back to the original one through a [has-one](/docs/has-one) join.
+
+If you were linking a book to its prequel, this might look something like the following:
 
 ```python
 from typing import Optional
@@ -58,6 +60,15 @@ class Book:
 To create a `has_many` self-join:
 1). Create a new feature set,
 2). Link your new feature set back to the original one through a [has-many](/docs/has-many) join.
+
+If you were linking a book to all other books in the same series, this might look something
+like the following:
+
+<TipInfo>
+  Note, in the example below the books linked through the SeriesLink would include the source Book: for example,
+  if books with ids `{1, 2, 3}` are part of the same series and you query for the book with id `1`
+  (`chalk query --input book.id=1 --output book.series`) then all three books would be returned: `{1, 2, 3}`.
+</TipInfo>
 
 ```python
 @features
