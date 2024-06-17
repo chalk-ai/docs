@@ -14,13 +14,13 @@ and retrieval applications.
 Nearest neighbor relationships are only supported for [vector features](/docs/feature-types#vectors).
 
 <TipInfo>
-  We recommend to first take a look through Chalk's support for <a href="/docs/feature-types#vectors">vector
+  Before reading this section, we recommend looking over <a href="/docs/feature-types#vectors">vector
   features</a> and <a href="/docs/embeddings">embedding functions</a>.
 </TipInfo>
 
 
-To illustrate how to use nearest neighbor relationships, we'll walk through an example for Chalk can power FAQ search.
-In this example, the feature set `SearchQuery` feature set represents an incoming request, and the `FAQDocument`
+To illustrate how to use nearest neighbor relationships, we'll walk through an example of how Chalk can power FAQ search.
+In this example, the `SearchQuery` feature set represents an incoming search request, and the `FAQDocument`
 feature set represents our collection of frequently asked questions and answers. Our goal is to return the five most
 relevant FAQ entries for the given search query.
 
