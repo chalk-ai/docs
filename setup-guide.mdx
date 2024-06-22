@@ -5,8 +5,6 @@ description: Customizing your Chalk solution.
 
 ---
 
-## Introduction
-
 Chalk is a feature store that enables data engineers and data scientists on production machine learning teams to
 collaborate efficiently and effectively.
 
@@ -17,8 +15,8 @@ your data goals.
 
 ## Creating your Chalk Project
 
-1. If you don't already have a Github repository where you will store your Chalk code, create one. Then, pick a
-local directory in which to work on Chalk code, and clone the Github repository there. Then `cd` inside of the
+1. If you don't already have a GitHub repository where you will store your Chalk code, create one. Then, pick a
+local directory in which to work on Chalk code, and clone the GitHub repository there. Then `cd` inside of the
 directory.
 2. If you haven't already, install Python. You can do this through [Homebrew](https://brew.sh/) as follows:
 ```bash Terminal
@@ -27,7 +25,7 @@ $ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/
 # Use Homebrew to install python3
 $ brew install python
 ```
-3. Install the [Chalk command line tool](/cli). The Chalk CLI allows you to create, update, and
+3. Install the [Chalk command line tool](/cli/). The Chalk CLI allows you to create, update, and
 manage your feature pipelines directly from your terminal
 ```bash
 curl -s -L https://api.chalk.ai/install.sh | sh
@@ -41,7 +39,7 @@ You can run `source .venv/bin/activate` to activate the virtual environment, and
 5. Login by typing [`chalk login`](/cli/login). If you're using a dedicated environment, make sure you use the
 [`--api-host`](/cli/chalk#api-host) flag. Type `y` when prompted and login in the browser.
 6. Run [`chalk init`](/cli/init) to initialize your project files. This will initialize a directory structure with an
-empty `src` directory and three files--`chalk.yaml`, `README.md`, and `requirements.txt`.
+empty `src` directory and three files: `chalk.yaml`, `README.md`, and `requirements.txt`.
 ```
 root_directory/
 ├── src/
@@ -76,7 +74,9 @@ $ pip3 install -r requirements.txt
 Now, you should have a virtual environment with all project dependencies installed and a basic project structure upon
 which we will build in the next step.
 
-## Configure Datasources
+---
+
+## Configure Data Sources
 
 Having set up a basic project directory, next we'll want to configure the data sources from which we will load data to
 compute our features. We can do so in the Chalk dashboard.
@@ -173,6 +173,8 @@ and [set staleness values](/docs/feature-caching) on different features to
 ensure that the data they query falls within their requirements for freshness. The data world is your oyster!
 
 But, as always, if you would like guidance on how to configure that oyster, please reach out in your support channel!
+
+---
 
 ## Further Resources
 
