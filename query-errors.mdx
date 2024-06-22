@@ -91,16 +91,10 @@ The online query interface for resolvers returns the following schema:
         The stacktrace produced by the code.
       </SubAttribute>
     </SubAttributeTable>
-  </Attribute>
-  <Attribute field={'feature'} kind={'string?'}>
-    The fully qualified name of the failing feature, eg.
-    <code>user.identity.has_voip_phone</code>.
-  </Attribute>
-  <Attribute field={'resolver'} kind={'string?'}>
-    The fully qualified name of the failing resolver, eg.
-    <code>my.project.get_fraud_score</code>.
-  </Attribute>
-</AttributeTable>
+  </Attribute> <Attribute field={'feature'} kind={'string?'}> The fully qualified name of the
+  failing feature, for example: <code>user.identity.has_voip_phone</code>. </Attribute> <Attribute
+  field={'resolver'} kind={'string?'}> The fully qualified name of the failing resolver, for
+  example: <code>my.project.get_fraud_score</code>. </Attribute> </AttributeTable>
 
 ### Error code
 
@@ -117,8 +111,8 @@ The online query interface for resolvers returns the following schema:
   The query is invalid. All supplied features need to be rooted in the same top-level entity.
 </Attribute>
 
-<Attribute field={'VALIDATION_FAILED'} kind={<a href={'#field-error'}>FIELD</a>}>
-  A feature value did not match the expected schema (eg. `incompatible type "int"; expected "str"`)
+<Attribute field={'VALIDATION_FAILED'} kind={<a href={'#field-error'}>FIELD</a>}> A feature value
+did not match the expected schema (for example: `incompatible type "int"; expected "str"`)
 </Attribute>
 
 <Attribute field={'RESOLVER_FAILED'} kind={<a href={'#field-error'}>FIELD</a>}>

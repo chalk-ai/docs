@@ -61,7 +61,7 @@ training sets or perform batch offline inference.
 1. You submit a [training data request](/docs/training-client) from a notebook client like Jupyter using Chalk's client library.
 2. Chalk's Query Planner creates a plan to determine which data can be served from **Offline Storage**, and which data must be computed fresh (i.e. in the case of lazy backfills).
 3. Chalk's Compute Engine pulls [point-in-time correct](/docs/temporal-consistency) feature values from Offline Storage.
-4. Chalk returns a dataframe of features to you.
+4. Chalk returns a DataFrame of features to you.
 
 Chalk's **Offline Storage** is optimized for batch querying of temporally consistent data.
 Chalk uses columnar storage backends ([Snowflake](https://snowflake.com/),

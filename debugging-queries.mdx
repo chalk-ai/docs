@@ -38,7 +38,7 @@ class User:
     transactions: DataFrame[Transaction] = has_many(lambda: Transaction.user_id == User.id)
 ```
 
-Then, we'll define simple online resolvers to ingest user and transaction data from a postgres database:
+Then, we'll define simple online resolvers to ingest user and transaction data from a Postgres database:
 
 ```sql
 -- (users.chalk.sql)
@@ -152,7 +152,7 @@ ChalkClient().offline_query(
 ```
 
 This will execute the resolver locally, using the same input data that was used in the query. This allows you to debug
-using your IDE (vscode, pycharm, or even pdb):
+using your IDE (VS Code, PyCharm, or even pdb):
 
 ![Debugger](/img/debugging/debugging.png)
 
@@ -163,7 +163,7 @@ in your terminal or by stepping through with a debugger.
 
 If you're not able to use the query plan visualizer or resolver replay, you can also use the logs to debug your query.
 Use the `chalk_logger` from the `chalk.clogging` just like a standard python logger. This logger will output
-to the web interface, and to configured log sinks (i.e. your DataDog instance).
+to the web interface, and to configured log sinks (for example, a DataDog instance).
 
 ```python
 from chalk.clogging import chalk_logger

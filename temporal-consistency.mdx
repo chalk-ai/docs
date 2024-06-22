@@ -204,7 +204,7 @@ the data was observed.
 
 ## Enforcing a TTL
 
-Features in the offline store can optionally have a `ttl` (time to live) applied.  In the case that a feature has a ttl, it will never be returned at any time later than `FeatureTime` + the ttl.
+Features in the offline store can optionally have a `TTL` (time to live) applied. In the case that a feature has a TTL, it will never be returned at any time later than `FeatureTime` + the TTL.
 As an example, perhaps you don't want to return credit scores for users which were observed more than a year ago, in this case the following feature class will return None instead of the last observed credit score if the credit score is older than 1 year.
 
 ```py

@@ -171,7 +171,7 @@ def test_get_sqft():
 
 ### after(...)/before(...) and time filtering
 
-Some dataframe filters are implicitly resolved relative to "now". In `offline_query` and `online_query`, this value
+Some DataFrame filters are implicitly resolved relative to "now". In `offline_query` and `online_query`, this value
 is controlled by `input_times=` and `now=` parameters, respectively. In unit tests, the value defaults to
 `datetime.now()`, but can be explicitly set with the `chalk.freeze_time` context manager:
 

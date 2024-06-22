@@ -9,9 +9,8 @@ import {TipBad, TipGood} from '@/components/Tip'
 ---
 
 Chalk enables data science and machine learning teams to build and
-deploy feature pipelines for machine learning.
-For datascience workflows, Chalk can be used in entirely in a notebook
-to iteratively build features and generate training data.
+deploy feature pipelines for machine learning. For data science workflows, Chalk can be used in
+entirely in a notebook to iteratively build features and generate training data.
 
 In this tutorial, we will use Chalk in a Jupyter notebook to explore
 a dataset of credit card authorizations and build out some features and resolvers.
@@ -20,7 +19,7 @@ a dataset of credit card authorizations and build out some features and resolver
 
 ## Table of Contents
 
-1. [Configure Datasources](#configure-data-sources)
+1. [Configure Data Sources](#configure-data-sources)
 2. [Defining Features](#defining-features)
 3. [Defining Resolvers](#defining-resolvers)
 4. [Computed Features](#computed-features)
@@ -67,10 +66,9 @@ snowflake = SnowflakeSource(name="snowflake-integration")
 
 ## Defining Features
 
-Once we have our datasource setup, we can start defining features.
-We will start by defining the features we will ingest from our datasource.
-In further sections, we will define derived features that we will
-use to train a fraud classification model.
+Once we have our data source setup, we can start defining features. We will start by defining the
+features we will ingest from our data source. In further sections, we will define derived features
+that we will use to train a fraud classification model.
 
 Our dataset consists of the following tables:
 - `cards`
