@@ -14,7 +14,7 @@ These are errors you would encounter when running queries, either manual or orch
 
 If you're receiving either 0 rows when you expect a non-zero query result, or if the feature values that you're seeing
 in your query results do not match what you're expecting, we recommend that you follow the steps in
-[our guide for debugging queries](https://docs.chalk.ai/docs/debugging-queries). This includes some common tips and
+[our guide for debugging queries](/docs/debugging-queries). This includes some common tips and
 tricks, such as using `store_plan_stages` and stepping through the query plan.
 
 ### Unexpected Chalk server error with status code 401
@@ -80,12 +80,12 @@ as opposed to errors you would encounter in local development.
 
 ### Elevated number of errors (e.g. 502/504's)
 
-Typically these errors are an indication of a misalignment in load and resource configuration. Please reach out to us
+Typically, these errors are an indication of a misalignment in load and resource configuration. Please reach out to us
 in your support channels with context on data scale and current resource configurations and we can help you identify
 mitigation strategies to avoid these errors!
 
 ### Returning stale features
 
 If you're seeing stale features, we'd recommend ensuring that you have
-[max_staleness](https://docs.chalk.ai/docs/feature-caching) set for the features to configure the maximum staleness
+[max_staleness](/docs/feature-caching) set for the features to configure the maximum staleness
 allowed for the features, so that Chalk will know to recompute fresh values as specified.

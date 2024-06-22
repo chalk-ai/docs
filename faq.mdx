@@ -12,6 +12,8 @@ import {RBACDiagram} from '@/components/ArchitectureDiagram'
 The questions are sorted by category. Don't see your question answered? Please reach out via your support channel
 and we will be happy to help!
 
+---
+
 ## Data Sources and Infrastructure
 
 ### What is the difference between the online store and the offline store?
@@ -37,13 +39,15 @@ on your cloud infrastructure!
 ### We use Okta SCIM provisioning. Can we import these roles to be used in Chalk?
 
 Yes! You can set up Okta to automatically provision and deprovision Chalk users. For more information on how,
-see [here](https://docs.chalk.ai/docs/okta-scim).
+see [here](/docs/okta-scim).
 
 ### How should I set up secrets to be accessible in our deployed environments?
 
 You can configure secrets as environment variables in the `Secrets` tab of `Settings` in your Chalk dashboard, and
 these secrets would then be available on the next deploy in the environments that you've specified, and on all
 branches in those environments!
+
+---
 
 ## Features
 
@@ -56,7 +60,7 @@ on recent activity and updates.
 
 You can define versions for features if, for example, you are iterating on feature definitions. We'd recommend
 setting a default feature version for ensuring consistency across feature references. For more information, please
-see [this tutorial on feature versions](https://docs.chalk.ai/docs/feature-versions)
+see [this tutorial on feature versions](/docs/feature-versions)
 
 ### How does FeatureTime work? Should I override FeatureTime with timestamps from existing data sources?
 
@@ -66,11 +70,11 @@ The first is a feature annotation `FeatureTime` that serves as a `datetime.datet
 The second is that if you define a feature named `ts` with a type of `datetime.datetime` in a feature set, then it will
 be treated as a feature time. You can override the feature time by supplying values for the `ts` feature if you
 would like to use the timestamps from your existing data sources as the observation timestamps for the feature.
-For more information on how feature times work, [see here](https://docs.chalk.ai/docs/time).
+For more information on how feature times work, [see here](/docs/time).
 
 ### How should I structure my windowed features? What kind of windows can I use?
 
-We recommend writing [windowed features](https://docs.chalk.ai/docs/aggregations) for aggregated computations over
+We recommend writing [windowed features](/docs/aggregations) for aggregated computations over
 different time periods. You can define the different windows in terms of weeks, days, hours, minutes,
 or even seconds (weeks="w", days="d", hours="h", minutes="m", seconds="s"). Under the hood, we normalize the
 time representations into durations in seconds, so you would have multiple syntactical options for accessing
@@ -84,6 +88,8 @@ features!
 Yes! In addition to streaming and scheduled bulk ingests of features, you can submit requests using
 the `upload_features` SDK endpoints to synchronously ingest features into the online or offline stores
 using API clients.
+
+---
 
 ## Resolvers
 
@@ -112,10 +118,10 @@ queries that have a matching tag. An even stricter variant of this concept is av
 `required_resolver_tags` argument to `query` and `offline_query` which allows you to force *all*
 resolvers to have a particular tag.
 
-### How do I know when my resolver will run and when it will timeout?
+### How do I know when my resolver will run and when it will time out?
 
-You can set [cron schedules](https://docs.chalk.ai/docs/resolver-cron) for your resolvers, which will be parsed in
-your local system's timezone. You can also set customized [timeouts for resolvers](https://docs.chalk.ai/docs/timeout).
+You can set [cron schedules](/docs/resolver-cron) for your resolvers, which will be parsed in
+your local system's timezone. You can also set customized [timeouts for resolvers](/docs/timeout).
 Chalk currently has a max timeout of 18 hours for resolvers, but if this does not suit your needs, please reach out
 to us in your support channel with a description of your compute needs for your resolver!
 
@@ -131,9 +137,11 @@ queries.
 ### How should I work with dataframes in my resolvers?
 
 You can define resolvers with DataFrame inputs or outputs, which uses the
-[Chalk DataFrame structure.](https://docs.chalk.ai/docs/dataframe) You can do some aggregations and projections
+[Chalk DataFrame structure.](/docs/dataframe) You can do some aggregations and projections
 using the Chalk DataFrame, but you can also convert the Chalk DataFrames into Pandas or Polars using `.to_pandas()`
 and `.to_polars()` for more data manipulation.
+
+---
 
 ## Querying
 
@@ -196,6 +204,8 @@ offline query is a combination of checking the query run in dashboard and the st
 visibility, you can also add the `run_asynchronously=True` argument to `ChalkClient.offline_query` to explicitly run
 your offline query on an isolated worker so you can use the worker status as a query status.
 
+---
+
 ## Deployment
 
 ### How are resources provisioned for my Chalk cluster, and can I modify the configuration?
@@ -211,6 +221,8 @@ please reach out to us in your support channel!
 You cannot currently suspend or delete branches, but stale branches do not consume resources, so there is no cost
 or performance impact from old branches.
 
+---
+
 ## Observability and Testing
 
 ### Is my (resolver / query) running?
@@ -221,15 +233,17 @@ See answers above under `Resolvers` and `Querying` respectfully!
 
 If you are triggering a resolver run as part of an orchestrated pipeline, we usually see customers using the
 built-in sensors from the orchestrators (e.g. Airflow or Dagster) to poll for resolver completion. You can
-also customize this polling using [an API to query run status.](https://docs.chalk.ai/docs/runs#query-run-status)
+also customize this polling using [an API to query run status.](/docs/runs#query-run-status)
 [See here](https://github.com/chalk-ai/examples/tree/main/13_airflow#polling-the-resolver-run) for an example
 of how to set up Airflow orchestration to trigger and poll a resolver run.
+
+---
 
 ## Roadmap
 
 ### What have the people at Chalk been working on?
 
-To get a glimpse of recently released features, take a look at our [changelog!](https://docs.chalk.ai/docs/changelog)
+To get a glimpse of recently released features, take a look at our [changelog!](/docs/changelog)
 
 ### I want to request a feature!
 

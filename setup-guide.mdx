@@ -27,7 +27,7 @@ $ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/
 # Use Homebrew to install python3
 $ brew install python
 ```
-3. Install the [Chalk command line tool](https://docs.chalk.ai/cli). The Chalk CLI allows you to create, update, and
+3. Install the [Chalk command line tool](/cli). The Chalk CLI allows you to create, update, and
 manage your feature pipelines directly from your terminal
 ```bash
 curl -s -L https://api.chalk.ai/install.sh | sh
@@ -82,13 +82,13 @@ Having set up a basic project directory, next we'll want to configure the data s
 compute our features. We can do so in the Chalk dashboard.
 
 1. In the same directory from before, login or signup with Chalk directly from the command line. The
-[`chalk login`](https://docs.chalk.ai/cli/login) command will open your browser and create an
+[`chalk login`](/cli/login) command will open your browser and create an
 API token for your local development, as well as redirect you to your dashboard. If you are not
 redirected you can also find the dashboard at [https://chalk.ai/projects](https://chalk.ai/projects)
 or run the `chalk dashboard` command.
-You will automatically see all of the environments in which the email you used to login has been
+You will automatically see all the environments in which the email you used to log in has been
 provisioned as a user.
- 2. Within the dashboard, navigate to `Data Sources` in the side bar and add all data sources that you will
+ 2. Within the dashboard, navigate to `Data Sources` in the sidebar and add all data sources that you will
 be working with here. After you have saved a data source, you can use the `Test Data Source` button
 in the upper right hand corner of the Data Source configuration view to verify that your connection is
 valid.
@@ -109,7 +109,7 @@ Say we added a PostgreSQL data source, then our `datasources.py` might look some
 pg = PostgreSQLSource(name='PG')
 ```
 
-For more details on setting up data sources, [see here](https://docs.chalk.ai/docs/integrations).
+For more details on setting up data sources, [see here](/docs/integrations).
 
 ---
 
@@ -139,8 +139,8 @@ root_directory/
 └── requirements.txt
 ```
 
-You can read more in our docs about the [different kinds of features](https://docs.chalk.ai/docs/features) and the
-[different kinds of resolvers](https://docs.chalk.ai/docs/resolver-overview) that you can write. If you would like
+You can read more in our docs about the [different kinds of features](/docs/features) and the
+[different kinds of resolvers](/docs/resolver-overview) that you can write. If you would like
 guidance on how to structure your feature sets and resolvers, please reach out in your support channel!
 
 ---
@@ -148,12 +148,12 @@ guidance on how to structure your feature sets and resolvers, please reach out i
 ## Deploy and Query
 
 Now, you can deploy the features and resolvers that you wrote! You can deploy to production by
-using the [`chalk apply`](https://docs.chalk.ai/cli/apply) command. During development, we recommend that you use
-`chalk apply --branch {BRANCH_NAME}` to deploy to the [branch server](https://docs.chalk.ai/docs/branches), which allows
+using the [`chalk apply`](/cli/apply) command. During development, we recommend that you use
+`chalk apply --branch {BRANCH_NAME}` to deploy to the [branch server](/docs/branches), which allows
 multiple people to work concurrently in one environment, and also enables more performant deploys.
 
 Once you have deployed your code, then you can query your features directly from the command line using the
-[`chalk query`](https://docs.chalk.ai/cli/query) command, or by calling one of our Chalk Clients in code.
+[`chalk query`](/cli/query) command, or by calling one of our Chalk Clients in code.
 Chalk has a [Python client](https://github.com/chalk-ai/chalk), [Go client](https://github.com/chalk-ai/chalk-go),
 [Java client](https://github.com/chalk-ai/chalk-java), and a [Typescript client](https://github.com/chalk-ai/chalk-ts).
 
@@ -167,13 +167,13 @@ definitions, the final step is frequently orchestration.
 
 Having verified that your feature and resolver definitions are correct, the next step is to determine how
 you want to use the corresponding feature values within your larger machine learning platform. Some users [trigger
-resolvers](https://docs.chalk.ai/docs/runs) and run queries from within other orchestrated pipelines, such as Airflow.
-Some users define [cron schedules](https://docs.chalk.ai/docs/resolver-cron)for their resolvers,
-and [set staleness values](https://docs.chalk.ai/docs/feature-caching) on different features to
+resolvers](/docs/runs) and run queries from within other orchestrated pipelines, such as Airflow.
+Some users define [cron schedules](/docs/resolver-cron)for their resolvers,
+and [set staleness values](/docs/feature-caching) on different features to
 ensure that the data they query falls within their requirements for freshness. The data world is your oyster!
 
 But, as always, if you would like guidance on how to configure that oyster, please reach out in your support channel!
 
 ## Further Resources
 
-For a detailed tutorial on how to build a fraud model using Chalk, [see here](https://docs.chalk.ai/docs/fraud-1).
+For a detailed tutorial on how to build a fraud model using Chalk, [see here](/docs/fraud-1).
