@@ -1,0 +1,67 @@
+---
+title: Scheduled Query
+description: Run feature pipelines on a schedule
+---
+
+---
+
+When features are coming from a single SQL file, or a single resolver,
+you can use [resolver crons](/docs/resolver-cron) to keep your online
+and offline stores up to date.
+
+However, when features are chained together, or when you need to run
+a feature pipeline on a schedule, you can use scheduled queries.
+
+Scheduled queries let you run an offline query on a schedule,
+and persist the results in the online and/or offline feature stores.
+
+---
+
+## Create a Scheduled Query
+
+To create a scheduled query, make a
+[ScheduledQuery](/api-docs#ScheduledQuery)
+object somewhere in your code.
+
+```python
+from chalk import ScheduledQuery
+
+ScheduledQuery(
+    name="enrich-transactions",
+    schedule="0 0 * * *",
+    output=[Transaction.clean_name, Transaction.category],
+    online=True,
+    offline=True,
+)
+```
+
+At the time of [`chalk apply`](/cli/apply), the scheduled query will be
+created.
+
+In the web, you can see the list of scheduled queries in `Runs` > `Scheduled Runs` tab.
+
+![Scheduled queries](/img/scheduled-runs.png)
+
+## Incrementalization
+
+By default, scheduled queries use incrementalization to only ingest data which
+has been updated since the last run. You can also set a resolver to use as the
+source of the incrementalization. For example, if you were enriching financial
+transaction data, you might use the `transactions.chalk.sql` resolver as the
+source of incrementalization.
+
+```python
+from chalk import ScheduledQuery
+
+ScheduledQuery(
+    name="enrich-transactions",
+    schedule="0 0 * * *",
+    output=[Transaction.clean_name, Transaction.category],
+    online=True,
+    offline=True,
+    incremental_resolver="transactions",
+)
+```
+
+
+
