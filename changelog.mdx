@@ -18,12 +18,18 @@ Here's an example of a scheduled query that caches the number of transactions a 
 the online store:
 
 ```py
+from chalk import ScheduledQuery
+
 ScheduledQuery(
+    name="num_transactions_last_24h",
     output=[User.num_transactions_last_24h],
     schedule="0 0 * * *", # every day at midnight
-    persist_online=True # cache this computed value in the online store
+    store_online=True,    # store the result in the online store
+    store_offline=False,  # don't store this value in the offline store
 )
 ```
+
+[//]: # (Read more at [Schedule Query]&#40;/docs/scheduled-query&#41;.)
 
 ### Bugfixes and improvements
 
