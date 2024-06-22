@@ -3,10 +3,12 @@ title: Best Practices
 description: Learn our best practices for building and maintaining your Chalk solution
 ---
 
-# Best Practices
+---
 
 With Chalk, the same solution can be implemented in a number of different ways. Below are some guidelines
 and recommended patterns for building and maintaining your Chalk solution!
+
+---
 
 ## Data Sources/Integrations
 
@@ -19,7 +21,9 @@ Define integrations through the Chalk dashboard and check that they're connectin
 
 Though this works, it can lead to ambiguity in SQL resolvers when you add multiple data sources of the same type. This occurs
 because Chalk lets you refer to data sources by their type if you've only linked one data source of that type to Chalk. In
-general, to future proof your resolvers, you should refer to them by their name.
+general, to future-proof your resolvers, you should refer to them by their name.
+
+---
 
 ## Features
 
@@ -58,11 +62,11 @@ class User:
   birthday: datetime
 ```
 
-If you want to apply a tag or owner to all features in a feature set, this should be done in the feature decorator, like so:
+If you want to apply a tag or owner to all features in a feature set, this
+should be done in the feature decorator, like so:
 
 ```python
 from chalk import features
-from datetime import datetime
 
 @features(owner="ada.lovelace@aol.com", tags=['group:risk'])
 class User:
@@ -72,29 +76,36 @@ class User:
   name: str
 ```
 
-You can also [apply restrictions or enforce feature annotation for your entire project](/docs/validation#feature-validation-requirements). For instance, you can block deployment if features are not tagged or described.
+You can also [apply restrictions or enforce feature annotation for your entire project](/docs/validation#feature-validation-requirements).
+For instance, you can block deployment if features are not tagged or described.
 
 ### Keep feature definitions separated from resolvers
 
-Features should be defined in separate files from resolvers (with the exception of underscore features).
+Features should be defined in separate files from resolvers (except underscore features).
 
-### When starting your Chalk implementaiton, define all your feature sets in the same file
+### When starting your Chalk implementation, define all your feature sets in the same file
 
 Although it can get a bit lengthy, we recommend starting by defining your features in a single file.
 This makes expressing joins between features easier and prevents circular dependencies.
 
 ### Add Validations For Your Features
 
-[Validations for your features](/docs/validation#feature-values) can prevent incorrect data from being written to your offline store. They can provide an even stricter complement to monitoring, ensuring that nothing
+[Validations for your features](/docs/validation#feature-values) can prevent incorrect
+data from being written to your offline store. They can provide an even stricter
+complement to monitoring, ensuring that nothing
 is going wrong with the feature you are calculating.
 
 ### Use implicit join syntax
 
-Joins between feature sets can be specified in a number of different ways. We recommend using an implicit join syntax, which [we cover in the join section of the docs](/docs/has-one#recommended-implementation).
+Joins between feature sets can be specified in a number of different ways.
+We recommend using an implicit join syntax, which
+[we cover in the join section of the docs](/docs/has-one#recommended-implementation).
+
+---
 
 ## Resolvers
 
-### Use underscore resolvers for very simple resolver definitions
+### Use underscore resolvers for simple calculations
 
 [Underscore resolvers](/docs/underscore) should be used for relatively simple calculations: your underscore resolver definitions should fit inline.
 
@@ -105,9 +116,9 @@ allow for direct execution against your data sources and additional optimization
 
 ### Explicitly list columns in a select statement for SQL file resolvers
 
-Select statements in SQL resolvers should be explicit: avoid using the \* syntax.
+Select statements in SQL resolvers should be explicit: avoid using the `*` syntax.
 
-### Give your Python resolver functions (or, equivalently, SQL resolver filenames) clear names
+### Give Python resolvers and SQL filenames clear names
 
 Resolver names are used in the Chalk dashboard to identify resolvers. They should be clear and concise.
 
@@ -119,6 +130,8 @@ Resolver inputs and outputs must belong to the same feature set, but joins can a
 
 Don't worry about converting Chalk DataFrames to [Pandas](https://pandas.pydata.org/) or [Polars](https://pola.rs/) in a Python resolver—the transformation is cheap. We use arrow (and so do Pandas and Polars) so moving data from a Chalk DataFrame to either is close to free
 
+---
+
 ## Querying
 
 ### Run simple queries with the Chalk CLI, for more flexibility use one of Chalk's API clients
@@ -129,6 +142,8 @@ The Chalk CLI should be used to run simple online queries. For more complex use 
 
 Naming queries makes it easier to evaluate and track the performance of specific queries over time. This can be done using the `query_name`
 parameter in the query functions of your client of choice.
+
+---
 
 ## Deployment
 
@@ -180,8 +195,11 @@ example/
 
 You would access the model.joblib file as follows:
 ```python
+import os
 model_file_path=f"{os.environ['TARGET_ROOT']}/model.joblib"
 ```
+
+---
 
 ## Observability / Testing
 
@@ -199,8 +217,12 @@ Chalk makes it easy to set up [unit tests](/docs/unit-tests) for your resolvers 
 Chalk has a [GitHub Actions integration](/docs/github-actions)—you can use it to create branch deployments or run queries
 as part of your code development cycle.
 
+---
+
 ## Security
 
 ### Generate and use access tokens to set and restrict the permissions for your different users
 
-Scope your Chalk user permissions with [access tokens](/docs/online-authentication). These can be programatically generated through Chalk Clients or in the dashboard. Give your users only the permissions they need.
+Scope your Chalk user permissions with [access tokens](/docs/online-authentication).
+These can be programmatically generated through
+Chalk clients or in the dashboard. Give your users only the permissions they need.
