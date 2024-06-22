@@ -371,7 +371,7 @@ def batch_get_age_in_years(df: DataFrame[User.id, User.birthday, Now]) -> DataFr
 
 ### Testing your SQL File Resolvers
 
-[SQL file resolvers](https://docs.chalk.ai/docs/sql#sql-file-resolvers) are Chalk's preferred method of resolving
+[SQL file resolvers](/docs/sql#sql-file-resolvers) are Chalk's preferred method of resolving
 features with SQL queries.
 Now, you can get your SQL file resolvers in Python by the name of the SQL file resolver.
 For example, if you have the following SQL file resolver:
@@ -422,7 +422,7 @@ a new deployment from ~10-15 seconds to ~1-3 seconds. This impacts customers wit
 
 ### Expanded support for logical keying in streaming contexts
 
-[Stream resolvers](https://docs.chalk.ai/api-docs#stream) support a `keys=` parameter. This parameter allows you to re-key a stream by a property of the message,
+[Stream resolvers](/api-docs#stream) support a `keys=` parameter. This parameter allows you to re-key a stream by a property of the message,
 rather than relaying on the protocol layer key. This is appropriate if a stream is keyed randomly, or by an entity key like "user",
 but you want to aggregate along a different axis, e.g. "organization".
 
@@ -496,7 +496,7 @@ You can access this page from the "runs" tab on an individual named query page, 
 on the "queries" page.
 
 You can search the list of previously executed queries by date range, or by "query id". The query id is returned
-in the "online query" API [response object](https://docs.chalk.ai/api-docs#ChalkClient.query).
+in the "online query" API [response object](/api-docs#ChalkClient.query).
 
 ## May 15, 2023
 
@@ -577,7 +577,7 @@ More functionality will be added to Online and Offline query APIs to support mor
 
 When deploying with [`chalk apply`](/cli/chalk#branch) a new flag `--branch <branch_name>` has been introduced which creates a branch deployment.
 Users can interact with their branch deployment using a consistent name by passing the branch name to query, upload_features, etc.
-Chalk [clients](https://docs.chalk.ai/api-docs#ChalkClient) can also be scoped to a branch by passing the branch in the constructor.
+Chalk [clients](/api-docs#ChalkClient) can also be scoped to a branch by passing the branch in the constructor.
 Branch deployments are many times faster than other flavors of `chalk apply`, frequently taking only a few seconds from beginning to end.
 Branch deployments replace preview deploys, which have been deprecated.
 
