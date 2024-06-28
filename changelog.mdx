@@ -6,6 +6,19 @@ hideToc: True
 
 ---
 
+## Jun 27, 2024
+
+### Deployment Tags
+
+You can now add tags to your deployments. Tags are unique on your environments. If you add an already existing tag
+to a new deployment, Chalk will remove the tag from the old deployment.
+
+Tags can be with the `--deployment-tag` flag n the chalk CLI.
+
+```sh
+chalk apply --deployment-tag=latest --deployment-tag=v1.0.4
+```
+
 ## Mar 19, 2024
 
 ### Scheduled Queries
