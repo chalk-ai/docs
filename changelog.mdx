@@ -6,26 +6,26 @@ hideToc: True
 
 ---
 
-## Jun 27, 2024
+## Jun 28, 2024
 
 ### Deployment Tags
 
-You can now add tags to your deployments. Tags are unique on your environments. If you add an already existing tag to a new deployment, Chalk will remove the tag from the old deployment.
+You can now add tags to your deployments. Tags are unique on your environments. If you add an already existing tag to a new deployment, Chalk will remove the tag from your old deployment.
 
-Tags can be added with the `--deployment-tag` flag in the chalk CLI.
+Tags can be added with the `--deployment-tag` flag in the chalk CLI:
 
 ```sh
 chalk apply --deployment-tag=latest --deployment-tag=v1.0.4
 ```
 
-You also can specify a required pattern for your tags by adding a `tagregex` field to your `chalk.yaml` file. Any deployment tags will need to match your supplied regex. For instance:
+You can also specify a required pattern for your tags by adding a `tagregex` field to your `chalk.yaml` file. If you've added this field, your deployment tags will need to match your supplied regex. For instance:
 
 ```chalk.yaml
 project: my-project-id
-tagregex: latest|v[0-9]+\.[0-9]+\.[0-9=+]
+tagregex: latest|v[0-9]+\.[0-9]+\.[0-9]+
 environments:
   default:
-    runtime: python311
+    runtime: python310
     requirements: ./requirements.txt
     dockerfile: Dockerfile
   prod:
