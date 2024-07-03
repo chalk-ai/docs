@@ -6,6 +6,141 @@ hideToc: True
 
 ---
 
+## July 1, 2024
+
+### Chalk GRPC
+
+We have shipped a GRPC engine for Chalk that drastically improves performance by **at least 2x** through improved data
+serialization, efficient data transfer, and a migration from Python to Go and C++. You can now use the ChalkGRPCClient
+to run queries with the GRPC engine, and fetch enriched metadata about your feature sets and resolvers through the
+`get_graph` method.
+
+### Spine SQL Query
+
+With ChalkPy v2.38.8 or later, you can now construct a "spine SQL query" to construct a unified spine of primary
+keys that enables you to make more complex offline queries. By constructing this spine, you can now query multiple
+root feature sets (also called namespaces) and access the same feature multiple times from one row for each primary
+key associated with that row. See an example of how to construct a spine SQL query below:
+
+```python
+query = """
+SELECT
+A_ID as "a.id",
+B_ID as "b.id",
+TIMESTAMP,
+OTHER_FEATURE_1,
+OTHER_FEATURE_2,
+OTHER_FEATURE_3
+FROM DB_TABLE
+WHERE TIMESTAMP >= "2024-01-01"
+"""
+
+client = ChalkClient()
+dataset = client.offline_query(
+	spine_sql_query=query,
+	output=[
+		A.feature_from_featureset_A,
+		B.feature_from_featureset_B
+	],
+	max_samples=10
+)
+```
+
+### Underscore Static Planning
+
+We have shipped underscore static planning, which enables you to define feature resolution using underscore notation
+in the feature definition, that is then translated to performant C++ code. This is currently shipped for basic
+arithmetic and logical operations, and we are continuing to build out more underscore functionality! See the code
+snippet below for some examples of how to use underscore static planning.
+
+```python
+@features
+class SampleFeatureSet:
+	id: int
+	feature_1: int
+	feature_2: int
+	feature_1_2_sum: int = _.feature_1 + _.feature_2
+	feature_1_2_diff: int = _.feature_1 - _.feature_2
+    feature_1_2_equality: bool = _.feature_1 == _.feature_2
+```
+
+### Chalk deployment tags
+
+You can now add tags to your deployments. Tags must be unique to each of your environments. If you add an already existing tag to a new deployment, Chalk will remove the tag from your old deployment.
+
+Tags can be added with the `-deployment-tag` flag in the chalk CLI:
+
+```sh
+chalk apply --deployment-tag=latest --deployment-tag=v1.0.4
+```
+
+You can also specify a required pattern for your tags by adding a `tagregex` field to your `chalk.yaml` file.
+If you've added this field, your deployment tags will need to match your supplied regex. For instance:
+
+```chalk.yaml
+project: my-project-id
+tagregex: latest|v[0-9]+\.[0-9]+\.[0-9]+
+environments:
+  default:
+    runtime: python310
+    requirements: ./requirements.txt
+    dockerfile: Dockerfile
+  prod:
+    requirements: ./requirements-prod.txt
+```
+
+### Resource Configuration Management in Dashboard
+
+We've updated our UI for resource configuration management in the dashboard! You can now toggle your view between
+a GUI or a JSON editor. The GUI exposes all the configuration options available in the JSON editor, including
+values that aren't set, and allows you to easily adjust your cluster's resources to fit your needs.
+
+[resource configuration management](/img/cloud-resource-config.png)
+
+### Datasource and Feature level RBAC
+
+We've expanded the functionality of our service tokens to enable role-based access control (RBAC) at both the
+datasource and feature level. On the datasource level, you can now restrict a token to only access datasources
+with matching tags to resolve features. On the feature level, you can restrict a token's access to tagged features
+either by blocking the token from returning tagged features in any queries but allowing the feature values to be
+used in the computation of other features, or by blocking the token from accessing tagged features entirely.
+
+[datasource and feature level rbac](/img/datasource-feature-rbac.png)
+
+### New Datasources and Native Drivers
+
+We've added integrations for Trino and Spanner as new datasources. We've also added native drivers for Postgres and
+Spanner, which drastically improves performance for these datasources.
+
+### Heartbeating
+
+We now have heartbeating to poll the status of long-running queries and resolvers, which will now mark any hanging
+runs that are no longer detected as "failed" after a certain period of time.
+
+### Incremental Status
+
+We've shipped statuses during incremental runs such that users can get a signal of the current high water mark of
+data being updated.
+
+```bash
+chalk incremental status  --scheduled_query get_some_data__daily
+✓ Fetched resolver progress state
+Resolver:                 N/A
+Query:                    run_this_query_daily
+Environment:              chalk12345
+Max Ingested Timestamp:   2024-07-01T16:01:46+00:00
+Last Execution Timestamp: 2024-07-01T00:01:27.421873+00:00
+````
+
+### Miscellaneous improvements
+* In addition to the changes listed above, we have also shipped a number of smaller improvements including but not
+limited to:
+    * spellcheck (based on Levenshtein distance) in SQL file resolvers
+    * type errors on failed annotation parsing
+    * improved errors for failure in type conversion in SQL resolvers (eg. your SQL file resolver selects an int column
+    but the feature is defined as a string)
+    * windowed resolvers have expanded to allow for hourly cadences.
+
 ## Mar 19, 2024
 
 ### Scheduled Queries
