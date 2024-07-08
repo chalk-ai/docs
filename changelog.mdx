@@ -74,21 +74,6 @@ Tags can be added with the `--deployment-tag` flag in the Chalk CLI:
 chalk apply --deployment-tag=latest --deployment-tag=v1.0.4
 ```
 
-You can also specify a required pattern for your tags by adding a `tagregex` field to your `chalk.yaml` file.
-If you've added this field, your deployment tags will need to match your supplied regex. For instance:
-
-```chalk.yaml
-project: my-project-id
-tagregex: latest|v[0-9]+\.[0-9]+\.[0-9]+
-environments:
-  default:
-    runtime: python310
-    requirements: ./requirements.txt
-    dockerfile: Dockerfile
-  prod:
-    requirements: ./requirements-prod.txt
-```
-
 ### Resource Configuration Management in Dashboard
 
 We updated our UI for resource configuration management in the dashboard! You can now toggle your view between
