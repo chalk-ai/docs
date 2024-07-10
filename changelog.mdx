@@ -15,7 +15,7 @@ serialization, efficient data transfer, and a migration from Python to Go and C+
 to run queries with the GRPC engine, and fetch enriched metadata about your feature sets and resolvers through the
 `get_graph` method.
 
-### Spine SQL Query
+### Spine SQL query
 
 With ChalkPy v2.38.8 or later, you can now construct a "spine SQL query" to construct a unified spine of primary
 keys that enables you to make more complex offline queries. By constructing this spine, you can now query multiple
@@ -46,12 +46,14 @@ dataset = client.offline_query(
 )
 ```
 
-### Underscore Static Planning
+### Static planning of underscore expressions
 
-We shipped underscore static planning, which enables you to define feature resolution using underscore notation
-in the feature definition, that is then translated to performant C++ code. This is currently shipped for basic
-arithmetic and logical operations, and we are continuing to build out more underscore functionality! See the code
-snippet below for some examples of how to use underscore static planning.
+We shipped static planning of [underscore expressions](/docs/underscore). Underscore expressions
+enable you to define and resolve features from operations on other features. When you use underscore expressions, we
+now do static analysis of your feature definition to transform it into performant C++ code.
+
+Underscore expressions currently support basic arithmetic and logical operations, and we continue to build out more
+functionality! See the code snippet below for some examples of how to use underscore expressions:
 
 ```python
 @features
@@ -74,7 +76,7 @@ Tags can be added with the `--deployment-tag` flag in the Chalk CLI:
 chalk apply --deployment-tag=latest --deployment-tag=v1.0.4
 ```
 
-### Resource Configuration Management in Dashboard
+### Resource configuration management in dashboard
 
 We updated our UI for resource configuration management in the dashboard! You can now toggle your view between
 a GUI or a JSON editor. The GUI exposes all the configuration options available in the JSON editor, including
@@ -82,20 +84,20 @@ values that aren't set, and allows you to easily adjust your cluster's resources
 
 ![resource configuration management](/img/cloud-resource-config.png)
 
-### Datasource and Feature level RBAC
+### Data source and feature-level RBAC
 
 We expanded the functionality of our service tokens to enable role-based access control (RBAC) at both the
-datasource and feature level. On the datasource level, you can now restrict a token to only access datasources
+data source and feature level. On the datasource level, you can now restrict a token to only access data sources
 with matching tags to resolve features. On the feature level, you can restrict a token's access to tagged features
 either by blocking the token from returning tagged features in any queries but allowing the feature values to be
 used in the computation of other features, or by blocking the token from accessing tagged features entirely.
 
 ![datasource and feature level rbac](/img/datasource-feature-rbac.png)
 
-### New Datasources and Native Drivers
+### New data sources and native drivers
 
-We added integrations for Trino and Spanner as new datasources. We've also added native drivers for Postgres and
-Spanner, which drastically improves performance for these datasources.
+We added integrations for Trino and Spanner as new data sources. We've also added native drivers for Postgres and
+Spanner, which drastically improves performance for these data sources.
 
 ### Heartbeating
 
