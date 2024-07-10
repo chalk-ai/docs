@@ -48,10 +48,12 @@ dataset = client.offline_query(
 
 ### Static planning of underscore expressions
 
-We shipped underscore static planning, which enables you to define feature resolution using underscore notation
-in the feature definition, that is then translated to performant C++ code. This is currently shipped for basic
-arithmetic and logical operations, and we are continuing to build out more underscore functionality! See the code
-snippet below for some examples of how to use underscore static planning.
+We shipped static planning of [underscore expressions](/docs/underscore). Underscore expressions
+enable you to define and resolve features from operations on other features. When you use underscore expressions, we
+now do static analysis of your feature definition to transform it into performant C++ code.
+
+Underscore expressions currently support basic arithmetic and logical operations, and we continue to build out more
+functionality! See the code snippet below for some examples of how to use underscore expressions:
 
 ```python
 @features
