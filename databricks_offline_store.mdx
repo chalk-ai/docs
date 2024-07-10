@@ -6,14 +6,14 @@ published: true
 
 ## Databricks Workspace Prerequisites
 To use Databricks as the offline store for Chalk, Chalk needs access to a Databricks workspace
-(requires “Pricing tier” to be Premium or higher, as required functionality (Databricks SQL) is
+(requires **Pricing tier** to be Premium or higher, as required functionality (Databricks SQL) is
 not available on Standard plans) in the same region as your Chalk deployment, along with the following:
 
 1.  A Unity Catalog in the same region as your Chalk deployment (must be assigned to the workspace).
-2. Create a schema for Chalk within the Unity Catalog, i.e. “chalk_offline_store”.
+2. Create a schema for Chalk within the Unity Catalog, i.e. `chalk_offline_store`.
 3. A Databricks SQL warehouse.
-    -  The “Unity Catalog” feature must be enabled.
-    -  This also requires the “Pro” feature to be enabled.
+    -  The **Unity Catalog** feature must be enabled.
+    -  This also requires the **Pro** feature to be enabled.
 4. Recommended warehouse size is 2X-Small (can be scaled up later).
 
 After this phase of setup is complete, Chalk needs the following information:
@@ -25,12 +25,12 @@ After this phase of setup is complete, Chalk needs the following information:
 ## Service Principal
 
 Next, you’ll create a dedicated service principal that Chalk will use to access your Databricks SQL schema.
-1. Navigate to “Settings > Workspace admin > Identity and access > Service principals”
+1. Navigate to `Settings > Workspace admin > Identity and access > Service principals`
 2. Create a service principal for Chalk
-3. In “Workspace settings > Identity and access > Service principals > Service principal details > Secrets”
-click “Generate secret” and save the client ID and secret to a secure location.
+3. In `Workspace settings > Identity and access > Service principals > Service principal details > Secrets`
+click `Generate secret` and save the client ID and secret to a secure location.
 4. Ensure the service principal has permission to create and drop tables within the schema you created above
-(Chalk may create a “temporary” table to cache data that can be accessed across multiple connections and then
+(Chalk may create a temporary table to cache data that can be accessed across multiple connections and then
 drop the table when it’s no longer used). It’s a best practice to only grant ownership access to this schema.
 It’s also recommended to ensure this user cannot create new users / modify permissions. There are some optional
 Chalk features that can be used to query other tables in the same database (catalog) as your offline
@@ -42,25 +42,25 @@ grant use catalog on catalog <CATALOG HERE> to `<SERVICE PRINCIPAL UUID HERE>;
 grant all privileges on schema <CATALOG HERE>.<SCHEMA HERE> to `<SERVICE PRINCIPAL UUID HERE>`;
 ```
 It’s worth noting that to grant the service principal access to the SQL warehouse above it was necessary to
-use the Databricks SQL CLI and give the service principal the “CAN_MANAGE” permission. The service_principal_name
+use the Databricks SQL CLI and give the service principal the `CAN_MANAGE` permission. The service_principal_name
 actually corresponds to the service principal’s unique ID, not the name displayed in the console (these names
 are not necessarily unique and the permissions cannot be ambiguous). This apparently can be done from the web
 portal on AWS but not GCP.
 
 ## Storage Credential and External Location
 
-Next, you’ll create a “storage credential” and “external location” that Chalk will use as a staging area for data
+Next, you’ll create a **storage credential** and **external location** that Chalk will use as a staging area for data
 uploaded to the offline store in Databricks.
 1. First, you’ll need an object storage bucket, i.e. S3, Google Cloud Storage, etc. Chalk’s principal needs
 exclusive access to the entire bucket.
-2. Click “Catalog” in the sidebar.
-3. Click the “+” in the “Catalog” sidebar.
-4. Click “Add a storage credential” and follow the instructions (the storage credential should probably be in the
+2. Click `Catalog` in the sidebar.
+3. Click the `+` in the `Catalog` sidebar.
+4. Click `Add a storage credential` and follow the instructions (the storage credential should probably be in the
 same cloud account as your Databricks workspace AND your bucket). You’ll need to give the underlying role / service
 account etc. access to the bucket.
-5. Click “Add an external location” and specify the storage credential and the bucket you created previously.
+5. Click `Add an external location` and specify the storage credential and the bucket you created previously.
 6. Grant the service principal all privileges on the external location via SQL.
-7. Recommended: Run a “LIST” command on your external location using the service account.
+7. Recommended: Run a `LIST` command on your external location using the service account.
 ```sql
 grant usage on external location `<EXTERNAL LOCATION HERE>` to `<SERVICE PRINCIPAL UUID HERE>`;
 -- You can run this using the service principal to ensure proper access.
