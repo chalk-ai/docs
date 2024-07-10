@@ -10,7 +10,7 @@ description: Using underscore expressions to define features
 Underscore expressions can be used to define and
 resolve features from operations on other features.
 
-Consider the feature class `RocketEngine` define below:
+Consider the feature class `RocketEngine` defined below:
 
 ```python
 from chalk.features import features
@@ -50,7 +50,7 @@ be used to reference features contained in the same feature class.
 
 Underscore can also be used to define expressions with [`DataFrame`](/docs/dataframe) features.
 
-In the example below, we will define two new feature classes `Astronaut` and `RocketShip`
+In the example below, we will define two new feature classes, `Astronaut` and `RocketShip`:
 
 ```python
 from chalk.features import features, has_one, has_many, DataFrame
@@ -79,7 +79,7 @@ class RocketShip:
 Suppose we wanted to define a feature called `total_mass` on `RocketShip` and resolve
 it as the sum of the masses of the astronauts on the ship and the mass of the engine.
 
-Using the underscore syntax, we can define `total_mass` as follows
+Using the underscore syntax, we can define `total_mass` as follows:
 
 ```diff-py
 - from chalk.features import features, has_one, has_many, DataFrame
