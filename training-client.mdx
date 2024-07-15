@@ -21,12 +21,12 @@ By default, an offline query returns a row for each primary key containing the m
 computed value for each requested output feature. The main use case for offline queries is
 creating datasets.
 
-Chalk supports a number of clients that can run offline queries. In this section, our examples
-focus on our python client, which integrates nicely with jupyter notebooks.
+Chalk supports a number of clients for offline queries. In this section, our examples
+use our Python client, which integrates nicely with Jupyter notebooks.
 
 <JupyterNotebook/>
 
-## Making Offline Queries
+## Making offline queries
 
 As mentioned earlier, offline queries can be made through one of Chalk's API clients.
 
@@ -48,10 +48,10 @@ client.offline_query(
 )
 ```
 
-In the Python client, offline queries return Chalk `Dataset`s, which we cover, in detail, in the
-next [section](/docs/datasets). However, at a high level, Chalk `Dataset`s are flexible wrappers
-around the results of your offline query that can be converted to pandas or polars—this makes them
-easy to use for downstream ML tasks.
+Offline queries return Chalk [Datasets](/api-docs#Dataset), which we cover in more detail in the
+next [section](/docs/datasets). At a high level, Chalk `Dataset`s are flexible wrappers
+for the results of your offline query. They can be converted to pandas or polars DataFrames for ease of use 
+in downstream ML tasks. 
 
 ### Input
 
@@ -69,7 +69,7 @@ input={
 }
 ```
 
-### Input Times
+### Input times
 
 Timestamps can be also be passed in the [input_times](/api-docs#ChalkClient.offline_query.input_times) argument instead.
 
@@ -96,11 +96,11 @@ output=[
 ]
 ```
 
-### Recompute Features
+### Recompute features
 
 Users can request that certain features be recomputed by resolvers
 at query time instead of sampled from the offline store.
-For more information, read [here](/api-docs#ChalkClient.offline_query.recompute_features).
+For more information, see [recompute_features](/api-docs#ChalkClient.offline_query.recompute_features).
 
 ### Timebounds
 
