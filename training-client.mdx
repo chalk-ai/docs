@@ -81,14 +81,18 @@ Spine SQL queries are recommended in the following scenarios:
 rows of data at once. Chalk will also reuse data between rows where appropriate.
 2. You want to query from Chalk as your offline data store. You can reduce unnecessary back-and-forth requests by having
 Chalk execute the SQL query and handle the result rows directly.
-3. You want to use multiple [feature namespaces](/docs/features#namespacing) in your input. Spine SQL queries accept
-multiple feature namespaces as column names.
+3. You want to request features from multiple [feature namespaces](/docs/features#namespacing) for each row of output.
 
-`spine_sql_query` expects each column in the result to correspond to a feature. Chalk replaces `__` in column names with
-`.` to form Chalk feature names. For example, `seller__id` corresponds to the `Seller.id` feature.
+Spine SQL queries accept features from multiple feature namespaces as columns of the result. Each column must either
+correspond to an existing feature or be included in the [output](/api-docs#ChalkClient.offline_query.output) list. For
+each referenced feature namespace, the feature namespace's primary key must be included as a column.
+
+Chalk replaces `__` in column names with `.` to form Chalk feature names. For example, `seller__id` corresponds to the
+`Seller.id` feature.
 
 <TipInfo>
-    The "ts" column is always interpreted as the observation time for the row.
+    The "ts" column is always interpreted as the query execution time for the row. See our documentation on [temporal
+    consistency](/docs/temporal-consistency) for more details.
 </TipInfo>
 
 ```python
@@ -98,8 +102,8 @@ output = chalk_client.query(
             t.txn_time AS ts,
             t.seller_id AS seller__id,
             t.buyer_id as buyer__id,
-            t.amount as txn_amount,
-            t.payment_type as txn_payment_type
+            t.amount as txn__amount,
+            t.payment_type as txn__payment_type
         FROM transactions AS t
         WHERE t.update_at >= {now - timedelta(days=30)}
     """,
