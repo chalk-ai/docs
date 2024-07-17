@@ -7,7 +7,7 @@ description: Updates to Chalk!
 
 ## July 10, 2024
 
-### Feature Catalog
+### Feature catalog
 
 You can now view and filter features in the feature catalog by their tags and owners.
 
@@ -24,34 +24,11 @@ to run queries with the GRPC engine, and fetch enriched metadata about your feat
 
 ### Spine SQL query
 
-With ChalkPy v2.38.8 or later, you can now construct a "spine SQL query" to construct a unified spine of primary
-keys that enables you to make more complex offline queries. By constructing this spine, you can now query multiple
-root feature sets (also called namespaces) and access the same feature multiple times from one row for each primary
-key associated with that row. See an example of how to construct a spine SQL query below:
-
-```python
-query = """
-SELECT
-A_ID as "a.id",
-B_ID as "b.id",
-TIMESTAMP,
-OTHER_FEATURE_1,
-OTHER_FEATURE_2,
-OTHER_FEATURE_3
-FROM DB_TABLE
-WHERE TIMESTAMP >= "2024-01-01"
-"""
-
-client = ChalkClient()
-dataset = client.offline_query(
-	spine_sql_query=query,
-	output=[
-		A.feature_from_featureset_A,
-		B.feature_from_featureset_B
-	],
-	max_samples=10
-)
-```
+With ChalkPy v2.38.8 or later, you can now pass [spine_sql_query](/api-docs#ChalkClient.offline_query.spine_sql_query)
+to offline queries. The resulting rows of the SQL query will be used as input to the offline query. Chalk will compute
+an efficient query plan to retrieve your SQL data without requiring you to load the data and transform it into input
+before sending it back to Chalk. For more details, check out [our
+documentation](/docs/training-client#sql-queries-as-input).
 
 ### Static planning of underscore expressions
 
