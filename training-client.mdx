@@ -87,9 +87,6 @@ Spine SQL queries accept features from multiple feature namespaces as columns of
 correspond to an existing feature or be included in the [output](/api-docs#ChalkClient.offline_query.output) list. For
 each referenced feature namespace, the feature namespace's primary key must be included as a column.
 
-Chalk replaces `__` in column names with `.` to form Chalk feature names. For example, `seller__id` corresponds to the
-`Seller.id` feature.
-
 The "ts" column is always interpreted as the query execution time for the row. See our documentation on [temporal
 consistency](/docs/temporal-consistency) for more details.
 
@@ -98,10 +95,10 @@ output = chalk_client.query(
     spine_sql_query=f"""
         SELECT
             t.txn_time AS ts,
-            t.seller_id AS seller__id,
-            t.buyer_id as buyer__id,
-            t.amount as txn__amount,
-            t.payment_type as txn__payment_type
+            t.seller_id AS "seller.id",
+            t.buyer_id AS "buyer.id",
+            t.amount AS "txn.amount",
+            t.payment_type AS "txn.payment_type"
         FROM transactions AS t
         WHERE t.update_at >= {now - timedelta(days=30)}
     """,
