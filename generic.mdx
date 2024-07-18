@@ -59,6 +59,11 @@ def initialize():
     ...
 ```
 
+### Initialization order
+
+The order in which setup hooks run is not guaranteed and may differ across instances of your service. Your setup hooks
+should not rely on being called in a specific order.
+
 ### Scopes
 
 You should be careful when trying to assign a variable outside the local
