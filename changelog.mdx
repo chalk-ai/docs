@@ -17,10 +17,9 @@ You can now view and filter features in the feature catalog by their tags and ow
 
 ### Chalk gRPC
 
-We shipped a gRPC engine for Chalk that drastically improves performance by **at least 2x** through improved data
-serialization, efficient data transfer, and a migration from Python to Go and C++. You can now use the ChalkGRPCClient
-to run queries with the GRPC engine, and fetch enriched metadata about your feature sets and resolvers through the
-`get_graph` method.
+We shipped a gRPC engine for Chalk that improved performance by at least 2x through improved data serialization,
+efficient data transfer, and a migration to our C++ server. You can now use `ChalkGRPCClient` to run queries with the
+gRPC engine and fetch enriched metadata about your feature sets and resolvers through the `get_graph` method.
 
 ### Spine SQL query
 

@@ -90,10 +90,8 @@ each referenced feature namespace, the feature namespace's primary key must be i
 Chalk replaces `__` in column names with `.` to form Chalk feature names. For example, `seller__id` corresponds to the
 `Seller.id` feature.
 
-<TipInfo>
-    The "ts" column is always interpreted as the query execution time for the row. See our documentation on [temporal
-    consistency](/docs/temporal-consistency) for more details.
-</TipInfo>
+The "ts" column is always interpreted as the query execution time for the row. See our documentation on [temporal
+consistency](/docs/temporal-consistency) for more details.
 
 ```python
 output = chalk_client.query(
