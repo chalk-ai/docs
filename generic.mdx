@@ -35,7 +35,7 @@ This function has access to all
 configured for you environment.
 Then, in your [resolver](/docs/resolver-overview),
 you can use the `vendor_client`
-knowing that it has been correctly initialized.
+knowing it has been correctly initialized.
 
 ```py
 @online
@@ -58,6 +58,11 @@ def initialize():
 def initialize():
     ...
 ```
+
+### Initialization order
+
+The order in which setup hooks run is not guaranteed and may differ across instances of your service. Your setup hooks
+should not rely on being called in a specific order.
 
 ### Scopes
 
@@ -89,9 +94,9 @@ def initialize():
 ```
 
 If you really want to assign a variable in the outer scope, you can
-using Python's `global` keyword.
+use Python's `global` keyword.
 
-<TipGood>Use the global to modify outside of local scope (not recommended but correct)</TipGood>
+<TipGood>Use the global to modify outside of local scope (not recommended, but correct)</TipGood>
 
 ```py
 vendor_client: VendorClient
