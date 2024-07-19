@@ -89,3 +89,18 @@ curl -H "Authorization: Bearer <ACCESS_TOKEN>" https://api.chalk.ai/v1/who-am-i
 ```
 
 will return a 200 response and a JSON object containing a short description of the requesting user. This is convenient for verifying that you are using a valid `access_token`.
+
+## Role-based access control (RBAC)
+
+Use service credentials to limit your application's access to specific data sources and features.
+
+### Data sources
+
+For data sources, you can provide an allowlist of tags when creating the service credential. Your service credential
+will only be allowed to access data sources whose tags match your allowlist.
+
+### Features
+
+For features, Chalk expects a blocklist of tags. Features that match these tags will be excluded from computation. We
+make a distinction between features solely used to compute other features and features which are returned as query
+output. You can maintain separate blocklists for each of these types of features.
