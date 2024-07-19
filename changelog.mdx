@@ -5,6 +5,54 @@ description: Updates to Chalk!
 
 ---
 
+## July 19, 2024
+
+### Datasets and dataset revisions now support previews and summaries
+
+[Datasets](/api-docs#Dataset) and [DatasetRevisions](/api-docs#DatasetRevision) have two new methods:
+[preview](/api-docs#Dataset.preview) and [summary](/api-docs#Dataset.summary). `preview` shows the first few rows of the
+query output. `summary` shows summary statistics of the query output. Here's an example of `summary` output:
+
+```
+     describe  user.id  ...  __index__ shard_id batch_id
+0       count      1.0  ...        1.0        0        0
+1  null_count      0.0  ...        0.0        0        0
+2        mean      1.0  ...        0.0        0        0
+3         std      0.0  ...        0.0        0        0
+4         min      1.0  ...        0.0        0        0
+5         max      1.0  ...        0.0        0        0
+6      median      1.0  ...        0.0        0        0
+
+[7 rows x 14 columns]
+```
+
+### Create isolated node pools for your resource groups (in AWS)
+
+Chalk resource groups create separate independent deployments of the query server to prevent resource contention. For
+example, one team may want to make long-running analytics queries and another may want to make low-latency queries in
+line with customer requests. 
+
+We have updated the Cloud Resource Configuration page! You can now configure resource groups to use completely independent
+node pools to ensure your workflows run on separate computer hardware. The configuration page also allows you to specify
+exactly what kind of hardware will be available in each resource group so you can optimize the balance between cost and
+performance. 
+
+This feature is currently available for customers running Chalk in EKS, but will be available soon for customers using
+GKE.
+
+### Performance improvements
+
+* We've significantly improved SQL runtime in our query planner by executing eligible queries in C++ instead of
+  SQLAlchemy. Chat with our support team if you'd like to update your query planner options.
+* We improved the performance of some underscore expressions by executing `count()` operations as native dataframe
+  operations.
+
+### Miscellaneous improvements
+
+* Our feature catalog now lets you filter features by their context (online or offline). Additionally, you can now search
+  features by their name, description, and owner.
+* We fixed an issue where some underscore experessions had incorrect typechecking.
+
 ## July 10, 2024
 
 ### Feature catalog
@@ -41,11 +89,11 @@ functionality! See the code snippet below for some examples of how to use unders
 ```python
 @features
 class SampleFeatureSet:
-	id: int
-	feature_1: int
-	feature_2: int
-	feature_1_2_sum: int = _.feature_1 + _.feature_2
-	feature_1_2_diff: int = _.feature_1 - _.feature_2
+    id: int
+    feature_1: int
+    feature_2: int
+    feature_1_2_sum: int = _.feature_1 + _.feature_2
+    feature_1_2_diff: int = _.feature_1 - _.feature_2
     feature_1_2_equality: bool = _.feature_1 == _.feature_2
 ```
 
