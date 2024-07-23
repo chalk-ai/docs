@@ -17,7 +17,7 @@ By default, if you have a feature named `ts` with a type
 of `datetime.datetime`, it will be treated as a feature time.
 
 ```py
-from chalk.features import features, FeatureTime
+from chalk.features import features
 
 @features
 class User:
@@ -71,7 +71,7 @@ Building on the above example:
 def fn(...) -> Features[User.name, User.ts]:
     return User(
         name="Maryam Mirzakhani",
-        ts=datetime(2014, 8, 12)
+        ts=datetime(2014, 8, 12, tzinfo=timezone.utc)
     )
 ```
 
@@ -133,25 +133,36 @@ You can express time-dependency by declaring a dependency on a special feature c
 which gets converted into a `datetime` within resolvers:
 
 ```py
-@online
 from chalk.features import Now
 
+@online
 def get_age_in_years(birthday: User.birthday, now: Now) -> User.age_in_years:
     return (now - birthday).years
 ```
 
-In online query, (i.e. with `ChalkClient().query`), `Now` is `datetime.now()` if the `now` parameter is unused.
-In offline query contexts, `now` will be set to the appropriate `input_time` value for the calculation.
-This allows you to backfill a feature for a single entity at many different historical time points:
+In online queries, (i.e. with `ChalkClient().query`), `Now` is `datetime.now()`
+if the `now` parameter is unused.
+
+In offline query contexts, pass
+[input_times](/api-docs#ChalkClient.offline_query.input_times) as a list
+corresponding to the `now` times to use for each entry in `input`. This
+parameter allows you to backfill a feature for a single entity at many
+different historical time points:
 
 ```py
-ChalkClient().offline_query(input={User.id: [1,1,1]}, output=[User.age_in_years], input_times=[
-    datetime.now() - timedelta(days=365*10),
-    datetime.now() - timedelta(days=365),
-    datetime.now() - timedelta(days=0),
-])
+from datetime import timezone
 
-## output:
+ChalkClient().offline_query(
+    input={User.id: [1, 1, 1]},
+    input_times=[
+        datetime.now(tz=timezone.utc) - timedelta(days=365 * 10),
+        datetime.now(tz=timezone.utc) - timedelta(days=365),
+        datetime.now(tz=timezone.utc) - timedelta(days=0),
+    ],
+    output=[User.age_in_years],
+)
+
+## Output:
 
 # | id | age_in_years |
 # | 1  | <age> - 10   |
@@ -173,3 +184,9 @@ def batch_get_age_in_years(df: DataFrame[User.id, User.birthday, Now]) -> DataFr
     )
 ```
 
+## Timezone handling for naive datetimes
+Chalk stores UTC as the timezone for naive datetime objects. Additionally,
+Chalk assumes UTC if retrieving naive datetimes from data stores.
+
+We recommend that you include timezone information on all datetime objects you
+work with to avoid ambiguity.
