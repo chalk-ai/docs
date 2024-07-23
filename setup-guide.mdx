@@ -36,8 +36,10 @@ $ python3.10 -m venv .venv
 $ source .venv/bin/activate
 ```
 You can run `source .venv/bin/activate` to activate the virtual environment, and `deactivate` to deactivate.
+
 5. Login by typing [`chalk login`](/cli/login). If you're using a dedicated environment, make sure you use the
 [`--api-host`](/cli/chalk#api-host) flag. Type `y` when prompted and login in the browser.
+
 6. Run [`chalk init`](/cli/init) to initialize your project files. This will initialize a directory structure with an
 empty `src` directory and three files: `chalk.yaml`, `README.md`, and `requirements.txt`.
 ```
@@ -66,6 +68,7 @@ chalkpy[runtime]
 This contains your project dependencies.
 You can add a file `.chalkignore` which will act just like a `.gitignore` file, and exclude the specified files from
 deploys when you run `chalk apply` (more on this later).
+
 7. Within your virtual environment, install the project requirements.
 ```bash Terminal
 $ pip3 install -r requirements.txt

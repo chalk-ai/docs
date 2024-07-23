@@ -21,13 +21,15 @@ the typeclass `chalk.streams.Windowed`.
 
 ### Example
 
+Here is an example of a windowed feature:
+
 ```py
 from chalk.features import features
 from chalk.streams import Windowed, windowed
 
 @features
 class User:
-    num_failed_logins: Windowed[int] = windowed("**10m**", "**30m**", "**1d**", default=0)
+    num_failed_logins: Windowed[int] = windowed("**10m**", "**30m**", "**1d**")
     ...
 ```
 
@@ -46,18 +48,21 @@ User.num_failed_logins__10m__    User.num_failed_logins__1d__       User.num_fai
 User.num_failed_logins__600__    User.num_failed_logins__86400__    User.num_failed_logins__5400__
 ```
 
-Windowed features support much of the same functionality as a normal feature.
-Like features for mapping resolvers, windowed features are most often used alongside
-`max_staleness` and `etl_offline_to_online` to allow the features
-to be sent to online store and offline store after each window period.
-Windowed features are often set with default values for when there are no messages within a time period.
+Windowed features support much of the same functionality as a normal feature.  Like features for mapping resolvers,
+windowed features are most often used alongside [max_staleness](/api-docs#windowed.max_staleness) and
+[etl_offline_to_online](/api-docs#windowed.etl_offline_to_online) to allow the features to be sent to online store and
+offline store after each window period.  Windowed features often use [default](/api-docs#windowed.default) to set a
+default value to return when there are no messages within a time period.
 
 ```python
 @features
 class User:
-    # Description of the num_failed_logins event
-    # :owner: trust-and-safety
-    num_failed_logins: Windowed[int] = windowed("**10m**", max_staleness="10m")
+    num_failed_logins: Windowed[int] = windowed(
+        "10m",
+        max_staleness="10m",
+        default=0,
+        owner="trust-and-safety",
+    )
     ...
 ```
 
@@ -365,11 +370,11 @@ from chalk.client import ChalkClient
 
 client = ChalkClient(...)
 data = client.query(
-        input={
-            StreamFeature.id: "12345",
-        },
-        output=[StreamFeature.count["7d"]],
-    )
+    input={
+        StreamFeature.id: "12345",
+    },
+    output=[StreamFeature.count["7d"]],
+)
 ```
 
-This will output the number of messages with `id = "12345"` whose custom timestamp lies between seven days ago and now.
+This code will output the number of messages with `id = "12345"` whose custom timestamp lies between seven days ago and now.
