@@ -66,7 +66,7 @@ but can be slow if you request longer time windows or large volumes of data. Som
 features from pre-aggregated batch data. Pre-aggregated data mitigates the performance issue by reducing the number of
 data points needed, but prevents your application from accessing the newest data entering your system.
 
-Chalk balances accurancy and performance by combining both approaches. We aggregate historical data while continuously
+Chalk balances accuracy and performance by combining both approaches. We aggregate historical data while continuously
 updating as new data arrives. To have Chalk aggregate your data, pass
 [materialization](/api-docs#windowed.materialization) to your windowed feature and use `bucket_duration` to set the size
 of each aggregated time window:
