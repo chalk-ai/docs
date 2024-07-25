@@ -5,7 +5,7 @@ description: Introspect and override feature resolution timestamps.
 
 ---
 
-By default, features are timestamped with the execution time of their resolver. 
+By default, features are timestamped with the execution time of their resolver.
 However, you can override this behavior by providing timestamps from your data source
 This functionality can be helpful when
 working with an event store or timestamped API.
@@ -129,8 +129,9 @@ output: 6
 Chalk supports resolvers that are explicitly time-dependent. This is useful for performing backfills which
 compute values that depend on timestamps that are semantically similar to `datetime.now()`.
 
-You can express time-dependency by declaring a dependency on a special feature called `Now`,
-which gets converted into a `datetime` within resolvers:
+You can express time-dependency by passing in a special feature called `Now` to your Python resolvers, or
+`${now}` as an argument to your SQL file resolvers. This special feature gets converted into a `datetime`
+within resolvers:
 
 ```py
 from chalk.features import Now
@@ -182,6 +183,23 @@ def batch_get_age_in_years(df: DataFrame[User.id, User.birthday, Now]) -> DataFr
                 pl.col(str(User.birthday) - pl.col(str(Now))).alias(str(User.age_in_years))
             )
     )
+```
+
+If `Now` is being used in a resolver to compute a has-many join, then the `Now` feature must be passed in
+alongside a primary key feature as inputs.
+
+```sql
+-- source: sql_file_resolver_temp_db
+-- resolves: tv_episode
+select id,
+       name,
+       season_no,
+       episode_no,
+       show_name,
+       air_date
+from tv_episodes
+where air_date < ${now}
+  and id = ${tv_episode.id}
 ```
 
 ## Timezone handling for naive datetimes
