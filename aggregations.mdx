@@ -10,7 +10,7 @@ to track the largest purchase amount a cardholder has made in the past 30 days.
 
 ## Feature definition
 
-Here is an example of a [windowed](/api-docs/#windowed) feature representing the number of
+Here is an example of a [`windowed`](/api-docs/#windowed) feature representing the number of
 failed logins in the last 10 minutes, 30 minutes, and 1 day:
 
 ```py
@@ -27,11 +27,13 @@ class User:
     )
 ```
 
-Windowed features support much of the same functionality as a normal feature.  Like features for mapping resolvers,
-windowed features are most often used alongside [max_staleness](/api-docs#windowed.max_staleness) and
-[etl_offline_to_online](/api-docs#windowed.etl_offline_to_online) to allow the features to be sent to online store and
-offline store after each window period.  Windowed features often use [default](/api-docs#windowed.default) to set a
+Windowed features support much of the same functionality as a normal feature. Like features for mapping resolvers,
+windowed features are most often used alongside [`max_staleness`](/api-docs#windowed.max_staleness) and
+[`etl_offline_to_online`](/api-docs#windowed.etl_offline_to_online) to allow the features to be sent to online store and
+offline store after each window period.  Windowed features often use [`default`](/api-docs#windowed.default) to set a
 default value to return when there are no messages within a time period.
+
+### Referencing windowed features
 
 A windowed feature can be referenced in a query or a resolver in the following, equivalent ways. Each
 column below shows the possible syntax variants for a given time window.
@@ -44,8 +46,6 @@ User.num_failed_logins_10m       User.num_failed_logins_1d          User.num_fai
 User.num_failed_logins__10m__    User.num_failed_logins__1d__       User.num_failed_logins__1h30m__
 User.num_failed_logins__600__    User.num_failed_logins__86400__    User.num_failed_logins__5400__
 ```
-
-### Input to other resolvers
 
 Windowed features can be inputs to resolvers:
 
@@ -68,7 +68,7 @@ data points needed, but prevents your application from accessing the newest data
 
 Chalk balances accuracy and performance by combining both approaches. We aggregate historical data while continuously
 updating as new data arrives. To have Chalk aggregate your data, pass
-[materialization](/api-docs#windowed.materialization) to your windowed feature and use `bucket_duration` to set the size
+[`materialization`](/api-docs#windowed.materialization) to your windowed feature and use `bucket_duration` to set the size
 of each aggregated time window:
 
 ```python
@@ -84,21 +84,42 @@ class User:
     )
 ```
 
-Because this code shows a `bucket_duration` of 1 day, Chalk will aggregate transaction data into 1 day buckets. Chalk
-will then use these buckets to serve `total_transaction_amount` for the past 30 days and 90 days. As new data arrives,
-the relevant bucket is modified to include the data.
+Because this code shows a `bucket_duration` of 1 day, Chalk will aggregate transaction data into 1 day buckets of
+timeseries data. Chalk will then use this timeseries data to serve `total_transaction_amount` for the past 30 days and
+90 days. As new data arrives, the relevant timeseries buckets are modified to include the data. Over time, the oldest
+buckets are removed from your online store once they cannot be used by any time window.
 
-### How aggregation works
-When you pass `materialization` with `bucket_duration`, the Chalk online store uses the bucket duration to determine how
-to aggregate and store your data internally. Rather than computing your feature from raw data, Chalk will instead
-compute the feature using a fixed number of data points, which we call buckets. The number of buckets is determined by
-your longest time window divided by your bucket duration. For example, if your time window is 90 days and your bucket
-duration is 1 day, you would have 90 buckets. If your bucket duration is set to 1 minute, you would instead have 129,600
-buckets.
+The number of buckets is determined by your longest time window divided by your bucket duration. For example, if your
+time window is 90 days and your bucket duration is 1 day, you would have 90 buckets. If your bucket duration is set to 1
+minute, you would instead have 129,600 buckets.
 
-Chalk uses the buckets corresponding to the requested time window to serve windowed features. Over time, the oldest
-buckets are removed from consideration. Buckets are continually updated as new data arrives, ensuring the feature
-operates on fresh data.
+Buckets are aligned starting from the Unix epoch, ignoring leap seconds. To serve windowed feature queries, Chalk uses
+all buckets containing any overlap with the requested time window.
+
+### Managing aggregations
+
+Use [`chalk aggregate backfill`](/cli/aggregate_backfill) to backfill aggregation for a windowed feature. This command
+is useful if you change your feature's time windows or `bucket_duration` values.
+
+To view existing aggregations, use [`chalk aggregate list`](/cli/aggregate_list).
+
+Each of these commands outputs a table of your aggregations:
+
+```
+ Series  Namespace    Group                Agg     Bucket  Retention  Aggregation  Dependent Features
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 1       transaction  user_id merchant_id  amount  1d      30d        sum          user.txn_sum_by_merchant merchant.txn_sum_by_user
+ 1       transaction  user_id merchant_id  amount  1d      30d        count        user.txn_count_by_merchant
+ 2       transaction  user_id              amount  1d      30d        sum          user.txn_sum
+```
+
+Series shows the unique ID of the timeseries data underlying our aggregation system. Each
+[namespace](/docs/features#namespacing), group (see
+[`group_by_windowed`](/docs/aggregations#grouping-windowed-features)), and agg (value to aggregate) represents a unique
+timeseries. When possible, Chalk will use the same timeseries data to serve multiple features.
+
+Bucket shows the current bucket size. Retention shows the maximum time window of any feature that depends on the given
+timeseries. Dependent features list the features that are served by the given timeseries.
 
 ## Windowed streaming
 To learn more about using windowed features with streaming data sources, see our
