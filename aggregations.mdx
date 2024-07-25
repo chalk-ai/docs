@@ -58,6 +58,48 @@ def account_under_attack(
     return failed_logins_30m > 10 or failed_logins_1d > 100
 ```
 
+
+## Windowed aggregation for performance
+
+Windowed features are typically computed using either raw data or pre-aggregated data. Raw data has the most accuracy,
+but can be slow if you request longer time windows or large volumes of data. Some systems improve performance by serving
+features from pre-aggregated batch data. Pre-aggregated data mitigates the performance issue by reducing the number of
+data points needed, but prevents your application from accessing the newest data entering your system.
+
+Chalk balances accurancy and performance by combining both approaches. We aggregate historical data while continuously
+updating as new data arrives. To have Chalk aggregate your data, pass
+[materialization](/api-docs#windowed.materialization) to your windowed feature and use `bucket_duration` to set the size
+of each aggregated time window:
+
+```python
+@features
+class User:
+    id: int
+    transactions: DataFrame[transactions],
+    total_transaction_amount: Windowed[int] = windowed(
+        "10d",
+        "90d",
+        materialization={"bucket_duration": "1d"},
+	 expression=_.transactions[_.amount].sum(),
+    )
+```
+
+Because this code shows a `bucket_duration` of 1 day, Chalk will aggregate transaction data into 1 day buckets. Chalk
+will then use these buckets to serve `total_transaction_amount` for the past 30 days and 90 days. As new data arrives,
+the relevant bucket is modified to include the data.
+
+### How aggregation works
+When you pass `materialization` with `bucket_duration`, the Chalk online store uses the bucket duration to determine how
+to aggregate and store your data internally. Rather than computing your feature from raw data, Chalk will instead
+compute the feature using a fixed number of data points, which we call buckets. The number of buckets is determined by
+your longest time window divided by your bucket duration. For example, if your time window is 90 days and your bucket
+duration is 1 day, you would have 90 buckets. If your bucket duration is set to 1 minute, you would instead have 129,600
+buckets.
+
+Chalk uses the buckets corresponding to the requested time window to serve windowed features. Over time, the oldest
+buckets are removed from consideration. Buckets are continually updated as new data arrives, ensuring the feature
+operates on fresh data.
+
 ## Windowed streaming
 To learn more about using windowed features with streaming data sources, see our
 documentation on [windowed streaming](/docs/windowed-streaming).
