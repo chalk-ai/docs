@@ -99,22 +99,20 @@ jobs:
         with:
           client-id: ${{secrets.CHALK_CLIENT_ID}}
           client-secret: ${{secrets.CHALK_CLIENT_SECRET}}
-          # Creates a preview deployment (Optional, default false)
-          no-promote: true
+          # Deploys Chalk to a branch environment
+          branch: ${{ GITHUB_REF_NAME }}
           # Waits for the deployment to succeed (Optional, default false)
           await: true
 
-      - name: Create a preview deployment and test
+      - name: Runs a test query against the branch
         run: |
-          # --no-promote creates a preview deployment
-          export DEPLOYMENT_ID=$(chalk apply --force --await --json --no-promote | jq -r .deployment_id)
-          # Example of making a query directly
-          chalk query --deployment $DEPLOYMENT_ID \
+          # Example of making a query directly against a branch
+          chalk query --branch ${{ GITHUB_REF_NAME }} \
                       --in user.id=1 \
                       --out user.id \
                       --out user.email \
                       --json \
                       --include-meta
-          # Running the integration test suite, which can pick up the DEPLOYMENT_ID environment variable.
+          # Alternatively, run the integration test suite, which should make queries with the branch parameter.
           python -m unittest ./tests/integration_tests.py
 ```
