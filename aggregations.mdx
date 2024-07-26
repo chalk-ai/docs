@@ -136,8 +136,8 @@ Each of these commands outputs a table of your aggregations:
  2       transaction  user_id              amount  1d      30d        sum          user.txn_sum
 ```
 
-Series shows the unique ID of the timeseries data underlying our aggregation system. Each
-[namespace](/docs/features#namespacing), group, and agg (value to aggregate) represents a unique
+The series column shows the unique ID of the timeseries data underlying our aggregation system. Each unique combination
+of [namespace](/docs/features#namespacing), group, and agg (value to aggregate) columns represents a separate
 timeseries. When possible, Chalk will use the same timeseries data to serve multiple features.
 
 Bucket shows the current bucket size. Retention shows the maximum time window of any feature that depends on the given
