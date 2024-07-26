@@ -58,6 +58,29 @@ def account_under_attack(
     return failed_logins_30m > 10 or failed_logins_1d > 100
 ```
 
+### Grouping windowed features
+Similar to SQL `GROUP BY` clauses, you can group your windowed feature by one or more other features with
+[`group_by_windowed`](/api-docs#group_by_windowed).
+
+Here's an example where we track a cardholder's spend in the last 30 and 90 days, grouped by `mcc` (merchant category
+code):
+
+```python
+@features
+class User:
+    id: int
+    transactions: DataFrame[Transaction]
+    spend_by_category: DataFrame = group_by_windowed(
+        "30d",
+        "90d",
+        materialization={
+            "bucket_duration": "1d",
+        },
+        expression=_.transactions.group_by(_.mcc).agg(_.amount.sum()),
+    )
+```
+
+The grouped windowed feature's type must be [`DataFrame`](/api-docs#DataFrame). To reference a specific grouped value, 
 
 ## Windowed aggregation for performance
 
@@ -114,8 +137,7 @@ Each of these commands outputs a table of your aggregations:
 ```
 
 Series shows the unique ID of the timeseries data underlying our aggregation system. Each
-[namespace](/docs/features#namespacing), group (see
-[`group_by_windowed`](/docs/aggregations#grouping-windowed-features)), and agg (value to aggregate) represents a unique
+[namespace](/docs/features#namespacing), group, and agg (value to aggregate) represents a unique
 timeseries. When possible, Chalk will use the same timeseries data to serve multiple features.
 
 Bucket shows the current bucket size. Retention shows the maximum time window of any feature that depends on the given
