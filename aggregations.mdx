@@ -80,8 +80,6 @@ class User:
     )
 ```
 
-The grouped windowed feature's type must be [`DataFrame`](/api-docs#DataFrame). To reference a specific grouped value, 
-
 ## Windowed aggregation for performance
 
 Windowed features are typically computed using either raw data or pre-aggregated data. Raw data has the most accuracy,
@@ -137,8 +135,9 @@ Each of these commands outputs a table of your aggregations:
 ```
 
 The series column shows the unique ID of the timeseries data underlying our aggregation system. Each unique combination
-of [namespace](/docs/features#namespacing), group, and agg (value to aggregate) columns represents a separate
-timeseries. When possible, Chalk will use the same timeseries data to serve multiple features.
+of [namespace](/docs/features#namespacing), group (see
+[`group_by_windowed`](/docs/aggregations#grouping-windowed-features)), and agg (value to aggregate) columns represents a
+separate timeseries. When possible, Chalk will use the same timeseries data to serve multiple features.
 
 Bucket shows the current bucket size. Retention shows the maximum time window of any feature that depends on the given
 timeseries. Dependent features list the features that are served by the given timeseries.
