@@ -27,10 +27,10 @@ class User:
     )
 ```
 
-Windowed features support much of the same functionality as a normal feature. Like features for mapping resolvers,
-windowed features are most often used alongside [`max_staleness`](/api-docs#windowed.max_staleness) and
+Windowed features support much of the same functionality as normal features. They are most often used alongside
+[`max_staleness`](/api-docs#windowed.max_staleness) and
 [`etl_offline_to_online`](/api-docs#windowed.etl_offline_to_online) to allow the features to be sent to online store and
-offline store after each window period.  Windowed features often use [`default`](/api-docs#windowed.default) to set a
+offline store after each window period. Windowed features often use [`default`](/api-docs#windowed.default) to set a
 default value to return when there are no messages within a time period.
 
 ### Referencing windowed features
@@ -62,23 +62,65 @@ def account_under_attack(
 Similar to SQL `GROUP BY` clauses, you can group your windowed feature by one or more other features with
 [`group_by_windowed`](/api-docs#group_by_windowed).
 
-Here's an example where we track a cardholder's spend in the last 30 and 90 days, grouped by `mcc` (merchant category
-code):
+#### Example
+
+In this example, our goal is to create a feature representing a given user's historical spend at a specific merchant.
+This feature can be used as input into our model to determine whether a given transaction is fraudulent.
+
+First, we define a `Transaction` FeatureSet with a has-one relationship to the `User` FeatureSet. Within the `User`
+FeatureSet, we track a grouped windowed feature representing the user's total spend at each merchant over the past
+30 days and 90 days.
 
 ```python
+@features
+class Transaction:
+    id: int
+    merchant_id: str
+    user_id: "User.id"
+    amount: float
+
 @features
 class User:
     id: int
     transactions: DataFrame[Transaction]
-    spend_by_category: DataFrame = group_by_windowed(
+    spend_by_merchant: DataFrame = group_by_windowed(
         "30d",
         "90d",
         materialization={
             "bucket_duration": "1d",
         },
-        expression=_.transactions.group_by(_.mcc).agg(_.amount.sum()),
+        expression=_.transactions.group_by(_.merchant_id).agg(_.amount.sum()),
     )
 ```
+
+In this example, `expression` groups all of the given user's `transactions` by each transaction's `merchant_id` value,
+then aggregates each group by the sum of the transactions' `amount` values.
+
+The User FeatureSet uses [`materialization`](/docs/aggregations#windowed-aggregation-for-performance) to aggregate
+associated transaction data as a performance optimization.
+
+Finally, to query for spend at a specific merchant, we create a `HistoricalSpend` FeatureSet to combine the relevant
+features:
+
+```python
+@features
+class HistoricalSpend:
+    id: int
+    merchant_id: str
+    user_id: "User.id"
+    user: User
+    spend_at_merchant: Windowed[int] = windowed(
+        "30d",
+        "90d",
+        expression=_.user.spend_by_merchant.group(merchant_id=_.merchant_id),
+    )
+```
+
+#### Limitations
+At this time, Chalk does not support direct referencing of the grouped windowed feature, as they are intended as an
+intermediary computation for producing scalar features. As a result, they also cannot be used as input into other
+resolvers. The grouped windowed feature must be resolved by passing an [underscore expression](/docs/underscore) to
+the `expression` parameter.
 
 ## Windowed aggregation for performance
 
@@ -101,7 +143,7 @@ class User:
         "10d",
         "90d",
         materialization={"bucket_duration": "1d"},
-	 expression=_.transactions[_.amount].sum(),
+        expression=_.transactions[_.amount].sum(),
     )
 ```
 
