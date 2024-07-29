@@ -173,8 +173,24 @@ company_chalk/
 └── requirements.txt
 ```
 
-Your `.chalkignore` file should include your scripts, notebooks, and tests: anything that you are not actively using in your deployment should be put there so that
-non-deployment code does not clutter or interfere with your deployment.
+Your Chalk project must contain a project configuration file named `chalk.yaml` or `chalk.yml` in its root directory.
+The `chalk.yaml` file allows you to configure your project's [Docker environment](/docs/docker), Python runtime, and
+[feature validations](/docs/validation). Here's a sample chalk.yaml file:
+
+```
+project: Sandbox
+environments:
+    default:
+        runtime: python310
+        requirements: requirements.txt
+```
+
+By default, Chalk uses [`pip`](https://pypi.org/project/pip/) to install dependencies defined in `requirements.txt`. You
+can configure the requirements file name in `chalk.yaml` for each of your environments as described
+[here](/docs/docker#extra-pip-dependencies).
+
+`.chalkignore` file should include your scripts, notebooks, and tests: anything that you are not actively using in your
+deployment should be put there so that non-deployment code does not clutter or interfere with your deployment.
 
 ### Use the `@before_all` decorator to configure global variables for your resolvers
 
