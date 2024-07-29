@@ -67,8 +67,8 @@ Similar to SQL `GROUP BY` clauses, you can group your windowed feature by one or
 In this example, our goal is to create a feature representing a given user's historical spend at a specific merchant.
 This feature can be used as input into our model to determine whether a given transaction is fraudulent.
 
-First, we define a `Transaction` FeatureSet with a has-one relationships to the `User` FeatureSet. Within the `User`
-FeatureSet, we will track a grouped windowed feature representing the user's total spend at each merchant over the past
+First, we define a `Transaction` FeatureSet with a has-one relationship to the `User` FeatureSet. Within the `User`
+FeatureSet, we track a grouped windowed feature representing the user's total spend at each merchant over the past
 30 days and 90 days.
 
 ```python
@@ -96,8 +96,8 @@ class User:
 In this example, `expression` groups all of the given user's `transactions` by each transaction's `merchant_id` value,
 then aggregates each group by the sum of the transactions' `amount` values.
 
-The User FeatureSet uses [`materialization`](/docs/aggregations#windowed-aggregation-for-performance) to aggregate the
-transaction data as a performance optimization.
+The User FeatureSet uses [`materialization`](/docs/aggregations#windowed-aggregation-for-performance) to aggregate
+associated transaction data as a performance optimization.
 
 Finally, to query for spend at a specific merchant, we create a `HistoricalSpend` FeatureSet to combine the relevant
 features:
@@ -109,8 +109,11 @@ class HistoricalSpend:
     merchant_id: str
     user_id: "User.id"
     user: User
-    spend_at_merchant_30d: float = _.user.spend_by_merchant["30d", _.merchant_id == __.merchant_id] # syntax TBD
-    spend_at_merchant_90d: float = _.user.spend_by_merchant["90d", _.merchant_id == __.merchant_id]
+    spend_at_merchant: Windowed[int] = windowed(
+        "30d",
+        "90d",
+        expression=_.user.spend_by_merchant.group(merchant_id=_.merchant_id),
+    )
 ```
 
 #### Limitations
