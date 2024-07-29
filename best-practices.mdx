@@ -174,8 +174,16 @@ company_chalk/
 ```
 
 Your Chalk project must contain a project configuration file named `chalk.yaml` or `chalk.yml` in its root directory.
-You can generate this file by running [`chalk init`](/cli/init). The `chalk.yaml` file allows you to configure your
-project's [Docker environment](/docs/docker) as well as your [feature validations](/docs/validation).
+The `chalk.yaml` file allows you to configure your project's [Docker environment](/docs/docker), Python runtime, and
+[feature validations](/docs/validation). Here's a sample chalk.yaml file:
+
+```
+project: Sandbox
+environments:
+    default:
+        runtime: python310
+        requirements: requirements.txt
+```
 
 By default, Chalk uses [`pip`](https://pypi.org/project/pip/) to install dependencies defined in `requirements.txt`. You
 can configure the requirements file name in `chalk.yaml` for each of your environments as described
