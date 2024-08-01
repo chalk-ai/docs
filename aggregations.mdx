@@ -55,11 +55,77 @@ def account_under_attack(
     return failed_logins_30m > 10 or failed_logins_1d > 100
 ```
 
-### Grouping windowed features
+---
+
+## Materialized window aggregations
+
+Windowed features are typically computed using either raw data or pre-aggregated data. Raw data has the most accuracy,
+but can be slow if you request longer time windows or large volumes of data. Some systems improve performance by serving
+features from pre-aggregated batch data. Pre-aggregated data mitigates the performance issue by reducing the number of
+data points needed, but prevents your application from accessing the newest data entering your system.
+
+Chalk balances accuracy and performance by combining both approaches. We aggregate historical data while continuously
+updating as new data arrives. To have Chalk aggregate your data, pass
+[`materialization`](/api-docs#windowed.materialization) to your windowed feature and use `bucket_duration` to set the size
+of each aggregated time window:
+
+```python
+@features
+class User:
+    id: int
+    transactions: DataFrame[transactions]
+    total_transaction_amount: Windowed[int] = windowed(
+        "10d",
+        "90d",
+        materialization={"bucket_duration": "1d"},
+        expression=_.transactions[_.amount].sum(),
+    )
+```
+
+Because this code shows a `bucket_duration` of 1 day, Chalk will aggregate transaction data into 1 day buckets of
+timeseries data. Chalk will then use this timeseries data to serve `total_transaction_amount` for the past 30 days and
+90 days. As new data arrives, the relevant timeseries buckets are modified to include the data. Over time, the oldest
+buckets are removed from your online store once they cannot be used by any time window.
+
+The number of buckets is determined by your longest time window divided by your bucket duration. For example, if your
+time window is 90 days and your bucket duration is 1 day, you would have 90 buckets. If your bucket duration is set to 1
+minute, you would instead have 129,600 buckets.
+
+Buckets are aligned starting from the Unix epoch, ignoring leap seconds. To serve windowed feature queries, Chalk uses
+all buckets containing any overlap with the requested time window.
+
+### Managing aggregations
+
+Use [`chalk aggregate backfill`](/cli/aggregate_backfill) to backfill aggregation for a windowed feature. This command
+is useful if you change your feature's time windows or `bucket_duration` values.
+
+To view existing aggregations, use [`chalk aggregate list`](/cli/aggregate_list).
+
+Each of these commands outputs a table of your aggregations:
+
+```
+ Series  Namespace    Group                Agg     Bucket  Retention  Aggregation  Dependent Features
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 1       transaction  user_id merchant_id  amount  1d      30d        sum          user.txn_sum_by_merchant merchant.txn_sum_by_user
+ 1       transaction  user_id merchant_id  amount  1d      30d        count        user.txn_count_by_merchant
+ 2       transaction  user_id              amount  1d      30d        sum          user.txn_sum
+```
+
+The series column shows the unique ID of the timeseries data underlying our aggregation system. Each unique combination
+of [namespace](/docs/features#namespacing), group (see
+[`group_by_windowed`](/docs/aggregations#grouping-windowed-features)), and agg (value to aggregate) columns represents a
+separate timeseries. When possible, Chalk will use the same timeseries data to serve multiple features.
+
+Bucket shows the current bucket size. Retention shows the maximum time window of any feature that depends on the given
+timeseries. Dependent features list the features that are served by the given timeseries.
+
+---
+
+## Grouped materialized window aggregations
 Similar to SQL `GROUP BY` clauses, you can group your windowed feature by one or more other features with
 [`group_by_windowed`](/api-docs#group_by_windowed).
 
-#### Example
+### Example
 
 In this example, our goal is to create a feature representing a given user's historical spend at a specific merchant.
 This feature can be used as input into our model to determine whether a given transaction is fraudulent.
@@ -127,70 +193,6 @@ class User:
 [//]: # (intermediary computation for producing scalar features. As a result, they also cannot be used as input into other)
 [//]: # (resolvers. The grouped windowed feature must be resolved by passing an [underscore expression]&#40;/docs/underscore&#41; to)
 [//]: # (the `expression` parameter.)
-
----
-
-## Windowed aggregation for performance
-
-Windowed features are typically computed using either raw data or pre-aggregated data. Raw data has the most accuracy,
-but can be slow if you request longer time windows or large volumes of data. Some systems improve performance by serving
-features from pre-aggregated batch data. Pre-aggregated data mitigates the performance issue by reducing the number of
-data points needed, but prevents your application from accessing the newest data entering your system.
-
-Chalk balances accuracy and performance by combining both approaches. We aggregate historical data while continuously
-updating as new data arrives. To have Chalk aggregate your data, pass
-[`materialization`](/api-docs#windowed.materialization) to your windowed feature and use `bucket_duration` to set the size
-of each aggregated time window:
-
-```python
-@features
-class User:
-    id: int
-    transactions: DataFrame[transactions]
-    total_transaction_amount: Windowed[int] = windowed(
-        "10d",
-        "90d",
-        materialization={"bucket_duration": "1d"},
-        expression=_.transactions[_.amount].sum(),
-    )
-```
-
-Because this code shows a `bucket_duration` of 1 day, Chalk will aggregate transaction data into 1 day buckets of
-timeseries data. Chalk will then use this timeseries data to serve `total_transaction_amount` for the past 30 days and
-90 days. As new data arrives, the relevant timeseries buckets are modified to include the data. Over time, the oldest
-buckets are removed from your online store once they cannot be used by any time window.
-
-The number of buckets is determined by your longest time window divided by your bucket duration. For example, if your
-time window is 90 days and your bucket duration is 1 day, you would have 90 buckets. If your bucket duration is set to 1
-minute, you would instead have 129,600 buckets.
-
-Buckets are aligned starting from the Unix epoch, ignoring leap seconds. To serve windowed feature queries, Chalk uses
-all buckets containing any overlap with the requested time window.
-
-### Managing aggregations
-
-Use [`chalk aggregate backfill`](/cli/aggregate_backfill) to backfill aggregation for a windowed feature. This command
-is useful if you change your feature's time windows or `bucket_duration` values.
-
-To view existing aggregations, use [`chalk aggregate list`](/cli/aggregate_list).
-
-Each of these commands outputs a table of your aggregations:
-
-```
- Series  Namespace    Group                Agg     Bucket  Retention  Aggregation  Dependent Features
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- 1       transaction  user_id merchant_id  amount  1d      30d        sum          user.txn_sum_by_merchant merchant.txn_sum_by_user
- 1       transaction  user_id merchant_id  amount  1d      30d        count        user.txn_count_by_merchant
- 2       transaction  user_id              amount  1d      30d        sum          user.txn_sum
-```
-
-The series column shows the unique ID of the timeseries data underlying our aggregation system. Each unique combination
-of [namespace](/docs/features#namespacing), group (see
-[`group_by_windowed`](/docs/aggregations#grouping-windowed-features)), and agg (value to aggregate) columns represents a
-separate timeseries. When possible, Chalk will use the same timeseries data to serve multiple features.
-
-Bucket shows the current bucket size. Retention shows the maximum time window of any feature that depends on the given
-timeseries. Dependent features list the features that are served by the given timeseries.
 
 ---
 
