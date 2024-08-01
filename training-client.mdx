@@ -91,7 +91,7 @@ The "ts" column is always interpreted as the query execution time for the row. S
 consistency](/docs/temporal-consistency) for more details.
 
 ```python
-output = chalk_client.query(
+output = chalk_client.offline_query(
     spine_sql_query=f"""
         SELECT
             t.txn_time AS ts,
