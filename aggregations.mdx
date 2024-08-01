@@ -8,6 +8,8 @@ Windowed features are features defined over time ranges. For example, you can us
 features to count the number of login attempts made by a user over the past 10 minutes, or
 to track the largest purchase amount a cardholder has made in the past 30 days.
 
+---
+
 ## Feature definition
 
 Here is an example of a [`windowed`](/api-docs/#windowed) feature representing the number of
@@ -112,9 +114,8 @@ Each of these commands outputs a table of your aggregations:
 ```
 
 The series column shows the unique ID of the timeseries data underlying our aggregation system. Each unique combination
-of [namespace](/docs/features#namespacing), group (see
-[`group_by_windowed`](/docs/aggregations#grouping-windowed-features)), and agg (value to aggregate) columns represents a
-separate timeseries. When possible, Chalk will use the same timeseries data to serve multiple features.
+of [namespace](/docs/features#namespacing), group (see `group_by_windowed`), and agg (the feature to aggregate) columns
+represents a separate timeseries. When possible, Chalk will use the same timeseries data to serve multiple features.
 
 Bucket shows the current bucket size. Retention shows the maximum time window of any feature that depends on the given
 timeseries. Dependent features list the features that are served by the given timeseries.
@@ -122,6 +123,7 @@ timeseries. Dependent features list the features that are served by the given ti
 ---
 
 ## Grouped materialized window aggregations
+
 Similar to SQL `GROUP BY` clauses, you can group your windowed feature by one or more other features with
 [`group_by_windowed`](/api-docs#group_by_windowed).
 
@@ -158,10 +160,10 @@ class User:
     )
 ```
 
-In this example, `expression` groups all of the given user's `transactions` by each transaction's `merchant_id` value,
+In this example, `expression` groups all the given user's `transactions` by each transaction's `merchant_id` value,
 then aggregates each group by the sum of the transactions' `amount` values.
 
-The User FeatureSet uses [`materialization`](/docs/aggregations#windowed-aggregation-for-performance) to aggregate
+The `User` class uses materialization to aggregate
 associated transaction data as a performance optimization.
 
 Finally, to query for spend at a specific merchant, we can access one of the groups:
