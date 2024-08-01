@@ -18,12 +18,9 @@ failed logins in the last 10 minutes, 30 minutes, and 1 day:
 class User:
     id: int
     num_failed_logins: Windowed[int] = windowed(
-        "10m",
-        "30m",
-        "1d",
+        "10m", "30m", "1d",
         max_staleness="10m",
         default=0,
-        owner="trust-and-safety",
     )
 ```
 
@@ -72,11 +69,15 @@ FeatureSet, we track a grouped windowed feature representing the user's total sp
 30 days and 90 days.
 
 ```python
+from chalk.features import DataFrame, features, _
+from chalk.streams import group_by_windowed
+
 @features
 class Transaction:
     id: int
     merchant_id: str
     user_id: "User.id"
+    user: "User"
     amount: float
 
 @features
@@ -86,9 +87,7 @@ class User:
     spend_by_merchant: DataFrame = group_by_windowed(
         "30d",
         "90d",
-        materialization={
-            "bucket_duration": "1d",
-        },
+        materialization={"bucket_duration": "1d"},
         expression=_.transactions.group_by(_.merchant_id).agg(_.amount.sum()),
     )
 ```
@@ -99,28 +98,37 @@ then aggregates each group by the sum of the transactions' `amount` values.
 The User FeatureSet uses [`materialization`](/docs/aggregations#windowed-aggregation-for-performance) to aggregate
 associated transaction data as a performance optimization.
 
-Finally, to query for spend at a specific merchant, we create a `HistoricalSpend` FeatureSet to combine the relevant
-features:
+Finally, to query for spend at a specific merchant, we can access one of the groups:
 
-```python
+```diff-py
+from chalk.features import features, _, Windowed, DataFrame, windowed
+from chalk.streams import group_by_windowed
+
 @features
-class HistoricalSpend:
+class User:
     id: int
-    merchant_id: str
-    user_id: "User.id"
-    user: User
-    spend_at_merchant: Windowed[int] = windowed(
+    transactions: DataFrame[Transaction]
+    most_common_merchant_id: str
+    spend_by_merchant: DataFrame = group_by_windowed(
         "30d",
         "90d",
-        expression=_.user.spend_by_merchant.group(merchant_id=_.merchant_id),
+        materialization={"bucket_duration": "1d"},
+        expression=_.transactions.group_by(_.merchant_id).agg(_.amount.sum()),
     )
++   spend_at_most_common_merchant: Windowed[float] = windowed(
++       "30d",
++       "90d",
++       expression=_.spend_by_merchant.group(merchant_id=_.most_common_merchant_id)
++   )
 ```
 
-#### Limitations
-At this time, Chalk does not support direct referencing of the grouped windowed feature, as they are intended as an
-intermediary computation for producing scalar features. As a result, they also cannot be used as input into other
-resolvers. The grouped windowed feature must be resolved by passing an [underscore expression](/docs/underscore) to
-the `expression` parameter.
+[//]: # (#### Limitations)
+[//]: # (At this time, Chalk does not support direct referencing of the grouped windowed feature, as they are intended as an)
+[//]: # (intermediary computation for producing scalar features. As a result, they also cannot be used as input into other)
+[//]: # (resolvers. The grouped windowed feature must be resolved by passing an [underscore expression]&#40;/docs/underscore&#41; to)
+[//]: # (the `expression` parameter.)
+
+---
 
 ## Windowed aggregation for performance
 
@@ -138,7 +146,7 @@ of each aggregated time window:
 @features
 class User:
     id: int
-    transactions: DataFrame[transactions],
+    transactions: DataFrame[transactions]
     total_transaction_amount: Windowed[int] = windowed(
         "10d",
         "90d",
@@ -183,6 +191,8 @@ separate timeseries. When possible, Chalk will use the same timeseries data to s
 
 Bucket shows the current bucket size. Retention shows the maximum time window of any feature that depends on the given
 timeseries. Dependent features list the features that are served by the given timeseries.
+
+---
 
 ## Windowed streaming
 To learn more about using windowed features with streaming data sources, see our
