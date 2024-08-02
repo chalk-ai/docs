@@ -1,0 +1,49 @@
+---
+title: DynamoDB
+description: Integrate with DynamoDB.
+published: true
+---
+
+Chalk supports [DynamoDB](https://aws.amazon.com/dynamodb/) as a [SQL source](/docs/sql).
+
+## Adding DynamoDB
+Follow the [AWS instructions](/docs/aws) to give Chalk access to application credentials for your AWS account. Chalk
+will use these credentials to access DynamoDB.
+
+## Integration
+
+Add your DynamoDB data source in a Python file and give it a `name`. In this file, we'll also define a `User` feature
+class with a `transaction_volume` feature which will be resolved with DynamoDB.
+
+```python
+from chalk.features import features
+from chalk.sql import DynamoDBSource
+
+DynamoDBSource(name="my_dynamo")
+
+@features
+class User:
+    id: str
+    transaction_volume: float
+```
+
+Now, you are all set to use DynamoDB with [SQL file resolvers](/docs/sql#sql-file-resolvers):
+
+```sql
+-- type: online
+-- resolves: user
+-- source: my_dynamo
+SELECT
+    id,
+    TransactionVolume AS transaction_volume
+FROM
+    UserTable
+```
+
+This file resolves the `User.transaction_volume` feature. Please note that the `--source: my_dynamo` line is necessary
+and should match the `name` provided to your `DynamoDBSource`.
+
+Chalk uses [PartiQL](https://partiql.org/) to execute SQL queries on your DynamoDB connection. Chalk extends PartiQL to
+support alias syntax so that you can rename your result columns to match your feature names. The above example
+demonstrates aliasing with `TransactionVolume AS transaction_volume`.
+
