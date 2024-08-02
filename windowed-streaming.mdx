@@ -120,30 +120,6 @@ when `max_staleness` and `etl_offline_to_online` are set.
 Unlike mapping resolvers, tumbling windowed resolvers
 only run once per resolver and time window, rather than with every message.
 
-#### Window bucket duration
-When using tumbling windows, you can configure the size of the time intervals with the
-[materialization](/api-docs#windowed.materialization) parameter. Consider the following code:
-
-```python
-@features
-class User:
-    id: int
-    transactions: DataFrame[Transaction]
-    total_transaction_amount: Windowed[int] = windowed(
-        "30d",
-        "90d",
-        materialization={"bucket_duration": "5d"},
-        expression=_.transactions[_.amount].sum(),
-    )
-```
-
-This code creates windowed features representing the total amount of money the user has spent in the last 30 days and 90
-days.
-
-, the bucket duration is set to 5 days. Chalk will aggregate
-
-In contrast, if the `materialization` parameter is not passed in, BLAH BLAH happens.
-
 ### Continuous windowing
 
 As opposed to tumbling windows, continuous windows are overlapping and exact.
