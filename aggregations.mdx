@@ -39,8 +39,15 @@ using the `_.chalk_window` operator:
 
 ```python
 @features
+class Transaction:
+    id: int
+    user_id: "User.id"
+    amount: float
+
+@features
 class User:
     id: int
+    transactions: DataFrame[Transaction]
     total_spend: Windowed[float] = windowed(
         "30d", "60d", "90d",
         default=0,
