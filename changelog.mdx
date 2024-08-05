@@ -5,6 +5,38 @@ description: Updates to Chalk!
 
 ---
 
+
+## August 5, 2024
+
+* We now support [DynamoDB](/docs/dynamodb) as a data source! After connecting your AWS credentials, Chalk 
+  automatically supports connecting to your DynamoDB instance. Your queries will be run with
+  [PartiQL](https://partiql.org/). Query away!
+* The [`@online`](/api-docs#online.static) and [`@offline`](/api-docs#offline.static) resolver decorators have a new
+  `static` boolean parameter. Use this parameter to flag whether the resolver is eligible for static planning.
+* Underscore expressions now support the `_.chalk_window` operator for [`windowed` resolvers](/docs/aggregations). Use
+  `_.chalk_window` to filter data based on the current context's time window:
+```python
+@features
+class Transaction:
+    id: int
+    user_id: "User.id"
+    amount: float
+
+@features
+class User:
+    id: int
+    transactions: DataFrame[Transaction]
+    total_spend: Windowed[float] = windowed(
+        "30d", "60d", "90d",
+        default=0,
+        expression=_.transactions[_.amount, _.ts > _.chalk_window].sum(),
+        materialization={"bucket_duration": "1d"},
+    )
+```
+* [`offline_query`](/api-docs#ChalkClient.offline_query.resources) now supports the `resources` parameter. `resources`
+  allows you to override the default resource requests associated with offline queries and cron jobs so that you can
+  control CPU, memory, ephemeral volume size, and ephemeral storage.
+
 ## July 26, 2024
 
 ### Dashboard improvements
