@@ -5,6 +5,38 @@ description: Updates to Chalk!
 
 ---
 
+
+## August 5, 2024
+
+* We now support [DynamoDB](/docs/dynamodb) as a native accelerated data source! After connecting your AWS credentials,
+  Chalk automatically has access to your DynamoDB instance, which you can query with [PartiQL](https://partiql.org/).
+* [Underscore expressions](/docs/underscore) on [windowed](/docs/aggregations) features can now include the special
+  expression `_.chalk_window` to reference the target window duration. Use `_.chalk_window` in [windowed aggregation
+  expressions](/docs/aggregations#querying-by-windowed-time-range) to define aggregations across multiple window sizes
+  at once:
+
+```python
+@features
+class Transaction:
+    id: int
+    user_id: "User.id"
+    amount: float
+
+@features
+class User:
+    id: int
+    transactions: DataFrame[Transaction]
+    total_spend: Windowed[float] = windowed(
+        "30d", "60d", "90d",
+        default=0,
+        expression=_.transactions[_.amount, _.ts > _.chalk_window].sum(),
+        materialization={"bucket_duration": "1d"},
+    )
+```
+* [`offline_query`](/api-docs#ChalkClient.offline_query.resources) now supports the `resources` parameter. `resources`
+  allows you to override the default resource requests associated with offline queries and cron jobs so that you can
+  control CPU, memory, ephemeral volume size, and ephemeral storage.
+
 ## July 26, 2024
 
 ### Dashboard improvements
