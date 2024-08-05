@@ -8,11 +8,8 @@ description: Updates to Chalk!
 
 ## August 5, 2024
 
-* We now support [DynamoDB](/docs/dynamodb) as a data source! After connecting your AWS credentials, Chalk 
-  automatically supports connecting to your DynamoDB instance. Your queries will be run with
-  [PartiQL](https://partiql.org/). Query away!
-* The [`@online`](/api-docs#online.static) and [`@offline`](/api-docs#offline.static) resolver decorators have a new
-  `static` boolean parameter. Use this parameter to flag whether the resolver is eligible for static planning.
+* We now support [DynamoDB](/docs/dynamodb) as a native accelerated data source! After connecting your AWS credentials,
+  Chalk automatically has access to your DynamoDB instance, which you can query with [PartiQL](https://partiql.org/).
 * Underscore expressions now support the `_.chalk_window` operator for [`windowed` resolvers](/docs/aggregations). Use
   `_.chalk_window` to filter data based on the current context's time window:
 ```python
