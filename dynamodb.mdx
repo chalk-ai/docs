@@ -47,3 +47,7 @@ Chalk uses [PartiQL](https://partiql.org/) to execute SQL queries on your Dynamo
 support alias syntax so that you can rename your result columns to match your feature names. The above example
 demonstrates aliasing with `TransactionVolume AS transaction_volume`.
 
+You can use [batch execution with
+PartiQL](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.multiplestatements.batching.html)
+to retrieve multiple records in a single request via [`ChalkClient.query_bulk`](/api-docs#ChalkClient.query_bulk). Batch
+execution is only supported for single table queries.
