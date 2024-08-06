@@ -22,22 +22,14 @@ incrementally.
 
 ## Basic queries
 
-There are multiple ways to construct resolvers using SQL.
-It's up to you to decide which best fits your workflow.
+There are several ways to construct resolvers using SQL: SQL file resolvers, SQLAlchemy, or SQL strings in Python.
 
-Here, instead of creating a session and engine,
-you use a `PostgreSQLSource`
-(or any of the SQL-supporting sources in the docs)
-as the base of your queries:
-Suppose we have a PostgreSQL source `PG` defined as follows.
+The examples on this page use our [PostgresQL data source](/docs/postgresql), but can be generalized to any of our other
+SQL data sources. The full list Chalk supports can be found [in our API reference](/api-docs#BaseSQLSourceProtocol).
 
-```py
-pg = PostgreSQLSource(name='PG')
-```
-
-### SQL File Resolvers
+### SQL file resolvers
 This is the preferred method of specifying a resolver.
-Only a single `.chalk.sql` SQL file is needed: no Python required!
+Only a single `.chalk.sql` SQL file is needed. No Python required!
 
 ```sql get_user.chalk.sql
 -- type: online
@@ -60,8 +52,145 @@ It's also possible to use `SELECT *` in a SQL file resolver, but be careful!
 select * from user_table
 ```
 
-Implicitly, this tries to align every scalar feature from the `User` feature set to a column name in
+Implicitly, this query tries to align every scalar feature from the `User` feature set to a column name in
 `user_table`. If a feature name is misnamed or absent from the table, you'll get a "missing columns" error.
+
+#### Parameterized feature inputs
+
+Like other resolvers, SQL file resolvers can take features as input. In this example, we want our resolver to require
+`EmailUser.id` as input:
+
+```sql
+-- type: online
+-- resolves: user
+-- source: PG
+select id, email, full_name from user_table where id = ${email_user.id}
+```
+
+Use `${}` with snake case to reference the desired feature.
+
+### SQLAlchemy
+
+Chalk has explicit support for SQLAlchemy:
+
+```py
+pg = PostgreSQLSource(name='PG')
+
+@online
+def get_user(uid: User.id) -> Features[User.email, User.full_name]:
+    return (
+        pg.query(User(email=UserSQL.email, full_name=UserSQL.name))
+        .filter_by(id=uid)
+        .first()
+    )
+```
+
+In the `.query(...)` call, you map the target columns of the
+SQL statement to the feature namespace.
+Here, we assign `User.email` to `UserSQL.email` and
+`User.full_name` to `UserSQL.name`.
+
+### SQL strings
+
+You can run SQL queries either as Python strings or from `.sql` files.
+
+When the name of the column matches the name of the feature
+with non-alphanumeric characters removed, the mapping from
+column to feature is automatic.
+
+```py
+pg = PostgreSQLSource(name='PG')
+
+@online
+def get_user(uid: User.id) -> Features[User.full_name, User.email]:
+    return (
+        pg.query_string("select full_name, email from users where id=1")
+        .first()
+    )
+```
+
+`get_user`'s return type indicates that it expects features named `full_name` and `email`, which are returned as
+columns from the SQL query.
+
+If the column names don't align exactly, you can
+include the parameter `fields` to specify the mapping from
+the query to the fields.
+
+```py
+pg = PostgreSQLSource(name='PG')
+
+@online
+def get_user(uid: User.id) -> Features[User.full_name, User.email]:
+    return (
+        pg.query_string(
+            "select name, email from users where id=1",
+            fields=dict(name=User.full_name),
+        )
+        .first()
+    )
+```
+
+Here, the `email` column of the query automatically aligns with the
+expected `User.email` feature, but the `name` column of the query
+is explicitly mapped to the `User.full_name` feature.
+
+#### Parameterizing string queries
+
+You can parameterize queries to pass variables.
+Parameterize names with a colon,
+and pass a dictionary from parameter name to parameter value:
+
+```py
+pg.query_string(
+    query="select * from users where user_id=**:user_id**",
+    args=dict(user_id="**uid123**"),
+)
+```
+
+Use a backslash to escape any literal `:` characters you need to use in your query:
+
+```py
+pg.query_string(
+    query="select * from users where user_id=**:user_id** and name=**'\:colon'**",
+    args=dict(user_id="uid123"),
+)
+```
+
+
+#### SQL string files
+
+Instead of passing a string directly into your Python code, you can load the SQL content from a file.
+you can use the `query_sql_file` function.
+
+For example, here is a `query.sql` file containing the same query from above:
+
+```sql query.sql
+select * from users where user_id=:user_id
+```
+
+You can reference this file in a Python resolver, either
+using the absolute path from the root of your project _or_
+relative to the resolver's file.
+
+For example, if the snippet below lived in the same directory
+as `query.sql`, we could refer to it as follows:
+
+```py
+pg = PostgreSQLSource(name='PG')
+
+@online
+def get_user(uid: User.id) -> Features[User.full_name, User.email]:
+    return (
+        pg.query_sql_file(
+            path="query.sql",
+            args=dict(user_id=uid)
+        )
+        .first()
+    )
+```
+
+Auto-mapping of column name to feature name also applies for
+the `query_sql_file` method. Parameterization also works the same way.
 
 ## Configuration
 
@@ -203,130 +332,6 @@ For SQLFluff, set the templater to `placeholder` and add the following to your c
 param_regex =\$\{[^}]*\}
 1 = 'arbitrary_placeholder_name'
 ```
-
-
-
-### Reading from SQL Sources (SQLAlchemy)
-
-Chalk has explicit support for SQLAlchemy,
-letting you write queries in a familiar fashion.
-
-```py
-pg = PostgreSQLSource(name='PG')
-
-@online
-def get_user(uid: User.id) -> Features[User.email, User.full_name]:
-    return (
-        pg.query(User(email=UserSQL.email, full_name=UserSQL.name))
-        .filter_by(id=uid)
-        .first()
-    )
-```
-
-In the `.query(...)` call, you map the target columns of the
-SQL statement to the feature namespace.
-Here, we assign `User.email` to `UserSQL.email` and
-`User.full_name` to `UserSQL.name`.
-
-### Reading from SQL Sources (SQL strings)
-
-You can also write SQL queries as strings in Python.
-When the name of the column matches the name of the feature
-with non-alphanumeric characters removed, the mapping from
-column to feature is automatic.
-
-```py
-pg = PostgreSQLSource(name='PG')
-
-@online
-def get_user(uid: User.id) -> Features[User.full_name, User.email]:
-    return (
-        pg.query_string("select full_name, email from users where id=1")
-        .first()
-    )
-```
-
-Here, the resolver expects features named `full_name` and `email`,
-both of which are columns in the response for the SQL query.
-
-If the column names don't align exactly, you can
-include the parameter `fields` to specify the mapping from
-the query to the fields.
-
-```py
-pg = PostgreSQLSource(name='PG')
-
-@online
-def get_user(uid: User.id) -> Features[User.full_name, User.email]:
-    return (
-        pg.query_string(
-            "select name, email from users where id=1",
-            fields=dict(name=User.full_name),
-        )
-        .first()
-    )
-```
-
-Here, the `email` column of the query automatically aligns with the
-expected `User.email` feature, but the `name` column of the query
-is explicitly mapped to the `User.full_name` feature.
-
-#### Parameterizing string queries
-
-You can also use parameterized queries with Chalk.
-Parameterize names with a colon,
-and pass a dictionary from parameter name to parameter value:
-
-```py
-pg.query_string(
-    query="select * from users where user_id=**:user_id**",
-    args=dict(user_id="**uid123**"),
-)
-```
-
-Use a backslash to escape any literal `:` characters you need to use in your query:
-
-```py
-pg.query_string(
-    query="select * from users where user_id=**:user_id** and name=**'\:colon'**",
-    args=dict(user_id="uid123"),
-)
-```
-
-### Python resolvers with SQL Sources (.sql files)
-
-Finally, if you want to join your sql files with Python resolvers,
-you can use the `query_sql_file` function.
-
-For example, if you have a sql query defined in `query.sql`:
-
-```sql query.sql
-select * from users where user_id=:user_id
-```
-
-You can reference this file in a Python resolver, either
-using the absolute path from the root of your project _or_
-relative to the resolver's file.
-
-For example, if the snippet below lived in the same directory
-as `query.sql`, we could refer to it as follows:
-
-```py
-pg = PostgreSQLSource(name='PG')
-
-@online
-def get_user(uid: User.id) -> Features[User.full_name, User.email]:
-    return (
-        pg.query_sql_file(
-            path="query.sql",
-            args=dict(user_id=uid)
-        )
-        .first()
-    )
-```
-
-Auto-mapping of column name to feature name also applies for
-the `query_sql_file` method.
 
 ## Incremental queries
 
