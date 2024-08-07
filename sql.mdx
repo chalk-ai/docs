@@ -13,16 +13,12 @@ import {RequestUrl} from '@/components/RequestUrl'
 
 ---
 
-Chalk can ingest your data using a SQL interface
-from any of the integrations that support it.
-You can describe your queries using SQL strings
-or [SQLAlchemy](https://www.sqlalchemy.org/).
-Offline, event tables can be ingested
-incrementally.
+Chalk can ingest data using a SQL interface from any of integrations that support it. We also support incremental
+offline ingestion of event tables.
 
 ## Basic queries
 
-There are several ways to construct resolvers using SQL: SQL file resolvers, SQLAlchemy, or SQL strings in Python.
+Chalk supports running SQL from files or from strings.
 
 The examples on this page use our [PostgresQL data source](/docs/postgresql), but can be generalized to any of our other
 SQL data sources. The full list Chalk supports can be found [in our API reference](/api-docs#BaseSQLSourceProtocol).
@@ -69,26 +65,6 @@ select id, email, full_name from user_table where id = ${email_user.id}
 
 Use `${}` with snake case to reference the desired feature.
 
-### SQLAlchemy
-
-Chalk has explicit support for SQLAlchemy:
-
-```py
-pg = PostgreSQLSource(name='PG')
-
-@online
-def get_user(uid: User.id) -> Features[User.email, User.full_name]:
-    return (
-        pg.query(User(email=UserSQL.email, full_name=UserSQL.name))
-        .filter_by(id=uid)
-        .first()
-    )
-```
-
-In the `.query(...)` call, you map the target columns of the
-SQL statement to the feature namespace.
-Here, we assign `User.email` to `UserSQL.email` and
-`User.full_name` to `UserSQL.name`.
 
 ### SQL strings
 
@@ -600,3 +576,25 @@ c.query(input={User.id: 1}, output=[User.name], tags=['analytics'])
 # This query uses the default datasource
 c.query(input={User.id: 1}, output=[User.name])
 ```
+
+## Additional query options
+
+### SQLAlchemy
+Chalk supports SQLAlchemy:
+
+```py
+pg = PostgreSQLSource(name='PG')
+
+@online
+def get_user(uid: User.id) -> Features[User.email, User.full_name]:
+    return (
+        pg.query(User(email=UserSQL.email, full_name=UserSQL.name))
+        .filter_by(id=uid)
+        .first()
+    )
+```
+
+In the `.query(...)` call, you map the target columns of the
+SQL statement to the feature namespace.
+Here, we assign `User.email` to `UserSQL.email` and
+`User.full_name` to `UserSQL.name`.
