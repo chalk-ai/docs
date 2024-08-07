@@ -210,12 +210,12 @@ The following are supported keys to be included in `.chalk.sql` file comments.
         </SubAttribute>
     </SubAttributeTable>
 </Attribute>
-<Attribute field='count' kind='"1" | null'>
+<Attribute field='count' kind='Literal[1, "one", "one_or_none"]'>
     Returns one. Equivalent to the common query finalizer <code className="dark:text-white">.one()</code>.
 </Attribute>
 <Attribute field='timeout' kind='Duration | null'>
     The maximum time to wait before timing out the query.
-    See [Duration](/api-docs#Duration) for more details.
+    See <a href="/docs/duration">Duration</a> for more details.
 </Attribute>
 <Attribute field='tags' kind='list[str] | null'>
     The user tags associated with this resolver. For online and offline resolvers.
