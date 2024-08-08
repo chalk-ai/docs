@@ -51,6 +51,9 @@ select * from user_table
 Implicitly, this query tries to align every scalar feature from the `User` feature set to a column name in
 `user_table`. If a feature name is misnamed or absent from the table, you'll get a "missing columns" error.
 
+To programmatically generate SQL file resolvers, check out [Generated SQL file
+resolvers](/docs/sql#generated-sql-file-resolvers).
+
 #### Parameterized feature inputs
 
 Like other resolvers, SQL file resolvers can take features as input. In this example, we want our resolver to require
@@ -64,7 +67,6 @@ select id, email, full_name from user_table where id = ${email_user.id}
 ```
 
 Use `${}` with snake case to reference the desired feature.
-
 
 ### SQL strings
 
@@ -179,11 +181,9 @@ The following are supported keys to be included in `.chalk.sql` file comments.
     and <code className="dark:text-white">user.full_name</code> are the outputs.
 </Attribute>
 <Attribute field='source' kind='str'>
-    Describes the database by name, as in the above example, or
+    Describes the database by <code className="dark:text-white">name</code>, as in the above example, or
     the type if there is only one database of that type. Thus, if you have
     one PostgreSQL source, you can also write <code className="dark:text-white">source: postgresql</code>.
-    Supported sources are <code className="dark:text-white">['snowflake', 'postgres', 'postgresql', 'mysql',
-    'bigquery', 'cloudsql', 'redshift', 'sqlite', 'kafka']</code>.
 </Attribute>
 <Attribute field='type' kind='"online" | "offline" | "streaming" | null'>
     The type of resolver. If not specified, <code className="dark:text-white">online</code> is the default.
@@ -307,6 +307,55 @@ For SQLFluff, set the templater to `placeholder` and add the following to your c
 [sqlfluff:templater:placeholder]
 param_regex =\$\{[^}]*\}
 1 = 'arbitrary_placeholder_name'
+```
+
+### Generated SQL file resolvers
+You can programmatically generate SQL resolvers with [`make_sql_file_resolver`](/api-docs#make_sql_file_resolver). This
+function is useful if you have many SQL tables and want to automate management of their resolvers.
+
+```python
+from chalk.sql import make_sql_file_resolver, PostgreSQLSource
+
+pg = PostgreSQLSource(name='PG')
+
+definitions = [
+    {
+        resolver_name: "get_user_features",
+        entity_name: "User",
+        table: "user_table",
+        pkey_column: "id",
+        features: ["feature1", "feature2"],
+    },
+    ...
+]
+
+for definition in definitions:
+    targets = ", ".join(definition.features)
+
+    make_sql_file_resolver(
+        name=definition.resolver_name,
+        sql=f"select {definition.pkey_column}, {targets} from {definition.table}",
+        source=pg, # "PG" is also acceptable
+        resolves=definition.entity_name,
+    )
+```
+
+`make_sql_file_resolver` adds this resolver to your registry as if it were a [SQL file
+resolver](/docs/sql#sql-file-resolvers), but without creating the `.chalk.sql` file.
+
+All SQL file resolvers require `source` and `resolves`. These values can be provided as SQL comments within your `sql`
+value or as parameters. If comments and parameters are both provided, parameters will take precedence. This function
+call is equivalent to the previous example:
+
+```python
+make_sql_file_resolver(
+    name=definition.resolver_name,
+    sql=f"""
+        -- source: PG
+        -- resolves: {definition.entity_name}
+        select {definition.pkey_column}, {targets} from {definition.table}
+    """,
+)
 ```
 
 ## Incremental queries
