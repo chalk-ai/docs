@@ -314,7 +314,8 @@ You can programmatically generate SQL resolvers with [`make_sql_file_resolver`](
 function is useful if you have many SQL tables and want to automate management of their resolvers.
 
 ```python
-from chalk.sql import make_sql_file_resolver, PostgreSQLSource
+from chalk import make_sql_file_resolver
+from chalk.sql import PostgreSQLSource
 
 pg = PostgreSQLSource(name='PG')
 
