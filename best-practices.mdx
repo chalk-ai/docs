@@ -140,8 +140,64 @@ The Chalk CLI should be used to run simple online queries. For more complex use 
 
 ### Create named queries for your commonly executed queries
 
-Naming queries makes it easier to evaluate and track the performance of specific queries over time. This can be done using the `query_name`
-parameter in the query functions of your client of choice.
+With Chalk, you can alias your complex queries using a `NamedQuery`. Named queries help simplify and document your
+query patterns.
+
+To define a named query, add a `NamedQuery` object to your Chalk deployment:
+
+```python
+from chalk import NamedQuery
+from src.feature_sets import Book, Author
+
+NamedQuery(
+    name="book_key_information",
+    output=[
+        Book.id,
+        Book.title,
+        Book.author.name,
+        Book.year,
+        Book.short_description
+    ],
+    tags=["team:analytics"],
+    staleness={
+        Book.short_description: "0s"
+    },
+    owner="mary.shelley@aol.com",
+    description="Return a condensed view of a book, including its title, author, year, and short description."
+)
+```
+
+Running `chalk apply` makes the query name available as an alias for executing your more complex queries.
+
+For instance, running:
+```sh
+chalk query --in book.id=1 --query-name book_key_information
+```
+will be equivalent to running the more complicated:
+```sh
+chalk query --in book.id=1 --out book.id --out book.title --out book.author --out book.year --out book.author.name --out book.short_description --staleness book.short_description=0s --tags team:analytics
+```
+
+This feature is also accessible in all of our API clients through the `query_name` parameter.
+For instance, in python, you can run:
+
+```python
+from chalk.client import ChalkClient
+client = ChalkClient()
+
+client.query(
+    in={"book.id": 1},
+    query_name="book_key_information",
+)
+```
+
+To see all the named queries you've defined in your current active deployment, you can run:
+```sh
+chalk named-query list
+```
+
+If you want to create multiple versions of a similar queries, you can use the version parameter of the NamedQuery object
+and the `query_name_version` parameter of our various clients.
 
 ---
 
