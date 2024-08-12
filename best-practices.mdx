@@ -140,7 +140,7 @@ The Chalk CLI should be used to run simple online queries. For more complex use 
 
 ### Create named queries for your commonly executed queries
 
-With Chalk, you can alias your complex queries using a `NamedQuery`. Named queries help simplify and document your
+With Chalk, you can alias your complex queries using a [NamedQuery](/api-docs#NamedQuery). Named queries help simplify and document your
 query patterns.
 
 To define a named query, add a `NamedQuery` object to your Chalk deployment:
@@ -183,6 +183,7 @@ For instance, in python, you can run:
 
 ```python
 from chalk.client import ChalkClient
+
 client = ChalkClient()
 
 client.query(
