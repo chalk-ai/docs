@@ -198,7 +198,7 @@ from chalk.client import ChalkClient
 client = ChalkClient()
 
 client.query(
-    in={"book.id": 1},
+    input={"book.id": 1},
     query_name="book_key_information",
 )
 ```
@@ -209,7 +209,7 @@ chalk named-query list
 ```
 
 If you want to create multiple versions of a similar queries, you can use the version parameter of the NamedQuery object
-and the `query_name_version` parameter of our various clients.
+and the [query_name_version](/api-docs#ChalkClient.query.query_name_version) parameter of our various clients.
 
 ---
 
