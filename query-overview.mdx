@@ -95,5 +95,3 @@ your online queries.
 | Designed to return data in milliseconds | Blocks until computation is complete, not designed for millisecond-level computation |
 | Queries the online store and calls `@online` resolvers for quick retrieval | Queries the offline store which stores all data from online queries, unless `recompute_features=True`, in which case `@offline` and `@online` resolvers are used to resolve the outputs |
 | Writes output data to online store database and offline store database | Writes output to a parquet file containing results to cloud storage. Only writes to online store or offline store if specified. |
-| Can query multiple namespaces per query | Can only query one namespace per query |
-
