@@ -178,7 +178,15 @@ chalk query --in book.id=1 --query-name book_key_information
 ```
 will be equivalent to running the more complicated:
 ```sh
-chalk query --in book.id=1 --out book.id --out book.title --out book.author --out book.year --out book.author.name --out book.short_description --staleness book.short_description=0s --tags team:analytics
+chalk query --in book.id=1 \
+  --out book.id \
+  --out book.title \
+  --out book.author \
+  --out book.year \
+  --out book.author.name \
+  --out book.short_description \
+  --staleness book.short_description=0s \
+  --tags team:analytics
 ```
 
 This feature is also accessible in all of our API clients through the `query_name` parameter.
