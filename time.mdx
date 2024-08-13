@@ -134,7 +134,7 @@ You can express time-dependency by passing in a special feature called `Now` to 
 within resolvers:
 
 ```py
-from chalk.features import Now
+from chalk import Now
 
 @online
 def get_age_in_years(birthday: User.birthday, now: Now) -> User.age_in_years:
