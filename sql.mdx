@@ -68,6 +68,9 @@ select id, email, full_name from user_table where id = ${email_user.id}
 
 Use `${}` with snake case to reference the desired feature.
 
+Use `${now}` in your query as a special argument representing the time of the query. For more details, see our
+[Time](/docs/time#now-explicitly-time-dependent-resolvers) documentation.
+
 ### SQL strings
 
 You can run SQL queries either as Python strings or from `.sql` files.
