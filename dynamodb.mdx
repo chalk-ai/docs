@@ -12,14 +12,15 @@ will use these credentials to access DynamoDB.
 
 ## Integration
 
-Add your DynamoDB data source in a Python file and give it a `name`. In this file, we'll also define a `User` feature
-class with a `transaction_volume` feature which will be resolved with DynamoDB.
+Add your DynamoDB data source in a Python file and give it a `name`. This line is required for all DynamoDB
+integrations. In this file, we'll also define a `User` feature class with a `transaction_volume` feature which will be
+resolved with DynamoDB.
 
 ```python
 from chalk.features import features
 from chalk.sql import DynamoDBSource
 
-DynamoDBSource(name="my_dynamo")
+DynamoDBSource(name="my_dynamo")  # required for Chalk to be aware of this source
 
 @features
 class User:
