@@ -44,14 +44,14 @@ def resolver_2(id: Animal.id) -> Animal.sound@2:
         case _: return "Hello"
 ```
 
-3. Deploy your new feature with [`chalk apply --no-promote`](/cli/apply#no-promote).
+3. Deploy your new feature with [`chalk apply --branch test`](/cli/apply#branch).
 4. Now try a basic query for `animal.sound`. When no explicit version is provided, and no `default_version` is set, version 1 will be requested, so this function will return `"Hello"`.
 ```bash
-$ chalk query --in animal.id=Cow --out animal.sound
+$ chalk query --in animal.id=Cow --out animal.sound --branch test
 ```
 5. To query a specific version, use the `@` syntax
 ```bash
-$ chalk query --in animal.id=Cow --out animal.sound@2
+$ chalk query --in animal.id=Cow --out animal.sound@2 --branch test
 ```
 
 ---
@@ -81,10 +81,10 @@ def resolver_2(id: Animal.id) -> Animal.sound:
         case "Dog": return "Woof"
         case _: return "Hello"
 ```
-2. [`chalk apply --no-promote`](/cli/apply#no-promote) to deploy.
+2. [`chalk apply --branch test`](/cli/apply#branch) to deploy.
 3. Now try querying without a version, and resolver_2 will get executed.
 ```bash
-$ chalk query --in animal.id=Cow --out animal.sound
+$ chalk query --in animal.id=Cow --out animal.sounda --branch test
 ```
 ---
 
@@ -117,5 +117,5 @@ def resolver_2(id: Animal.id, sound: Animal.sound@1) -> Animal.sound@2:
 2. Now query for an `Cow.sound@2` and notice how Chalk automatically generates the dependent `Cow.sound@1` feature!
 
 ```bash
-$ chalk query --in animal.id=Cow --out animal.sound@2
+$ chalk query --in animal.id=Cow --out animal.sound@2 --branch test
 ```

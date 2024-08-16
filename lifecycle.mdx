@@ -87,7 +87,7 @@ that they run in production. However, branch deployments don't impact
 the [offline store](/docs/training-client).
 
 ```bash
-chalk apply --no-promote
+chalk apply --branch test
 ```
 
 Take note of the deployment id from this step -- you'll use it later.
@@ -110,7 +110,7 @@ in the previous step.
 
 Once you've tested your changes, it's time to deploy!
 This step looks much like the preview deployment,
-but this time without the flag [`--no-promote`](/cli/apply#no-promote):
+but this time without the [`--branch`](/cli/apply#branch) flag:
 
 ```bash
 chalk apply
