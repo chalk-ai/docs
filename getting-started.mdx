@@ -271,7 +271,7 @@ to pull this information. Create a new file called
 -- count: 1
 select name, surname, email, birthday, is_fraud from users where id=${user.id}
 ```
-4. After deploying (remember to use `--branch` with the name you specified),
+4. After deploying (remember to use `--branch` with the name you specified, for example "test"),
 query your feature. Supplying `User` as the output
 tells Chalk to give you back ALL the features of `User`.
 ```py Jupyter
