@@ -5,6 +5,55 @@ description: Updates to Chalk!
 
 ---
 
+## August 19, 2024
+
+### Execute queries by name
+
+Instead of writing out the full definition of your query each time you want to run it, you can now register a name for
+your query and reference it by the name!
+
+Here's an example of a [NamedQuery](/api-docs#NamedQuery):
+
+```python
+from chalk import NamedQuery
+from src.feature_sets import Book, Author
+
+NamedQuery(
+    name="book_key_information",
+    output=[
+        Book.id,
+        Book.title,
+        Book.author.name,
+        Book.year,
+        Book.short_description
+    ],
+    tags=["team:analytics"],
+    staleness={
+        Book.short_description: "0s"
+    },
+    owner="mary.shelley@aol.com",
+    description=((
+        "Return a condensed view of a book, including its title, author, "
+        "year, and short description."
+    ))
+)
+```
+
+After applying this code, you can execute this query by its name:
+
+```
+chalk query --in book.id=1 --query-name book_key_information
+```
+
+To see all named queries defined in your current active deployment, use `chalk named-query list`.
+
+As Shakespeare once wrote, "What's in a named query? That which we call a query
+by any other name would execute just as quickly."
+
+### Miscellaneous improvements
+
+- The offline query page of the dashboard now shows which table in your offline store contains the query's output values.
+
 ## August 12, 2024
 
 ### Queries can reference multiple feature namespaces

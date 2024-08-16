@@ -13,19 +13,20 @@ import {RequestUrl} from '@/components/RequestUrl'
 
 ---
 
-Chalk can ingest data using a SQL interface from any of integrations that support it. We also support incremental
-offline ingestion of event tables.
+Chalk can ingest data using a SQL interface from any of our supported SQL data source integrations. The full list of
+supported SQL data sources can be found [in our API reference](/api-docs#BaseSQLSourceProtocol).
 
 ## Basic queries
 
-Chalk supports running SQL from files or from strings.
+Chalk supports running SQL from files or from strings. When you run queries that invoke your SQL resolver, Chalk
+automatically pushes your input parameters into the `WHERE` clause of your query. For more details, see our section on
+[push-down filters](/docs/sql#push-down-filtering).
 
 The examples on this page use our [PostgresQL data source](/docs/postgresql), but can be generalized to any of our other
-SQL data sources. The full list Chalk supports can be found [in our API reference](/api-docs#BaseSQLSourceProtocol).
+SQL data sources.
 
 ### SQL file resolvers
-This is the preferred method of specifying a resolver.
-Only a single `.chalk.sql` SQL file is needed. No Python required!
+SQL file resolvers are Chalk's recommended method for writing SQL resolvers.
 
 ```sql get_user.chalk.sql
 -- type: online
@@ -67,6 +68,9 @@ select id, email, full_name from user_table where id = ${email_user.id}
 ```
 
 Use `${}` with snake case to reference the desired feature.
+
+Use `${now}` in your query as a special argument representing the time of the query. For more details, see our
+[Time](/docs/time#now-explicitly-time-dependent-resolvers) documentation.
 
 ### SQL strings
 
@@ -169,6 +173,71 @@ def get_user(uid: User.id) -> Features[User.full_name, User.email]:
 
 Auto-mapping of column name to feature name also applies for
 the `query_sql_file` method. Parameterization also works the same way.
+
+## Push-down filtering
+
+Chalk automatically adds query inputs to the `WHERE` clause of your SQL
+queries. We recommend relying on our push-down filtering logic rather than
+parameterizing your queries by hand.
+
+The following example will show a transaction feature and how we use push-down
+filtering to retrieve transactions belonging to a specific category.
+
+Here's the feature set:
+
+```python
+pg = PostgreSQLSource(name='PG')
+
+@features
+class Transaction:
+    id: int
+    category: string
+    amount: float
+```
+
+And the SQL file resolver:
+
+```sql
+-- type: online
+-- resolves: transaction
+-- source: PG
+SELECT
+    id, merchant_category AS category, amount
+FROM
+    txn_table;
+```
+
+Finally, here is our query for grocery transactions:
+
+```python
+client = ChalkClient()
+client.query(
+    input={
+        Transaction.id: [1, 2, 3, 4],
+        Transaction.category: "Groceries",
+    },
+    output=[
+        Transaction.id,
+        Transaction.amount,
+    ],
+)
+```
+
+When this query is run, Chalk adds each input parameter to the `WHERE` clause,
+effectively running this query against your database:
+
+```diff-sql
+SELECT
+    id, merchant_category AS category, amount
+FROM
+    txn_table
++ WHERE
++     id IN (1, 2, 3, 4)
++     AND merchant_category = "Groceries";
+```
+
+If your database column names differ from your feature names, the column name must be aliased in the `SELECT` clause of
+your query, as shown above with the `merchant_category` column.
 
 ## Configuration
 
@@ -480,8 +549,10 @@ SELECT
     SUM(amount) as sum_payments_amount,
     COUNT(*) as count_payments,
     max(updated_at) as ts
-FROM payments
-GROUP BY 1
+FROM
+    payments
+GROUP BY
+    1
 ```
 
 to ingest features for this feature class:
@@ -506,8 +577,10 @@ def resolve_aggregate_payment_features() -> DataFrame[Business]:
             SUM(amount) as sum_payments_amount,
             COUNT(*) as count_payments,
             max(updated_at) as ts
-        FROM payments
-        GROUP BY 1
+        FROM
+            payments
+        GROUP BY
+            1
     """
 
     return db.query_string(query, fields={"business_id": Business.id}) \
@@ -614,17 +687,17 @@ def users() -> DataFrame[User]:
 Then, when you submit queries, the query tags will control which datasource is used to execute the query:
 
 ```py
-c = ChalkClient()
+client = ChalkClient()
 
 # This query uses the risk datasource
-c.query(input={User.id: 1}, output=[User.name], tags=['risk'])
+client.query(input={User.id: 1}, output=[User.name], tags=['risk'])
 
 # This query uses the analytics datasource
 
-c.query(input={User.id: 1}, output=[User.name], tags=['analytics'])
+client.query(input={User.id: 1}, output=[User.name], tags=['analytics'])
 
 # This query uses the default datasource
-c.query(input={User.id: 1}, output=[User.name])
+client.query(input={User.id: 1}, output=[User.name])
 ```
 
 ## Additional query options
