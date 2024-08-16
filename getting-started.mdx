@@ -190,16 +190,13 @@ def get_credit_score(
         f"https://credit-report.chalk.dev/rutter_score/{id}"
     ).json()["score"]
 ```
-2. Deploy your code. Pass the [`--no-promote`](/cli/apply#no-promote)
-flag so that you don't affect the "actual" environment, and the
-[`--await`](/cli/apply#await) flag so that your CLI will
-wait for deploy to finish before returning. Take note of
-the deployment ID so that you can use it when querying.
-The deployment ID is the last part of the deployment url
-returned by CLI.
+2. Deploy your code. Pass the [`--branch`](/cli/apply#branch) flag with a name
+so that you don't affect the "actual" environment
+
 ```bash Terminal
-chalk apply --await --no-promote
+chalk apply --branch test
 ```
+
 3. Now lets query for your feature from your [Jupyter Notebook](https://jupyter.org/).
 Enter and execute the following code in your notebook.
 ```python Jupyter
@@ -208,7 +205,7 @@ from chalk.client import ChalkClient
 ChalkClient().query(
    input={User.id: 'u_F6zY0tE4w8'},
    output=[User.credit_score],
-   preview_deployment_id='XXYYZZ'
+   branch="test"
 )
 ```
 You can also query for this feature in your terminal:
@@ -216,7 +213,7 @@ You can also query for this feature in your terminal:
 ```bash Terminal
 $ chalk query --in user.id=u_F6zY0tE4w8 \
               --out user.credit_score \
-              --deployment XXYYZZ
+              --branch test
 ```
 
 Congratulations! You've written your first Chalk feature,
@@ -274,14 +271,14 @@ to pull this information. Create a new file called
 -- count: 1
 select name, surname, email, birthday, is_fraud from users where id=${user.id}
 ```
-4. After deploying (remember to use `--no-promote`),
+4. After deploying (remember to use `--branch` with the name you specified, for example "test"),
 query your feature. Supplying `User` as the output
 tells Chalk to give you back ALL the features of `User`.
 ```py Jupyter
 res = client.query(
     input={User.id: 'u_F6zY0tE4w8'},
     output=[User],
-    preview_deployment_id='XXYYZZ'
+    branch="test"
 )
 ```
 You can also query for this feature in your terminal:
@@ -289,37 +286,7 @@ You can also query for this feature in your terminal:
 ```bash Terminal
 $ chalk query --in user.id=u_F6zY0tE4w8 \
               --out user \
-              --deployment XXYYZZ
+              --deployment test
 ```
 
 ---
-
-## Higher order features
-
-### Add experian credit score
-Now that you've got some experience under your belt, let's try
-a challenge. In this exercise, we'll give you a new API to
-integrate as a feature on `User`, with a new resolver.
-This feature is another credit score (this time from Experian).
-Add a second new feature that is the average of the
-`rutter_score` and the `experian_score`.
-Make sure to deploy with [`--no-promote`](/cli/apply#no-promote)
-and query for your new feature using [Jupyter](https://jupyter.org/). Good luck!
-
-Here's an example using the API:
-
-```bash Terminal
-$ curl -X POST https://experian.chalk.dev/bureau_score \
-       -H 'Content-Type: application/json' \
-       -d '{"name": "Riley Siebel", "email": "riley@chalk.ai"}'
-```
-
-If you do this right, you should be able to run the below query, even though the experian api takes an email as input.  How do you think that works!?
-
-```python Jupyter
-client.query(input={User.id: 'u_a8fU4zT0Y8'}, output=[User.experian_score])
-```
-
-### Combine 2 features
-
-Now create another feature to average the 2 credit scores.  The user with id: 'u_a8fU4zT0Y8' should have an average credit score of ~18.8.

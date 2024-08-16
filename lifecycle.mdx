@@ -84,18 +84,17 @@ with the new changes.
 Chalk allows you to create an unlimited number of branch deployments.
 Branch deployments run all of your resolvers in the same way
 that they run in production. However, branch deployments don't impact
-the [offline store](/docs/training-client).
+the [offline store](/docs/training-client). You can create a branch
+deployment with the following command:
 
 ```bash
-chalk apply --no-promote
+chalk apply --branch test
 ```
-
-Take note of the deployment id from this step -- you'll use it later.
 
 ### Integration test
 
-With the [Branch Deploy](/docs/integration-tests#branch-deployments)
-in hand, you can integration test your changes.
+With the [branch deployment](/docs/integration-tests#branch-deployments) created, you can run integration tests
+on your changes.
 
 <PyEditor html={integrationTest} filename={'integration_test.py'} />
 
@@ -110,7 +109,7 @@ in the previous step.
 
 Once you've tested your changes, it's time to deploy!
 This step looks much like the preview deployment,
-but this time without the flag [`--no-promote`](/cli/apply#no-promote):
+but this time without the [`--branch`](/cli/apply#branch) flag:
 
 ```bash
 chalk apply
