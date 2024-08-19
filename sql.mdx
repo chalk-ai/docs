@@ -309,6 +309,19 @@ The following are supported keys to be included in `.chalk.sql` file comments.
     namespace described by the <code className="dark:text-white">resolves</code> field with the mapping
     <code className="dark:text-white">arbitrary_column_name: chalk_feature_name</code>.
 </Attribute>
+<Attribute field='unique_on' kind='list[str]'>
+    A list of features that must be unique for each row of the output.
+    This enables unique optimizations in the resolver execution.
+    Only applicable to resolvers that return a DataFrame.
+</Attribute>
+<Attribute field='partitioned_by' kind='list[str]'>
+    A list of features that correspond to partition keys in the data source.
+    This field indicates that this resolver executes its query against a data storage system that is
+    partitioned by a particular set of columns.
+    This is most common with data-warehouse sources like Snowflake, BigQuery or Databricks.
+</Attribute>
+
+
 </AttributeTable>
 
 ### Proper comment formatting
