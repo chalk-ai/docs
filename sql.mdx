@@ -241,7 +241,9 @@ your query, as shown above with the `merchant_category` column.
 
 ## Configuration
 
-The following are supported keys to be included in `.chalk.sql` file comments.
+### Supported SQL file resolver comment keys
+
+The following are supported keys that may be included in `.chalk.sql` file comments.
 
 <AttributeTable title={"SQL File Resolvers"}>
 <Attribute field='resolves' kind='str'>
@@ -262,11 +264,12 @@ The following are supported keys to be included in `.chalk.sql` file comments.
     href='/docs/sql#incremental-queries'>below</a> section on incremental queries.
     <SubAttributeTable title='incremental query parameters'>
         <SubAttribute field='mode' kind='"row" | "group" | "parameter"'>
-            The incrementalization mode decides how to ingest new data.
+            The incrementalization mode decides how to ingest new data. Defaults to <code
+            className="dark:text-white">"row"</code>.
         </SubAttribute>
         <SubAttribute field='lookback_period' kind='string'>
             The length of the window from the last observed row that Chalk will re-ingest, e.g. <code
-            className="dark:text-white">1h</code>.
+            className="dark:text-white">1h</code>. Defaults to <code className="dark:text-white">0</code>.
         </SubAttribute>
         <SubAttribute field='incremental_column' kind='string'>
             The timestamp column in the underlying table to use as the basis for incrementalization.
@@ -275,7 +278,7 @@ The following are supported keys to be included in `.chalk.sql` file comments.
         </SubAttribute>
         <SubAttribute field='incremental_timestamp' kind='"feature_time" | "resolver_execution_time"'>
             The timestamp used for timedelta calculations. Defaults to <code
-            className="dark:text-white">feature_time</code>
+            className="dark:text-white">feature_time</code>.
         </SubAttribute>
     </SubAttributeTable>
 </Attribute>
@@ -336,10 +339,10 @@ will appear as a docstring since it is not in `key:value` format.
 select * from user_table
 ```
 
-For field values that can be lists or dictionaries, such as `tags` or 'incremental` settings,
+For field values that can be lists or dictionaries, such as `tags` or `incremental` settings,
 we can either enumerate the values inline or with an extra indentation.
 Remember, if your values include a colon, you must use quotes around your value in order for
-the line to be valid YAML format.
+the line to have valid YAML format.
 
 Both of the following formats are valid and equivalent.
 
@@ -361,9 +364,9 @@ select * from user_table
 select * from user_table
 ```
 
-### Streaming SQL File Resolvers
+### Streaming SQL file resolvers
 
-Chalk also supports SQL file streaming resolvers:
+Chalk supports streaming with SQL file resolvers:
 
 ```sql get_store_features.chalk.sql
 -- source: kafka
@@ -374,7 +377,7 @@ from topic
 group by 1
 ```
 
-### SQL Linting Configuration
+### SQL linting configuration
 
 If you are using [SQLFluff](https://www.sqlfluff.com/) or another SQL Linter,
 you may need to set configurations to accept the variable pattern.
@@ -441,7 +444,7 @@ make_sql_file_resolver(
 
 ## Incremental queries
 
-### Why incremental?
+### Overview
 
 The first time that a resolver with an incremental
 query is executed, Chalk ingests all data from the source.
@@ -451,43 +454,18 @@ Using incremental queries limits the amount of data that
 Chalk needs to ingest, lowering latency for updates
 and reducing costs.
 
-### When to use
-
 Incremental queries are useful for ingesting immutable tables
 or queries, like event tables or logs.
 This type of data is frequently found in the offline
 context, as it represents logs of real-time events.
 
-### Using incremental queries (SQLAlchemy)
+Incremental queries use the `incremental_column` parameter to
+page over the underlying table.
 
-Imagine you have a login events table, where you keep track of
-login attempts to your website.
-You can ingest this table as follows:
+### Incremental queries with SQL file resolvers
 
-```py
-pg = PostgreSQLSource(name='PG')
-
-@offline
-def fn() -> DataFrame[Login.ts, Login.attemped_at, Login.user_id, Login.status]:
-    return pg.query(
-        Login(
-            attempted_at=LoginHistorySQL.attempted_at,
-            status=LoginHistorySQL.status,
-            ts=LoginHistorySQL.created_at,
-            user_id=LoginHistorySQL.user_id,
-        )
-    ).incremental()
-```
-
-Incremental queries need to map a [feature-time](/docs/features#feature-time)
-feature (above as `Login.ts`). Using `.incremental` is equivalent to `.all`,
-except Chalk can page over the underlying table using the column mapped to
-the `feature_time` feature.
-
-### Incremental queries with SQL File Resolvers
-
-With Chalk SQL File resolvers, you can describe your incremental parameters
-in typical YAML format.
+Imagine you have a login events table, where you keep track of login attempts to your website. You can ingest this table
+with a SQL file resolver as follows:
 
 ```sql incremental_query.chalk.sql
 -- type: offline
@@ -500,10 +478,12 @@ in typical YAML format.
 select attempted_at, status, user_id from logins
 ```
 
-### Using incremental queries (SQL-strings)
+Configuration for incremental resolvers can be passed in the `incremental` dictionary of the file's comments. For more
+details, see the [configuration reference above](/docs/sql#supported-sql-file-resolver-comment-keys).
 
-Chalk also supports incremental queries with raw SQL strings. If you use `.incremental` with string queries,
-you must specify the `incremental_column` parameter.
+### Incremental queries with SQL strings
+
+To use incremental mode with SQL string resolvers, use `.incremental` along with the `incremental_column` parameter.
 
 ```py
 pg = PostgreSQLSource(name='PG')
@@ -732,3 +712,24 @@ In the `.query(...)` call, you map the target columns of the
 SQL statement to the feature namespace.
 Here, we assign `User.email` to `UserSQL.email` and
 `User.full_name` to `UserSQL.name`.
+
+#### Incremental queries with SQLAlchemy
+
+To create an incremental SQLAlchemy query, use `.incremental`. Chalk will page over the underlying table using the
+column mapped to the [`feature_time`](/docs/features#feature-time).
+
+```py
+pg = PostgreSQLSource(name='PG')
+
+@offline
+def fn() -> DataFrame[Login.ts, Login.attemped_at, Login.user_id, Login.status]:
+    return pg.query(
+        Login(
+            ts=LoginHistorySQL.created_at,
+            attempted_at=LoginHistorySQL.attempted_at,
+            user_id=LoginHistorySQL.user_id,
+            status=LoginHistorySQL.status,
+        )
+    ).incremental()
+```
+
