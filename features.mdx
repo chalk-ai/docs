@@ -92,7 +92,7 @@ class User:
     id: str
 ```
 
-Alternatively, you can use the `feature(...)` function
+Alternatively, you can use the [`feature`](/api-docs#feature) function
 to set a feature to primary:
 
 ```py
@@ -204,3 +204,15 @@ Where the name of the Python property
 and the name provided to `feature(name=...)` differ,
 IDs are [auto-assigned](/docs/features#primary-keys) based
 on the name provided to `feature(name=...)`.
+
+## Default feature values
+For features that can't be computed, you can pass `default` to 
+[`feature`](/api-docs#feature.default), or assign a default directly:
+
+```python
+from chalk.features import features
+@features
+class User:
+    num_purchases: int = 0
+```
+
