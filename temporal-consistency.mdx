@@ -164,7 +164,7 @@ the temporal consistency of your data.
 
 ---
 
-## Back-filling time-aware data
+## Backfilling time-aware data
 
 You can also [backfill](/docs/backfilling-data) time-aware data into Chalk.
 For example, you may have events tables that track
@@ -204,8 +204,10 @@ the data was observed.
 
 ## Enforcing a TTL
 
-Features in the offline store can optionally have a `ttl` (time to live) applied.  In the case that a feature has a ttl, it will never be returned at any time later than `FeatureTime` + the ttl.
-As an example, perhaps you don't want to return credit scores for users which were observed more than a year ago, in this case the following feature class will return None instead of the last observed credit score if the credit score is older than 1 year.
+Features in the offline store have an optional TTL (time to live). When a feature has a TTL value, it will never be
+returned at any time later than `FeatureTime` + TTL. For example, you may not want to consider credit scores which were
+retrieved more than a year ago. Setting `offline_ttl` below will make `credit_score` return None if last observed credit
+score is more than one year old.
 
 ```py
 @features
