@@ -519,6 +519,20 @@ WHERE updated_at >= (<previous_max_updated_at> - <lookback_period>)
 This means that rows that arrive up to 30 minutes late will be properly ingested. The trade-off
 is that Chalk will re-ingest some redundant data.
 
+### Managing incremental resolvers
+
+Each incremental resolver tracks the timestamp of its latest ingested row in an internal property called
+`chalk_incremental_timestamp`. This property can be referenced within your SQL query when using `parameter` as your
+incrementalization mode.
+
+The Chalk CLI provides several commands for managing your incremental resolvers:
+
+* [`chalk incremental status`](/cli/incremental_status) shows the status and latest timestamp of the given resolver.
+* [`chalk incremental set`](/cli/incremental_set) allows you to directly modify the internal timestamps the resolver
+  uses to track its state.
+* [`chalk incremental drop`](/cli/incremental_set) clears the resolver's tracking state so that it will restart data
+  ingestion on its next run.
+
 ### Incrementalization modes
 
 The default incrementalization mode for `.incremental` is `mode='row'`. Three modes are supported:
