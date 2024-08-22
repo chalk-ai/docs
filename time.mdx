@@ -5,13 +5,11 @@ description: Introspect and override feature resolution timestamps.
 
 ---
 
-By default, features are timestamped with the execution time of their resolver.
-However, you can override this behavior by providing timestamps from your data source
-This functionality can be helpful when
-working with an event store or timestamped API.
+By default, features are timestamped with the execution time of their resolver. You can override this behavior by
+providing timestamps from your data source. This functionality can be helpful when working with an event store or
+timestamped API.
 
-The first step is to
-add a `FeatureTime` attribute to your feature set.
+The first step is to add a `FeatureTime` attribute to your feature set.
 
 By default, if you have a feature named `ts` with a type
 of `datetime.datetime`, it will be treated as a feature time.
