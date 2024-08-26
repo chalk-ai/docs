@@ -19,7 +19,7 @@ from chalk.features import features
 class RocketEngine:
     id: int
     mass: float
-    thrust: float
+    volume: float
 ```
 
 Suppose we wanted to define a feature called `density` and resolve it as `mass / volume`.
@@ -33,7 +33,7 @@ We can use the underscore feature definition syntax as follows:
 class RocketEngine:
     id: int
     mass: float
-    thrust: float
+    volume: float
 
 +   # Defining density using an underscore expression
 +   density: float = _.mass / _.volume
@@ -41,8 +41,6 @@ class RocketEngine:
 
 Note that `_` is a reference to the containing feature class `RocketEngine` and should
 be used to reference features contained in the same feature class.
-
-
 
 ---
 
