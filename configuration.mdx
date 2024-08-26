@@ -44,7 +44,8 @@ company_chalk/
 
 ## chalk.yaml
 
-Use `chalk.yaml` to configure your project's Docker environment, Python configuration, and feature metadata validation.
+Use `chalk.yaml` to configure your project's Docker environment, Python configuration, and metadata validation for your
+features and resolvers.
 
 ### Schema
 <AttributeTable title={"chalk.yaml"}>
@@ -73,20 +74,39 @@ Use `chalk.yaml` to configure your project's Docker environment, Python configur
   </SubAttributeTable>
 </Attribute>
 <Attribute field='validation' kind='dictionary'>
-  Configuration for metadata validation for features. See our <a href="/docs/validation#feature-validation-requirements">validation
+  Configuration for metadata validation for features and resolvers. See our <a href="/docs/validation#feature-validation-requirements">validation
   documentation</a> for more details.
   <SubAttributeTable title=''>
-    <SubAttribute field='[feature_name]' kind='dictionary'>
-      The name of the feature.
+    <SubAttribute field='feature' kind='dictionary'>
+      Validations for all features.
       <SubAttributeTable title=''>
         <SubAttribute field='metadata' kind='list'>
-          A list of dictionaries of metadata attributes and error severity levels when this metadata is missing.
+          A list of dictionaries of metadata attributes and error severity levels when this metadata property is
+          missing.
             <SubAttributeTable title=''>
               <SubAttribute field='name' kind='"description" | "owner" | "tags"'>
                 The name of the metadata property.
               </SubAttribute>
               <SubAttribute field='missing' kind='"info" | "warning" | "error"'>
-                The level of severity to use when a feature is missing this metadata feature. Deploys are permitted for
+                The level of severity to use when a feature is missing this metadata property. Deploys are permitted for
+                <code>info</code> and <code>warning</code> levels, but disallowed for `error` level.
+              </SubAttribute>
+            </SubAttributeTable>
+        </SubAttribute>
+      </SubAttributeTable>
+    </SubAttribute>
+    <SubAttribute field='resolver' kind='dictionary'>
+      Validations for all resolvers.
+      <SubAttributeTable title=''>
+        <SubAttribute field='metadata' kind='list'>
+          A list of dictionaries of metadata attributes and error severity levels when this metadata property is
+          missing.
+            <SubAttributeTable title=''>
+              <SubAttribute field='name' kind='"description" | "owner" | "tags"'>
+                The name of the metadata property.
+              </SubAttribute>
+              <SubAttribute field='missing' kind='"info" | "warning" | "error"'>
+                The level of severity to use when a feature is missing this metadata property. Deploys are permitted for
                 <code>info</code> and <code>warning</code> levels, but disallowed for `error` level.
               </SubAttribute>
             </SubAttributeTable>
@@ -120,6 +140,10 @@ validation:
         missing: warning
       - name: tags
         missing: info
+  resolver:
+    metadata:
+      - name: owner
+        missing: error
 ```
 
 ## .chalkignore
