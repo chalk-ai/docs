@@ -1,0 +1,131 @@
+---
+title: Configuration Files
+description: Configure your Chalk project.
+---
+
+import {
+    Attribute,
+    AttributeTable,
+    SubAttribute,
+    SubAttributeTable,
+} from '@/components/AttributeTable'
+
+---
+
+## Overview
+
+Your Chalk project's configuration is shared across the following files:
+
+1. `chalk.yaml` (or `chalk.yml`): Configuration for your project's deployment
+1. `.chalkignore`: Files to exclude from your project's deployment
+1. `requirements.txt`: Default Python requirements for Chalk to install via `pip` (can be overridden in `chalk.yaml`)
+
+Here's our recommended repository structure:
+
+```
+company_chalk/
+├── src/
+│  ├── resolvers/
+│  │  ├── .../
+│  │  ├── __init__.py
+│  │  └── pipelines.py
+│  ├── __init__.py
+│  ├── datasources.py
+│  └── feature_sets.py
+├── tests/
+│  └── ...
+├── notebooks/
+│  └── ...
+├── .chalkignore
+├── chalk.yaml
+├── README.md
+└── requirements.txt
+```
+
+## chalk.yaml
+
+Use `chalk.yaml` to configure your project's Docker environment, Python configuration, and feature metadata validation.
+
+### Schema
+<AttributeTable title={"chalk.yaml"}>
+<Attribute field='project' kind='str'>
+  The name of this Chalk project, which must match your project's name in the dashboard (case-sensitive).
+</Attribute>
+<Attribute field='environments' kind='dictionary'>
+  Per-environment overrides. See our <a href="/docs/docker">Docker documentation</a> for more details.
+  <SubAttributeTable title=''>
+    <SubAttribute field='[environment_name]' kind='dictionary'>
+      The name of this environment, such as <code>prod</code> or <code>qa</code>. Find available environment names in
+      your dashboard. Use <code>default</code> to configure default values to apply to all of this project's
+      environments.
+      <SubAttributeTable title=''>
+        <SubAttribute field='runtime' kind='"python310" | "python311"'>
+          The Python version for the Chalk project.
+        </SubAttribute>
+        <SubAttribute field='requirements' kind='str'>
+          Python requirements file to install with <code>pip</code>.
+        </SubAttribute>
+        <SubAttribute field='dockerfile' kind='str'>
+          Path to an alternative Dockerfile that will be used to build a base image for your Chalk deploys.
+        </SubAttribute>
+      </SubAttributeTable>
+    </SubAttribute>
+  </SubAttributeTable>
+</Attribute>
+<Attribute field='validation' kind='dictionary'>
+  Configuration for metadata validation for features. See our <a href="/docs/validation#feature-validation-requirements">validation
+  documentation</a> for more details.
+  <SubAttributeTable title=''>
+    <SubAttribute field='[feature_name]' kind='dictionary'>
+      The name of the feature.
+      <SubAttributeTable title=''>
+        <SubAttribute field='metadata' kind='list'>
+          A list of dictionaries of metadata attributes and error severity levels when this metadata is missing.
+            <SubAttributeTable title=''>
+              <SubAttribute field='name' kind='"description" | "owner" | "tags"'>
+                The name of the metadata property.
+              </SubAttribute>
+              <SubAttribute field='missing' kind='"info" | "warning" | "error"'>
+                The level of severity to use when a feature is missing this metadata feature. Deploys are permitted for
+                <code>info</code> and <code>warning</code> levels, but disallowed for `error` level.
+              </SubAttribute>
+            </SubAttributeTable>
+        </SubAttribute>
+      </SubAttributeTable>
+    </SubAttribute>
+  </SubAttributeTable>
+</Attribute>
+</AttributeTable>
+
+### Sample file
+
+Here is a sample `chalk.yaml` file. In this file, we use a different Dockerfile in production.
+
+```
+project: my-project-id
+
+environments:
+  default:
+    runtimes: python310
+    requirements: requirements.txt
+  prod:
+    dockerfile: ./DockerfileProd
+
+validation:
+  feature:
+    metadata:
+      - name: owner
+        missing: error
+      - name: description
+        missing: warning
+      - name: tags
+        missing: info
+```
+
+## .chalkignore
+Your `.chalkignore` file should include your scripts, notebooks, and tests. Anything that you are not actively using in
+your deployment should be added so that non-deployment code does not clutter or interfere with your deployment.
+
+## requirements.txt
+By default, Chalk will use `pip` to install Python requirements from `./requirements.txt` in your project's root
+directory. You may override this file's location within the `environments` dictionary of your `chalk.yaml` file.

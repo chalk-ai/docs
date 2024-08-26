@@ -5,11 +5,10 @@ description: Customize the base image for your pipelines.
 
 ---
 
-Chalk's runs your feature pipelines on [Docker images](https://docs.docker.com).
-If your code relies only on the resolvers and data definitions you
-define, using Chalk's base image with no modification is a good option.
-However, if you require additional dependencies, you'll need to specify
-how to install and manage them.
+Chalk runs your feature pipelines on [Docker images](https://docs.docker.com).
+If your code relies only on your resolvers and data source definitions, you may
+use Chalk's base image with no modification. If you require additional
+dependencies, you can specify installation and management instructions.
 
 You can specify build options on a per-environment basis,
 and you can provide a default set of configuration for
