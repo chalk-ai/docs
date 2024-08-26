@@ -215,50 +215,16 @@ and the [query_name_version](/api-docs#ChalkClient.query.query_name_version) par
 
 ## Deployment
 
+### Customize your Chalk project with configuration files
+
+Chalk expects to find a `chalk.yaml` file in your project's root repository. This file stores configuration for your
+deployment (such as your Dockerfile and Python requirements). You can find a sample Chalk project repository
+structure and more details in our [configuration documentation](/docs/configuration). You'll also find details on how to
+exclude files from your deployment with `.chalkignore`.
+
 ### Code changes should be tested and queried on the branch server.
 
 Use the [branch server](/docs/branches) to test that your deployments and new features are behaving as expected.
-
-### To get started, we recommend the following repository structure
-
-```
-company_chalk/
-├── src/
-│  ├── resolvers/
-│  │  ├── .../
-│  │  ├── __init__.py
-│  │  └── pipelines.py
-│  ├── __init__.py
-│  ├── datasources.py
-│  └── feature_sets.py
-├── tests/
-│  └── ...
-├── notebooks/
-│  └── ...
-├── .chalkignore
-├── chalk.yaml
-├── README.md
-└── requirements.txt
-```
-
-Your Chalk project must contain a project configuration file named `chalk.yaml` or `chalk.yml` in its root directory.
-The `chalk.yaml` file allows you to configure your project's [Docker environment](/docs/docker), Python runtime, and
-[feature validations](/docs/validation). Here's a sample chalk.yaml file:
-
-```
-project: Sandbox
-environments:
-    default:
-        runtime: python310
-        requirements: requirements.txt
-```
-
-By default, Chalk uses [`pip`](https://pypi.org/project/pip/) to install dependencies defined in `requirements.txt`. You
-can configure the requirements file name in `chalk.yaml` for each of your environments as described
-[here](/docs/docker#extra-pip-dependencies).
-
-`.chalkignore` file should include your scripts, notebooks, and tests: anything that you are not actively using in your
-deployment should be put there so that non-deployment code does not clutter or interfere with your deployment.
 
 ### Use the `@before_all` decorator to configure global variables for your resolvers
 
