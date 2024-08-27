@@ -163,7 +163,7 @@ Features are namespaced by their containing `FeatureSet` and by the
 name of the variable.
 
 For example, as defined above `Authorization` would be the containing
-`FeatureSet` and it's corresponding features would be named as follows:
+`FeatureSet` and its corresponding features would be named as follows:
 
 | Feature Name                    | Type                                                                                                          |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -227,9 +227,9 @@ For a complete list of features, refer to [Feature Types](/docs/feature-types).
 By default, our features are timestamped with the execution time of their resolvers.
 Since we want to be able to run point-in-time correct backfills, we will need
 to use the `FeatureTime` type to override the default behavior and explicitly
-specify the `created_at` field.
+use the `authorized_at` field.
 
-To learn more about how to use `FeatureTime`, refer to the section on [Time](/docs/time).
+To learn more about how to use `FeatureTime`, refer to our [time documentation](/docs/time).
 
 ```diff-py notebook.ipynb
 from chalk.features import FeatureTime
