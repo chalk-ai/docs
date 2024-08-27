@@ -72,14 +72,13 @@ chalk_df = DataFrame([
 ### From a pandas.DataFrame
 
 You can also convert to and from a `pandas.DataFrame`.
-We recommend using string values as the columns of the `pandas.DataFrame`.
 
 ```python
 import pandas as pd
 
-DataFrame.from_pandas(
+DataFrame(
     pd.DataFrame({
-        "taco.id": ["t_1", "t_2", "t_3"],
+        "taco.id": ["t_1", "t_2", "t_3"],  # Taco.id or "taco.id" are accepted
         "taco.price": [1, 2, 10],
     })
 )
