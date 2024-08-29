@@ -14,7 +14,7 @@ The first use case is accomplished through **online queries**, which try to
 return values for a single feature set as quickly as possible, taking
 advantage of caching and distributed execution.
 
-The latter use cases are accomplished through **offline queries** which use 
+The latter use cases are accomplished through **offline queries** which use
 the offline store and can return multiple instances of a feature set
 for multiple primary keys or timepoints.
 
@@ -58,7 +58,7 @@ client.offline_query(
   output=['user.name']
   # branch='test',                      # run against a branch
   # recompute_features=True,            # recompute features
-  # run_async=True,                     # run in separate pod from active deployment
+  # run_asynchronously=True,            # run in separate pod from active deployment
   # max_samples = 10,                   # max of 10 samples
   # lower_bound=datetime(2024, 10, 12), # sample computed after 10.12.2024
   # upper_bound=datetime(2024, 10, 20), # sample computed before 10.20.2024
