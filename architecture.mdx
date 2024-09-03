@@ -7,27 +7,61 @@ import { ArchitectureDiagram, ServiceDiagramSwitcher } from '@/components/Archit
 
 ---
 
-Chalk integrates with your _data sources_, transforms data with _feature pipelines_,
-stores this data in _online_ and _offline storage_, and provides _monitoring_ on feature computation and distributions.
+## Service Architecture
+
+Chalk offers a hosted model ("Chalk Cloud") and
+a customer-hosted model ("Customer Cloud").
+Most companies choose to run Chalk in their own
+cloud using the Customer Cloud model.
+This page discusses the Customer Cloud deployment of Chalk on AWS and GCP.
+
+A Chalk deployment consists of a Management Plane and a Data Plane:
+
+<ServiceDiagramSwitcher />
+
+### Management Plane
+
+The Management Plane is responsible for storing and serving
+non-customer data (like alert and RBAC configurations).
+It orchestrates machines in the Data Plane using the
+Kubernetes API to do things like scaling deployments,
+and running batch jobs.
+
+The Management Plane _does not_ have access to your data.
+Most Chalk partners using the Customer Cloud deployment
+choose to have Chalk host the Metadata Plane, but in some
+especially sensitive applications (like FedRamp deployments),
+Chalk partners will also opt to host the Metadata Plane.
+
+### Data Plane
+
+The Data Plane consists of the machines computing feature
+pipelines, online store, and offline store.
+The compute nodes run on Kubernetes (typically EKS on AWS and GKE on GCP.)
+
+A single Data Plane can run many Chalk Environments.
+Often, companies will have 2-3 environments (like `qa`, `stage`, and `prod`.)
+If running in a single data plane, these environments
+share resources, which helps with cost and ease of setup.
+
+However, if you prefer to have stronger isolation between
+Chalk Environments, each Chalk Environment can run in a
+separate Data Plane. You would typically run only one
+Metadata Plane to orchestrate all Data Planes, and deploy
+the Metadata Plane to the most sensitive of the environments.
 
 ---
 
-## Service Architecture
+## Deploying a Chalk instance
 
-Chalk offers a hosted model ("Chalk Cloud"), or a customer-hosted model ("Customer Cloud").
+Chalk is deployed with Terraform and uses common cloud primitives.
+Given all necessary permissions, Chalk can be deployed in about an
+hour. You can see sample Terraform for AWS
+[here](https://github.com/chalk-ai/terraform-samples/tree/main/aws/).
 
-There are a few main components of a Chalk deployment:
-
-- **Management** - serves non-customer data (like alert and RBAC configurations).
-- **Builder** - builds containers that run your feature pipelines.
-- **Compute** - machines that run your feature pipelines. In both AWS and GCP, compute runs on
-  Kubernetes with [Knative](https://knative.dev/).
-- **Customer Data** - the online and offline stores for your features.
-- **Secrets** - environment variables and configuration for your data sources.
-
-These components are organized as follows:
-
-<ServiceDiagramSwitcher />
+Our goal is to make deployments fit with your existing infrastructure.
+If you have custom needs, we are happy to customize the deployment to
+fit with your service architecture.
 
 ---
 
@@ -35,7 +69,10 @@ These components are organized as follows:
 
 <ArchitectureDiagram />
 
-Let's explore Chalk's architecture by examining how the pieces work together to compute & serve **[Features](/docs/features)** online. Suppose that you want to compute a set of features for making a decision about a request from a user:
+Let's explore Chalk's architecture by examining how the pieces work
+together to compute & serve **[Features](/docs/features)** online.
+Suppose that you want to compute a set of features for making a
+decision about a request from a user:
 
 1. Your application sends an [HTTP request](/docs/query-basics) to Chalk's serving API, specifying information about which features you would like to compute.
 2. Chalk's Query Planner creates an optimized "plan" to understand which data must be fetched or transformed in order to answer your request.
@@ -43,7 +80,10 @@ Let's explore Chalk's architecture by examining how the pieces work together to 
 4. Chalk responds to your application with the features you requested.
 5. Chalk logs any newly computed features to Online and/or Offline Storage for future use.
 
-Chalk's online query serving platform is designed to fetch data from a variety of heterogeneous data sources and execute complex transformations on that data with the minimum possible latency. Chalk uses many techniques to reduce latency, such as:
+Chalk's online query serving platform is designed to fetch data from a
+variety of heterogeneous data sources and execute complex
+transformations on that data with the minimum possible latency. Chalk
+uses many techniques to reduce latency, such as:
 
 - Automatic parallel execution of concurrent pipeline stages
 - Vectorization of pipeline stages that are written using scalar syntax
