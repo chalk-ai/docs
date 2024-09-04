@@ -35,7 +35,7 @@ SQL file resolvers are Chalk's recommended method for writing SQL resolvers.
 select id, email, full_name from user_table
 ```
 
-Here, we define an online resolver that returns some features for the `User` feature set
+Here, we define an online resolver that returns some features for the `User` feature class
 from the `user_table` table in the PostgreSQL source `PG`. The comments are `yaml`-parsed
 to provide other metadata for Chalk to decide how to design the resolver. SQL file resolvers
 can return multiple rows for aggregation operations, offline queries, and more.
@@ -49,7 +49,7 @@ It's also possible to use `SELECT *` in a SQL file resolver, but be careful!
 select * from user_table
 ```
 
-Implicitly, this query tries to align every scalar feature from the `User` feature set to a column name in
+Implicitly, this query tries to align every scalar feature from the `User` feature class to a column name in
 `user_table`. If a feature name is misnamed or absent from the table, you'll get a "missing columns" error.
 
 To programmatically generate SQL file resolvers, check out [Generated SQL file
@@ -183,7 +183,7 @@ parameterizing your queries by hand.
 The following example will show a transaction feature and how we use push-down
 filtering to retrieve transactions belonging to a specific category.
 
-Here's the feature set:
+Here's the feature class:
 
 ```python
 pg = PostgreSQLSource(name='PG')
