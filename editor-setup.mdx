@@ -13,7 +13,7 @@ import { TipBad, TipGood } from '@/components/Tip'
 
 <p>
   Chalk extensively uses the Python type system to allow you to naturally express your feature
-  pipelines. Chalk's type annotations and feature set constructors are not natively supported by
+  pipelines. Chalk's type annotations and feature class constructors are not natively supported by
   editors, which can trigger{' '}
   <span class="underline decoration-wavy decoration-accent-yellow">warnings</span> and{' '}
   <span class="outline outline-1 outline-offset-2 outline-accent-red">errors</span> in your
@@ -45,9 +45,9 @@ the [Mypy Plugin](https://plugins.jetbrains.com/plugin/11086-mypy).
 
 ## Plugin capabilities
 
-### Incomplete feature sets
+### Incomplete feature classes
 
-<TipGood>Return only part of a feature set from a resolver.</TipGood>
+<TipGood>Return only part of a feature class from a resolver.</TipGood>
 
 ```python
 @features
@@ -63,7 +63,7 @@ def incomplete_set() -> Features[User.name, User.age]:
 ```
 
 Chalk allows you to return only a subset of the fields
-for a particular feature set.
+for a particular feature class.
 In the above example, `User` contains three fields,
 but our resolver returns only two of them.
 Our plugin converts
@@ -137,7 +137,7 @@ but we have instead supplied an `int`.
 
 ### Constructor arguments
 
-<TipBad>Check arguments to constructor of feature sets.</TipBad>
+<TipBad>Check arguments to constructor of feature classes.</TipBad>
 
 ```python
 User(bogus_field=4)

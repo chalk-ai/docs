@@ -216,7 +216,7 @@ You can now view and filter features in the feature catalog by their tags and ow
 
 We shipped a gRPC engine for Chalk that improved performance by at least 2x through improved data serialization,
 efficient data transfer, and a migration to our C++ server. You can now use `ChalkGRPCClient` to run queries with the
-gRPC engine and fetch enriched metadata about your feature sets and resolvers through the `get_graph` method.
+gRPC engine and fetch enriched metadata about your feature classes and resolvers through the `get_graph` method.
 
 ### Spine SQL query
 
@@ -1100,7 +1100,7 @@ Feel free to choose either mechanism!
 
 ### Auto Id Features
 
-It's natural to name the primary feature of a feature set
+It's natural to name the primary feature of a feature class
 `id`. So why do you always have to specify it?
 Until now, you needed to write:
 
