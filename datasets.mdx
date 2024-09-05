@@ -22,8 +22,8 @@ at = datetime.now()
 dataset: Dataset = ChalkClient().offline_query(
      input={
          User.id: uids,
-         User.ts: [at] * len(uids),
      },
+     input_times=[at] * len(uids),
      output=[
          User.id,
          User.fullname,
@@ -74,8 +74,8 @@ at = datetime.now()
 dataset: Dataset = ChalkClient().offline_query(
      input={
          User.id: uids,
-         User.ts: [at] * len(uids),
      },
+     input_times=[at] * len(uids),
      output=[
          User.id,
          User.fullname,
@@ -99,8 +99,8 @@ at = datetime.now()
 dataset: Dataset = ChalkClient().offline_query(
      input={
          User.id: uids,
-         User.ts: [at] * len(uids),
      },
+     input_times=[at] * len(uids),
      output=[
          User.id,
          User.fullname,
@@ -122,8 +122,8 @@ at = datetime.now()
 dataset: Dataset = ChalkClient().offline_query(
      input={
          User.id: uids,
-         User.ts: [at] * len(uids),
      },
+     input_times=[at] * len(uids),
      output=[
          User.id,
          User.fullname,
@@ -147,8 +147,8 @@ at = datetime.now()
 dataset: Dataset = ChalkClient().offline_query(
      input={
          User.id: uids,
-         User.ts: [at] * len(uids),
      },
+     input_times=[at] * len(uids),
      output=[
          User.id,
          User.fullname,
