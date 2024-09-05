@@ -76,9 +76,11 @@ t2 = datetime.now() - timedelta(days=30)
 
 dataset = ChalkClient().offline_query(
      input={
-         # Sample a single business with id=123,
+         # Sample business 123 twice because we have two input_times
          Business.id: [123, 123],
-         # Sample the same business at two times: t1 and t2
+     },
+     input_times={
+         # Request business 123 at t1 and t2
          Business.ts: [t1, t2],
      },
      # Sample all features of business.
