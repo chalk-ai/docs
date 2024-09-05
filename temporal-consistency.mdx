@@ -79,10 +79,9 @@ dataset = ChalkClient().offline_query(
          # Sample business 123 twice because we have two input_times
          Business.id: [123, 123],
      },
-     input_times={
-         # Request business 123 at t1 and t2
-         Business.ts: [t1, t2],
-     },
+     # Each element of `input_times` corresponds to the element
+     # with the same index in `input`
+     input_times=[t1, t2],
      # Sample all features of business.
      # Alternatively, sample only the features you need:
      #   output=[Business.sales, Business.cogs]
