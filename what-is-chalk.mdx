@@ -103,12 +103,15 @@ Add a caching policy with one line of code in your feature definition:
 
 Optionally warm feature caches by executing resolvers on a schedule:
 
-```py
-from chalk import online
-
-@online(cron="**1d**")
-def fn(id: User.id) -> User.credit_score:
-  return redshift.query(...).all()
+```sql
+-- resolves: User
+-- source: snowflake
+-- cron: 1h
+select
+    user_id as id,
+    credit_report,
+    ts
+from credit_scores
 ```
 
 Or override staleness tolerances at query time when you need fresher
@@ -118,9 +121,11 @@ data for your models:
 from chalk.client import ChalkClient
 
 ChalkClient().query(
-    ...,
-    outputs: [User.fraud_score],
-    max_staleness: { User.fraud_score: "1m" }
+    input={
+        User.id: 123,
+    },
+    output=[User.credit_report],
+    max_staleness={User.credit_report: "1m"}
 )
 ```
 
@@ -132,10 +137,18 @@ or other custom sources with historical features computed online.
 Specify a cron schedule on an `@offline` resolver, and Chalk will automatically ingest
 data with support for incremental reads:
 
-```py
-@offline(cron="**1h**")
-def fn() -> Feature[User.id, User.datawarehouse_feature, User.updated_at]:
-  return redshift.query(...).incremental()
+```sql
+-- resolves: User
+-- source: snowflake
+-- cron: 1h
+-- incremental:
+--   lookback_period: 10m
+--   incremental_column: ts
+select
+    id,
+    credit_score as start_of_day_balance,
+    ts
+from credit_scores
 ```
 
 Chalk makes this data available for point-in-time-correct dataset
@@ -164,7 +177,7 @@ low-latency online serving.
 ## Deploying and querying
 
 Once you've defined your pipelines, you can rapidly deploy them to
-production with Chalk's CLI:
+production with [Chalk's CLI](/cli/introduction):
 
 ```bash
 chalk apply
@@ -178,7 +191,7 @@ your Chalk deployment performs as expected.
 Once you promote your deployment to production, Chalk makes features
 available for low-latency [online inference](/docs/query-basics) and
 [offline training](/docs/training-client). Chalk uses
-the **exact same source code** to serve temporally-consistent training
+the **exact same source code** to serve [temporally-consistent](/docs/temporal-consistency) training
 sets to data scientists and live feature values to models. This re-use
 dramatically shortens development time and ensures that feature values
 from online and offline contexts match.
@@ -205,7 +218,7 @@ inputs, outputs, and other data for audit and reproducibility.
 
 <JupyterNotebook />
 
-Chalk datasets are always "temporally consistent."
+Chalk datasets are always [temporally consistent](/docs/temporal-consistency).
 This means that you can provide labels with different past timestamps to easily
 get historical features that represent what your application would have
 retrieved online at those past times. Temporal consistency ensures that
