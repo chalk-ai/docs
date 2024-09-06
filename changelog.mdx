@@ -5,6 +5,24 @@ description: Updates to Chalk!
 
 ---
 
+## September 9, 2024
+
+### Configure Chalk to not cache null feature values
+
+By default, Chalk caches all feature values, including null. To prevent Chalk from caching null values, use the
+`feature` field and set [`cache_nulls`](/api-docs#feature.cache_nulls) to False.
+
+### More static execution of certain Python resolvers
+
+We built a way to statically interpret Python resolvers to identify ones that are eligible for static C++ execution.
+For now, resolvers are eligible if they do simple arithmetic and logical expressions. If you're interested in learning
+more and seeing whether these new query planner options would apply to your codebase, please reach out!
+
+### New tutorial for using Chalk with SageMaker
+
+We have a new [tutorial for using Chalk with SageMaker](/docs/sagemaker-tutorial) available now. In the tutorial, we
+show how to use Chalk to generate training datasets from within a SageMaker pipeline for model training and evaluation.
+
 ## September 3, 2024
 
 ### Feature catalog shows associated named queries
