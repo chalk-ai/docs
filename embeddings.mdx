@@ -143,7 +143,7 @@ class Document:
 ## Custom embedding functions
 
 If you would like to run your own embedding model, you can define a custom resolver to compute the embedding
-from existing features in the feature set. For performance, we recommend to store the model weights in an
+from existing features in the feature class. For performance, we recommend to store the model weights in an
 object store (such as AWS S3 or GCS) rather than including them your source code and to load the model
 using a [boot hook](/docs/generic#initializing).
 

@@ -10,7 +10,7 @@ import {TipBad, TipGood} from '@/components/Tip'
 
 Chalk enables data science and machine learning teams to build and
 deploy feature pipelines for machine learning.
-For datascience workflows, Chalk can be used in entirely in a notebook
+For data science workflows, Chalk can be used in entirely in a notebook
 to iteratively build features and generate training data.
 
 In this tutorial, we will use Chalk in a Jupyter notebook to explore
@@ -84,7 +84,7 @@ with the `@feature` decorator.
 Chalk lets you define features directly in Python. To create a new `FeatureSet`,
 apply the `@features` decorator to a Python class with typed attributes.
 
-In our notebook, we will now define the following feature sets:
+In our notebook, we will now define the following feature classes:
 
 ```python notebook.ipynb
 from datetime import datetime
@@ -133,7 +133,7 @@ class CardHolder:
     cards: DataFrame[Card] = has_many(lambda: CardHolder.id == Card.cardholder_id)
 ```
 
-Here we have defined four feature sets: `Merchant`, `Authorization`, `Card`,
+Here we have defined four feature classes: `Merchant`, `Authorization`, `Card`,
 and `CardHolder`.
 In the features sets, we have defined the root features which are the
 features that are directly fetched from the datasource as well as derived features.
@@ -141,7 +141,7 @@ In the next section, we will look at how to resolve these features.
 
 ### Primary Keys
 Feature classes in Chalk need to have a unique `id` field. By default,
-Chalk will use the `id` field as the primary key for the feature set.
+Chalk will use the `id` field as the primary key for the feature class.
 However, if you want to use a different field as the primary key, you can
 specify it using the [`Primary`](/api-docs#Primary) argument as shown below.
 
@@ -440,7 +440,7 @@ When set to `False`, output features are sampled from the offline store.
 
 ### Feature Definitions
 
-Let's expand on the feature sets we have defined and add the following computed features:
+Let's expand on the feature classes we have defined and add the following computed features:
 
 ```diff-py notebook.ipynb
 @features

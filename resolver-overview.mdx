@@ -7,12 +7,12 @@ import {TipInfo} from '@/components/Tip'
 
 ---
 
-While feature sets define what your data looks like (e.g. the types of your features,
+While feature classes define what your data looks like (e.g. the types of your features,
 their relationships, and their properties), resolvers define how your feature values
 are computed.
 
 <TipInfo>
-    If you haven't read the section on feature sets, you are strongly encourage to do so. Understanding feature sets
+    If you haven't read the section on feature classes, you are strongly encourage to do so. Understanding feature classes
     will help you understand resolvers.
 </TipInfo>
 
@@ -52,10 +52,10 @@ Chalk allows you to write resolvers in three different ways:
 ## A Quick Example
 
 Below, we provide an example of how to write SQL and python resolvers in Chalk
-for a `User` feature set. In this example, we assume that a Postgres data source
+for a `User` feature class. In this example, we assume that a Postgres data source
 called `pg_users` has been configured and connected to Chalk.
 
-First, let's define our `User` feature set:
+First, let's define our `User` feature class:
 
 ```python src/user.py
 from chalk.features import features
@@ -101,7 +101,7 @@ def get_is_runner(
 
 ## When Do Resolvers Run
 
-A question that often crops up at this point, is: "I have defined a resolver, but how do
+A question that often crops up at this point is, "I have defined a resolver, but how do
 I make it run?"
 
 Just like features, the idea behind resolvers is that they are declarative. Resolvers
@@ -111,12 +111,12 @@ practice, this means that they run in response to "queries".
 
 <TipInfo>
     Resolvers can also be run on a schedule or triggered. Either approach causes them
-    to: 1). excecute, in batch-job fashion, over all the data they find in your upstream
+    to 1). execute, in batch-job fashion, across all data they find in your upstream
     data sources, and 2). write computed features to your offline store.
 </TipInfo>
 
 A query is just a request for data. Chalk takes a query and determines which resolvers it
 needs to run, optimizes the execution order, and provides you with a response. For now, we'll
 hold off on discussing queries further, but feel free to skip ahead and
-get a sense of [what Chalk queries are and how they work](/docs/query-overview), before diving
+get a sense of [what Chalk queries are and how they work](/docs/query-overview) before diving
 deeper into resolvers.

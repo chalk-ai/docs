@@ -5,6 +5,37 @@ description: Updates to Chalk!
 
 ---
 
+## September 9, 2024
+
+### Configure Chalk to not cache null feature values
+
+By default, Chalk caches all feature values, including null. To prevent Chalk from caching null values, use the
+`feature` field and set [`cache_nulls`](/api-docs#feature.cache_nulls) to False.
+
+### More static execution of certain Python resolvers
+
+We built a way to statically interpret Python resolvers to identify ones that are eligible for static C++ execution.
+For now, resolvers are eligible if they do simple arithmetic and logical expressions. If you're interested in learning
+more and seeing whether these new query planner options would apply to your codebase, please reach out!
+
+### New tutorial for using Chalk with SageMaker
+
+We have a new [tutorial for using Chalk with SageMaker](/docs/sagemaker-tutorial) available now. In the tutorial, we
+show how to use Chalk to generate training datasets from within a SageMaker pipeline for model training and evaluation.
+
+## September 3, 2024
+
+### Feature catalog shows associated named queries
+
+In the [August 19](/docs/changelog#queries-can-reference-multiple-feature-namespaces) changelog entry, we announced
+[`NamedQuery`](/api-docs#NamedQuery), a tool for naming your queries so that you can execute them without writing out
+the full query definition.
+
+This week, we've updated the dashboard's feature catalog so that it shows which named queries
+reference a given feature as input or output.
+
+![Feature catalog showing links to named queries a feature is an input or output of](/img/feature_catalog_named_queries.png)
+
 ## August 26, 2024
 
 ### View aggregation backfills in the dashboard
@@ -203,7 +234,7 @@ You can now view and filter features in the feature catalog by their tags and ow
 
 We shipped a gRPC engine for Chalk that improved performance by at least 2x through improved data serialization,
 efficient data transfer, and a migration to our C++ server. You can now use `ChalkGRPCClient` to run queries with the
-gRPC engine and fetch enriched metadata about your feature sets and resolvers through the `get_graph` method.
+gRPC engine and fetch enriched metadata about your feature classes and resolvers through the `get_graph` method.
 
 ### Spine SQL query
 
@@ -951,8 +982,8 @@ at = datetime.now()
 dataset: Dataset = ChalkClient().offline_query(
      input={
          User.id: uids,
-         User.ts: [at] * len(uids),
      },
+     input_times=[at] * len(uids),
      output=[
          User.id,
          User.fullname,
@@ -1087,7 +1118,7 @@ Feel free to choose either mechanism!
 
 ### Auto Id Features
 
-It's natural to name the primary feature of a feature set
+It's natural to name the primary feature of a feature class
 `id`. So why do you always have to specify it?
 Until now, you needed to write:
 
