@@ -10,13 +10,14 @@ description: Updates to Chalk!
 ### Configure Chalk to not cache null feature values
 
 By default, Chalk caches all feature values, including null. To prevent Chalk from caching null values, use the
-`feature` field and set [`cache_nulls`](/api-docs#feature.cache_nulls) to False.
+`feature` method and set [`cache_nulls`](/api-docs#feature.cache_nulls) to False.
 
 ### More static execution of certain Python resolvers
 
-We built a way to statically interpret Python resolvers to identify ones that are eligible for static C++ execution.
-For now, resolvers are eligible if they do simple arithmetic and logical expressions. If you're interested in learning
-more and seeing whether these new query planner options would apply to your codebase, please reach out!
+We built a way to statically interpret Python resolvers to identify ones that are eligible for C++ execution, which has
+faster performance.  For now, resolvers are eligible if they do simple arithmetic and logical expressions. If you're
+interested in learning more and seeing whether these new query planner options would apply to your codebase, please
+reach out!
 
 ### New tutorial for using Chalk with SageMaker
 
