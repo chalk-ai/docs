@@ -728,7 +728,7 @@ Here, we assign `User.email` to `UserSQL.email` and
 #### Incremental queries with SQLAlchemy
 
 To create an incremental SQLAlchemy query, use `.incremental`. Chalk will page over the underlying table using the
-column mapped to the [`feature_time`](/docs/features#feature-time).
+column mapped to [`FeatureTime`](/docs/features#feature-time).
 
 ```py
 pg = PostgreSQLSource(name='PG')
