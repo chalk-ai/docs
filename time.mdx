@@ -52,7 +52,8 @@ class User:
 
 Using your `FeatureTime` feature, you can access and override feature time for the whole feature class.
 
-You can access the `FeatureTime` as a resolver input:
+You can access the `FeatureTime` as a resolver input. In this example, `ts` will be set to the maximum feature time for
+all features passed as resolver parameters:
 
 ```py
 @offline
@@ -69,6 +70,9 @@ def fn(...) -> Features[User.name, User.timestamp]:
         ts=datetime(2014, 8, 12, tzinfo=timezone.utc)
     )
 ```
+
+You can include the `FeatureTime` feature in query [`output`](/api-docs#ChalkClient.offline_query.output). Its value
+will be set to the maximum timestamp across all features in its feature class.
 
 ### Time filtering in resolvers
 
@@ -179,7 +183,8 @@ timestamp or as a list corresponding to the `Now` times to use for each entry in
 from datetime import timezone
 
 ChalkClient().offline_query(
-    input={User.id: [1, 1, 1]},
+    # Pass id 1 multiple times because we want to request it with multiple input_times
+    input={User.id: [1, 1, 1]},  
     input_times=[
         datetime.now(tz=timezone.utc) - timedelta(days=365 * 10),
         datetime.now(tz=timezone.utc) - timedelta(days=365),
@@ -241,6 +246,11 @@ from tv_episodes
 where air_date < ${now}
   and id = ${tv_episode.id}
 ```
+
+### Accessing query time in query output
+
+For ergonomics, you may find it easier to access query time when it is correlated with the rows of your DataFrame. To
+have Chalk include query time as a column in your DataFrame, use [`output_ts`](/api-docs#ChalkClient.sample.output_ts).
 
 ## Timezone handling for naive datetimes
 Chalk stores UTC as the timezone for naive datetime objects. Additionally,
