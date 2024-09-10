@@ -208,7 +208,7 @@ key to the header.
 This tells Chalk to only ingest new data from the database, and is helpful
 when you have an immutable events table. Also, notice the new
 `updated_at` column in the `select` statement. We'll map that column
-to a [FeatureTime](/docs/time) attribute in our feature class:
+to a [`FeatureTime`](/docs/time) attribute in our feature class:
 
 ```diff-py src/models.py
 from chalk.features import feature, features, FeatureTime
