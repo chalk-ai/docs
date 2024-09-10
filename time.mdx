@@ -1,81 +1,119 @@
 ---
 title: Time
-description: Introspect and override feature resolution timestamps.
+description: Manage feature timestamps and point-in-time query timestamps.
 ---
 
 ---
 
-By default, features are timestamped with the execution time of their resolver. You can override this behavior by
-providing timestamps from your data source. This functionality can be helpful when working with an event store or
-timestamped API.
+## Overview
 
-The first step is to add a `FeatureTime` attribute to your feature class.
+Chalk uses two main timestamps you should be aware of as you build your Chalk project:
 
-By default, if you have a feature named `ts` with a type
-of `datetime.datetime`, it will be treated as a feature time.
+1. Feature time (`FeatureTime`): The time at which a feature was observed, which is used in query time filters and
+aggregation time windows.
+2. Query time (`Now`): The time a query should assume is "now" when retrieving data. Features whose feature time comes
+after a given query time will never be returned for those queries, in online or offline contexts.
 
-```py
-from chalk.features import features
+## Feature time
 
-@features
-class User:
-    ts: datetime
-```
+Feature time is the time at which a feature was observed. By default, Chalk sets a feature's time to the feature's
+resolver execution time. The feature time can be overridden for a feature class, accessed from resolver parameters, and
+requested in query inputs and outputs.
 
-However, if you wish to use a different name, you can use
-the `FeatureTime` annotation:
+You may have multiple timestamps associated with your data. It's important to set the feature time to the value that
+most closely represents when your system would have accessed the data in production.
+
+For example, in an asynchronous streaming system, you may have one timestamp for when an event was added to your task
+queue and another timestamp for when the event was removed from the queue and processed. We recommend using the
+latter timestamp as your feature time to make your training most closely resemble production. If you use the timestamp
+for when an event was added to your task queue, you would be training your system with data it would not have been able
+to access in production.
+
+### Setting feature time for a feature class
+
+Each individual feature has its own feature time, which is used to retrieve point-in-time correct data for [temporal
+consistency](/docs/temporal-consistency).
+
+To access the latest time associated with any feature in a feature class, use the special `FeatureTime` feature
+throughout Chalk.
+
+By default, if it is present, Chalk will treat a feature named `ts` with `datetime.datetime` type as the `FeatureTime`
+value. Otherwise, you can use the `FeatureTime` type annotation to set a different name:
 
 ```py
 from chalk.features import features, FeatureTime
 
 @features
 class User:
-    timestamp: FeatureTime
+    id: int
+    name: str
+    timestamp: FeatureTime  # datetime.datetime under the hood
 ```
 
-The class `FeatureTime` is a `datetime.datetime` with a `typing.Annotation`
-applied.
+Using your `FeatureTime` feature, you can access and override feature time for the whole feature class.
 
-Using this new feature, you can now
-introspect the time features were created in resolvers,
-and return feature data with custom timestamps.
-
----
-
-## Using feature time
-
-To pull the feature time, require the `ts`
-field from the user in the arguments of your function.
-This value will be set to the most-recent value
-of all arguments to your function.
+You can access the `FeatureTime` as a resolver input:
 
 ```py
 @offline
-def fn(name: User.name, ts: User.ts) -> ...:
+def fn(name: User.name, ts: User.timestamp) -> ...:
 ```
 
----
-
-## Overriding feature time
-
-You can also provide the time that a set of features
-was created by supplying a value for the `ts` field
-in your resolver.
-
-Building on the above example:
+You can directly set the `FeatureTime` value by returning it from a resolver:
 
 ```py
 @offline
-def fn(...) -> Features[User.name, User.ts]:
+def fn(...) -> Features[User.name, User.timestamp]:
     return User(
         name="Maryam Mirzakhani",
         ts=datetime(2014, 8, 12, tzinfo=timezone.utc)
     )
 ```
 
----
+### Time filtering in resolvers
 
-## Interaction with the online store
+[has-many](/docs/has-many) features create [DataFrames](/docs/dataframe). These DataFrames can be filtered with
+[`before`](/api-docs#before) and [`after`](/api-docs#after). Regardless of which time filters you use, Chalk will
+never return features where the feature time is greater than the current query time, in order to maintain [temporal
+consistency](/docs/temporal-consistency).
+
+#### Examples
+
+To compute the number of transfers a user made in the last seven days, use [`after`](/api-docs#after):
+
+```py
+from chalk.features import after, ...
+
+@online
+def fn(transfers: User.transfers[after(days_ago=7)]) -> ...:
+    return transfers.count()
+```
+
+To compute the number of transfers a user made *more than* seven days ago, use [`before`](/api-docs#before):
+
+```py
+from chalk.features import before, ...
+
+@online
+def fn(transfers: User.transfers[before(days_ago=7)]) -> ...:
+    return transfers.count()
+```
+
+Combine `before` and `after` to retrieve transfers made 1-2 weeks ago:
+
+```py
+from chalk.features import before, after, ...
+
+@online
+def fn(transfers: User.transfers[after(days_ago=14), before(days_ago=7)]) -> ...:
+    return transfers.count()
+```
+
+All of these examples can be used in combination with [other DataFrame projections and
+filters](/docs/dataframe#composing-projections-and-filters). You may also find [windowed
+aggregations](/docs/aggregations) useful.
+
+### Interaction with the online store
 
 Features with overriden observation timestamps are treated specially when inserted into the online store.
 In particular, Chalk will always check for existing "newer" feature values in the online store
@@ -86,9 +124,7 @@ Additionally, once features are inserted into the online store, Chalk tracks the
 when these feature values are returned as part of online queries. Chalk uses these source timestamps
 to compute the "feature staleness" metric. Staleness in this context is defined as "query time - observation time".
 
----
-
-## Interaction with the offline store
+### Interaction with the offline store
 
 Features with overriden observation timestamps are inserted into the offline store with the timestamp that you
 specify. The observation timestamp works like an "effective as of" timestamp, so if you insert something like this:
@@ -122,31 +158,22 @@ id, age, <= 2022-01-02
 output: 6
 ```
 
-### Now: Explicitly time-dependent resolvers
+---
 
-Chalk supports resolvers that are explicitly time-dependent. This is useful for performing backfills which
-compute values that depend on timestamps that are semantically similar to `datetime.now()`.
+## Query time
 
-You can express time-dependency by passing in a special feature called `Now` to your Python resolvers, or
-`${now}` as an argument to your SQL file resolvers. This special feature gets converted into a `datetime`
-within resolvers:
+Query time is the time treated as "now" within a query context. The current query time can be accessed with `chalk.Now`
+in resolvers. For online queries, `Now` is equal to `datetime.now()`. For offline queries, you can pass one or more
+timestamps that will be used as the query time.
 
-```py
-from chalk import Now
+### Setting query time
 
-@online
-def get_age_in_years(birthday: User.birthday, now: Now) -> User.age_in_years:
-    return (now - birthday).years
-```
+In training, you will likely want to retrieve data as if you are at a point in the past to create the most accurate
+predictions. We cover this idea in greater detail in our [temporal consistency](/docs/temporal-consistency)
+documentation.
 
-In online queries, (i.e. with `ChalkClient().query`), `Now` is `datetime.now()`
-if the `now` parameter is unused.
-
-In offline query contexts, pass
-[input_times](/api-docs#ChalkClient.offline_query.input_times) as a list
-corresponding to the `now` times to use for each entry in `input`. This
-parameter allows you to backfill a feature for a single entity at many
-different historical time points:
+To set the query's "now" time, pass [`input_times`](/api-docs#ChalkClient.offline_query.input_times) as either a single
+timestamp or as a list corresponding to the `Now` times to use for each entry in `input`:
 
 ```py
 from datetime import timezone
@@ -169,6 +196,21 @@ ChalkClient().offline_query(
 # | 1  | <age> - 0    |
 ```
 
+### Accessing query time in resolvers
+
+To access the query time in your resolvers, you can reference a special feature called `Now`, which is a
+`datetime.datetime` object.
+
+You can pass `Now` in Python resolvers:
+
+```py
+from chalk import Now
+
+@online
+def get_age_in_years(birthday: User.birthday, now: Now) -> User.age_in_years:
+    return (now - birthday).years
+```
+
 `Now` can be used in DataFrame resolvers as well in order to compute bulk values:
 
 ```py
@@ -183,8 +225,8 @@ def batch_get_age_in_years(df: DataFrame[User.id, User.birthday, Now]) -> DataFr
     )
 ```
 
-If `Now` is being used in a resolver to compute a has-many join, then the `Now` feature must be passed in
-alongside a primary key feature as inputs.
+You can also reference `${now}` in SQL file resolvers. If `Now` is used in a resolver to compute a has-many join, then
+the `Now` feature must be passed as input.
 
 ```sql
 -- source: sql_file_resolver_temp_db
@@ -206,3 +248,4 @@ Chalk assumes UTC if retrieving naive datetimes from data stores.
 
 We recommend that you include timezone information on all datetime objects you
 work with to avoid ambiguity.
+
