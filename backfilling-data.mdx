@@ -13,7 +13,7 @@ If you need to ingest historical feature data from bulk data sources (i.e. a dat
 use Chalk's support for "feature timestamping". This functionality allows you to override the default timestamps
 on the ingested feature values.
 
-First, define a [feature_time](/docs/time) feature for the relevant feature class:
+First, define a [`FeatureTime`](/docs/time) feature for the relevant feature class:
 
 ```py
 @features
@@ -25,9 +25,9 @@ class User:
     ts: FeatureTime
 ```
 
-Note that this `ts` feature doesn't need to correspond to a specific feature in your business domain.
-Chalk simply uses this `feature_time` to set the "observation time" of other features that your resolvers compute.
-Please see documentation on [feature_time](/docs/time) for more information on this topic.
+The `ts` feature doesn't need to correspond to a specific feature in your business domain.
+Chalk uses `FeatureTime` to set the "observation time" of other features that your resolvers compute.
+Please see documentation on [feature time](/docs/time) for more information on this topic.
 
 Now, define a resolver to ingest data from your data source:
 
@@ -57,7 +57,7 @@ chalk trigger --resolver your.module.path.ingest_historical_data
 You must manually trigger the resolver because it has no cron schedule specified.
 
 Once your resolver run completes, your data will be available in the offline store with effective times
-specified by the values returned for your `feature_time` (in this example, `updated_at` from `source_table`).
+specified by the values returned for your `FeatureTime` (in this example, `updated_at` from `source_table`).
 If the feature is marked as [tolerating staleness](/docs/feature-caching), and `etl_offline_to_online=True`, then Chalk will also insert
 feature values into the online store if they are newer than existing values.
 

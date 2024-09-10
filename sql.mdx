@@ -70,7 +70,7 @@ select id, email, full_name from user_table where id = ${email_user.id}
 Use `${}` with snake case to reference the desired feature.
 
 Use `${now}` in your query as a special argument representing the time of the query. For more details, see our
-[Time](/docs/time#now-explicitly-time-dependent-resolvers) documentation.
+[time](/docs/time#accessing-query-time-in-resolvers) documentation.
 
 ### SQL strings
 
@@ -654,11 +654,9 @@ between executions of your resolver.
 When Chalk executes an incremental query, it has to update the "max timestamp" value that it will use as the
 lower bound for the next query. By default, Chalk sets this value to the time at the _start_ of the query.
 
-If your resolver returns a [FeatureTime](/docs/time) feature, Chalk will update the "max timestamp" value
+If your resolver returns a [`FeatureTime`](/docs/time) feature, Chalk will update the "max timestamp" value
 to the "max" `FeatureTime` value that is returned instead. This allows you to control the incremental
 behavior more precisely.
-
-
 
 ## Tagged SQL sources
 
@@ -730,7 +728,7 @@ Here, we assign `User.email` to `UserSQL.email` and
 #### Incremental queries with SQLAlchemy
 
 To create an incremental SQLAlchemy query, use `.incremental`. Chalk will page over the underlying table using the
-column mapped to the [`feature_time`](/docs/features#feature-time).
+column mapped to [`FeatureTime`](/docs/features#feature-time).
 
 ```py
 pg = PostgreSQLSource(name='PG')
