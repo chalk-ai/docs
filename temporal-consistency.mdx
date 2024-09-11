@@ -119,7 +119,14 @@ With the same historical data from the previous scenario, we can determine the c
 
 <BackfillExample />
 
-In your code, you can add new features and compute their historical values by running an offline query with
+`Business.gross_profit` at `t1` and `t2` would be computed with the following values:
+
+| Query time | `Business.sales` | `Business.cogs` | `Business.gross_profit` |
+| --- | --- | --- | --- |
+| `t1` | <span className="font-mono text-accent-orange"> 1.3 </span> | <span className="font-mono text-accent-purple"> 0.5 </span> | <span className="font-mono"> 0.8 </span> |
+| `t2` | <span className="font-mono text-accent-orange"> 1.0 </span> | <span className="font-mono text-accent-purple"> 0.4 </span> | <span className="font-mono"> 0.6 </span> |
+
+In your code, you can compute historical values for updated features by running an offline query with
 [`recompute_features=True`](/api-docs#ChalkClient.offline_query.recompute_features). You may also consider one of our
 other [backfill](/docs/backfilling-data) options for other use cases.
 
