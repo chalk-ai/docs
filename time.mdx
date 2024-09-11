@@ -3,6 +3,8 @@ title: Time
 description: Manage feature timestamps and point-in-time query timestamps.
 ---
 
+import { TipInfo } from '@/components/Tip'
+
 ---
 
 ## Overview
@@ -13,6 +15,9 @@ Chalk uses two main timestamps you should be aware of as you build your Chalk pr
 aggregation time windows.
 2. Query time (`Now`): The time a query should assume is "now" when retrieving data. Features whose feature time comes
 after a given query time will never be returned for those queries, in online or offline contexts.
+
+Feature time is returned in the `__observed_at__` column in Chalk query results. Query time is returned in the `__ts__`
+column.
 
 ## Feature time
 
@@ -261,12 +266,21 @@ where air_date < ${now}
   and id = ${tv_episode.id}
 ```
 
-### Accessing query time in query output
+### Accessing query time in query results
 
-You may find it more convenient to access query time when it is correlated with the rows of your output DataFrame. To
-have Chalk include query time in your output DataFrame, use [`output_ts`](/api-docs#ChalkClient.sample.output_ts).  If
-you pass `output_ts=True`, query time will be accessible in a column named `__chalk__.CHALK_TS`. You may pass a string
-to `output_ts` to provide a name for the column.
+Chalk [Datasets](/docs/datasets) return the query time in the `__ts__` column.
+
+When converting Chalk Datasets to Polars or Pandas DataFrames, you may want to include the query time column. To do so,
+pass `output_ts` to your [`to_polars`](/api-docs#Dataset.to_polars) or [`to_pandas`](/api-docs#Dataset.to_pandas) calls.
+You may pass a column name to `output_ts` to set the name of the query time column. If you pass `True`, the query time
+column name will be `__chalk__.CHALK_TS`.
+
+<TipInfo>
+Be careful to not mix up <code>__ts__</code> and <code>ts</code>. <code>__ts__</code> represents the query time, or the
+time the query treats as "now" during query execution. <code>ts</code> is a common name for the feature representing
+<code>FeatureTime</code>, the time at which a feature was observed.
+</TipInfo>
+
 
 ## Timezone handling for naive datetimes
 Chalk stores UTC as the timezone for naive datetime objects. Additionally, Chalk assumes UTC if retrieving naive
