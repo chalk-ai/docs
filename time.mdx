@@ -266,7 +266,7 @@ where air_date < ${now}
 You may find it more convenient to access query time when it is correlated with the rows of your output DataFrame. To
 have Chalk include query time in your output DataFrame, use [`output_ts`](/api-docs#ChalkClient.sample.output_ts).  If
 you pass `output_ts=True`, query time will be accessible in a column named `__chalk__.CHALK_TS`. You may pass a string
-to output_ts to provide a name for the column.
+to `output_ts` to provide a name for the column.
 
 ## Timezone handling for naive datetimes
 Chalk stores UTC as the timezone for naive datetime objects. Additionally, Chalk assumes UTC if retrieving naive
