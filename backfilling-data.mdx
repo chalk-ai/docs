@@ -37,7 +37,7 @@ SELECT id, backfilled_feature, updated_at AS ts FROM source_table
 ```
 
 Chalk assumes your timestamp column is in UTC. You may return many values of `backfilled_feature` for the same `id`, but
-they should have different `ts` values.
+they should have different `FeatureTime` values.
 
 Then, after running [`chalk apply`](/cli/apply), you can trigger this resolver to run once using the Chalk Dashboard or
 the [`chalk trigger`](/cli/trigger) command:
@@ -55,7 +55,7 @@ online store if they are newer than existing values.
 
 ---
 
-## Re-ingesting Incremental Resolvers
+## Re-ingesting incremental resolvers
 
 Resolvers that use [incremental ingestion](/docs/sql) don't re-process data from before their "max observed timestamp"
 by default, even if the query is changed.
@@ -101,7 +101,7 @@ dataset.ingest(store_offline=True)
 
 ---
 
-## Backfilling Python Resolvers
+## Backfilling Python resolvers
 
 Chalk can also backfill feature data for resolvers that take arguments to compute feature values. This
 is useful for generating historically accurate training datasets using new resolvers that are derived from
@@ -128,21 +128,15 @@ def reverse_name(name: User.name) -> User.reversed_name:
 
 
 Chalk can automatically compute this feature using historically observed values of `User.name`.  To do so, you can
-either use an offline query with [`recompute_features`](/api-docs#ChalkClient.offline_query.recompute_features) set to
-True and ingest the computed feature values as we did above, or you can use [`chalk trigger`](/cli/trigger) to trigger a
-resolver run.
+either use an offline query with [`recompute_features=True`](/api-docs#ChalkClient.offline_query.recompute_features) and
+ingest the computed feature values as we did above. Alternatively, you can use [`chalk trigger`](/cli/trigger) to
+trigger a resolver run:
 
 ```
 chalk trigger --resolver your.module.path.reverse_name --lower-bound 2024-05-05T12:00:00+00:00 --persist-offline=True
 ```
 
-In this example, Chalk will query the offline store to sample all combinations of:
-
-```
-| user.id | user.name | observed_at |
-```
-
-where observed_at is later than the ISO8601 timestamp passed in as the `lower_bound` and then invoke your resolver.
-For each sampled tuple `(id, name, observed_at)`, Chalk will write
-`(id, reverse_name(name), observed-at)` back to the offline store, and to the online store if
-the new feature is marked with non-zero `max_staleness` and `etl_offline_to_online=True`.
+In this example, Chalk will query the offline store to sample all combinations of `user.id`, `user.name`, and the
+corresponding `FeatureTime` for which `FeatureTime` is later than the ISO8601 timestamp passed in as the `lower_bound`.
+For each sample, Chalk will invoke your resolver and write the results back to the offline store. Chalk will also update
+the online store if the new feature is marked with non-zero `max_staleness` and `etl_offline_to_online=True`.
