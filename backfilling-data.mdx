@@ -7,11 +7,11 @@ published: true
 
 ---
 
-## Simple Backfills from Bulk Sources
+## Simple backfills from bulk sources
 
-If you need to ingest historical feature data from bulk data sources (i.e. a data warehouse or S3), you can
-use Chalk's support for "feature timestamping". This functionality allows you to override the default timestamps
-on the ingested feature values.
+When ingesting historical feature data from bulk data sources (such as a data warehouse or S3), you can override
+[feature time](/docs/time) with timestamps from the data source. Chalk uses feature time to determine when a feature
+should be included in your [point-in-time queries](/docs/temporal-consistency) for consistency with production.
 
 First, define a [`FeatureTime`](/docs/time) feature for the relevant feature class:
 
@@ -25,30 +25,22 @@ class User:
     ts: FeatureTime
 ```
 
-The `ts` feature doesn't need to correspond to a specific feature in your business domain.
-Chalk uses `FeatureTime` to set the "observation time" of other features that your resolvers compute.
-Please see documentation on [feature time](/docs/time) for more information on this topic.
+Next, define a resolver to ingest data from your data source. Here's an example of a [SQL file resolver](/docs/sql) for
+ingesting data from Snowflake:
 
-Now, define a resolver to ingest data from your data source:
+```sql filename.chalk.sql
+-- type: offline
+-- resolves: user 
+-- source: snowflake
 
-```py
-@offline
-def ingest_historical_data() -> DataFrame[User.id, User.backfilled_feature, User.ts]:
-    return (
-        snowflake
-            .query_string(
-                "SELECT id, backfilled_feature, updated_at FROM source_table"
-                fields={"updated_at": User.ts}
-            )
-            .all()
-    )
+SELECT id, backfilled_feature, updated_at AS ts FROM source_table
 ```
 
-Chalk assumes that your timestamp column is `UTC`, unless otherwise specified. Note: you may return many
-values of `backfilled_feature` for the same `id`, but they should have different `ts` values.
+Chalk assumes your timestamp column is in UTC. You may return many values of `backfilled_feature` for the same `id`, but
+they should have different `ts` values.
 
-Then, after running [`chalk apply`](/cli/apply), you can trigger this resolver to run one time using the Chalk Dashboard,
-or the [`chalk trigger`](/cli/trigger) command:
+Then, after running [`chalk apply`](/cli/apply), you can trigger this resolver to run once using the Chalk Dashboard or
+the [`chalk trigger`](/cli/trigger) command:
 
 ```
 chalk trigger --resolver your.module.path.ingest_historical_data
@@ -56,32 +48,32 @@ chalk trigger --resolver your.module.path.ingest_historical_data
 
 You must manually trigger the resolver because it has no cron schedule specified.
 
-Once your resolver run completes, your data will be available in the offline store with effective times
-specified by the values returned for your `FeatureTime` (in this example, `updated_at` from `source_table`).
-If the feature is marked as [tolerating staleness](/docs/feature-caching), and `etl_offline_to_online=True`, then Chalk will also insert
-feature values into the online store if they are newer than existing values.
+Once your resolver run completes, your data will be available in the offline store with effective times specified by the
+values returned for the `FeatureTime` (in this example, `updated_at` from `source_table`). If the feature [tolerates
+staleness](/docs/feature-caching) and `etl_offline_to_online=True`, then Chalk will also insert feature values into the
+online store if they are newer than existing values.
 
 ---
 
 ## Re-ingesting Incremental Resolvers
 
-Resolvers that use [incremental ingest](/docs/sql), don't re-process data from before their
-"max observed timestamp" by default, even if the query is changed.
+Resolvers that use [incremental ingestion](/docs/sql) don't re-process data from before their "max observed timestamp"
+by default, even if the query is changed.
 
 Chalk lets you reset the maximum observed timestamp of incremental resolvers to a specific timestamp,
 or re-ingest all historical data.
 
-Chalk uses [offline queries](/docs/training-client) to perform this operation. Suppose that you want to add a new column,
+Chalk uses [offline queries](/docs/training-client) to perform this operation. Suppose you want to add a new column,
 `favorite_color`, to this existing batch SQL resolver:
 
 ```py
-@offline(cron="0 * * * *")
-def ingest_preferences() -> DataFrame[User.id, User.favorite_food, User.favorite_color]:
-    return (
-        snowflake
-            .query_string("SELECT id, favorite_food, favorite_color, updated_at FROM preferences")
-            .incremental(incremental_column="updated_at")
-    )
+-- type: offline
+-- resolves: user
+-- source: snowflake
+-- cron: "0 * * * *"
+-- incremental:
+--   incremental_column: updated_at
+SELECT id, favorite_food, favorite_color, updated_at FROM preferences
 ```
 
 If you have been running this resolver in production for a long time, then simply adding `favorite_color` and
@@ -135,10 +127,10 @@ def reverse_name(name: User.name) -> User.reversed_name:
 ```
 
 
-Chalk can automatically compute this feature using historically observed values of `User.name`.
-To do so, you can either use an offline query with `recompute_features=True` and ingest the
-computed feature values as we did above, or you can use the  [`chalk`](/cli/) CLI tool to
-trigger a resolver run.
+Chalk can automatically compute this feature using historically observed values of `User.name`.  To do so, you can
+either use an offline query with [`recompute_features`](/api-docs#ChalkClient.offline_query.recompute_features) set to
+True and ingest the computed feature values as we did above, or you can use [`chalk trigger`](/cli/trigger) to trigger a
+resolver run.
 
 ```
 chalk trigger --resolver your.module.path.reverse_name --lower-bound 2024-05-05T12:00:00+00:00 --persist-offline=True

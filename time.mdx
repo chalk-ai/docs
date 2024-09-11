@@ -162,13 +162,26 @@ id, age, <= 2022-01-02
 output: 6
 ```
 
+### Enforcing a TTL
+
+Features in the offline store have an optional TTL (time to live). When a feature has a TTL value, it will never be
+returned at any time later than `FeatureTime` + TTL. For example, you may not want to consider credit scores which were
+retrieved more than a year ago. Setting [`offline_ttl`](/api-docs#feature.offline_ttl) will make `credit_score` return
+None if last observed credit score is more than one year old in comparison to the current query time.
+
+```py
+@features
+class User:
+    id: str
+    credit_score: int = feature(offline_ttl=timedelta(years=1))
+```
+
 ---
 
 ## Query time
 
-Query time is the time treated as "now" within a query context. The current query time can be accessed with `chalk.Now`
-in resolvers. For online queries, `Now` is equal to `datetime.now()`. For offline queries, you can pass one or more
-timestamps that will be used as the query time.
+Query time is the time treated as "now" within a query context. For online queries, `Now` is equal to `datetime.now()`.
+For offline queries, you can pass one or more timestamps that will be used as the query time for each input row.
 
 ### Setting query time
 
@@ -183,7 +196,8 @@ timestamp or as a list corresponding to the `Now` times to use for each entry in
 from datetime import timezone
 
 ChalkClient().offline_query(
-    # Pass id 1 multiple times because we want to request it with multiple input_times
+    # Pass id 1 multiple times because we want to
+    # request it with multiple input_times
     input={User.id: [1, 1, 1]},  
     input_times=[
         datetime.now(tz=timezone.utc) - timedelta(days=365 * 10),
@@ -249,13 +263,12 @@ where air_date < ${now}
 
 ### Accessing query time in query output
 
-For ergonomics, you may find it easier to access query time when it is correlated with the rows of your DataFrame. To
-have Chalk include query time as a column in your DataFrame, use [`output_ts`](/api-docs#ChalkClient.sample.output_ts).
+You may find it more convenient to access query time when it is correlated with the rows of your DataFrame. To have
+Chalk include query time as a column in your DataFrame, use [`output_ts`](/api-docs#ChalkClient.sample.output_ts).
 
 ## Timezone handling for naive datetimes
-Chalk stores UTC as the timezone for naive datetime objects. Additionally,
-Chalk assumes UTC if retrieving naive datetimes from data stores.
+Chalk stores UTC as the timezone for naive datetime objects. Additionally, Chalk assumes UTC if retrieving naive
+datetimes from data stores.
 
-We recommend that you include timezone information on all datetime objects you
-work with to avoid ambiguity.
+We recommend that you include timezone information on all datetime objects you work with to avoid ambiguity.
 
