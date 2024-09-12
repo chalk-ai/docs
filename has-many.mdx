@@ -101,12 +101,62 @@ relationship from our example, add a `User` to the `Transfer` class:
 
 ### Many-to-many
 
-Many-to-many relations are defined by has-many relationship on both sides of the relation.
-As before, you don't need to specify the join condition a second time if the join
-condition is symmetric.
+The recommended way to define a many-to-many relationship is through a joining feature class.
+For instance, if you were defining a many-many relationship between `Actors` and `Movies`, you
+would define something like:
 
-<PyDiffEditor html={manyToManyDiff} />
+```python
+from chalk.features import features, DataFrame
+from chalk import online
+
+@features
+class Actor:
+  id: str
+  appearances: "DataFrame[ActorInMovie]"
+  full_name: str
+  movie_ids: list[int]
+
+@features
+class Movie:
+  id: str
+  title: str
+  cast: list[ids]
+
+@features
+class ActorInMovie:
+  id: str
+  actor_id: Actor.id
+  movie_id: Movie.id
+  movie: Movie
+```
 
 <TipInfo>
-  Here you need to use quotes around `DataFrame[Author]` to use a forward reference.
+  Here you need to use quotes around `DataFrame[ActorInMovie]` to use a forward reference.
 </TipInfo>
+
+This joining feature class can either by populated by:
+
+A SQL Resolver
+```sql
+-- resolves: ActorInMovie
+SELECT a.id||'_'||m.id as id, a.id as actor_id, m.id as movie_id FROM actors a CROSS JOIN movies m;
+```
+
+or, by a `DataFrame` returning python resolver (namespaced to one of the joined feature sets):
+
+```python
+@online
+def get_actor_in_movie(a_id: Actor.id, movie_ids: Actor.movie_ids) -> Actor.appearances:
+  return DataFrame([
+    ActorInMovie(id=f"{a_id}_{m_id}", actor_id=a_id, movie_id=m_id)
+    for m_id in movie_ids
+  ])
+
+```
+
+With the above in place, you can now query for movie features from the actor namespace. For example, if you wanted to
+query for the names of all the movies an actor appears in, you can do this using a
+
+```sh
+chalk query --in actor.id=1 --out actor.appearances.movie.title
+```
