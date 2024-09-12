@@ -5,133 +5,145 @@ description: Using underscore expressions to define features
 
 ---
 
-## Underscore expressions
+## Overview
 
-Underscore expressions can be used to define and
-resolve features from operations on other features.
+Underscore expressions are used to derive features from operations on other features. In feature definitions, `_`
+represents a reference to the containing feature class and is used to access other features in the same instance. In
+addition to arithmetic operations, underscore expressions can also be used to filter and aggregate data.
 
-Consider the feature class `RocketEngine` defined below:
+Underscore expressions are useful because Chalk statically analyzes and optimizes them, leading to better performance
+when compared to equivalent Python resolvers. They are also useful for succinctly defining common features, such as the
+number of times a user failed a login attempt over the past 30 days or the total amount spent at a given merchant.
 
-```python
-from chalk.features import features
+## Arithmetic
 
-@features
-class RocketEngine:
-    id: int
-    mass: float
-    volume: float
-```
-
-Suppose we wanted to define a feature called `density` and resolve it as `mass / volume`.
-We can use the underscore feature definition syntax as follows:
+In this example, we have a Transaction feature class with `total` and `sales_tax` features and we want to define
+`subtotal` as `total` minus `sales_tax`. Instead of writing a Python resolver, we can resolve `subtotal` with an
+underscore expression:
 
 ```diff-py
-- from chalk.features import features
+- from chalk import online
 + from chalk.features import _, features
 
 @features
-class RocketEngine:
+class Transaction:
     id: int
-    mass: float
-    volume: float
+    total: float
+    sales_tax: float
++   subtotal: float = _.total - _.sales_tax
 
-+   # Defining density using an underscore expression
-+   density: float = _.mass / _.volume
+- @online
+- def get_subtotal(total: Transaction.total, sales_tax: Transaction.sales_tax) -> Transaction.subtotal:
+-     return total - sales_tax
 ```
 
-Note that `_` is a reference to the containing feature class `RocketEngine` and should
-be used to reference features contained in the same feature class.
+## Conditions and filters
 
----
+DataFrame features can be [filtered](/docs/dataframe#filters) with underscore expressions.
 
-## DataFrames
-
-Underscore can also be used to define expressions with [`DataFrame`](/docs/dataframe) features.
-
-In the example below, we will define two new feature classes, `Astronaut` and `RocketShip`:
-
-```python
-from chalk.features import features, has_one, has_many, DataFrame
-
-@features
-class Astronaut:
-    id: int
-    name: str
-    height: float
-    mass: float
-    ship_id: int
-
-@features
-class RocketShip:
-    id: int
-    engine_id: int
-
-    # `has_one` relationship with `RocketEngine`
-    engine: RocketEngine = has_one(lambda: RocketShip.engine_id == RocketEngine.id)
-
-    # `has_many` relationship with `Astronaut`
-    astronauts: DataFrame[Astronaut] = has_many(lambda: Astronaut.ship_id == RocketShip.id)
-```
-### Projections
-
-Suppose we wanted to define a feature called `total_mass` on `RocketShip` and resolve
-it as the sum of the masses of the astronauts on the ship and the mass of the engine.
-
-Using the underscore syntax, we can define `total_mass` as follows:
+Extending our `Transaction` example, we can create `User` feature class with a [has-many](/docs/has-many) relationship
+to `Transaction`. Then, we can define a feature representing large purchases by referencing the existing
+`User.transactions` feature:
 
 ```diff-py
-- from chalk.features import features, has_one, has_many, DataFrame
-+ from chalk.features import _, features, has_one, has_many, DataFrame
+from chalk.features import _, features, DataFrame
 
 @features
-class Astronaut:
+class Transaction:
     id: int
-    name: str
-    height: float
-    mass: float
-    ship_id: int
++   user_id: "User.id"
+    total: float
+    sales_tax: float
+    subtotal: float = _.total - _.sales_tax
 
-@features
-class RocketShip:
-    id: int
-    engine_id: int
-
-    # `has_one` relationship with `RocketEngine`
-    engine: RocketEngine = has_one(lambda: RocketShip.engine_id == RocketEngine.id)
-
-    # `has_many` relationship with `Astronaut`
-    astronauts: DataFrame[Astronaut] = has_many(lambda: Astronaut.ship_id == RocketShip.id)
-
-+   # Defining total_mass using an underscore expression
-+   total_mass: float = _.engine.mass + _.astronauts[_.mass].sum()
++ @features
++ class User:
++    id: int
++    # implicit has-many relationship with Transaction due to `user_id` above
++    transactions: DataFrame[Transaction]
++    large_transactions: DataFrame[Transaction] = _.transactions[_.total > 1000]
 ```
 
-Here we used the underscore syntax do a [projection](/docs/dataframe#projections) of the `mass` column in the
-astronauts `DataFrame`.
+The object referenced by `_` changes depending on its current scope. In this code, the `_` in `_.transactions`
+references the `User` object. Within the DataFrame filter, the `_` in `_.total` references each `Transaction` object as
+each one is evaluated.
 
+## Projections and aggregations
 
-### Filters
+DataFrame features support [projection](/docs/dataframe#projections) with underscore expressions, which produce a new
+DataFrame scoped down to the referenced columns. DataFrames can be aggregated after eligible columns are selected.
 
-Underscores can also be used to define [filters](/docs/dataframe#filters) on `DataFrame` features.
-
-For example, suppose we wanted to define a feature called `count_tall_astronauts` on `RocketShip`.
-We could define the feature as follows
+With our `Transaction` example, we can compute the number of large transactions a user as had as well as their total
+spending volume:
 
 ```diff-py
+from chalk.features import _, features, DataFrame
+
 @features
-class RocketShip:
+class Transaction:
     id: int
-    engine_id: int
+    user_id: "User.id"
+    total: float
+    sales_tax: float
+    subtotal: float = _.total - _.sales_tax
 
-    # `has_one` relationship with `RocketEngine`
-    engine: RocketEngine = has_one(lambda: RocketShip.engine_id == RocketEngine.id)
-
-    # `has_many` relationship with `Astronaut`
-    astronauts: DataFrame[Astronaut] = has_many(lambda: Astronaut.ship_id == RocketShip.id)
-
-    # Defining total_mass using an underscore expression
-    total_mass: float = _.engine.mass + _.astronauts[_.mass].sum()
-
-+   # Filtering on the `height` column
-+   count_tall_astronauts = _.astronauts[_.height > 2.0].count()
+@features
+class User:
+    id: int
+    # implicit has-many relationship with Transaction due to `user_id` above
+    transactions: DataFrame[Transaction]
+    large_transactions: DataFrame[Transaction] = _.transactions[_.total > 1000]
++   total_spend: float = _.transactions[_.total].sum()
++   num_large_transactions: int = _.large_transactions.count()
 ```
+
+To compute `User.total_spend`, we needed to create a projection of the `User.transactions` DataFrame limited to only the
+`Transaction.total` column so that the `sum` aggregation could work. In contrast, no projection was needed for
+`num_large_transaction`'s `count` aggregation because `count` works on DataFrames with any number of columns.
+
+## All supported operations
+
+### Arithmetic
+* Addition: `+`
+* Subtraction: `-`
+* Multiplication: `*`
+* Division: `/`
+
+### Conditions
+* Greater than: `>`
+* Greater than or equal: `>=`
+* Less than: `<`
+* Less than or equal: `<=`
+* Equal: `==` [^1]
+* Not equal: `!=` [^1]
+* Boolean and: `&` [^1]
+* Boolean or: `|` [^1]
+
+### Aggregations
+* `sum`
+* `min`
+* `max`
+* `mean`
+* `count`
+* `any`
+* `all`
+* `std` (aliases: `stddev`, `stddev_sample`, `std_sample`)
+* `var` (alias: `var_sample`)
+* `approx_count_distinct`
+* `count_distinct`
+* `approx_percentile`
+
+### Additional functions
+The `chalk.functions` module exposes several helpful functions that can be used in
+combination with underscore references to transform features:
+
+* [`bytes_to_string`](/api-docs#bytes_to_string)
+* [`coalesce`](/api-docs#coalesce)
+* [`gunzip`](/api-docs#gunzip)
+* [`json_value`](/api-docs#json_value)
+* [`md5`](/api-docs#md5)
+* [`string_to_bytes`](/api-docs#string_to_bytes)
+
+[^1]: Be careful to not use Python's `and`, `or`, `not`, or `is` operators. Python does not allow these operators to be
+overridden. They take precedence and will be evaluated with native Python, so they will not work with Chalk's underscore
+expressions.
