@@ -107,13 +107,14 @@ would define something like:
 
 ```python
 from chalk.features import features, DataFrame
-from chalk import online
 
 @features
 class Actor:
   id: str
   appearances: "DataFrame[ActorInMovie]"
   full_name: str
+
+  # this will be used to demonstrate one of the ways the joining feature can be populated
   movie_ids: list[int]
 
 @features
@@ -139,6 +140,7 @@ This joining feature class can either by populated by:
 A SQL Resolver
 ```sql
 -- resolves: ActorInMovie
+-- source: PG
 SELECT a.id||'_'||m.id as id, a.id as actor_id, m.id as movie_id FROM actors a CROSS JOIN movies m;
 ```
 
@@ -154,8 +156,8 @@ def get_actor_in_movie(a_id: Actor.id, movie_ids: Actor.movie_ids) -> Actor.appe
 
 ```
 
-With the above in place, you can now query for movie features from the actor namespace. For example, if you wanted to
-query for the names of all the movies an actor appears in, you can do this using a
+With the joining feature class, you can query for movie features from the actor namespace. For example, if you wanted to
+get the titles of the movies an actor appears in, you could run the following query:
 
 ```sh
 chalk query --in actor.id=1 --out actor.appearances.movie.title
