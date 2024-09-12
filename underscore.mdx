@@ -114,10 +114,14 @@ To compute `User.total_spend`, we needed to create a projection of the `User.tra
 * Greater than or equal: `>=`
 * Less than: `<`
 * Less than or equal: `<=`
-* Equal: `==` [^1]
-* Not equal: `!=` [^1]
-* Boolean and: `&` [^1]
-* Boolean or: `|` [^1]
+* Equal: `==`
+* Not equal: `!=`
+* Boolean and: `&`
+* Boolean or: `|`
+
+Be careful to not use Python's `and`, `or`, `not`, or `is` operators. Python does not allow these operators to be
+overridden. They take precedence and will be evaluated with native Python, so they will not work with Chalk's underscore
+expressions.
 
 ### Aggregations
 * `sum`
@@ -144,6 +148,3 @@ combination with underscore references to transform features:
 * [`md5`](/api-docs#md5)
 * [`string_to_bytes`](/api-docs#string_to_bytes)
 
-[^1]: Be careful to not use Python's `and`, `or`, `not`, or `is` operators. Python does not allow these operators to be
-overridden. They take precedence and will be evaluated with native Python, so they will not work with Chalk's underscore
-expressions.
