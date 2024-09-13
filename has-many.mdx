@@ -111,7 +111,7 @@ from chalk.features import features, DataFrame
 @features
 class Actor:
   id: str
-  appearances: "DataFrame[ActorInMovie]"
+  appearances: "DataFrame[MovieRole]"
   full_name: str
 
   # this will be used to demonstrate one of the ways the joining feature can be populated
@@ -123,34 +123,33 @@ class Movie:
   title: str
 
 @features
-class ActorInMovie:
-  id: str
+class MovieRole:
+  id: int
   actor_id: Actor.id
   movie_id: Movie.id
   movie: Movie
 ```
 
 <TipInfo>
-  Here you need to use quotes around `DataFrame[ActorInMovie]` to use a forward reference.
+  Here you need to use quotes around `DataFrame[MovieRole]` to use a forward reference.
 </TipInfo>
 
 This joining feature class can be populated by a SQL file resolver:
 ```sql
--- resolves: ActorInMovie
+-- resolves: MovieRole
 -- source: PG
-SELECT a.id||'_'||m.id as id, a.id as actor_id, m.id as movie_id FROM actors a CROSS JOIN movies m;
+SELECT id, actor_id, movie_id FROM movie_roles;
 ```
 
-or, by a `DataFrame` returning python resolver (namespaced to one of the joined feature sets):
+Alternatively, by a `DataFrame`-returning Python resolver (namespaced to one of the joined feature sets):
 
 ```python
 @online
 def get_actor_in_movie(a_id: Actor.id, movie_ids: Actor.movie_ids) -> Actor.appearances:
   return DataFrame([
-    ActorInMovie(id=f"{a_id}_{m_id}", actor_id=a_id, movie_id=m_id)
+    MovieRole(id=f"{a_id}_{m_id}", actor_id=a_id, movie_id=m_id)
     for m_id in movie_ids
   ])
-
 ```
 
 The joining feature class lets you:
