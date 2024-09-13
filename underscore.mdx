@@ -41,8 +41,8 @@ class Transaction:
 
 DataFrame features can be [filtered](/docs/dataframe#filters) with underscore expressions.
 
-Extending our `Transaction` example, we can create `User` feature class with a [has-many](/docs/has-many) relationship
-to `Transaction`. Then, we can define a feature representing large purchases by referencing the existing
+Extending our `Transaction` example, we can create a `User` feature class with a [has-many](/docs/has-many) relationship
+to `Transaction`. Then, we can define a feature representing the number of large purchases by referencing the existing
 `User.transactions` feature:
 
 ```diff-py
@@ -61,20 +61,20 @@ class Transaction:
 +    id: int
 +    # implicit has-many relationship with Transaction due to `user_id` above
 +    transactions: DataFrame[Transaction]
-+    large_transactions: DataFrame[Transaction] = _.transactions[_.total > 1000]
++    num_large_transactions: DataFrame[Transaction] = _.transactions[_.total > 1000].count()
 ```
 
 The object referenced by `_` changes depending on its current scope. In this code, the `_` in `_.transactions`
 references the `User` object. Within the DataFrame filter, the `_` in `_.total` references each `Transaction` object as
-each one is evaluated.
+each one is evaluated. The `count` aggregation is covered in the next section.
 
 ## Projections and aggregations
 
 DataFrame features support [projection](/docs/dataframe#projections) with underscore expressions, which produce a new
 DataFrame scoped down to the referenced columns. DataFrames can be aggregated after eligible columns are selected.
 
-With our `Transaction` example, we can compute the number of large transactions a user as had as well as their total
-spending volume:
+With our `Transaction` example, we already saw a `count` aggregation for counting the number of large transactions. We
+can add another aggregation for computing the user's total spend:
 
 ```diff-py
 from chalk.features import _, features, DataFrame
@@ -92,9 +92,8 @@ class User:
     id: int
     # implicit has-many relationship with Transaction due to `user_id` above
     transactions: DataFrame[Transaction]
-    large_transactions: DataFrame[Transaction] = _.transactions[_.total > 1000]
+    num_large_transactions: int = _.large_transactions.count()
 +   total_spend: float = _.transactions[_.total].sum()
-+   num_large_transactions: int = _.large_transactions.count()
 ```
 
 To compute `User.total_spend`, we needed to create a projection of the `User.transactions` DataFrame limited to only the
@@ -119,23 +118,30 @@ To compute `User.total_spend`, we needed to create a projection of the `User.tra
 * Boolean and: `&`
 * Boolean or: `|`
 
-Be careful to not use Python's `and`, `or`, `not`, or `is` operators. Python does not allow these operators to be
-overridden. They take precedence and will be evaluated with native Python, so they will not work with Chalk's underscore
-expressions.
+Do not use Python's `and`, `or`, `not`, or `is` operators in underscore expressions. Python does not allow these
+operators to be overridden, so they will not work with Chalk's underscore expressions.
 
 ### Aggregations
-* `sum`
-* `min`
-* `max`
-* `mean`
-* `count`
-* `any`
-* `all`
-* `std` (aliases: `stddev`, `stddev_sample`, `std_sample`)
-* `var` (alias: `var_sample`)
-* `approx_count_distinct`
-* `count_distinct`
-* `approx_percentile`
+
+Aggregation functions have varying behavior when handling None values and empty DataFrames.  If an aggregation function
+says None values are skipped in the table below, it will consider a DataFrame with only None values as empty.
+
+| Function | `None` values | Empty DataFrame | Notes |
+| --- | --- | --- | --- |
+| `sum` | Skipped | Returns `0` | |
+| `min` | Skipped | Returns `None` | |
+| `max` | Skipped | Returns `None` | |
+| `mean` | Skipped | Returns `None` | Feature type must be `float` or <code>float &#124; None</code>. `None` values are skipped, meaning they are not included in the mean calculation.  |
+|`count` | Included | Returns `0` | 
+|`any` | Skipped | Returns `False` | |
+|`all` | Skipped | Returns `True` | |
+|`std` | Skipped | See notes | Standard deviation. Requires at least 2 values. For DataFrames with less than 2 values, returns `None`.<br/><br/>Aliases: `stddev`, `stddev_sample`, `std_sample`. | 
+|`var` | Skipped | See notes | Variance. Same requirements as `std`.<br/><br/>Alias: `var_sample`. | 
+|`approx_count_distinct` | Skipped | Returns `0` | |
+|`approx_percentile` | Skipped | Returns `None` | Takes one argument, `quantile`, expected to be a float in the range `[0, 1]`.<br/><br/>Example: `approx_percentile(0.75)` returns a value approximately equal to the 75th percentile of the not-`None` values in the DataFrame. |
+
+For aggregations that can return `None`, either mark the feature as optional (for example, by setting the feature type
+to `float | None`) or use [`coalesce`](/api-docs#coalesce) to fall back to a default value.
 
 ### Additional functions
 The `chalk.functions` module exposes several helpful functions that can be used in
