@@ -82,9 +82,10 @@ will be set to the maximum timestamp across all features in its feature class.
 ### Time filtering in resolvers
 
 [has-many](/docs/has-many) features create [DataFrames](/docs/dataframe). These DataFrames can be filtered with
-[`before`](/api-docs#before) and [`after`](/api-docs#after). Regardless of which time filters you use, Chalk will
-never return features where the feature time is greater than the current query time, in order to maintain [temporal
-consistency](/docs/temporal-consistency).
+[`before`](/api-docs#before) and [`after`](/api-docs#after).
+
+Regardless of which time filters you use, Chalk will never return features where the feature time is strictly greater
+than the current query time (`Now`), in order to maintain [temporal consistency](/docs/temporal-consistency).
 
 #### Examples
 
