@@ -110,7 +110,7 @@ from chalk.features import features, DataFrame
 
 @features
 class Actor:
-  id: str
+  id: int
   appearances: "DataFrame[MovieRole]"
   full_name: str
 
@@ -119,12 +119,12 @@ class Actor:
 
 @features
 class Movie:
-  id: str
+  id: int
   title: str
 
 @features
 class MovieRole:
-  id: int
+  id: str
   actor_id: Actor.id
   movie_id: Movie.id
   movie: Movie
@@ -159,5 +159,10 @@ The joining feature class lets you:
 For example, to get the titles for all the movies that an actor has appeared in, you can run the following query:
 
 ```sh
-chalk query --in actor.id=1 --out actor.appearances.movie.title
+$ chalk query --in actor.id=1 --out actor.appearances.movie.title
+Results
+
+ Name                           Hit?  Value
+───────────────────────────────────────────────────────────────────────────────
+ actor.appearances.movie.title        ["The Bad Sleep Well","High and Low",...]
 ```
