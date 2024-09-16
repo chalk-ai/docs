@@ -5,6 +5,30 @@ description: Updates to Chalk!
 
 ---
 
+## September 16, 2024
+
+### New feature and resolver tables in the dashboard
+
+We have shipped new tables in the Features and Resolvers sections of the dashboard!
+
+The new tables have compact filtering with expanded functionality–you can now filter
+and sort by various resolver and feature attributes! The tables also provide column resizing
+for intuitive exploration of the feature catalog.
+
+[Resolver table with compact filtering and sorting](/img/resolver_table_v2.png)
+
+The Features table now includes request counts from the last 5 minutes up to the last 180 days
+with sorting built in, as well as a `Features as CSV` button to download all the feature attributes
+in your table as a CSV for further analysis.
+
+[Feature table with request count and csv export button](/img/feature_table_v2.png)
+
+### JSON feature type
+
+You can now define features as JSON values and reference the JSON fields in feature, resolver,
+and query definitions. Read more on how to define and reference JSON features
+[here](https://docs.chalk.ai/api-docs#json_value).
+
 ## September 9, 2024
 
 ### Configure Chalk to not cache null feature values
