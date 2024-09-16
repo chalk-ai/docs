@@ -94,6 +94,7 @@ from src.feature_sets import Book, Author
 
 NamedQuery(
     name="book_key_information",
+    input=[Book.id],
     output=[
         Book.id,
         Book.title,
