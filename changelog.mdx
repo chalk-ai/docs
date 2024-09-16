@@ -7,21 +7,28 @@ description: Updates to Chalk!
 
 ## September 16, 2024
 
-### New feature and resolver tables in the dashboard
+### New feature and resolver UI in the dashboard
 
-We have shipped new tables in the Features and Resolvers sections of the dashboard!
+We have shipped a new UI for the Features and Resolvers sections of the dashboard!
 
-The new tables have compact filtering with expanded functionality–you can now filter
+The new UI has tables with compact filtering and expanded functionality. You can now filter
 and sort by various resolver and feature attributes! The tables also provide column resizing
-for intuitive exploration of the feature catalog.
+for convenient exploration of the feature catalog.
 
-[Resolver table with compact filtering and sorting](/img/resolver_table_v2.png)
+![Resolver table with compact filtering and sorting](/img/resolver_table_v2.png)
 
-The Features table now includes request counts from the last 5 minutes up to the last 180 days
-with sorting built in, as well as a `Features as CSV` button to download all the feature attributes
+The features table now includes request counts from the last 5 minutes up to the last 180 days,
+has built-in sorting, and has a `Features as CSV` button to download all the feature attributes
 in your table as a CSV for further analysis.
 
-[Feature table with request count and csv export button](/img/feature_table_v2.png)
+![Feature table with request count and csv export button](/img/feature_table_v2.png)
+
+### New helper functions for feature computation
+
+The new `chalk.functions` module contains several helper functions for feature computation. For example, if you have a
+feature representing a raw value in GZIP-compressed value, you can use [`gunzip`](/api-docs#gunzip) with an underscore
+reference to create an unzipped feature. The full list of available functions can be found at the bottom of our
+[underscore expression documentation](/docs/underscore#additional-functions).
 
 ### JSON feature type
 
