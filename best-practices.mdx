@@ -105,10 +105,6 @@ We recommend using an implicit join syntax, which
 
 ## Resolvers
 
-### Use underscore resolvers for simple calculations
-
-[Underscore resolvers](/docs/underscore) should be used for relatively simple calculations: your underscore resolver definitions should fit inline.
-
 ### Use SQL resolvers to read data from your raw datasets
 
 While Python resolvers can be used to read data from your data sources, SQL resolvers are preferred. SQL resolvers
@@ -116,7 +112,7 @@ allow for direct execution against your data sources and additional optimization
 
 ### Explicitly list columns in a select statement for SQL file resolvers
 
-Select statements in SQL resolvers should be explicit: avoid using the `*` syntax.
+Select statements in SQL resolvers should be explicit. Avoid using the `*` syntax.
 
 ### Give Python resolvers and SQL filenames clear names
 
@@ -151,6 +147,7 @@ from src.feature_sets import Book, Author
 
 NamedQuery(
     name="book_key_information",
+    input=[Book.id],
     output=[
         Book.id,
         Book.title,
