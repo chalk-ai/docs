@@ -13,7 +13,7 @@ arguments to the resolver function.
 
 ## Scalar dependencies
 
-To depend on features from a [Feature Set](/docs/features),
+To depend on features from a [feature class](/docs/features),
 label your resolver arguments with your features as the types.
 You can then use those arguments in the body of your resolver to
 compute your [output features](/docs/resolver-outputs).
@@ -78,7 +78,7 @@ def fn(email: Transfer.user.email, memo: Transfer.memo) -> Transfer.email_in_mem
 ### Scalar has-one
 
 You can also require features joined to a
-[Feature Set](/docs/features) through
+[feature class](/docs/features) through
 [has-one](/docs/has-one) relationships.
 For example, if users in your system have bank accounts,
 and you wanted to compare the name on the user's bank account
@@ -150,8 +150,8 @@ You can also traverse nested [has-one](/docs/has-one)
 relationships in the same manner as
 [requiring a single has-one](#has-one-dependencies).
 
-Consider a schema where users have a feature set of profile information,
-and the user's profile has an identity feature set, which in turn
+Consider a schema where users have a feature class of profile information,
+and the user's profile has an identity feature class, which in turn
 has the age of the user's email.
 You can require the email age feature as below:
 
@@ -214,7 +214,7 @@ among other operations.
 ### Projections
 
 By default, Chalk will materialize all scalar features
-on the `Transfer` feature set before calling your resolver.
+on the `Transfer` feature class before calling your resolver.
 As an optimization hint, you can specify which features from
 the transfers that you'd like Chalk to materialize before calling
 the function. For example, if there were expensive features

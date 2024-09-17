@@ -223,7 +223,7 @@ transaction is linked to a single account. We'll define the
 +    id: int
 +
 +    # The id of the account that this transaction belongs to, set to a join.
-+    # We refer to features and feature sets defined further down in the file
++    # We refer to features and feature classes defined further down in the file
 +    # using quotation marks, so Chalk will recognize that it is a valid
 +    # feature reference to be processed later.
 +    account_id: "Account.id"
@@ -491,7 +491,7 @@ key to the header.
 This tells Chalk to only ingest new data from the database, and is helpful
 when you have an immutable events table. Also, notice the new
 `updated_at` column in the `select` statement. We'll map that column
-to a [FeatureTime](/docs/time) attribute in our feature class:
+to a [`FeatureTime`](/docs/time) attribute in our feature class:
 
 ```diff-py src/models.py
 from chalk.features import feature, features, FeatureTime

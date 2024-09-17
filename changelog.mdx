@@ -7,11 +7,61 @@ description: Updates to Chalk!
 
 ---
 
+## September 16, 2024
+
+### New feature and resolver UI in the dashboard
+
+We have shipped a new UI for the Features and Resolvers sections of the dashboard!
+
+The new UI has tables with compact filtering and expanded functionality. You can now filter
+and sort by various resolver and feature attributes! The tables also provide column resizing
+for convenient exploration of the feature catalog.
+
+![Resolver table with compact filtering and sorting](/img/resolver_table_v2.png)
+
+The features table now includes request counts from the last 5 minutes up to the last 180 days,
+has built-in sorting, and has a `Features as CSV` button to download all the feature attributes
+in your table as a CSV for further analysis.
+
+![Feature table with request count and csv export button](/img/feature_table_v2.png)
+
+### New helper functions for feature computation
+
+The new `chalk.functions` module contains several helper functions for feature computation. For example, if you have a
+feature representing a raw value in GZIP-compressed value, you can use [`gunzip`](/api-docs#gunzip) with an underscore
+reference to create an unzipped feature. The full list of available functions can be found at the bottom of our
+[underscore expression documentation](/docs/underscore#additional-functions).
+
+### JSON feature type
+
+You can now define features with `JSON` as the type after importing `JSON` from the `chalk` module. You can then
+reference the JSON feature in resolver and query definitions. You can also retrieve scalar values from JSON features
+using the [`json_value`](/api-docs#json_value) function.
+
+## September 9, 2024
+
+### Configure Chalk to not cache null feature values
+
+By default, Chalk caches all feature values, including null. To prevent Chalk from caching null values, use the
+`feature` method and set [`cache_nulls`](/api-docs#feature.cache_nulls) to False.
+
+### More static execution of certain Python resolvers
+
+We built a way to statically interpret Python resolvers to identify ones that are eligible for C++ execution, which has
+faster performance.  For now, resolvers are eligible if they do simple arithmetic and logical expressions. If you're
+interested in learning more and seeing whether these new query planner options would apply to your codebase, please
+reach out!
+
+### New tutorial for using Chalk with SageMaker
+
+We have a new [tutorial for using Chalk with SageMaker](/docs/sagemaker-tutorial) available now. In the tutorial, we
+show how to use Chalk to generate training datasets from within a SageMaker pipeline for model training and evaluation.
+
 ## September 3, 2024
 
 ### Feature catalog shows associated named queries
 
-In the [August 19](/docs/changelog#queries-can-reference-multiple-feature-namespaces) changelog entry, we announced
+In the [August 19](/docs/changelog#execute-queries-by-name) changelog entry, we announced
 [`NamedQuery`](/api-docs#NamedQuery), a tool for naming your queries so that you can execute them without writing out
 the full query definition.
 
@@ -46,6 +96,7 @@ from src.feature_sets import Book, Author
 
 NamedQuery(
     name="book_key_information",
+    input=[Book.id],
     output=[
         Book.id,
         Book.title,
@@ -58,10 +109,10 @@ NamedQuery(
         Book.short_description: "0s"
     },
     owner="mary.shelley@aol.com",
-    description=((
+    description=(
         "Return a condensed view of a book, including its title, author, "
         "year, and short description."
-    ))
+    )
 )
 ```
 
@@ -218,7 +269,7 @@ You can now view and filter features in the feature catalog by their tags and ow
 
 We shipped a gRPC engine for Chalk that improved performance by at least 2x through improved data serialization,
 efficient data transfer, and a migration to our C++ server. You can now use `ChalkGRPCClient` to run queries with the
-gRPC engine and fetch enriched metadata about your feature sets and resolvers through the `get_graph` method.
+gRPC engine and fetch enriched metadata about your feature classes and resolvers through the `get_graph` method.
 
 ### Spine SQL query
 
@@ -966,8 +1017,8 @@ at = datetime.now()
 dataset: Dataset = ChalkClient().offline_query(
      input={
          User.id: uids,
-         User.ts: [at] * len(uids),
      },
+     input_times=[at] * len(uids),
      output=[
          User.id,
          User.fullname,
@@ -1102,7 +1153,7 @@ Feel free to choose either mechanism!
 
 ### Auto Id Features
 
-It's natural to name the primary feature of a feature set
+It's natural to name the primary feature of a feature class
 `id`. So why do you always have to specify it?
 Until now, you needed to write:
 

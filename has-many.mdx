@@ -1,6 +1,6 @@
 ---
 title: Has Many
-description: Define one-to-many and many-to-many relationships between feature sets.
+description: Define one-to-many and many-to-many relationships between feature classes.
 ---
 
 import { PyDiffEditor } from '@/components/Editor'
@@ -101,12 +101,68 @@ relationship from our example, add a `User` to the `Transfer` class:
 
 ### Many-to-many
 
-Many-to-many relations are defined by has-many relationship on both sides of the relation.
-As before, you don't need to specify the join condition a second time if the join
-condition is symmetric.
+The recommended way to define a many-to-many relationship is through a joining feature class.
+For instance, to define a many-many relationship between `Actors` and `Movies`, you
+could write the following feature classes:
 
-<PyDiffEditor html={manyToManyDiff} />
+```python
+from chalk.features import features, DataFrame
+
+@features
+class Actor:
+  id: int
+  appearances: "DataFrame[MovieRole]"
+  full_name: str
+
+  # this will be used to demonstrate one of the ways the joining feature can be populated
+  movie_ids: list[int]
+
+@features
+class Movie:
+  id: int
+  title: str
+
+@features
+class MovieRole:
+  id: str
+  actor_id: Actor.id
+  movie_id: Movie.id
+  movie: Movie
+```
 
 <TipInfo>
-  Here you need to use quotes around `DataFrame[Author]` to use a forward reference.
+  Here you need to use quotes around `DataFrame[MovieRole]` to use a forward reference.
 </TipInfo>
+
+This joining feature class can be populated by a SQL file resolver:
+```sql
+-- resolves: MovieRole
+-- source: PG
+SELECT id, actor_id, movie_id FROM movie_roles;
+```
+
+Alternatively, by a `DataFrame`-returning Python resolver (namespaced to one of the joined feature sets):
+
+```python
+@online
+def get_actor_in_movie(a_id: Actor.id, movie_ids: Actor.movie_ids) -> Actor.appearances:
+  return DataFrame([
+    MovieRole(id=f"{a_id}_{m_id}", actor_id=a_id, movie_id=m_id)
+    for m_id in movie_ids
+  ])
+```
+
+The joining feature class lets you:
+- query for movie features from the `Actor` namespace, and
+- use movie features in downstream `Actor` resolvers.
+
+For example, to get the titles for all the movies that an actor has appeared in, you can run the following query:
+
+```sh
+$ chalk query --in actor.id=1 --out actor.appearances.movie.title
+Results
+
+ Name                           Hit?  Value
+───────────────────────────────────────────────────────────────────────────────
+ actor.appearances.movie.title        ["The Bad Sleep Well","High and Low",...]
+```

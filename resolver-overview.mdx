@@ -9,12 +9,12 @@ import {TipInfo} from '@/components/Tip'
 
 ---
 
-While feature sets define what your data looks like (e.g. the types of your features,
+While feature classes define what your data looks like (e.g. the types of your features,
 their relationships, and their properties), resolvers define how your feature values
 are computed.
 
 <TipInfo>
-    If you haven't read the section on feature sets, you are strongly encourage to do so. Understanding feature sets
+    If you haven't read the section on feature classes, you are strongly encourage to do so. Understanding feature classes
     will help you understand resolvers.
 </TipInfo>
 
@@ -54,10 +54,10 @@ Chalk allows you to write resolvers in three different ways:
 ## A Quick Example
 
 Below, we provide an example of how to write SQL and python resolvers in Chalk
-for a `User` feature set. In this example, we assume that a Postgres data source
+for a `User` feature class. In this example, we assume that a Postgres data source
 called `pg_users` has been configured and connected to Chalk.
 
-First, let's define our `User` feature set:
+First, let's define our `User` feature class:
 
 ```python src/user.py
 from chalk.features import features

@@ -66,13 +66,9 @@ see [this tutorial on feature versions](/docs/feature-versions)
 
 ### How does FeatureTime work? Should I override FeatureTime with timestamps from existing data sources?
 
-Feature times act as observation timestamps for a set of feature values, which is important when working with
-staleness guarantees, and incrementally loading data. Chalk provides two default methods of loading feature times.
-The first is a feature annotation `FeatureTime` that serves as a `datetime.datetime` with `typing.Annotation` applied.
-The second is that if you define a feature named `ts` with a type of `datetime.datetime` in a feature set, then it will
-be treated as a feature time. You can override the feature time by supplying values for the `ts` feature if you
-would like to use the timestamps from your existing data sources as the observation timestamps for the feature.
-For more information on how feature times work, [see here](/docs/time).
+Feature time is the time at which a feature was observed. By default, feature time is set to the feature's resolver
+execution time. You can override feature time and may want to do so if you're ingesting historical data.
+For more information on how feature times work, see our [time documentation](/docs/time).
 
 ### How should I structure my windowed features? What kind of windows can I use?
 

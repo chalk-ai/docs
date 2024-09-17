@@ -10,23 +10,23 @@ import { highlightedCode as backfillTimeAware } from '@/samples/features/backfil
 
 ---
 
-For model training, you often need to pull past observations of feature
-values that correspond to the point in time when you made that
-observation.
+## Introduction
 
-[//]: # 'Each label occurs at a particular time, and you want your feature'
-[//]: # 'values to come from that point in time, even if the label were to'
-[//]: # 'later change.'
+Temporal consistency is crucial for ensuring your model's training performance is reflective of production. When
+creating datasets for model training, your system must consistently retrieve data as it would appear at a specific point
+in time. If your model trains on data that was retrieved after the point where it would have made a prediction, it will
+not perform consistently in production.
 
-Chalk performs point-in-time lookups on your training data so that
-you can train your models knowing that they won't receive information
-about the future, even across complex [relationships](/docs/has-one).
+Chalk performs point-in-time lookups on your training data so you can train your models knowing they won't receive data
+from the future, even across complex [relationships](/docs/has-one).
 
-## Sampling Historical Values
+## Scenario 1: Historical loan decisions
 
-Say you have features `Business.sales` and `Business.cogs`
-that represent the sales and cost of goods sold for a business,
-in millions of dollars:
+In this scenario, we will consider a machine learning model for determining whether to issue loans to businesses based
+on their financial performance.
+
+For each business, we track sales and COGS (cost of goods sold) over time in millions of dollars. We define a `Business`
+feature class with `sales` and `cogs` features:
 
 ```py
 from chalk.features import features, FeatureTime
@@ -39,34 +39,35 @@ class Business:
     ts: FeatureTime
 ```
 
-Over time, you've been issuing loans to businesses, and you want
-review your loan book to see if you could have made better decisions
-about which businesses were credit-worthy.
+After collecting historical data on the performance of businesses we previously considered, we want to retrain our
+model.
 
-For example, maybe you gave loans to the business with `id=123`
-at times `t1` and `t2`:
-
-[//]: #
-[//]: # '`label 1` observed at time `t1` and `label 2`'
-[//]: # 'observed at time `t2`.'
-[//]: # "You've been monitoring three features"
-[//]: # '(`Feature 1`, `Feature 2`, and `Feature 3`)'
-[//]: # 'continuously through logs of online evaluations'
-[//]: # 'and offline data pulls.'
+For a business with `id=123`, we gave loans at `t1` and `t2`:
 
 <TemporalCorrectnessBusiness />
 
-In training, you want to know the observed gross profit and COGS
-for the business at the time you made the loan, without
+In training, you want to know the observed gross profit and COGS for the business at the time you made the loan without
 knowing the future values of those features.
 
-For example, it would be unfair to allow ourselves to see
-the impending gross profit drop from $1.3M to $1M when considering what
-our new model would have done at time `t1`.
+For example, at t1, when we issued the loan, we had observed sales of $1.3M. It would be inconsistent for this model to
+train with the $1M data point because this data would not have existed at `t1`.
 
-You can use Chalk's [Python Client](/api-docs#ChalkClient.offline_query)
-to sample the values of `Business.sales`
-and `Business.cogs` at the time of the loans:
+At `t1` and `t2`, the temporally consistent values of `sales` and `cogs` would be as follows:
+
+| Feature          | Value at `t1`                                            | Value at `t2`                                             |
+| ---------------- | -------------------------------------------------------- | --------------------------------------------------------- |
+| Business.sales | <span className="font-mono text-accent-red"> 1.3 </span> | <span className="font-mono text-accent-lime"> 1 </span>   |
+| Business.cogs    | <span className="font-mono text-accent-red"> 0.5 </span> | <span className="font-mono text-accent-lime"> 0.4 </span> |
+
+Each of these values occurred at or before the sample time and is valid to use in training.
+
+### Sample code
+
+Chalk allows you to control the time your query considers to be "now", which is covered in greater detail in our
+[time](/docs/time#setting-query-time) documentation.
+
+To set the query's "now" time, pass [`input_times`](/api-docs#ChalkClient.offline_query.input_times) to
+your offline queries:
 
 ```py
 from chalk.client import ChalkClient
@@ -76,11 +77,12 @@ t2 = datetime.now() - timedelta(days=30)
 
 dataset = ChalkClient().offline_query(
      input={
-         # Sample a single business with id=123,
+         # Sample business 123 twice because we have two input_times
          Business.id: [123, 123],
-         # Sample the same business at two times: t1 and t2
-         Business.ts: [t1, t2],
      },
+     # Each element of `input_times` corresponds to the element
+     # with the same index in `input`
+     input_times=[t1, t2],
      # Sample all features of business.
      # Alternatively, sample only the features you need:
      #   output=[Business.sales, Business.cogs]
@@ -88,132 +90,47 @@ dataset = ChalkClient().offline_query(
 )
 ```
 
-Running this query will result in a [Dataset](/docs/datasets)
-with the following values:
+This query will return a [Dataset](/docs/datasets) with temporally consistent values for each input time.
 
-| Feature          | Value at `t1`                                            | Value at `t2`                                             |
-| ---------------- | -------------------------------------------------------- | --------------------------------------------------------- |
-| Business.sales | <span className="font-mono text-accent-red"> 1.3 </span> | <span className="font-mono text-accent-lime"> 1 </span>   |
-| Business.cogs    | <span className="font-mono text-accent-red"> 0.5 </span> | <span className="font-mono text-accent-lime"> 0.4 </span> |
+## Scenario 2: Backfilling new features
 
-Each of these values occurred at or before the sample time
-and is valid to use in training.
+Temporal consistency is especially difficult when you want to build new features. Building on the first scenario,
+imagine you've observed `Business.sales` and `Business.cogs` many times in the past, and for each of the businesses that
+you track, these values have changed over time.
 
----
+Now, you want to compute a new feature, `Business.gross_profit`, which is the difference between `Business.sales` and
+`Business.cogs`. We can add an [underscore expression](/docs/underscore) to compute this new feature:
 
-## Migrations
+```diff-py
+- from chalk.features import features, FeatureTime
++ from chalk.features import _, features, FeatureTime
 
-Temporal consistency is especially difficult when you want
-to build new features. Continuing the example from the previous section,
-imagine you've observed `Business.sales` and `Business.cogs`
-many times in the past, and for each of the businesses
-that you track, these values have changed over time.
+@features
+class Business:
+    id: int
+    sales: float
+    cogs: float
+    ts: FeatureTime
++   gross_profit: float = _.sales - _.cogs
+```
 
-Now, you want to compute a new feature, `Business.gross_profit`,
-which is the difference between `Business.sales` and
-`Business.cogs`. You can do this by writing a function
-`get_rev` that takes `Business.sales` and
-`Business.cogs` as arguments and returns `Business.gross_profit`:
-
-<PyDiffEditor html={migrateBusiness} />
-
-If you deploy this resolver with [chalk apply](/cli/apply),
-you'll start calculating `Business.gross_profit` correctly on an
-ongoing basis.
-However, you won't yet have values of `Business.gross_profit` in
-the past. You may want to pretend that the resolver `get_rev`
-was always computing the gross profit of the business you track, so that
-you can train our models on the historical
-value of `Business.gross_profit`.
-
-To do that, you can run a [backfill](/docs/backfilling-data)
-against all of your data, or against only the samples
-you want to observe.
-For example, if you had observed the `Business.sales`
-and `Business.cogs` features as below, and wanted
-to compute `Business.gross_profit` at the times `t1`
-and `t2` below, Chalk would pull the latest value
-of each feature that occurred before the sample time:
+With the same historical data from the previous scenario, we can determine the correct inputs for computing
+`Business.gross_profit`:
 
 <BackfillExample />
 
-Then, Chalk would run the `get_rev` resolver
-with the sampled values:
+`Business.gross_profit` at `t1` and `t2` would be computed with the following values:
 
-| Feature     | `Business.sales`                                            | `Business.cogs`                                             | `Function call`                                        | `Business.gross_profit`                       |
-| ----------- | ----------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------ | ---------------------------------------- |
-| id=123 @ t1 | <span className="font-mono text-accent-orange"> 1.3 </span> | <span className="font-mono text-accent-purple"> 0.5 </span> | <span className="font-mono"> get_rev(1.3, 0.5) </span> | <span className="font-mono"> 0.8 </span> |
-| id=123 @ t2 | <span className="font-mono text-accent-orange"> 1.0 </span> | <span className="font-mono text-accent-purple"> 0.4 </span> | <span className="font-mono"> get_rev(1.0, 0.4) </span> | <span className="font-mono"> 0.6 </span> |
+| Query time | `Business.sales` | `Business.cogs` | `Business.gross_profit` |
+| --- | --- | --- | --- |
+| `t1` | <span className="font-mono text-accent-orange"> 1.3 </span> | <span className="font-mono text-accent-purple"> 0.5 </span> | <span className="font-mono"> 0.8 </span> |
+| `t2` | <span className="font-mono text-accent-orange"> 1.0 </span> | <span className="font-mono text-accent-purple"> 0.4 </span> | <span className="font-mono"> 0.6 </span> |
 
-The resulting values for `Business.gross_profit` would be stored
-as having occurred at the latest observed time of all the
-sample inputs.
+In your code, you can compute historical values for updated features by running an offline query with
+[`recompute_features=True`](/api-docs#ChalkClient.offline_query.recompute_features). You may also consider one of our
+other [backfill](/docs/backfilling-data) options for other use cases.
 
-For the sample at `t1`, the observed at time
-for `Business.gross_profit` would be the time at which `Business.gross_profit`
-was 1.3M.
-
-At `t2`, the observed at time for `Business.gross_profit` would
-be the time at which `Business.cogs` was seen to be `0.4`, as
-`Business.cogs` was observed more recently than `Business.sales` was observed.
-
-As you start nesting more resolvers, or using
-[has-many relationships](/docs/has-many),
-this can become even more complex and error-prone without a framework managing
-the temporal consistency of your data.
-
----
-
-## Backfilling time-aware data
-
-You can also [backfill](/docs/backfilling-data) time-aware data into Chalk.
-For example, you may have events tables that track
-data changes over time. To do so, you can use [feature time](/docs/time)
-to specify the time at which the data was observed.
-
-<PyDiffEditor html={backfillTimeAware} />
-
-If you provide the `ts` feature of `Business` when you ingest data,
-Chalk will use that value to determine the time at which
-the data was observed.
-
-```py
-from chalk.sql import SnowflakeSource
-
-db = SnowflakeSource()
-
-@offline(cron='1h')
-def get_historical() -> Business:
-    db.query_string(
-        """
-        SELECT
-            sales,
-            cogs,
-            gross_profit,
-            ts
-        FROM
-            business
-        """
-    ).incremental()
-```
-
-Every hour, Chalk will run the `get_historical` resolver
-to check for new data. If it finds new data, it will
-use the `ts` column to determine the time at which
-the data was observed.
-
-## Enforcing a TTL
-
-Features in the offline store have an optional TTL (time to live). When a feature has a TTL value, it will never be
-returned at any time later than `FeatureTime` + TTL. For example, you may not want to consider credit scores which were
-retrieved more than a year ago. Setting `offline_ttl` below will make `credit_score` return None if last observed credit
-score is more than one year old.
-
-```py
-@features
-class User:
-    id: str
-    credit_score: int = feature(offline_ttl=timedelta(years=1))
-```
-
+As you start layering more resolvers or using [has-many relationships](/docs/has-many), temporal consistency becomes even
+more difficult to reason about. Chalk manages the complexity under the hood so that you can write any query and expect
+temporally consistent results.
 

@@ -35,7 +35,7 @@ SQL file resolvers are Chalk's recommended method for writing SQL resolvers.
 select id, email, full_name from user_table
 ```
 
-Here, we define an online resolver that returns some features for the `User` feature set
+Here, we define an online resolver that returns some features for the `User` feature class
 from the `user_table` table in the PostgreSQL source `PG`. The comments are `yaml`-parsed
 to provide other metadata for Chalk to decide how to design the resolver. SQL file resolvers
 can return multiple rows for aggregation operations, offline queries, and more.
@@ -49,7 +49,7 @@ It's also possible to use `SELECT *` in a SQL file resolver, but be careful!
 select * from user_table
 ```
 
-Implicitly, this query tries to align every scalar feature from the `User` feature set to a column name in
+Implicitly, this query tries to align every scalar feature from the `User` feature class to a column name in
 `user_table`. If a feature name is misnamed or absent from the table, you'll get a "missing columns" error.
 
 To programmatically generate SQL file resolvers, check out [Generated SQL file
@@ -70,7 +70,7 @@ select id, email, full_name from user_table where id = ${email_user.id}
 Use `${}` with snake case to reference the desired feature.
 
 Use `${now}` in your query as a special argument representing the time of the query. For more details, see our
-[Time](/docs/time#now-explicitly-time-dependent-resolvers) documentation.
+[time](/docs/time#accessing-query-time-in-resolvers) documentation.
 
 ### SQL strings
 
@@ -183,7 +183,7 @@ parameterizing your queries by hand.
 The following example will show a transaction feature and how we use push-down
 filtering to retrieve transactions belonging to a specific category.
 
-Here's the feature set:
+Here's the feature class:
 
 ```python
 pg = PostgreSQLSource(name='PG')
@@ -654,11 +654,9 @@ between executions of your resolver.
 When Chalk executes an incremental query, it has to update the "max timestamp" value that it will use as the
 lower bound for the next query. By default, Chalk sets this value to the time at the _start_ of the query.
 
-If your resolver returns a [FeatureTime](/docs/time) feature, Chalk will update the "max timestamp" value
+If your resolver returns a [`FeatureTime`](/docs/time) feature, Chalk will update the "max timestamp" value
 to the "max" `FeatureTime` value that is returned instead. This allows you to control the incremental
 behavior more precisely.
-
-
 
 ## Tagged SQL sources
 
@@ -730,7 +728,7 @@ Here, we assign `User.email` to `UserSQL.email` and
 #### Incremental queries with SQLAlchemy
 
 To create an incremental SQLAlchemy query, use `.incremental`. Chalk will page over the underlying table using the
-column mapped to the [`feature_time`](/docs/features#feature-time).
+column mapped to [`FeatureTime`](/docs/features#feature-time).
 
 ```py
 pg = PostgreSQLSource(name='PG')

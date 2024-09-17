@@ -15,7 +15,7 @@ your data goals.
 
 ---
 
-## Creating your Chalk Project
+## Creating your Chalk project
 
 1. If you don't already have a GitHub repository where you will store your Chalk code, create one. Then, pick a
 local directory in which to work on Chalk code, and clone the GitHub repository there. Then `cd` inside of the
@@ -81,7 +81,7 @@ which we will build in the next step.
 
 ---
 
-## Configure Data Sources
+## Configure data sources
 
 Having set up a basic project directory, next we'll want to configure the data sources from which we will load data to
 compute our features. We can do so in the Chalk dashboard.
@@ -118,14 +118,14 @@ For more details on setting up data sources, [see here](/docs/integrations).
 
 ---
 
-##  Define Feature Sets and Resolvers
+## Define feature classes and resolvers
 
-Next, we'll define our feature sets and resolvers. Each *feature set* is a Python class of features, and each *resolver*
+Next, we'll define our feature classes and resolvers. Each *feature class* is a Python class of features, and each *resolver*
 tells Chalk how to compute the values for different features. Each feature that we write should correspond to a
 resolver output.
 
-We recommend starting with a minimal feature set and building up iteratively to easily test your code along the way.
-After writing some feature sets, resolvers, and tests, we would expect to see a directory structure like this:
+We recommend starting with a minimal feature class and building up iteratively to easily test your code along the way.
+After writing some feature classes, resolvers, and tests, we would expect to see a directory structure like this:
 ```
 root_directory/
 ├── src/
@@ -146,11 +146,11 @@ root_directory/
 
 You can read more in our docs about the [different kinds of features](/docs/features) and the
 [different kinds of resolvers](/docs/resolver-overview) that you can write. If you would like
-guidance on how to structure your feature sets and resolvers, please reach out in your support channel!
+guidance on how to structure your feature classes and resolvers, please reach out in your support channel!
 
 ---
 
-## Deploy and Query
+## Deploy and query
 
 Now, you can deploy the features and resolvers that you wrote! You can deploy to production by
 using the [`chalk apply`](/cli/apply) command. During development, we recommend that you use
@@ -163,7 +163,7 @@ Chalk has a [Python client](https://github.com/chalk-ai/chalk), [Go client](http
 [Java client](https://github.com/chalk-ai/chalk-java), and a [Typescript client](https://github.com/chalk-ai/chalk-ts).
 
 This is the primary workflow for iterating on features and resolvers! Write, deploy, and query to verify whether the
-feature values that you receive are the values you expect. Once you have finalized your feature set and resolver
+feature values that you receive are the values you expect. Once you have finalized your feature class and resolver
 definitions, the final step is frequently orchestration.
 
 ---
@@ -181,6 +181,6 @@ But, as always, if you would like guidance on how to configure that oyster, plea
 
 ---
 
-## Further Resources
+## Further resources
 
 For a detailed tutorial on how to build a fraud model using Chalk, [see here](/docs/fraud-1).

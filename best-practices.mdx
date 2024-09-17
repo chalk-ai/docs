@@ -31,11 +31,11 @@ general, to future-proof your resolvers, you should refer to them by their name.
 
 Features fully specify what you want your data to look like. Once you have an understanding of the inner relations, writing resolvers for your features becomes easier.
 
-### Avoid dataclass feature types, instead use separate feature sets or unpack the data
+### Avoid dataclass feature types, instead use separate feature classes or unpack the data
 
 While Chalk allows for dataclass feature types, they should be avoided. They don't always play nicely with serialization and can cause tough-to-debug errors. We recommend
-either unpacking the nested class into basic types or defining and joining an additional Chalk feature set if the nested component is truly a separate entity. Defining a
-separate feature set also makes the underlying data easier to monitor and test.
+either unpacking the nested class into basic types or defining and joining an additional Chalk feature class if the nested component is truly a separate entity. Defining a
+separate feature class also makes the underlying data easier to monitor and test.
 
 ### Tag and annotate your features
 
@@ -62,7 +62,7 @@ class User:
   birthday: datetime
 ```
 
-If you want to apply a tag or owner to all features in a feature set, this
+If you want to apply a tag or owner to all features in a feature class, this
 should be done in the feature decorator, like so:
 
 ```python
@@ -83,7 +83,7 @@ For instance, you can block deployment if features are not tagged or described.
 
 Features should be defined in separate files from resolvers (except underscore features).
 
-### When starting your Chalk implementation, define all your feature sets in the same file
+### When starting your Chalk implementation, define all your feature classes in the same file
 
 Although it can get a bit lengthy, we recommend starting by defining your features in a single file.
 This makes expressing joins between features easier and prevents circular dependencies.
@@ -97,17 +97,13 @@ is going wrong with the feature you are calculating.
 
 ### Use implicit join syntax
 
-Joins between feature sets can be specified in a number of different ways.
+Joins between feature classes can be specified in a number of different ways.
 We recommend using an implicit join syntax, which
 [we cover in the join section of the docs](/docs/has-one#recommended-implementation).
 
 ---
 
 ## Resolvers
-
-### Use underscore resolvers for simple calculations
-
-[Underscore resolvers](/docs/underscore) should be used for relatively simple calculations: your underscore resolver definitions should fit inline.
 
 ### Use SQL resolvers to read data from your raw datasets
 
@@ -116,7 +112,7 @@ allow for direct execution against your data sources and additional optimization
 
 ### Explicitly list columns in a select statement for SQL file resolvers
 
-Select statements in SQL resolvers should be explicit: avoid using the `*` syntax.
+Select statements in SQL resolvers should be explicit. Avoid using the `*` syntax.
 
 ### Give Python resolvers and SQL filenames clear names
 
@@ -124,7 +120,7 @@ Resolver names are used in the Chalk dashboard to identify resolvers. They shoul
 
 ### Make sure your resolvers operate inside a single feature space
 
-Resolver inputs and outputs must belong to the same feature set, but joins can allow resolvers to connect data between feature sets.
+Resolver inputs and outputs must belong to the same feature class, but joins can allow resolvers to connect data between feature classes.
 
 ### Transform your Chalk DataFrame to Pandas or Polars
 
@@ -151,6 +147,7 @@ from src.feature_sets import Book, Author
 
 NamedQuery(
     name="book_key_information",
+    input=[Book.id],
     output=[
         Book.id,
         Book.title,
@@ -163,10 +160,10 @@ NamedQuery(
         Book.short_description: "0s"
     },
     owner="mary.shelley@aol.com",
-    description=((
+    description=(
         "Return a condensed view of a book, including its title, author, "
         "year, and short description."
-    ))
+    )
 )
 ```
 
