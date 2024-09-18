@@ -1,5 +1,7 @@
 ---
 title: Overview
+metaTitle: Queries - Fetch feature values via queries.
+metaDescription: Chalk computes features through online queries, which return real-time data as fast as possible, and offline queries, which are best for batch processing large amounts of data.
 description: Fetch feature values via queries.
 ---
 
@@ -89,10 +91,10 @@ your online queries.
 
 ## Online and offline query differences
 
-| Online query | Offline query |
-|---|---|
+| Online query                                                                                                                  | Offline query                                                                                                                                                                                                                                |
+| ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Runs only <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolvers | Runs both <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> and <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolvers |
-| Returns one row of data about one entity | Returns a DataFrame of many rows of historical data corresponding to multiple entities point-in-time |
-| Designed to return data in milliseconds | Blocks until computation is complete, not designed for millisecond-level computation |
-| Queries the online store and calls `@online` resolvers for quick retrieval | Queries the offline store which stores all data from online queries, unless `recompute_features=True`, in which case `@offline` and `@online` resolvers are used to resolve the outputs |
-| Writes output data to online store database and offline store database | Writes output to a parquet file containing results to cloud storage. Only writes to online store or offline store if specified. |
+| Returns one row of data about one entity                                                                                      | Returns a DataFrame of many rows of historical data corresponding to multiple entities point-in-time                                                                                                                                         |
+| Designed to return data in milliseconds                                                                                       | Blocks until computation is complete, not designed for millisecond-level computation                                                                                                                                                         |
+| Queries the online store and calls `@online` resolvers for quick retrieval                                                    | Queries the offline store which stores all data from online queries, unless `recompute_features=True`, in which case `@offline` and `@online` resolvers are used to resolve the outputs                                                      |
+| Writes output data to online store database and offline store database                                                        | Writes output to a parquet file containing results to cloud storage. Only writes to online store or offline store if specified.                                                                                                              |
