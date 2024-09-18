@@ -61,7 +61,7 @@ class Transaction:
 +    id: int
 +    # implicit has-many relationship with Transaction due to `user_id` above
 +    transactions: DataFrame[Transaction]
-+    num_large_transactions: DataFrame[Transaction] = _.transactions[_.total > 1000].count()
++    num_large_transactions: int = _.transactions[_.total > 1000].count()
 ```
 
 The object referenced by `_` changes depending on its current scope. In this code, the `_` in `_.transactions`
@@ -92,7 +92,7 @@ class User:
     id: int
     # implicit has-many relationship with Transaction due to `user_id` above
     transactions: DataFrame[Transaction]
-    num_large_transactions: int = _.large_transactions.count()
+    num_large_transactions: int = _.transactions[_.total > 1000].count()
 +   total_spend: float = _.transactions[_.total].sum()
 ```
 
