@@ -145,9 +145,16 @@ Alternatively, by a `DataFrame`-returning Python resolver (namespaced to one of 
 
 ```python
 @online
-def get_actor_in_movie(a_id: Actor.id, movie_ids: Actor.movie_ids) -> Actor.appearances:
+def get_actor_in_movie(
+  a_id: Actor.id,
+  movie_ids: Actor.movie_ids,
+) -> Actor.appearances:
   return DataFrame([
-    MovieRole(id=f"{a_id}_{m_id}", actor_id=a_id, movie_id=m_id)
+    MovieRole(
+      id=f"{a_id}_{m_id}",
+      actor_id=a_id,
+      movie_id=m_id
+    )
     for m_id in movie_ids
   ])
 ```
