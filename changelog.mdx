@@ -24,7 +24,7 @@ exactly one user by setting `InsurancePolicy.id`s type to `Primary[User.id]`.
 Now, we've updated Chalk so that you can chain more of these relationships together. For example, a `InsurancePolicy`
 feature class may have an associated `InsuranceApplication`. The `InsuranceApplication` may also have an associated
 `CreditReport`. Chalk now allows chaining an arbitrary number of has-one relationships. Chalk will also validate these
-relationships to ensure there are no cyclical dependencies.
+relationships to ensure there are no circular dependencies.
 
 ```diff-py
 from chalk import Primary
