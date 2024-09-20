@@ -7,6 +7,56 @@ description: Updates to Chalk!
 
 ---
 
+## September 23, 2024
+
+### Configurable retry policy for SQL resolvers
+
+Sometimes, a SQL resolver may fail to retrieve data due to temporary unavailability. We've added new options for
+configuring the number of retry attempts a resolver may make (and how long it should wait between attempts). If you're
+interested in trying out this new functionality early, please let the team know.
+
+### Has-one join keys can be chained
+
+When creating [has-one](/docs/has-one) relationships, you can set the primary key of the child feature class to the
+primary key of the parent feature class. For example, you may model an `InsurancePolicy` feature class as belonging to
+exactly one user by setting `InsurancePolicy.id`s type to `Primary[User.id]`.
+
+Now, we've updated Chalk so that you can chain more of these relationships together. For example, a `InsurancePolicy`
+feature class may have an associated `InsuranceApplication`. The `InsuranceApplication` may also have an associated
+`CreditReport`. Chalk now allows chaining an arbitrary number of has-one relationships. Chalk will also validate these
+relationships to ensure there are no cyclical dependencies.
+
+```diff-py
+from chalk import Primary
+from chalk.features import features
+
+@features
+class User:
+    id: str
+
+@features
+class InsurancePolicy:
+    id: Primary[User.id]
+    user: User
+
++ @features
++ class InsuranceApplication:
++     id: Primary[InsurancePolicy.id]
++     stated_income: float
++
++ @features
++ class CreditReport:
++     id: Primary[InsuranceApplication.id]
++     fico_score: int
+```
+
+### User permissions page shows roles per user
+
+When you view Users in the Chalk settings page, you will now find a menu for viewing the roles associated with each
+user, whether those roles are granted directly or via SCIM.
+
+![An example user with admin and owner roles](/img/changelog_9_23_roles.png)
+
 ## September 16, 2024
 
 ### New feature and resolver UI in the dashboard
