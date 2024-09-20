@@ -19,9 +19,9 @@ interested in trying out this new functionality early, please let the team know.
 
 When creating [has-one](/docs/has-one) relationships, you can set the primary key of the child feature class to the
 primary key of the parent feature class. For example, you may model an `InsurancePolicy` feature class as belonging to
-exactly one user by setting `InsurancePolicy.id`s type to `Primary[User.id]`.
+exactly one user by setting `InsurancePolicy.id`'s type to `Primary[User.id]`.
 
-Now, we've updated Chalk so that you can chain more of these relationships together. For example, a `InsurancePolicy`
+Now, we've updated Chalk so that you can chain more of these relationships together. For example, an `InsurancePolicy`
 feature class may have an associated `InsuranceApplication`. The `InsuranceApplication` may also have an associated
 `CreditReport`. Chalk now allows chaining an arbitrary number of has-one relationships. Chalk will also validate these
 relationships to ensure there are no circular dependencies.
