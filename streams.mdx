@@ -23,7 +23,7 @@ kinesis_source = KinesisSource(name="...")
 Now, let's set up the Chalk features you'd like to materialize upon stream message ingestion.
 
 ```py
-from chalk import features, Features
+from chalk.features import features, Features
 
 @features(max_staleness="1d", etl_offline_to_online=True)
 class StreamFeature:
@@ -169,7 +169,7 @@ we can expect `StreamFeature` to be queryable in both online and offline context
 from datetime import datetime, timezone
 from dateutil import parser
 from pydantic import BaseModel
-from chalk import features, Features
+from chalk.features import features, Features
 from chalk.streams import stream, KafkaSource
 
 

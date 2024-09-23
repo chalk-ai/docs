@@ -44,7 +44,7 @@ dashboard and are a good way of documenting your code. You can also add tags and
 be used for aggregation and filtering in the Chalk Dashboard.
 
 ```python
-from chalk import features
+from chalk.features import features
 from datetime import datetime
 
 @features
@@ -66,7 +66,7 @@ If you want to apply a tag or owner to all features in a feature class, this
 should be done in the feature decorator, like so:
 
 ```python
-from chalk import features
+from chalk.features import features
 
 @features(owner="ada.lovelace@aol.com", tags=['group:risk'])
 class User:
