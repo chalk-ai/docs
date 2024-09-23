@@ -253,7 +253,7 @@ Note that our `keys` argument contains the Chalk feature primary key, as we are 
 from datetime import datetime, timezone
 from dateutil import parser
 from pydantic import BaseModel
-from chalk import features, DataFrame
+from chalk.features import features, DataFrame
 from chalk.streams import stream, KafkaSource, windowed, Windowed
 
 source = KafkaSource(name="...")

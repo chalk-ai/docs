@@ -31,7 +31,8 @@ Using the `has_many` function and the `is_near` method, we can express a relatio
 documents for each query.
 
 ```py
-from chalk.features import DataFrame, features, embedding, has_many, Vector
+from chalk import embedding
+from chalk.features import DataFrame, features, has_many, Vector
 
 @features
 class SearchQuery:

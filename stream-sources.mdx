@@ -131,9 +131,9 @@ For Kinesis, these parameters must be set:
 
 ```py
 from pydantic import BaseModel
-from chalk import stream, Features, feature
+from chalk import stream, feature
 from chalk.streams import KafkaSource
-from chalk.features import features
+from chalk.features import features, Features
 
 @features
 class User:
