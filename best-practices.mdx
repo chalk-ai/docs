@@ -134,6 +134,14 @@ Don't worry about converting Chalk DataFrames to [Pandas](https://pandas.pydata.
 
 The Chalk CLI should be used to run simple online queries. For more complex use cases, you should use one of Chalk's API clients.
 
+### Run large queries asynchronously
+
+When sending large or long-running queries, use
+[`run_asynchronously`](/api-docs#ChalkClient.offline_query.run_asynchronously) to set up a separate Kubernetes pod for
+running your query separately from your production and branch servers. You can configure resources for asynchronous
+offline queries in your dashboard settings. You can also terminate asynchronous queries through the dashboard by
+terminating the pod or canceling the query within the dashboard, which is not possible for synchronous queries.
+
 ### Create named queries for your commonly executed queries
 
 With Chalk, you can alias your complex queries using a [NamedQuery](/api-docs#NamedQuery). Named queries help simplify and document your
