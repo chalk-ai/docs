@@ -26,28 +26,82 @@ feature class may have an associated `InsuranceApplication`. The `InsuranceAppli
 `CreditReport`. Chalk now allows chaining an arbitrary number of has-one relationships. Chalk will also validate these
 relationships to ensure there are no circular dependencies.
 
+Here's an example where we have features describing a system where user has one insurance policy, each policy has one
+submitted application, and each application has one credit report:
+
 ```diff-py
 from chalk import Primary
 from chalk.features import features
 
 @features
 class User:
-    id: str
+      id: str
+      # :tags: pii
+      ssn: str
+      policy: "InsurancePolicy"
 
 @features
 class InsurancePolicy:
-    id: Primary[User.id]
-    user: User
+      id: Primary[User.id]
+      user: User
++     application: "InsuranceApplication"
 
 + @features
 + class InsuranceApplication:
 +     id: Primary[InsurancePolicy.id]
 +     stated_income: float
++     # For the sake of illustrating has-one relationships,
++     # we're assuming exactly one credit report per
++     # application, which may not be realistic. A has-many
++     # relationship may be more accurate here.
++     credit_report: "CreditReport"
 +
 + @features
 + class CreditReport:
 +     id: Primary[InsuranceApplication.id]
 +     fico_score: int
++     application: InsuranceApplication
+```
+
+To query for a user's credit report, you would write:
+
+```python
+client.query(
+    inputs={User.id: "123"},
+    output=[User.policy.application.credit_report],
+)
+```
+
+To write a resolver for one of the dependent feature classes here, such as `CreditReport.fico_score`, you would still
+reference the relevant feature class by itself:
+
+```python
+@online
+def get_fico_score(id: CreditReport.id) -> CreditReport.fico_score:
+    ...
+```
+
+As an aside, if your resolver depends on features from other feature classes, such as `User.ssn`, we instead recommend
+joining those two feature classes directly for clarity (which was possible prior to this changelog entry):
+
+```diff-py
+from chalk import Primary
+- from chalk.features import features
++ from chalk.features import features, has_one
+
+@features
+class User:
+      id: str
+      # :tags: pii
+      ssn: str
+      policy: "InsurancePolicy"
++     credit_report: "CreditReport" = has_one(lambda: User.id == CreditReport.id)
+
+# ... the rest of the feature classes
+
++ @online
++ def get_fico_score(id: User.id, ssn: User.ssn) -> User.credit_report.fico_score:
++     ...
 ```
 
 ### User permissions page shows roles per user
