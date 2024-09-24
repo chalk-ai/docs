@@ -28,7 +28,7 @@ of your repo.
 project: my-project-id
 environments:
   default:
-    runtime: python311
+    runtime: python312
     requirements: ./requirements.txt
     dockerfile: Dockerfile
   prod:
@@ -41,7 +41,7 @@ You may have dependencies that cannot be expressed through `pip`.
 For those dependencies, you need to customize the base image Chalk uses
 to run your pipelines.
 Chalk allows you to specify a custom [Dockerfile](https://docs.docker.com/engine/reference/builder/)
-that will be used to build a base image for your deploys.
+that will be used to build a base image for your deployments.
 
 ```yaml
 project: my-project-id
@@ -57,7 +57,7 @@ image that you like, with a few requirements:
 
 - `python` must be on the path
 - `pip` must be on the path
-- The Python version can be `python310` or `python311`
+- The Python version can be `python310`, `python311`, or `python312`
 - There should be no folder or file at `/app`
 
 Chalk is responsible for mounting your code into
@@ -69,13 +69,13 @@ the image, and for installing your requirements with pip.
 
 The Python version for a Chalk project is set at the project level.
 The version is set with the `chalk.yml` file in your project repo.
-Chalk supports both `python310` and `python311` as values for `runtime`:
+Chalk supports `python310`, `python311`, and `python312` as values for `runtime`:
 
 ```yaml
 project: my-project-id
 environments:
   default:
-    runtime: python311
+    runtime: python312
   prod:
-    runtime: python310
+    runtime: python311
 ```
