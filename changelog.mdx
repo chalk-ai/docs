@@ -81,9 +81,8 @@ def get_fico_score(id: CreditReport.id) -> CreditReport.fico_score:
     ...
 ```
 
-If your resolver depends on features from other feature classes (such as `User.ssn`), we would not recommend this
-chaining pattern. Instead, we recommend falling back to the existing way of writing a has-one join between `User` and
-`CreditReport`:
+As an aside, if your resolver depends on features from other feature classes, such as `User.ssn`, we instead recommend
+joining those two feature classes directly for clarity (which was possible prior to this changelog entry):
 
 ```diff-py
 from chalk import Primary
