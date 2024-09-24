@@ -86,13 +86,17 @@ chaining pattern. Instead, we recommend falling back to the existing way of writ
 `CreditReport`:
 
 ```diff-py
+from chalk import Primary
+- from chalk.features import features
++ from chalk.features import features, has_one
+
 @features
 class User:
       id: str
       # :tags: pii
       ssn: str
       policy: "InsurancePolicy"
-+     credit_report: "CreditReport"
++     credit_report: "CreditReport" = has_one(lambda: User.id == CreditReport.id)
 
 # ... the rest of the feature classes
 
