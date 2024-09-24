@@ -60,7 +60,7 @@ features and resolvers.
       your dashboard. Use <code>default</code> to configure default values to apply to all of this project's
       environments.
       <SubAttributeTable title=''>
-        <SubAttribute field='runtime' kind='"python310" | "python311"'>
+        <SubAttribute field='runtime' kind='"python310" | "python311" | "python312"'>
           The Python version for the Chalk project.
         </SubAttribute>
         <SubAttribute field='requirements' kind='str'>
@@ -126,7 +126,7 @@ project: my-project-id
 
 environments:
   default:
-    runtimes: python310
+    runtimes: python312
     requirements: requirements.txt
   prod:
     dockerfile: ./DockerfileProd
