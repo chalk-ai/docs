@@ -7,6 +7,49 @@ description: Updates to Chalk!
 
 ---
 
+## September 30, 2024
+
+### Compute cosine similarity between two vector features
+
+`chalk.functions` now offers a [`cosine_similarity`](/api-docs#cosine_similarity) function:
+
+```diff-py
+import chalk.functions as F
+from chalk.features import _, embedding, features
+
+@features
+class Shopper:
+      id: str
+      preferences_embedding: Vector[1536]
+
+@features
+class Product:
+      id: str
+      description_embedding: Vector[1536]
+
+@features
+class ShopperProduct:
+      id: str
+      shopper_id: Shopper.id
+      shopper: Shopper
+      product_id: Product.id
+      product: Product
++     similarity: float = F.cosine_similarity(_.shopper.preferences_embedding, _.product.description_embedding)
+```
+
+Cosine similarity is useful when handling vector embeddings, which are often used when analyzing unstructured text. You
+can also use [`embedding`](/docs/embeddings) to compute vector embeddings with Chalk.
+
+### Dashboard now shows metrics for query runs
+
+When looking at a query run in the dashboard, you'll now find a new Metrics tab showing query metadata, CPU utilization,
+and memory utilization.
+
+### Configuration option for recomputing features on cache misses
+
+We have a new offline query configuration option for recomputing features *only* when they are not already available in
+the offline store. Please reach out if you'd like to try this feature.
+
 ## September 23, 2024
 
 ### Configurable retry policy for SQL resolvers
