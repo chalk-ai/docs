@@ -40,15 +40,16 @@ class ShopperProduct:
 Cosine similarity is useful when handling vector embeddings, which are often used when analyzing unstructured text. You
 can also use [`embedding`](/docs/embeddings) to compute vector embeddings with Chalk.
 
-### Dashboard now shows metrics for query runs
+### Dashboard now shows metrics for offline query runs
 
-When looking at a query run in the dashboard, you'll now find a new Metrics tab showing query metadata, CPU utilization,
+When looking at an offline query run in the dashboard, you'll now find a new Metrics tab showing query metadata, CPU utilization,
 and memory utilization.
 
 ### Configuration option for recomputing features on cache misses
 
 We have a new offline query configuration option for recomputing features *only* when they are not already available in
-the offline store. Please reach out if you'd like to try this feature.
+the offline store. This option is useful for workloads with computationally expensive features that cannot easily be
+recomputed. Please reach out if you'd like to try this feature.
 
 ## September 23, 2024
 
