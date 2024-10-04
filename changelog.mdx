@@ -18,33 +18,37 @@ expressions.
 
 For example, to define a feature that computes the difference between two date features in days and weeks,
 we can use `chalk.functions.total_seconds` and underscore date expressions together.
+
 ```python
 from chalk.functions as F
 from chalk.features import _, features, Primary
+from datetime import date
 @features
-class MyFeatures:
+class User:
     id: Primary[str]
-    date1: date
-    date2: date
-    date_diff_days: float = F.total_seconds(_.date2 - _.date1) / (60 * 60 * 24)
-    date_diff_weeks: float = F.total_seconds(_.date2 - _.date1) / (60 * 60 * 24 * 7)
+    created_at: date
+    last_activity: date
+    days_since_last_activity: float = F.total_seconds(date.today() - _.last_activity) / (60 * 60 * 24)
+    num_weeks_active: float = F.total_seconds(_.last_activity - _.created_at) / (60 * 60 * 24 * 7)
 ```
 
 ### Optionally evict nulls from your Redis lightning online store
 
 You can now select whether to persist null values for features in the Redis lightning online store
 using the `cache_nulls` parameter in the `feature` method. By default, null values are persisted in the
-online store. If you set `cache_nulls=False`, null values will not be persisted in the online store.
+online store for features defined as `Optional`. If you set `cache_nulls=False`, null values will
+not be persisted in the online store.
 
 ```python
 from chalk import feature
-from chalk.features import features, Primary
+from chalk.features import features, Primary, Optional
 
 @features
-class MyFeatures:
+class RestaurantRating:
     id: Primary[str]
-    feature1: float = feature(cache_nulls=False) # null values will not be persisted
-    feature2: float = feature(cache_nulls=True) # null values will be persisted. This is the default behavior.
+    cleanliness_score: Optional[float] = feature(cache_nulls=False) # null values will not be persisted
+    service_score: Optional[float] = feature(cache_nulls=True) # null values will be persisted. This is the default behavior.
+    overall_score: float # null values are not persisted for required features
 ```
 
 ### Feature value metrics from gRPC server and feature table updates
@@ -53,8 +57,8 @@ Customers running the gRPC server can now reach out to enable feature value metr
 the number of observations, number of unique values, and percentage of null values over all queries, as well as the
 running average and maximum of features observed. Please reach out if you'd like to enable feature value metrics.
 
-Additionally, the feature table in the dashboard has been updated to allow for selection of visible columns, which
-enables viewing request counts over multiple time ranges in the same view.
+Additionally, the feature table in the dashboard has been updated to allow for customization of columns displayed,
+which enables viewing request counts over multiple time ranges in the same view.
 
 ## September 30, 2024
 
