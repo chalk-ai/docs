@@ -7,6 +7,55 @@ description: Updates to Chalk!
 
 ---
 
+## October 7, 2024
+
+### Underscore expressions support datetime subtraction and total_seconds
+
+[Underscore expressions](/docs/underscore) now support datetime subtraction and the use of a new
+library function `chalk.functions.total_seconds`. This allows you to compute the number of seconds
+in a time duration and define more complex time interval calculations using performant underscore
+expressions.
+
+For example, to define a feature that computes the difference between two date features in days and weeks,
+we can use `chalk.functions.total_seconds` and underscore date expressions together.
+```python
+from chalk.functions as F
+from chalk.features import _, features, Primary
+@features
+class MyFeatures:
+    id: Primary[str]
+    date1: date
+    date2: date
+    date_diff_days: float = F.total_seconds(_.date2 - _.date1) / (60 * 60 * 24)
+    date_diff_weeks: float = F.total_seconds(_.date2 - _.date1) / (60 * 60 * 24 * 7)
+```
+
+### Optionally evict nulls from your Redis lightning online store
+
+You can now select whether to persist null values for features in the Redis lightning online store
+using the `cache_nulls` parameter in the `feature` method. By default, null values are persisted in the
+online store. If you set `cache_nulls=False`, null values will not be persisted in the online store.
+
+```python
+from chalk import feature
+from chalk.features import features, Primary
+
+@features
+class MyFeatures:
+    id: Primary[str]
+    feature1: float = feature(cache_nulls=False) # null values will not be persisted
+    feature2: float = feature(cache_nulls=True) # null values will be persisted. This is the default behavior.
+```
+
+### Feature value metrics from gRPC server and feature table updates
+
+Customers running the gRPC server can now reach out to enable feature value metrics. Feature value metrics include
+the number of observations, number of unique values, and percentage of null values over all queries, as well as the
+running average and maximum of features observed. Please reach out if you'd like to enable feature value metrics.
+
+Additionally, the feature table in the dashboard has been updated to allow for selection of visible columns, which
+enables viewing request counts over multiple time ranges in the same view.
+
 ## September 30, 2024
 
 ### Compute cosine similarity between two vector features
