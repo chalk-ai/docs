@@ -7,6 +7,39 @@ description: Updates to Chalk!
 
 ---
 
+## October 14, 2024
+
+### SQL explorer in dashboard for datasets
+
+You can now run SQL queries in the dashboard to explore data in [datasets](https://docs.chalk.ai/docs/datasets).
+To use this feature, navigate to the `Datasets` page in the menu, select a dataset,
+and click on the `Output Explorer` tab.
+
+![SQL Explorere for Datasets](/img/sql_explorer_datasets.png)
+
+### Optionally evict nulls from your DynamoDB online store
+
+Last week we enabled the option to decide whether to persist null values for features in Redis lightning
+online stores, and this week we have enabled this feature in DynamoDB online stores. By default, null
+values are persisted in the online store for features defined as `Optional`, but you can set `cache_nulls=False`
+in the `feature` method to evict null values. Read more about how to use the `cache_nulls` parameter
+[here](/api-docs#feature.cache_nulls).
+
+### Set environment variables and more in Advanced section of Cloud Resource Configurations page in dashboard
+
+You can set cloud resource configurations for your environment by navigating to `Settings > Resources` in the
+dashboard. In addition to specifying resource configurations for resource groups like instance counts and CPU,
+you can now also set environment variables and other settings like Kubernetes Node Selectors. A notable
+environment variable that you can set is `AUTO_SHUTDOWN_PERIOD`, which should be set to the number of seconds
+of inactivity after which the branch server is automatically shut down. The Kubernetes Node Selector allows
+you to specify the machine family you would like to use for your deployment. For example, this would be [EC2
+Instance Types](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html) for AWS deployments or
+[Compute Engine Machine Families](https://cloud.google.com/compute/docs/machine-resource) for GCP deployments.
+If you have any questions about how to use any of these settings in the configuration page, please reach out
+to the team.
+
+![Cloud Resource Configurations Advanced Settings](/img/cloud_resource_configuration_advanced_10_2024)
+
 ## October 7, 2024
 
 ### Underscore expressions support datetime subtraction and total_seconds
