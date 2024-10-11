@@ -91,6 +91,7 @@ The "ts" column is always interpreted as the query execution time for the row. S
 consistency](/docs/temporal-consistency) for more details.
 
 ```python
+# This spine_sql_query queries the table `transactions` in the Snowflake offline store instance.
 output = chalk_client.offline_query(
     spine_sql_query=f"""
         SELECT
