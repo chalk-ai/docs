@@ -678,9 +678,10 @@ resolver. Then, using this account id, Chalk will retrieve `Account.title` from 
 
 Lets deploy our code. Note, this time we are using a `branch`. In testing, it can be helpful to deploy your
 feature pipeline to a [branch](/cli/apply), which allows you to test your changes without
-affecting the production feature pipeline. Branch deployments also take only a few seconds to deploy.
+affecting the production feature pipeline. Branches are not just isolated, they are also incredibly
+lightweight—they should deploy pretty much instantly.
 
-```bash
+```sh
 $ chalk apply --branch tutorial
 ✓ Found resolvers
 ✓ Deployed branch
@@ -715,8 +716,8 @@ def test_names_completely_different():
     )
 ```
 
-If you want to learn more, we also have more docs and recommendations on
-[testing resolvers](/docs/unit-tests).
+If you want to learn more, we also provide [additional docs on
+testing resolvers](/docs/unit-tests).
 
 ---
 
@@ -743,7 +744,7 @@ class User:
 
     # The average time between each of a user's transactions, from the last
     # 30 days, in ms.
-    average_time_between_transactions_30d: float
++   average_time_between_transactions_30d: float
 ```
 
 We would then write a resolver to calculate this feature:
@@ -819,13 +820,20 @@ After some testing, we realize couple of things:
 
 
 We decide to reverse-ETL this computed feature from our snowflake data store into
-our Chalk online store.
+our Chalk online store. At a high level, this means that periodically,
+we'll:
+1. look for all users with new transactions in the snowflake data source,
+2. recompute the `average_time_between_transactions_30d` for these users,
+3. Load the new `average_time_between_transactions_30d` into the Chalk online store.
 
 <TipInfo>
   In practice, even executing the above resolver in realtime should be really fast—when building
   new features, do some testing. You may not even need to reverse-ETL features into the online
   store to achieve your target latency.
 </TipInfo>
+
+Of note, we don't want to use our PostgreSQL database for this, we want to use our Snowflake
+
 
 While our offline data is useful for training models and generating features,
 we may also want to use these values for serving production queries.
@@ -882,8 +890,7 @@ computed feature sinto the cache
 Any Python function can be used as a resolver.
 This means that we can call APIs to compute features.
 Let's add a feature that computes the user's FICO score
-from our credit scoring vendor,
-[Experian](https://experian.com).
+from our credit scoring vendor, [Experian](https://experian.com).
 
 As before, we'll first add the features that we want to compute:
 
@@ -1116,15 +1123,15 @@ user := User{}
 
 // Query Chalk, and add the results to the struct.
 _, err = client.OnlineQuery(
-    chalk.OnlineQueryParams{}.
-        WithInput(Features.User.Id, 1234).
-        WithOutputs(
-			Features.User.Id,
-			Features.User.LastName,
-			Features.User.FicoScore,
-			Features.User.Account.Balance,
-        ),
-    &user,
+  chalk.OnlineQueryParams{}.
+  WithInput(Features.User.Id, 1234).
+  WithOutputs(
+    Features.User.Id,
+    Features.User.LastName,
+    Features.User.FicoScore,
+    Features.User.Account.Balance,
+  ),
+  &user,
 )
 
 // Now, you can access the properties of the
