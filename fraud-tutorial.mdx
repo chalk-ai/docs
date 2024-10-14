@@ -82,7 +82,7 @@ matter).
 In particular, the error message tells use that a "Resolver" was not found. A
 [resolver](/docs/resolver-overview) is a function that takes in features and outputs features.
 Broadly, there are two types of resolvers: root and non-root. Root resolvers
-don't take any features as inputs and are used to fetch data from external sources.
+don't take any features (or only a primary key) as inputs and are used to fetch data from external sources.
 
 In the `User` example we sketched out above, you could think of a root resolver
 as a SQL query that reads from a `users` table in an external database.
