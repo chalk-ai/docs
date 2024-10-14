@@ -337,7 +337,7 @@ transaction is linked to a single account. We'll define the
 
 ```diff-py src/models.py
 - from chalk.features import features
-+ from chalk.features import features, DataFrame
++ from chalk.features import features, DataFrame, FeatureTime
 
 + class TransactionStatus(str, Enum):
 +     PENDING = "pending"
@@ -359,6 +359,9 @@ transaction is linked to a single account. We'll define the
 +
 +    # The status of the transaction, defined as an enum above.
 +    status: TransactionStatus
++
++
++    created_at: FeatureTime
 +
 +    # Because we define the join condition between
 +    # `Transaction` and `Account` below, we don't
@@ -398,6 +401,10 @@ and aggregating on a `DataFrame`. However, there are two main differences.
 
 You might also notice that we used an [`Enum`](/docs/feature-types#scalars) feature. Chalk supports many feature types, including
 [`Enums`](/docs/feature-types#scalars), [lists/sets](/docs/feature-types#lists-and-sets), and [`dataclasses`](/docs/feature-types#dataclass).
+
+We also added a `created_at` field to the `Transaction` class of type `FeatureTime`. `FeatureTime` is a special annotation
+that can only be assigned to a single field in a feature class. This field specifies the logical time of a feature instance—it is
+used for point in time correctness and incremental updating. We'll cover both later in this tutorial.
 
 
 [//]: # (We could choose to write a resolver for each of the tables)
@@ -470,7 +477,7 @@ To do this, we can write the following SQL file resolver:
 
 ```sql src/get_user.chalk.sql
 -- The features given to us by the user.
--- resolves: user
+-- resolves: User
 -- source: postgres
 select
     id,
@@ -499,6 +506,30 @@ searched in the [Chalk dashboard](https://chalk.ai/projects). In the example
 resolver above the comment `The features given to us by the user.` becomes
 the description of the resolver in the dashboard.
 
+Lets add our `get_transactions`  and `get_accounts` SQL file resolvers:
+
+```sql src/get_accounts.chalk.sql
+-- The features given to us by an account.
+-- resolves: Account
+-- source: postgres
+select
+    id,
+    full_name as name,
+    email
+from users
+```
+
+```sql src/get_transactions.chalk.sql
+-- The features given to by a transaction.
+-- resolves: Transaction
+-- source: postgres
+select
+    id,
+    full_name as name,
+    email
+from users
+```
+
 ---
 
 ## Deploying!
@@ -507,15 +538,10 @@ Now that we've written a resolver, we can deploy our feature pipeline and
 query our data in realtime.
 
 ```bash
-$ chalk appl
+$ chalk apply
 ✓ Found resolvers
 ✓ Deployed branch
 ```
-
-In testing, it can be helpful to deploy your feature pipeline to a
-[branch](/cli/apply), which allows you to test your changes without
-affecting the production feature pipeline. Branch deployments
-take only a few seconds to deploy.
 
 ---
 
@@ -540,8 +566,7 @@ Note that in SQL file resolver that we wrote,
 we didn't include a `where` clause.
 However, Chalk automatically pushes down filters to the database
 when querying features.
-So, the SQL that will execute against our PostgreSQL database
-will be:
+The SQL query that executes against our PostgreSQL database is:
 
 ```diff-sql
 select
@@ -568,6 +593,15 @@ select
 from txns
 + where account_id = 38;
 ```
+
+You can see this in action, by querying for a user's transactions:
+```bash
+$ chalk query --in user.id=1 --out user.account.transactions
+
+user.name     "John Doe"
+email         "john@doe.com"
+```
+
 
 ---
 
@@ -632,7 +666,7 @@ class Account:
 +   updated_at: FeatureTime
 ```
 
-Features with overriden observation timestamps are inserted into
+Features with overridden observation timestamps are inserted into
 the offline store with the timestamp that you
 specify. The observation timestamp works like an "effective as of" timestamp.
 When you sample historical data, you can specify the observation timestamp
@@ -641,69 +675,6 @@ most-recent feature value that was observed before that timestamp.
 This method of sampling ensures [temporal consistency](/docs/temporal-consistency)
 in your feature values.
 
-### Reverse ETL
-
-While our offline data is useful for training models and generating features,
-we may also want to use these values for serving production queries.
-
-However, data warehouses like [Snowflake](/docs/snowflake)
-and [BigQuery](/docs/bigquery) are optimized for analytics
-and are not well-suited for transactional queries.
-
-We can have Chalk
-[reverse-ETL](/docs/reverse-etl)
-our offline data into our online store
-by setting the
-[`max_staleness`](/api-docs#features.max_staleness)
-and
-[`etl_offline_to_online`](/api-docs#features.etl_offline_to_online)
-keyword arguments on our
-[`@features`](/api-docs#features)
-decorator:
-
-```diff-py src/models.py
-- @features
-+ @features(max_staleness="infinity", etl_offline_to_online=True)
-class Account:
-    id: int
-    user_id: int
-    amount: float
-    updated_at: FeatureTime
-```
-
-The [`max_staleness`](/docs/feature-caching) keyword argument tells
-Chalk how stale a feature value can be before it should be refreshed.
-In this case, we're telling Chalk that we'll tolerate arbitrarily old
-feature values. However, we could also specify a `max_staleness` of
-`1h` or `1d` to tell Chalk not to serve feature values that are older
-than 1 hour or 1 day.
-
-The [`etl_offline_to_online`](/api-docs#features) keyword argument
-tells Chalk to reverse-ETL our offline data into our online store.
-By default, data only enters the online store when it's queried in
-realtime. However, by setting this keyword argument, we're telling
-Chalk to reverse-ETL our offline data into our online store.
-
-
-[//]: # (For some data, you may want reach out directly to the database.)
-[//]: # (That pattern works well with transactional databases like)
-[//]: # ([PostgreSQL]&#40;/docs/postgresql&#41; and [MySQL]&#40;/docs/mysql&#41;.)
-[//]: # (However, data warehouses like [Snowflake]&#40;/docs/snowflake&#41;)
-[//]: # (and [BigQuery]&#40;/docs/bigquery&#41; are optimized for analytics)
-[//]: # (and are not well-suited for transactional queries.)
-
-[//]: # (For these data warehouses, it's often better to ingest data)
-[//]: # (incrementally into Chalk. )
-
-
-[//]: # (We could choose to write a resolver for each of the tables)
-[//]: # (in our database, but we'll take a shortcut and use)
-
-[//]: # (mapping in some of existing data from a)
-[//]: # ([PostgreSQL database]&#40;/docs/postgresql&#41;. SQL-file resolvers]&#40;/docs/&#41; instead.)
-
-[//]: # (Each of the attributes of the class will be mapped to a)
-[//]: # (field in our database.)
 
 ---
 
@@ -817,6 +788,107 @@ You can read more about testing resolvers in the
 [API docs](/docs/unit-tests).
 
 ---
+
+## Reverse ETL
+
+Let's say we have a rather complex feature that we can't serve in realtime
+because it increases the latency of a query too much. For instance, lets
+say we want to add a new feature to our users that indicates the
+average time between their transactions. Maybe we believe that we can use
+this to detect whether a new transaction is fraudulent.
+
+To add this feature, we'd add it to the `User` feature class:
+
+```diff-py src/models.py
+@features
+class User:
+    id: int
+    name: str
+    email: str
+    account: "Account"
+
+    # The similarity between the user's name and the account's title.
+    account_name_match: float
+
+    # There average time between each of a user's transactions, from the last
+    # 30 days, in ms.
+    average_time_between_transactions: float
+```
+
+We would then write a resolver to calculate this feature:
+
+
+```python
+from chalk import online
+from chalk.features import after
+
+@online
+def get_average_time_between_transactions(
+    transactions: User.account.transactions[
+      Transaction.
+      after(days_ago=30)]
+    ]
+):
+  df = transactions.to_polars()
+  df.sort(str(Transaction.date))
+
+
+
+
+```
+
+While our offline data is useful for training models and generating features,
+we may also want to use these values for serving production queries.
+
+However, data warehouses like [Snowflake](/docs/snowflake)
+and [BigQuery](/docs/bigquery) are optimized for analytics
+and are not well-suited for transactional queries.
+
+We can have Chalk
+[reverse-ETL](/docs/reverse-etl)
+our offline data into our online store by setting the [`max_staleness`](/api-docs#features.max_staleness) and
+using scheduled queries.
+
+```diff-py src/models.py
+- @features
++ @features(max_staleness="infinity")
+class Account:
+    id: int
+    user_id: int
+    amount: float
+    updated_at: FeatureTime
+```
+
+The [`max_staleness`](/docs/feature-caching) keyword argument tells
+Chalk how stale a feature value can be before it should be refreshed.
+In this case, we're telling Chalk that we'll tolerate arbitrarily old
+feature values. However, we could also specify a `max_staleness` of
+`1h` or `1d` to tell Chalk not to serve feature values that are older
+than 1 hour or 1 day.
+
+In order to take advantage of our max_staleness, we need to get
+computed feature sinto the cache
+
+
+[//]: # (For some data, you may want reach out directly to the database.)
+[//]: # (That pattern works well with transactional databases like)
+[//]: # ([PostgreSQL]&#40;/docs/postgresql&#41; and [MySQL]&#40;/docs/mysql&#41;.)
+[//]: # (However, data warehouses like [Snowflake]&#40;/docs/snowflake&#41;)
+[//]: # (and [BigQuery]&#40;/docs/bigquery&#41; are optimized for analytics)
+[//]: # (and are not well-suited for transactional queries.)
+
+[//]: # (For these data warehouses, it's often better to ingest data)
+[//]: # (incrementally into Chalk. )
+
+
+[//]: # (We could choose to write a resolver for each of the tables)
+[//]: # (in our database, but we'll take a shortcut and use)
+
+[//]: # (mapping in some of existing data from a)
+[//]: # ([PostgreSQL database]&#40;/docs/postgresql&#41;. SQL-file resolvers]&#40;/docs/&#41; instead.)
+
+[//]: # (Each of the attributes of the class will be mapped to a)
+[//]: # (field in our database.)
 
 ## API Calls
 
@@ -970,6 +1042,7 @@ as we used for defining our features and resolvers.
 Chalk has API client libraries in several languages, including
 [Python](/api-docs#ChalkClient),
 [Go](https://github.com/chalk-ai/chalk-go),
+[Java](https://github.com/chalk-ai/chalk-java),
 [Typescript](https://github.com/chalk-ai/chalk-ts), and
 [Elixir](https://github.com/chalk-ai/chalk-elixir).
 
