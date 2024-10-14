@@ -6,41 +6,164 @@ description: Build a feature pipeline for fraud detection.
 published: true
 ---
 
+import { TipInfo } from '@/components/Tip'
+
+---
+
 ## Introduction
 
 Chalk helps you build out feature pipelines for training and serving machine learning models.
 
-The building blocks of Chalk are [features](/docs/features).
-Each piece of data in your system, whether a column in a database
-or a value passed in at inference, is a feature.
-For example, a user's age and whether they are an adult might be a
-features in your system:
+The building blocks of Chalk are [features](/docs/features) and resolvers. Features are an
+abstraction that specify what you want your data to look like—this is similar
+to CSS or an SQL query.
+
+To write a features in chalk, you specify a python class with annotated attributes:
 
 ```python
 from chalk.features import features
+import datetime as dt
 
 @features
 class User:
     id: int
+    birthday: dt.datetime
+    name: str
+    email: str
+
+    # computed features
+    username: str
     age: int
     is_adult: bool
 ```
 
-Features are computed by [resolvers](/docs/resolver-overview).
-A resolver is a function that takes features as arguments and
-outputs new features. For example, a resolver might take a user's
-age and output a boolean indicating whether they are over 18.
+<TipInfo>
+  Features are the abstract underlying attributes of your data—id, birthday, name, age, is_adult. The `User` class is either a
+  **feature set** or a **feature class**. Specific instances of a feature class are **feature class instances**:
+  ```python
+  User(id=1, birthday=dt.datetime(1990, 1, 1), name="Alice")
+  ```
+</TipInfo>
 
-```python
-from chalk.features import online
+Note, you do not need to specify how the features will be computed yet—some of these
+features might come directly from a database table: for instance, the id, birthday, and
+name fields that we've defined above. Some might be calculated in real time based on
+the current timestamp (like the age feature) or a different upstream feature (like the
+`is_adult` feature, which depends on the age feature). In fact, you could deploy the code
+above to Chalk and it would be considered valid. However, if you tried to query for a field (for
+example, if you asked chalk to return the name of a user with id 1) then you'd get an
+error.
 
-@online
-def is_adult(age: User.age) -> User.is_adult:
-    return age >= 18
+In particular, you would get the following error:
+
+```bash
+$ chalk query --in user.id=1 --out user.name
+Results
+
+No scalar features
+
+
+Errors
+
+Resolver Not Found user.age
+
+Failed to find any valid resolver for feature: 'user.name' and no `default` value or
+`max_staleness` was specified for 'user.name', so the feature cannot be defaulted or
+resolved from the online store.
 ```
 
-The focus on data instead of pipelines may be unfamiliar at first.
-Traditional orchestration platforms
+<TipInfo>
+  We'll talk more about deploying code to Chalk later, but you're welcome to skip ahead to get a better
+  sense of [deploying code to Chalk] and [running queries].
+</TipInfo>
+
+This should not be surprising. Chalk has no connection to your underlying data. So
+it doesn't know how to get the name of a user with an id of 1—or any id for that
+matter.
+
+In particular, the error message tells use that a "Resolver" was not found. A
+[resolver](/docs/resolver-overview) is a function that optionally takes in features and outputs features.
+There are two main types of resolvers: root and non-root. Root resolvers
+don't take any features as inputs and are used to fetch data from external sources.
+
+In the `User` example we sketched out above, you can think of a root resolver
+as a SQL query that reads from a `users` table in an external database. While there
+are exceptions, this is what the majority of root resolvers will look like. For
+example, to read from the `users` table in your PostgreSQL database, you might write
+the following file: `get_users.chalk.sql`, with the following contents:
+
+```sql
+-- source: PG
+-- resolves: User
+
+SELECT id, birthday, email, name FROM users
+```
+
+By writing this file, you've defined a SQL resolver, named `get_users`, which knows
+how to resolve `birthday` or `name` for any given id in the `users` table. At this point,
+you might have noticed that the SQL query above doesn't explicitly know how to get
+the birthday or name of a given id, it just returns all users. Chalk gets around this
+by pushing filters into your SQL queries.
+
+Lets say you've defined the SQL resolver above and deployed it to Chalk. You run the
+query that failed above:
+```sh
+$ chalk query --in user.id=1 --out user.name
+```
+
+Chalk will look at the resolvers you've defined and ask "given a User.id, can I calculate
+a `User.name`". It will see the SQL resolver defined above, and realize that it can be
+used to get `User.name` from `User.id`. It will push the id filter into the SQL query,
+running:
+
+```sh
+SELECT id, birthday, name FROM users
+WHERE id=1
+```
+
+And returning the result.
+
+Getting this to work fully, will involve setting up a database connector to Chalk, which
+we will cover later. For now, it is important to note that the process of defining resolvers
+is incredibly modular. Now lets look into defining a non-root resolver—a User's email
+username.
+
+In Chalk, Non-root resolvers are python functions with feature annotations.
+```python
+from chalk import online
+from chalk.features import features
+import datetime as dt
+
+@features
+class User:
+    id: int
+    birthday: dt.datetime
+    name: str
+    email: str
+
+    # computed features
+    username: str
+    age: int
+    is_adult: bool
+
+@online
+def get_email_username(email: User.email) -> User.username:
+    return email.split('@')[0]
+```
+
+By writing the `get_email_username` python function, we've defined another resolver. If we apply
+this code to Chalk, we can now query for the username of a user with a given id.
+
+```sh
+$ chalk query --in user.id=1 --out user.username
+```
+
+When running the above query, Chalk will identify that it knows how to determine an email
+from a given id using the `get_user` resolver. It will also determine that it knows how
+to calculate a username for an email using the `get_email_username` resolver. Chalk
+will execute both these resolvers and return the result.
+
+The focus on data instead of pipelines may be unfamiliar at first. Traditional orchestration platforms
 like [Airflow](https://airflow.apache.org/) or [Dagster](https://dagster.io/)
 explicitly compose functions which produce data into a DAG of tasks.
 With Chalk, the DAG of [resolvers](/docs/resolver-overview) is defined implicitly by the [features](/docs/features)
@@ -48,10 +171,12 @@ they produce. This architecture makes it easy to build out feature pipelines tha
 Chalk handles tracking your features for [temporal consistency](/docs/temporal-consistency),
 running your resolvers in parallel, and horizontally scaling your feature pipelines.
 
-This tutorial will walk you through the process of building a feature pipeline for a simple model.
-We will be building a feature pipeline for a fraud detection model,
-and will cover the full feature development lifecycle:
+Alright, enough with the intro. Lets get started building!
 
+## Fraud Detection Pipeline
+
+This tutorial walks through the process of building a feature pipeline for fraud detection.
+We'll cover the full feature development lifecycle:
 1. [Data Modeling](/docs/fraud-2) - Creating feature classes for the data we want to compute.
 2. [SQL Resolvers](/docs/fraud-3) - Mapping data from SQL sources to feature classes.
 3. [Python Resolvers](/docs/fraud-4) - Defining resolvers in Python that call APIs and compute derived features.
@@ -97,10 +222,8 @@ class User:
     email: str
 ```
 
-Note that at this point,
-we haven't defined how to compute these
-features. We are only thinking about the data
-that we would like to have.
+Note that at this point we haven't defined how to compute these features.
+We are only thinking about the data that we would like to have.
 
 ### Primary keys
 
@@ -130,21 +253,19 @@ policies. For example, you may wish to send [PagerDuty alerts](/docs/pagerduty)
 to [different teams](/docs/alertconfig) based on
 the owner of the related feature.
 
-Any of the comments and tags from the code also show up
+All of the comments and tags from the code also show up
 in the [Chalk dashboard](https://chalk.ai/projects),
 and are indexed for search.
 
-For example, we've added a `pii` tag
-to the `name` and `email` fields. This means that
-these fields will be treated as personally identifiable
-information and will be subject to additional
-restrictions.
+For example, we've added a `pii` tag to the `name` and `email` fields. This means that
+these fields will be treated as personally identifiable information and will be
+subject to additional restrictions.
 
 ---
 
 ## Has-One Relationships
 
-Next up, we'll define a related feature class to our users.
+Next up, we'll define a feature class related to our users.
 We'll call this class `Account` and it will represent
 a bank account that a user owns.
 
@@ -199,6 +320,11 @@ class User:
 +   # The account that this user owns.
 +   account: "Account"
 ```
+
+<TipInfo>
+  Note that the account annotation in the User feature class is quoted. This is because the Account class is defined later in the file
+  Chalk will recognize this as a valid feature reference and process it correctly.
+</TipInfo>
 
 ---
 
@@ -259,8 +385,8 @@ class Account:
 
 This is the first time we're seeing the [`DataFrame`](/docs/dataframe) type.
 
-A Chalk `DataFrame` models tabular data in much the same
-way that `pandas` does. However, there are some key differences that
+A [Chalk DataFrame](/docs/dataframe) models tabular data in much the same
+way that `Pandas` does. However, there are some key differences that
 allow the Chalk `DataFrame` to increase type safety and performance.
 
 Like pandas, Chalk's `DataFrame` is a two-dimensional data structure with
@@ -268,17 +394,10 @@ rows and columns. You can perform operations like filtering, grouping,
 and aggregating on a `DataFrame`. However, there are two main differences.
 
 - *Lazy implementation* - Chalk's `DataFrame` is lazy and can be backed by multiple data sources, where a `pandas.DataFrame` executes eagerly in memory.
-- *Use as a type* - Chalk's `DataFrame[...]` can be used to represent a type of data with pre-defined filters.
+- *Usable as a type* - Chalk's `DataFrame[...]` can be used to represent a type of data with pre-defined filters.
 
-You can read more about the Chalk `DataFrame`
-in the [docs](/docs/dataframe) and
-[API Reference](/api-docs#DataFrame).
-
-You might also notice that we've used an [`Enum`](/docs/feature-types#scalars) feature here.
-Chalk supports many feature types, including
-[`Enum`](/docs/feature-types#scalars),
-[lists and sets](/docs/feature-types#lists-and-sets),
-and [`@dataclasses`](/docs/feature-types#dataclass).
+You might also notice that we used an [`Enum`](/docs/feature-types#scalars) feature. Chalk supports many feature types, including
+[`Enums`](/docs/feature-types#scalars), [lists/sets](/docs/feature-types#lists-and-sets), and [`dataclasses`](/docs/feature-types#dataclass).
 
 
 [//]: # (We could choose to write a resolver for each of the tables)
@@ -295,52 +414,61 @@ and [`@dataclasses`](/docs/feature-types#dataclass).
 ## Configuring SQL sources
 
 A primary source of data for many companies is a SQL database. Chalk can
-automatically ingest data from SQL databases and map it to feature classes.
+automatically ingest data from SQL databases and map it into feature classes.
 
 In our example application, we have two databases: PostgreSQL and Snowflake.
 Our PostgreSQL database is the primary database used in our
 codebase, and our Snowflake database is used for analytics, with tables
 populated from DBT views and batch jobs.
 
-To configure our SQL sources in Chalk, we'll create a
-[`datasources.py`](https://github.com/chalk-ai/fraud-example/blob/main/src/datasources.py)
-file that contains a
-[`SnowflakeSource`](/docs/snowflake)
-and a
-[`PostgreSQLSource`](/docs/postgresql):
+To configure our SQL sources in Chalk, we'll: 1). Add the data sources to the Chalk
+dashboard, and 2). Create a  [`datasources.py`](https://github.com/chalk-ai/fraud-example/blob/main/src/datasources.py) file that contains a [`SnowflakeSource`](/docs/snowflake) and a [`PostgreSQLSource`](/docs/postgresql):
+
+### Adding Data Sources in the Chalk Dashboard
+
+To add the data sources to the Chalk dashboard, go to the `Data Sources` tab of the dashboard
+and click on the `Add a data source` button. You can then select the type of data source you
+want to add.
+
+Select `PostgreSQL` and fill in the required information. Repeat the same process with
+a Snowflake data source. Note the names that you've given to each of your data sources,
+these will be used in the next step—we recommend naming naming your `PostgreSQL` data
+source `postgres` and your `Snowflake` data source `snowflake`.
+
+Note, the connection information will be stored securely using the secrets manager of your cloud provider.
 
 ```python src/datasources.py
 from chalk.sql import SnowflakeSource, PostgreSQLSource
 
-snowflake = SnowflakeSource()
-postgres = PostgreSQLSource()
+# if you named your postgres or snowflake resolvers something other than `postgres`
+# and `snowflake`, you'll have to update the code accordingly.
+snowflake = SnowflakeSource(name=<postgres_source_name>)
+postgres = PostgreSQLSource(name=<snowflake_source_name>)
 ```
 
-These singleton variables can be used to query data in
-[Python SQL resolvers](/docs/sql#sql-strings).
-They're also necessary before we can write any
-[`.chalk.sql`](/docs/sql#sql-file-resolvers)
-files, as we'll do below.
+Now that we've defined our data sources, we can use them to create root SQL resolvers.
 
----
+--
 
 ## Online data
 
-Chalk's preferred way to ingest data from SQL databases is to use
-[SQL file resolvers](/docs/sql#sql-file-resolvers). This allows us to write
-queries in the same language as our database, and to use the same tooling to
-test and debug them.
+Chalk's preferred way to ingest data from SQL databases is to use [SQL file resolvers](/docs/sql#sql-file-resolvers).
 
-To create a SQL file resolver, we create a file in our project directory with
-the extension `.chalk.sql`. We can then write a SQL query in this file, and
-add [metadata](/docs/sql#sql-file-resolvers)
-to the top of the file to tell Chalk how to ingest the data.
+With SQL file resolvers, you can write your root resolvers in `SQL`, and to use
+the database tooling you're familiar with to test and debug them.
 
-From our `User` feature class, we may want to resolve the
-`name` and `email` attributes from a PostgreSQL table.
+To create a SQL resolver, add a file to your project directory with
+the extension `.chalk.sql`. You can now write a SQL query in this file. You
+will also need to add [metadata](/docs/sql#sql-file-resolvers) to the top of the file
+to tell Chalk how to ingest the data.
+
+For example, say that we want to resolve the
+`name` and `email` attributes from a PostgreSQL table
+for our User class.
+
 To do this, we can write the following SQL file resolver:
 
-```sql src/user.chalk.sql
+```sql src/get_user.chalk.sql
 -- The features given to us by the user.
 -- resolves: user
 -- source: postgres
@@ -348,7 +476,7 @@ select
     id,
     full_name as name,
     email
-from users;
+from users
 ```
 
 The `resolves` key tells Chalk which feature class the columns
@@ -360,16 +488,16 @@ the select target is mapped to the feature.
 In the example above, we aliased the `full_name` column to `name`,
 so it will be mapped to the `name` attribute on the `User` feature class.
 Chalk validates your SQL file resolvers when you run
-[`chalk apply`](/cli/apply).
+[`chalk apply`](/cli/apply). If you want to validate your code
+without deploying, you can run the `chalk lint` command.
 
-The `source` key tells Chalk which [integration](/docs/integrations)
-to use to connect to the database. Since we have only one PostgreSQL
-database, we can reference the `source` as `postgres`. If we had
-multiple PostgreSQL databases, we can use named integrations to
-reference different databases.
+The `source` key tells Chalk which [integration](/docs/integrations) to use to connect
+to the database.
 
 Other comments in the SQL file resolver are indexed by Chalk and can be
-searched in the [Chalk dashboard](https://chalk.ai/projects).
+searched in the [Chalk dashboard](https://chalk.ai/projects). In the example
+resolver above the comment `The features given to us by the user.` becomes
+the description of the resolver in the dashboard.
 
 ---
 
@@ -378,16 +506,16 @@ searched in the [Chalk dashboard](https://chalk.ai/projects).
 Now that we've written a resolver, we can deploy our feature pipeline and
 query our data in realtime.
 
+```bash
+$ chalk appl
+✓ Found resolvers
+✓ Deployed branch
+```
+
 In testing, it can be helpful to deploy your feature pipeline to a
 [branch](/cli/apply), which allows you to test your changes without
 affecting the production feature pipeline. Branch deployments
 take only a few seconds to deploy.
-
-```bash
-$ chalk apply --branch tutorial
-✓ Found resolvers
-✓ Deployed branch
-```
 
 ---
 
@@ -644,6 +772,16 @@ Chalk will retrieve `Account.title`
 from the online store, where it has been cached from our cron run of the
 [`balance.chalk.sql`](https://github.com/chalk-ai/fraud-example/blob/main/src/balance.chalk.sql)
 resolver.
+
+```bash
+$ chalk apply --branch tutorial
+✓ Found resolvers
+✓ Deployed branch
+```
+In testing, it can be helpful to deploy your feature pipeline to a
+[branch](/cli/apply), which allows you to test your changes without
+affecting the production feature pipeline. Branch deployments
+take only a few seconds to deploy.
 
 ### Testing
 
