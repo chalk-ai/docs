@@ -15,10 +15,9 @@ import { TipInfo } from '@/components/Tip'
 Chalk helps you build out feature pipelines for training and serving machine learning models.
 
 The building blocks of Chalk are [features](/docs/features) and resolvers. Features are an
-abstraction that specify what you want your data to look like—this is similar
-to CSS or an SQL query.
+abstraction that specify what you want your data to look like.
 
-To write a features in chalk, you specify a python class with annotated attributes:
+To write features in chalk, you specify a python class with annotated attributes:
 
 ```python
 from chalk.features import features
@@ -38,21 +37,20 @@ class User:
 ```
 
 <TipInfo>
-  Features are the abstract underlying attributes of your data—id, birthday, name, age, is_adult. The `User` class is either a
-  **feature set** or a **feature class**. Specific instances of a feature class are **feature class instances**:
-  ```python
-  User(id=1, birthday=dt.datetime(1990, 1, 1), name="Alice")
-  ```
+  Features are the abstract underlying attributes of your data—id, birthday, name, age, is_adult are all features.
+  The `User` class is a **feature class** (also sometimes referred to as a **feature set**. Specific instances
+  of a feature class are **feature class instances**.
 </TipInfo>
 
-Note, you do not need to specify how the features will be computed yet—some of these
+Note, you define your features before defining how they will be computed. Some of these
 features might come directly from a database table: for instance, the id, birthday, and
 name fields that we've defined above. Some might be calculated in real time based on
 the current timestamp (like the age feature) or a different upstream feature (like the
-`is_adult` feature, which depends on the age feature). In fact, you could deploy the code
-above to Chalk and it would be considered valid. However, if you tried to query for a field (for
-example, if you asked chalk to return the name of a user with id 1) then you'd get an
-error.
+`is_adult` feature).
+
+In fact, you could deploy the code above to Chalk and it would be considered valid.
+However, if you tried to query for a field (for example, if you asked chalk to return the name
+of a user with id 1) then you'd get an error.
 
 In particular, you would get the following error:
 
@@ -73,24 +71,25 @@ resolved from the online store.
 ```
 
 <TipInfo>
-  We'll talk more about deploying code to Chalk later, but you're welcome to skip ahead to get a better
-  sense of [deploying code to Chalk] and [running queries].
+  We'll talk more about deploying code to Chalk later, but, if you'd like to, you're welcome to
+  skip ahead to get a better sense of [deploying code to Chalk] and [running queries].
 </TipInfo>
 
 This should not be surprising. Chalk has no connection to your underlying data. So
-it doesn't know how to get the name of a user with an id of 1—or any id for that
-matter.
+it doesn't know how to get the name of a user with an id of 1 (or any id for that
+matter).
 
 In particular, the error message tells use that a "Resolver" was not found. A
-[resolver](/docs/resolver-overview) is a function that optionally takes in features and outputs features.
-There are two main types of resolvers: root and non-root. Root resolvers
+[resolver](/docs/resolver-overview) is a function that takes in features and outputs features.
+Broadly, there are two types of resolvers: root and non-root. Root resolvers
 don't take any features as inputs and are used to fetch data from external sources.
 
-In the `User` example we sketched out above, you can think of a root resolver
-as a SQL query that reads from a `users` table in an external database. While there
-are exceptions, this is what the majority of root resolvers will look like. For
-example, to read from the `users` table in your PostgreSQL database, you might write
-the following file: `get_users.chalk.sql`, with the following contents:
+In the `User` example we sketched out above, you could think of a root resolver
+as a SQL query that reads from a `users` table in an external database.
+
+While there are exceptions, this is what the majority of root resolvers will look
+like. For example, to read from the `users` table in your PostgreSQL database, you
+might write a `get_users.chalk.sql` file, with the following contents:
 
 ```sql
 -- source: PG
@@ -113,7 +112,7 @@ $ chalk query --in user.id=1 --out user.name
 
 Chalk will look at the resolvers you've defined and ask "given a User.id, can I calculate
 a `User.name`". It will see the SQL resolver defined above, and realize that it can be
-used to get `User.name` from `User.id`. It will push the id filter into the SQL query,
+used to get `User.name` from a `User.id`. It will push the id filter into the SQL query,
 running:
 
 ```sh
@@ -125,8 +124,9 @@ And returning the result.
 
 Getting this to work fully, will involve setting up a database connector to Chalk, which
 we will cover later. For now, it is important to note that the process of defining resolvers
-is incredibly modular. Now lets look into defining a non-root resolver—a User's email
-username.
+is incredibly modular.
+
+Now lets look into defining a non-root resolver—computing a User's email username.
 
 In Chalk, Non-root resolvers are python functions with feature annotations.
 ```python
@@ -183,6 +183,11 @@ We'll cover the full feature development lifecycle:
 4. [Inference](/docs/fraud-5) - Integrating Chalk into production decisioning systems.
 5. [Backtesting](/docs/fraud-6) - Experimenting with new features
 
+In this tutorial, we'll assume the following existing data architecture:
+- a PostgreSQL database with three tables: `users`, `accounts`, and `transactions`.
+- a Snowflake analytics database with the same three tables: `users`, `accounts`, and `transactions`,
+which is periodically updated in response to changes in PostgreSQL database.
+
 Before you get started, make sure you have the
 [Chalk CLI installed](/docs/installation).
 
@@ -197,14 +202,10 @@ If you want to skip ahead, you can find the full source code for this tutorial o
 
 ## Define features
 
-We'll start by modeling the features we want for our
-the users in our system.
-We'll start simple with three
-[scalar features](/docs/feature-types):
-`user.id`, `user.name`, and `user.email`.
-First, we'll create a new file called [`models.py`](https://github.com/chalk-ai/fraud-example/blob/main/src/models.py)
-where we'll define a `User` class decorated with
-[`@features`](/api-docs#features).
+We'll start by modeling out the features we want for the users of our system.
+We'll start simple with three [scalar features](/docs/feature-types): `User.id`, `User.name`, and `User.email`.
+First, we'll create a new file called [`models.py`](https://github.com/chalk-ai/fraud-example/blob/main/src/models.py) where we'll define a `User` class
+decorated with [`@features`](/api-docs#features).
 
 ```python src/user.py
 from chalk.features import features
@@ -231,7 +232,8 @@ There are a few things to note here. First, all our feature
 classes need to have a unique `id` field. By default, this
 is the field named `id`. However, if you want to use a
 different feature name as the primary key, you can specify it
-by describing the primary key feature with the `Primary` type.
+by describing the primary key feature with the `Primary` type
+annotation.
 
 ```diff-py src/user.py
 from chalk.features import features
@@ -244,7 +246,7 @@ class User:
     email: str
 ```
 
-### Tags, Descriptions, & Owners
+### Tags, Descriptions, and Owners
 
 In our features above, we've added some comments and
 annotations to our features. These are optional, but
@@ -265,9 +267,8 @@ subject to additional restrictions.
 
 ## Has-One Relationships
 
-Next up, we'll define a feature class related to our users.
-We'll call this class `Account` and it will represent
-a bank account that a user owns.
+Next up, we'll define a feature class related to our users. We'll call this class
+`Account` and it will represent a bank account that a user owns.
 
 ```python src/models.py
 from chalk.features import features
@@ -303,11 +304,12 @@ class Account:
 ```
 
 This denotes that each account has one user, and that the
-`Account.user_id` and the `User.id` are equal and of type `int`, as described by `Account.user_id`.
+`Account.user_id` and the `User.id` are equal and of type `int`,
+as described by `User.id`.
 
 Once we've defined the relationship on one side of the
 join, we can define the inverse relationship on the
-other side without needing to specify the predicate
+other side without needing to specify the foreign key
 again.
 
 ```diff-py src/models.py
@@ -360,7 +362,7 @@ transaction is linked to a single account. We'll define the
 +    # The status of the transaction, defined as an enum above.
 +    status: TransactionStatus
 +
-+
++    # When the transaction occurred
 +    created_at: FeatureTime
 +
 +    # Because we define the join condition between
@@ -420,8 +422,11 @@ used for point in time correctness and incremental updating. We'll cover both la
 
 ## Configuring SQL sources
 
-A primary source of data for many companies is a SQL database. Chalk can
-automatically ingest data from SQL databases and map it into feature classes.
+The primary source of data for most companies are SQL databases (note, by
+SQL database, we don't mean relational databases, we mean any database that
+can be queried with SQL—in practice this means pretty much any of them). Chalk
+can automatically ingest data from SQL databases and map results into feature
+classes.
 
 In our example application, we have two databases: PostgreSQL and Snowflake.
 Our PostgreSQL database is the primary database used in our
@@ -429,7 +434,7 @@ codebase, and our Snowflake database is used for analytics, with tables
 populated from DBT views and batch jobs.
 
 To configure our SQL sources in Chalk, we'll: 1). Add the data sources to the Chalk
-dashboard, and 2). Create a  [`datasources.py`](https://github.com/chalk-ai/fraud-example/blob/main/src/datasources.py) file that contains a [`SnowflakeSource`](/docs/snowflake) and a [`PostgreSQLSource`](/docs/postgresql):
+dashboard, and 2). Define your Data Sources in Your Chalk Code.
 
 ### Adding Data Sources in the Chalk Dashboard
 
@@ -438,11 +443,16 @@ and click on the `Add a data source` button. You can then select the type of dat
 want to add.
 
 Select `PostgreSQL` and fill in the required information. Repeat the same process with
-a Snowflake data source. Note the names that you've given to each of your data sources,
-these will be used in the next step—we recommend naming naming your `PostgreSQL` data
+a Snowflake data source. Note the names that you've given to each of your data sources:
+these will be used in the next step. We recommend naming naming your `PostgreSQL` data
 source `postgres` and your `Snowflake` data source `snowflake`.
 
-Note, the connection information will be stored securely using the secrets manager of your cloud provider.
+Note, the connection information you add to the dashboard will be stored securely using
+the secrets manager of your cloud provider.
+
+### Define Your Data Sources in Your Chalk Code
+
+To define your data sources, you'll need to create a [`datasources.py`](https://github.com/chalk-ai/fraud-example/blob/main/src/datasources.py) file that contains a [`SnowflakeSource`](/docs/snowflake) and a [`PostgreSQLSource`](/docs/postgresql):
 
 ```python src/datasources.py
 from chalk.sql import SnowflakeSource, PostgreSQLSource
@@ -461,8 +471,9 @@ Now that we've defined our data sources, we can use them to create root SQL reso
 
 Chalk's preferred way to ingest data from SQL databases is to use [SQL file resolvers](/docs/sql#sql-file-resolvers).
 
-With SQL file resolvers, you can write your root resolvers in `SQL`, and to use
-the database tooling you're familiar with to test and debug them.
+With SQL file resolvers, you can write your root resolvers in `SQL`, and use
+the database tooling you're familiar with to test, lint, and debug your
+code.
 
 To create a SQL resolver, add a file to your project directory with
 the extension `.chalk.sql`. You can now write a SQL query in this file. You
@@ -489,9 +500,10 @@ from users
 The `resolves` key tells Chalk which feature class the columns
 in the `select` statement should be mapped to.
 Then, the target names of the query are
-compared against the names of the attributes on the feature class.
+compared against the names of the attributes on the specified feature class.
 If the names match after stripping underscores and lower-casing,
 the select target is mapped to the feature.
+
 In the example above, we aliased the `full_name` column to `name`,
 so it will be mapped to the `name` attribute on the `User` feature class.
 Chalk validates your SQL file resolvers when you run
@@ -503,10 +515,10 @@ to the database.
 
 Other comments in the SQL file resolver are indexed by Chalk and can be
 searched in the [Chalk dashboard](https://chalk.ai/projects). In the example
-resolver above the comment `The features given to us by the user.` becomes
+resolver above, the comment `The features given to us by the user.` becomes
 the description of the resolver in the dashboard.
 
-Lets add our `get_transactions`  and `get_accounts` SQL file resolvers:
+Lets also add our `get_accounts`  and `get_transactions` SQL file resolvers:
 
 ```sql src/get_accounts.chalk.sql
 -- The features given to us by an account.
@@ -534,7 +546,7 @@ from users
 
 ## Deploying!
 
-Now that we've written a resolver, we can deploy our feature pipeline and
+Now that we've written a few resolvers, we can deploy our feature pipeline and
 query our data in realtime.
 
 ```bash
@@ -597,103 +609,30 @@ from txns
 You can see this in action, by querying for a user's transactions:
 ```bash
 $ chalk query --in user.id=1 --out user.account.transactions
+Results
 
-user.name     "John Doe"
-email         "john@doe.com"
+No scalar features
+
+user.account.transactions
+
+ id      account_id   amount    status     created_at
+─────────────────────────────────────────────────────────────────────────────────────
+ 197524  38           12.00     "cleared"  "2023-12-02T21:05:54.057868+00:00"
+ 198604  38           27.51     "cleared"  "2023-04-29T22:27:12.058023+00:00"
+ 210326  38           93.27     "cleared"  "2023-02-17T21:49:27.058144+00:00"
+ 228363  38           1.05      "cleared"  "2023-04-20T21:46:33.058240+00:00"
+ 230225  38           23.91     "cleared"  "2023-06-09T03:07:44.058314+00:00"
+ 235551  38           12.20     "failed"   "2022-12-26T15:45:07.058416+00:00"
 ```
-
-
----
-
-## Offline data
-
-In addition to online data, we can also ingest data from SQL databases
-into Chalk's offline store. Offline data won't be queried in realtime,
-but can be used to train models and generate features.
-
-For our `Account` feature class, we may want to ingest data from a
-Snowflake table. We can write a
-[SQL file resolver](https://github.com/chalk-ai/fraud-example/blob/main/src/balance.chalk.sql)
-to do this:
-
-```sql src/balance.chalk.sql
--- Incrementally ingest account data from Snowflake.
--- This comment will be searchable in the Chalk dashboard.
---
--- resolves: account
--- source: snowflake
--- type: offline
--- cron: 5m
--- incremental:
---   mode: row
---   lookback: 1h
-select
-    id,
-    user_id,
-    amount,
-    updated_at
-from accounts;
-```
-
-There are a few differences between this SQL file resolver and the one
-we wrote for the `User` feature class.
-
-First, we've added a `type` key to the header. This tells Chalk
-that this resolver should be used to ingest data into the offline store.
-If we didn't include this key, Chalk would assume that this resolver
-could be [queried in realtime](/docs/query-basics).
-
-Second, we've added a [`cron`](/docs/resolver-cron) key to the header. This tells Chalk
-to run this resolver on a schedule. In this case, we're telling Chalk
-to run this resolver every 5 minutes.
-
-Finally, we've added an
-[`incremental`](/docs/sql#incremental-queries)
-key to the header.
-This tells Chalk to only ingest new data from the database, and is helpful
-when you have an immutable events table. Also, notice the new
-`updated_at` column in the `select` statement. We'll map that column
-to a [`FeatureTime`](/docs/time) attribute in our feature class:
-
-```diff-py src/models.py
-from chalk.features import feature, features, FeatureTime
-
-@features
-class Account:
-    id: int
-    user_id: int
-    amount: float
-+   updated_at: FeatureTime
-```
-
-Features with overridden observation timestamps are inserted into
-the offline store with the timestamp that you
-specify. The observation timestamp works like an "effective as of" timestamp.
-When you sample historical data, you can specify the observation timestamp
-at which you want to sample a feature value. Then, Chalk will return the
-most-recent feature value that was observed before that timestamp.
-This method of sampling ensures [temporal consistency](/docs/temporal-consistency)
-in your feature values.
-
-
----
-
-## SQL
-
-So far, we've mapped SQL tables into feature classes. But there's a lot more we can do with
-Chalk. In this step, we'll add features to our `Account` and `User` feature classes
-that are gathered from API calls and computed downstream of other features.
 
 ---
 
 ## Derived Features
 
-We've noticed that some fraudsters try to link
-stolen accounts to our platform and attempt to
-transfer money through our system.
-To detect this behavior, we want to compute a
-similarity score between the user's name and the
-account's title.
+We've noticed that some fraudsters try to link stolen accounts to our platform
+and attempt to transfer money through our system. To detect this behavior, we
+want to compute a similarity score between the user's name and the account's
+title.
 
 We'll start by adding this new feature, `account_name_match`,
 to our `User` feature class.
@@ -711,9 +650,7 @@ class User:
 ```
 
 Next, we'll define a resolver that computes this feature.
-We'll use
-[Jaccard similarity](https://en.wikipedia.org/wiki/Jaccard_index)
-to compute the similarity score.
+We'll use [Jaccard similarity](https://en.wikipedia.org/wiki/Jaccard_index) to compute the similarity score.
 
 ```python src/resolvers.py
 from src.models import User
@@ -736,29 +673,23 @@ Our feature dependencies are declared in the function signature
 as `User.account.title` and `User.name`.
 Chalk will automatically retrieve
 `User.account_id` and `User.name`
-from our
-[`user.chalk.sql`](https://github.com/chalk-ai/fraud-example/blob/main/src/user.chalk.sql)
-resolver. Then, using this account id,
-Chalk will retrieve `Account.title`
-from the online store, where it has been cached from our cron run of the
-[`balance.chalk.sql`](https://github.com/chalk-ai/fraud-example/blob/main/src/balance.chalk.sql)
-resolver.
+from our [`user.chalk.sql`](https://github.com/chalk-ai/fraud-example/blob/main/src/user.chalk.sql)
+resolver. Then, using this account id, Chalk will retrieve `Account.title` from the `account.chalk.sql` resolver.
+
+Lets deploy our code. Note, this time we are using a `branch`. In testing, it can be helpful to deploy your
+feature pipeline to a [branch](/cli/apply), which allows you to test your changes without
+affecting the production feature pipeline. Branch deployments also take only a few seconds to deploy.
 
 ```bash
 $ chalk apply --branch tutorial
 ✓ Found resolvers
 ✓ Deployed branch
 ```
-In testing, it can be helpful to deploy your feature pipeline to a
-[branch](/cli/apply), which allows you to test your changes without
-affecting the production feature pipeline. Branch deployments
-take only a few seconds to deploy.
 
 ### Testing
 
 Resolvers are callable functions, so we can test them like any other Python function.
-Let's test our new resolver by writing a
-[unit test](https://github.com/chalk-ai/fraud-example/blob/main/tests/test_name_match.py):
+Let's test our new resolver by writing a [unit test](https://github.com/chalk-ai/fraud-example/blob/main/tests/test_name_match.py):
 
 ```python tests/test_name_match.py
 from src.resolvers import account_name_match
@@ -782,19 +713,19 @@ def test_names_completely_different():
         title="John Coltrane",
         name="Zyx",
     )
-````
+```
 
-You can read more about testing resolvers in the
-[API docs](/docs/unit-tests).
+If you want to learn more, we also have more docs and recommendations on
+[testing resolvers](/docs/unit-tests).
 
 ---
 
 ## Reverse ETL
 
 Let's say we have a rather complex feature that we can't serve in realtime
-because it increases the latency of a query too much. For instance, lets
-say we want to add a new feature to our users that indicates the
-average time between their transactions. Maybe we believe that we can use
+because it increases the latency of a query too much for a particular production
+use case. For instance, lets say we want to add a new feature to our users
+that indicates the average time between their transactions. Maybe we believe that we can use
 this to detect whether a new transaction is fraudulent.
 
 To add this feature, we'd add it to the `User` feature class:
@@ -810,13 +741,12 @@ class User:
     # The similarity between the user's name and the account's title.
     account_name_match: float
 
-    # There average time between each of a user's transactions, from the last
+    # The average time between each of a user's transactions, from the last
     # 30 days, in ms.
-    average_time_between_transactions: float
+    average_time_between_transactions_30d: float
 ```
 
 We would then write a resolver to calculate this feature:
-
 
 ```python
 from chalk import online
@@ -825,34 +755,91 @@ from chalk.features import after
 @online
 def get_average_time_between_transactions(
     transactions: User.account.transactions[
-      Transaction.
+      Transaction.created_at,
       after(days_ago=30)]
     ]
-):
+) -> User.average_time_between_transactions:
+  """Computes the average time between transactions for a user"""
+
+  # conversion to polars is cheap since both Chalk and Polars DataFrames
+  # Use Arrow as their memory representation.
   df = transactions.to_polars()
-  df.sort(str(Transaction.date))
 
+  # Get the date column, convert to milliseconds timestamps, and sort
+  date_col = df.get_column(str(Transaction.created_at)).dt.timestamp("ms").sort()
 
-
-
+  return (date_col - date_col.shift(1)).mean()
 ```
+
+For good measure, lets also add this to our tests and make sure that it is running
+as expected:
+
+```python tests/test_average_time.py
+import datetime as dt
+
+from chalk.features import DataFrame
+
+from src.resolvers import get_average_time_between_transactions
+
+def test_get_average_time_between_transactions():
+    """To unit test Dataframe taking resolvers, you can construct and
+    pass in a Chalk DataFrame:
+    """
+    now = dt.now(tzinfo=dt.timezone.utc),
+    transactions = DataFrame({
+      Transaction.created_at: [
+        # will be filtered out since it did not occur in last 30d
+        dt.datetime(1990, 1, 1, tzinfo=dt.timezone.utc),
+        now,
+        now - dt.timedelta(days=1), # diff = 1
+        now - dt.timedelta(days=3), # diff = 1
+        now - dt.timedelta(days=3), # diff = 1
+        now - dt.timedelta(days=4), # diff = 1
+        now - dt.timedelta(days=6), # diff = 2
+      ]                             # --------
+    })                              #        6 / 5 = 1.2
+
+    assert 1.2 == get_average_time_between_transactions(
+      transactions
+    )
+```
+
+We deploy this new feature to a branch and run a couple test queries:
+```sh
+chalk apply --branch new-fraud-features
+```
+
+```sh
+chalk query --in user.id=1 --out user.average_time_between_transactions_30d
+```
+
+After some testing, we realize couple of things:
+1). This feature is too slow to compute in real time (for our use case),
+2). This feature doesn't change very often.
+
+
+We decide to reverse-ETL this computed feature from our snowflake data store into
+our Chalk online store.
+
+<TipInfo>
+  In practice, even executing the above resolver in realtime should be really fast—when building
+  new features, do some testing. You may not even need to reverse-ETL features into the online
+  store to achieve your target latency.
+</TipInfo>
 
 While our offline data is useful for training models and generating features,
 we may also want to use these values for serving production queries.
 
-However, data warehouses like [Snowflake](/docs/snowflake)
-and [BigQuery](/docs/bigquery) are optimized for analytics
+However, data warehouses like [Snowflake](/docs/snowflake) and [BigQuery](/docs/bigquery) are optimized for analytics
 and are not well-suited for transactional queries.
 
-We can have Chalk
-[reverse-ETL](/docs/reverse-etl)
-our offline data into our online store by setting the [`max_staleness`](/api-docs#features.max_staleness) and
-using scheduled queries.
+We can have Chalk [reverse-ETL](/docs/reverse-etl) our offline data into our online store by setting
+the [`max_staleness`](/api-docs#features.max_staleness) on a feature and using scheduled queries.
 
 ```diff-py src/models.py
 - @features
 + @features(max_staleness="infinity")
-class Account:
+class User:
     id: int
     user_id: int
     amount: float
@@ -1165,3 +1152,5 @@ containing the directory of your generated code
 (in the above example, [`clients/`](https://github.com/chalk-ai/fraud-example/blob/main/clients/)).
 Otherwise, Chalk will find duplicate definitions
 of your features.
+
+---
