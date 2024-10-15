@@ -37,8 +37,8 @@ class User:
 ```
 
 <TipInfo>
-  Features are the abstract underlying attributes of your data—`id`, `birthday`, `name`, `age`, `is_adult` are all features.
-  The `User` class is a **feature class** (also sometimes referred to as a **feature set**). Specific instances
+  Features are the abstract underlying attributes of your data. In the example above `id`, `birthday`, `name`, `email`, `username`, `age`, and `is_adult`
+  are all features. The `User` class is a **feature class** (also sometimes referred to as a **feature set**). Specific instances
   of a feature class are **feature class instances**.
 </TipInfo>
 
@@ -46,7 +46,7 @@ Note, you define your features before defining how they will be computed. Some o
 features might come directly from a database table: for instance, the id, birthday, and
 name fields that we've defined above. Some might be calculated in real time based on
 the current timestamp (like the age feature) or a different upstream feature (like the
-`is_adult` feature).
+`is_adult` feature, which will depend on the age feature).
 
 You could deploy the code above to Chalk and it would be considered valid.
 However, if you tried to query for a field (for example, if you asked chalk to return the name
@@ -88,7 +88,7 @@ fetch data from external sources.
 In the `User` example we sketched out above, you could think of a root resolver
 as a SQL query that reads from a `users` table in an external database.
 
-While there are exceptions, this is what the majority of root resolvers will look
+While there are exceptions, this is what the majority of root resolvers look
 like. For example, to read from the `users` table in your PostgreSQL database, you
 might write a `get_users.chalk.sql` file, with the following contents:
 
@@ -127,7 +127,7 @@ Getting this to work fully, will involve setting up a database connector to Chal
 code, both of which we will cover later. For now it is important to note that the process of
 defining resolvers is incredibly modular.
 
-Now lets look into defining a non-root resolver—computing a User's email username.
+Now lets look into defining a non-root resolver, which computes a User's email username.
 
 In Chalk, Non-root resolvers are python functions with feature annotations.
 
@@ -181,7 +181,7 @@ This tutorial walks through the process of building a feature pipeline for fraud
 We'll cover the full feature development lifecycle:
 1. [Data Modeling](/docs/fraud-2) - Creating feature classes for the data we want to compute.
 2. [SQL Resolvers](/docs/fraud-3) - Mapping data from SQL sources to feature classes.
-3. [Python Resolvers](/docs/fraud-4) - Defining resolvers in Python that call APIs and compute derived features.
+3. [Python Resolvers](/docs/fraud-4) - Defining resolvers in Python that compute derived features and call external APIs.
 4. [Inference](/docs/fraud-5) - Integrating Chalk into production decisioning systems.
 5. [Backtesting](/docs/fraud-6) - Experimenting with new features
 
@@ -247,9 +247,8 @@ class User:
 ### Tags, Descriptions, and Owners
 
 In our features above, we've added some comments and
-annotations to our features. These are optional, but
-can be useful for documentation and for setting alerting
-policies. For example, you may wish to send [PagerDuty alerts](/docs/pagerduty)
+annotations. These are optional, but can be useful for documentation and for setting alerting
+policies. For example, you may wish to send [Pagerduty alerts](/docs/pagerduty)
 to [different teams](/docs/alertconfig) based on
 the owner of the related feature.
 
@@ -887,16 +886,18 @@ than 1 hour or 1 day.
 To take advantage of our max_staleness, we need to get
 computed feature into the online store. Feature are only written
 to the online store if they (or their feature class) have been
-given a `max_staleness` value. Features with a `max_staleness`
+given a `max_staleness` value. Features with a max_staleness`
 are written to the online store in two ways:
 - Passively, when a feature value is computed in response to an online query,
-- Actively, in response to a ETL or scheduled query.
+- Actively, in response to an ETL or scheduled query.
 
 If we deployed the change we've written above, the following would happen:
 the first time `average_time_between_transactions_30d` is queried for any given
 user it will be computed by the `get_average_time_between_transactions` resolver.
 All subsequent times that the feature is requested it will be read from the
 online store (until the feature is evicted from the cache).
+
+
 
 ## API Calls
 
@@ -905,7 +906,7 @@ This means that we can call APIs to compute features.
 Let's add a feature that computes the user's FICO score
 from our credit scoring vendor, [Experian](https://experian.com).
 
-As before, we'll first add the features that we want to compute:
+As we did earlier, we'll first add the features that we want to compute:
 
 ```diff-py src/feature_sets.py
 + from chalk.features import feature
@@ -968,7 +969,7 @@ and Chalk's
 ## Deploying
 
 Finally, we'll want to deploy our new resolvers.
-As before, we can check our work by using a branch
+As we did earlier, we can check our work by using a branch
 deployment:
 
 ```bash
