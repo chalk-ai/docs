@@ -14,10 +14,10 @@ import { TipInfo } from '@/components/Tip'
 
 Chalk helps you build out feature pipelines for training and serving machine learning models.
 
-The building blocks of Chalk are [features](/docs/features) and resolvers. Features are an
-abstraction that specify what you want your data to look like.
+The building blocks of Chalk are [features](/docs/features) and resolvers. Features specify what
+you want your data to look like.
 
-To write features in chalk, you specify a python class with annotated attributes:
+In Chalk, features are python classes with annotated attributes:
 
 ```python
 from chalk.features import features
@@ -37,7 +37,7 @@ class User:
 ```
 
 <TipInfo>
-  Features are the abstract underlying attributes of your data—id, birthday, name, age, is_adult are all features.
+  Features are the abstract underlying attributes of your data—`id`, `birthday`, `name`, `age`, `is_adult` are all features.
   The `User` class is a **feature class** (also sometimes referred to as a **feature set**). Specific instances
   of a feature class are **feature class instances**.
 </TipInfo>
@@ -76,13 +76,13 @@ resolved from the online store.
 </TipInfo>
 
 This should not be surprising. Chalk has no connection to your underlying data. So
-it doesn't know how to get the name of a user with an id of 1 (or any id for that
+it doesn't know how to get the name of the user with an id of 1 (or any id for that
 matter).
 
 In particular, the error message tells use that a "Resolver" was not found. A
 [resolver](/docs/resolver-overview) is a function that takes in features and outputs features.
 Broadly, there are two types of resolvers: root and non-root. Root resolvers
-don't take no features (or only a primary key) as their input and are used to
+don't take any features (or take only a primary key) as their input and are used to
 fetch data from external sources.
 
 In the `User` example we sketched out above, you could think of a root resolver
@@ -112,7 +112,7 @@ $ chalk query --in user.id=1 --out user.name
 ```
 
 Chalk will look at the resolvers you've defined and ask "given a User.id, can I calculate
-a `User.name`". It will see the SQL resolver defined above, and realize that it can be
+a `User.name`". It will see the SQL resolver defined above and realize that it can be
 used to get `User.name` from a `User.id`. It will push the id filter into the SQL query,
 running:
 
@@ -231,8 +231,7 @@ There are a few things to note here. First, all our feature
 classes need to have a unique `id` field. By default, this
 is the field named `id`. However, if you want to use a
 different feature name as the primary key, you can specify it
-by describing the primary key feature with the `Primary` type
-annotation.
+by annotating the primary key feature with the `Primary` type.
 
 ```diff-py src/feature_sets.py
 from chalk.features import features, Primary
@@ -879,16 +878,16 @@ class User:
 ```
 
 The [`max_staleness`](/docs/feature-caching) keyword argument tells
-Chalk how stale a feature value can be before it should be refreshed.
+Chalk how stale a feature value can get before it should be refreshed.
 In this case, we're telling Chalk that we'll tolerate arbitrarily old
 feature values. However, we could also specify a `max_staleness` of
 `1h` or `1d` to tell Chalk not to serve feature values that are older
 than 1 hour or 1 day.
 
-In order to take advantage of our max_staleness, we need to get
+To take advantage of our max_staleness, we need to get
 computed feature into the online store. Feature are only written
-to the online store if they or their feature class have been
-given a `max_staleness` value. Features that have a `max_staleness`
+to the online store if they (or their feature class) have been
+given a `max_staleness` value. Features with a `max_staleness`
 are written to the online store in two ways:
 - Passively, when a feature value is computed in response to an online query,
 - Actively, in response to a ETL or scheduled query.
@@ -896,7 +895,7 @@ are written to the online store in two ways:
 If we deployed the change we've written above, the following would happen:
 the first time `average_time_between_transactions_30d` is queried for any given
 user it will be computed by the `get_average_time_between_transactions` resolver.
-All subsequent times that the feature is calculated it will be read from the
+All subsequent times that the feature is requested it will be read from the
 online store (until the feature is evicted from the cache).
 
 ## API Calls
