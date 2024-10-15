@@ -795,7 +795,7 @@ def get_average_time_between_transactions(
   df = transactions.to_polars()
 
   # Get the date column, convert to milliseconds timestamps, and sort
-  date_col = df.get_column(str(Transaction.created_at)).dt.timestamp("ms").sort()
+  date_col = df.collect().get_column(str(Transaction.created_at)).dt.timestamp("ms").sort()
 
   return (date_col - date_col.shift(1)).mean()
 ```
@@ -820,15 +820,15 @@ def test_get_average_time_between_transactions():
         # will be filtered out since it did not occur in last 30d
         dt.datetime(1990, 1, 1, tzinfo=dt.timezone.utc),
         now,
-        now - dt.timedelta(days=1), # diff = 1
-        now - dt.timedelta(days=3), # diff = 1
-        now - dt.timedelta(days=3), # diff = 1
-        now - dt.timedelta(days=4), # diff = 1
-        now - dt.timedelta(days=6), # diff = 2
-      ]                             # --------
-    })                              #        6 / 5 = 1.2
+        now - dt.timedelta(seconds=1), # diff = 1000
+        now - dt.timedelta(seconds=2), # diff = 1000
+        now - dt.timedelta(seconds=3), # diff = 1000
+        now - dt.timedelta(seconds=4), # diff = 1000
+        now - dt.timedelta(seconds=6), # diff = 2000
+      ]                                # -----------
+    })                                 #        6000 / 5 = 1200
 
-    assert 1.2 == get_average_time_between_transactions(
+    assert 1200 == get_average_time_between_transactions(
       transactions
     )
 ```
@@ -839,7 +839,10 @@ chalk apply --branch new-fraud-feature
 ```
 
 ```sh
-chalk query --in user.id=1 --out user.average_time_between_transactions_30d --branch new-fraud-feature
+chalk query \
+  --in user.id=1 \
+  --out user.average_time_between_transactions_30d \
+  --branch new-fraud-feature
 ```
 
 After some testing, we realize couple of things:
@@ -847,16 +850,14 @@ After some testing, we realize couple of things:
 2). This feature doesn't change very often.
 
 
-We decide to reverse-ETL this computed feature from our snowflake data store into
-our Chalk online store. At a high level, this means that periodically (maybe once a
-day), we'll:
+We decide to reverse-ETL this computed feature from our snowflake data store into our Chalk online store. At a high level, this means that periodically (maybe once a day), we'll:
 1. Look for all users with new transactions in our snowflake data source,
 2. Recompute the `average_time_between_transactions_30d` for these users,
 3. Load the new `average_time_between_transactions_30d` into the Chalk online store.
 
 <TipInfo>
-  In practice, even executing the above resolver in realtime should be really fast. When building
-  new features, do some testing. You may not even need to reverse-ETL features into the online
+  In practice, even executing the above resolver in realtime should be really
+  fast. When building new features, do some testing. You may not even need to reverse-ETL features into the online
   store to achieve your target latency.
 </TipInfo>
 
