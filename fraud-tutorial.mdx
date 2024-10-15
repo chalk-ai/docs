@@ -96,7 +96,7 @@ might write a `get_users.chalk.sql` file, with the following contents:
 -- source: PG
 -- resolves: User
 
-SELECT id, birthday, email, name FROM users
+select id, birthday, email, name from users
 ```
 
 By writing this file, you've defined a SQL resolver, named `get_users`, which knows
@@ -203,10 +203,10 @@ If you want to skip ahead, you can find the full source code for this tutorial o
 We'll start by modeling out the `Users` feature class.
 
 We'll start simple with three [scalar features](/docs/feature-types): `User.id`, `User.name`, and `User.email`.
-First, we'll create a new file called [`models.py`](https://github.com/chalk-ai/fraud-example/blob/main/src/models.py) where we'll define a `User` class
+First, we'll create a new file called [`feature_sets.py`](https://github.com/chalk-ai/fraud-example/blob/main/src/feature_sets.py) where we'll define a `User` class
 decorated with [`@features`](/api-docs#features).
 
-```python src/user.py
+```python src/feature_sets.py
 from chalk.features import features
 
 @features
@@ -234,8 +234,8 @@ different feature name as the primary key, you can specify it
 by describing the primary key feature with the `Primary` type
 annotation.
 
-```diff-py src/user.py
-from chalk.features import features
+```diff-py src/feature_sets.py
+from chalk.features import features, Primary
 
 @features
 class User:
@@ -269,7 +269,7 @@ subject to additional restrictions.
 Next up, we'll define a feature class related to our `User`. We'll call this class
 `Account` and it will represent a user's bank account.
 
-```python src/models.py
+```python src/feature_sets.py
 from chalk.features import features
 
 @features
@@ -290,7 +290,7 @@ This should look much like what we did for the `User` class.
 However, we may want to link these two classes together.
 We can do this by adding a `user` field to the `Account` class.
 
-```diff-py src/models.py
+```diff-py src/feature_sets.py
 @features
 class Account:
     id: int
@@ -311,7 +311,7 @@ join, we can define the inverse relationship on the
 other side without needing to specify the foreign key
 again.
 
-```diff-py src/models.py
+```diff-py src/feature_sets.py
 @features
 class User:
     id: int
@@ -336,7 +336,7 @@ for transactions. Each account has many transactions and each
 transaction is linked to a single account. We'll define the
 `Transaction` class and link it to our `Account` class as follows:
 
-```diff-py src/models.py
+```diff-py src/feature_sets.py
 + from enum import Enum
 - from chalk.features import features
 + from chalk.features import features, DataFrame, FeatureTime
@@ -407,16 +407,6 @@ You might also notice that we used an [`Enum`](/docs/feature-types#scalars) feat
 We also added a `created_at` field to the `Transaction` class of type `FeatureTime`. `FeatureTime` is a special annotation
 that can only be assigned to a single feature in a feature class. This feature specifies the logical time of a feature
 instance—it is used for point in time correctness and incremental updating. We'll cover both later in this tutorial.
-
-
-[//]: # (We could choose to write a resolver for each of the tables)
-[//]: # (in our database, but we'll take a shortcut and use)
-
-[//]: # (mapping in some of existing data from a)
-[//]: # ([PostgreSQL database]&#40;/docs/postgresql&#41;. SQL-file resolvers]&#40;/docs/&#41; instead.)
-
-[//]: # (Each of the attributes of the class will be mapped to a)
-[//]: # (field in our database.)
 
 ---
 
@@ -665,7 +655,7 @@ title.
 We'll start by adding this new feature, `account_name_match`,
 to our `User` feature class.
 
-```diff-py src/models.py
+```diff-py src/feature_sets.py
 @features
 class User:
     id: int
@@ -681,7 +671,7 @@ Next, we'll define a resolver that computes this feature.
 We'll use [Jaccard similarity](https://en.wikipedia.org/wiki/Jaccard_index) to compute the similarity score.
 
 ```python src/resolvers.py
-from src.models import User
+from src.feature_sets import User
 from chalk import online
 
 @online
@@ -759,7 +749,7 @@ this to detect whether a new transaction is fraudulent.
 
 To add this feature, we'd add it to the `User` feature class:
 
-```diff-py src/models.py
+```diff-py src/feature_sets.py
 @features
 class User:
     id: int
@@ -795,7 +785,9 @@ def get_average_time_between_transactions(
   df = transactions.to_polars()
 
   # Get the date column, convert to milliseconds timestamps, and sort
-  date_col = df.collect().get_column(str(Transaction.created_at)).dt.timestamp("ms").sort()
+  date_col = df.collect().get_column(
+    str(Transaction.created_at)
+  ).dt.timestamp("ms").sort()
 
   return (date_col - date_col.shift(1)).mean()
 ```
@@ -833,7 +825,7 @@ def test_get_average_time_between_transactions():
     )
 ```
 
-We deploy this new feature to a branch and run a couple test queries:
+Lets deploy this new feature to a branch and run a couple test queries:
 ```sh
 chalk apply --branch new-fraud-feature
 ```
@@ -853,16 +845,14 @@ After some testing, we realize couple of things:
 We decide to reverse-ETL this computed feature from our snowflake data store into our Chalk online store. At a high level, this means that periodically (maybe once a day), we'll:
 1. Look for all users with new transactions in our snowflake data source,
 2. Recompute the `average_time_between_transactions_30d` for these users,
-3. Load the new `average_time_between_transactions_30d` into the Chalk online store.
+3. Load the new `average_time_between_transactions_30d` values into the Chalk online store.
 
 <TipInfo>
   In practice, even executing the above resolver in realtime should be really
-  fast. When building new features, do some testing. You may not even need to reverse-ETL features into the online
-  store to achieve your target latency.
+  fast. When building new features, do some testing. You may not even need to reverse-ETL features into the online store to achieve your target latency.
 </TipInfo>
 
-Of note, we don't want to use our PostgreSQL database for this, we want to use our
-Snowflake—
+Of note, we don't want to use our PostgreSQL database for this, we want to use Snowflake—
 
 While our offline data is useful for training models and generating features,
 we may also want to use these values for serving production queries.
@@ -870,7 +860,7 @@ we may also want to use these values for serving production queries.
 We can have Chalk [reverse-ETL](/docs/reverse-etl) our offline data into our online store by setting
 the [`max_staleness`](/api-docs#features.max_staleness) on a feature and using scheduled queries.
 
-```diff-py src/models.py
+```diff-py src/feature_sets.py
 from chalk.features import feature
 @features
 class User:
@@ -918,7 +908,7 @@ from our credit scoring vendor, [Experian](https://experian.com).
 
 As before, we'll first add the features that we want to compute:
 
-```diff-py src/models.py
+```diff-py src/feature_sets.py
 + from chalk.features import feature
 
 @features
@@ -943,7 +933,7 @@ to ensure that we only store and utilize valid FICO scores.
 Now, we can write a resolver to fetch the user's FICO score from Experian.
 
 ```python src/resolvers.py
-from src.models import User
+from src.feature_sets import User
 from src.mocks import experian
 from chalk.features import online, Features
 
@@ -1035,7 +1025,7 @@ In this first example, we'll use the
 to [query Chalk from our application](https://github.com/chalk-ai/fraud-example/blob/main/datascience/example_inference.py):
 
 ```python datascience/example_inference.py
-from src.models import User
+from src.feature_sets import User
 from chalk.client import ChalkClient
 
 # Create a new Chalk client. By default, this will
