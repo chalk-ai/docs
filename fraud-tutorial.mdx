@@ -691,11 +691,7 @@ Chalk will automatically retrieve
 `User.account_id` and `User.name`
 with our [`get_user.chalk.sql`](https://github.com/chalk-ai/fraud-example/blob/main/src/user.chalk.sql)
 resolver. Then, using this account_id, Chalk will retrieve `Account.title` from the `get_account.chalk.sql` resolver.
-
-Lets deploy our code. Note, this time we are using a `branch` (by specifying the `--branch <name>` flag). In testing,
-new features, we recommend deploying your feature pipeline to a [branch](/cli/apply), which allows you to test your
-changes without affecting the production feature pipeline. An additional benefit of branches is that they are
-also incredibly lightweight—they should deploy pretty much instantly.
+Lets deploy our code.
 
 ```sh
 $ chalk apply --branch tutorial
@@ -703,10 +699,25 @@ $ chalk apply --branch tutorial
 ✓ Deployed branch
 ```
 
+Note, this time we are using a `branch` (by specifying the `--branch <name>` flag). In testing,
+new features, we recommend deploying your feature pipeline to a [branch](/cli/apply), which allows you to test your
+changes without affecting your production feature pipelines. An additional benefit of branches is that they are
+incredibly lightweight—they should deploy pretty much instantly.
+
+
 ### Testing
 
-Resolvers are callable functions, so we can test them like any other Python function.
+Resolvers are callable functions, so we can also test them like any other Python function.
 Let's test our new resolver by writing a [unit test](https://github.com/chalk-ai/fraud-example/blob/main/tests/test_name_match.py):
+
+<TipInfo>
+  This is one of the only times when you'll explicitly call your resolver functions.
+  We covered this idea already in the intro, but since its one of the central concepts
+  behind Chalk it is worth reiterating. Most of the time, Chalk will determine which
+  resolvers it needs to run to compute the features you've requested in a query. This
+  is just like how a SQL database decides how to compute the output features you've
+  requested.
+</TipInfo>
 
 ```python tests/test_name_match.py
 from src.resolvers import account_name_match
@@ -839,21 +850,35 @@ After some testing, we realize couple of things:
 1). This feature is too slow to compute in real time (for our use case),
 2). This feature doesn't change very often.
 
+<TipInfo>
+  In practice, even executing the above resolver in realtime should be really fast.
+  When building new features, do some testing. You may not even need to reverse-ETL
+  features into the online store to achieve your target latency. Reverse-ETL-ing
+  features into the online store adds state and complexity to your feature pipeline.
+  We recommend only doing this if you are unable to achieve your latency targets.
+</TipInfo>
 
 We decide to reverse-ETL this computed feature from our snowflake data store into our Chalk online store. At a high level, this means that periodically (maybe once a day), we'll:
 1. Look for all users with new transactions in our snowflake data source,
 2. Recompute the `average_time_between_transactions_30d` for these users,
 3. Load the new `average_time_between_transactions_30d` values into the Chalk online store.
 
-<TipInfo>
-  In practice, even executing the above resolver in realtime should be really
-  fast. When building new features, do some testing. You may not even need to reverse-ETL features into the online store to achieve your target latency.
-</TipInfo>
 
-Of note, we don't want to use our PostgreSQL database for this, we want to use Snowflake—
+Of note, we don't want to use our PostgreSQL database for this, we want to use Snowflake,
+which is optimized for bulk data loads unlike Postgres. As a result, we'll need to define
+some `offline` resolvers.
 
-While our offline data is useful for training models and generating features,
-we may also want to use these values for serving production queries.
+So far we've only written `online` resolvers. You can think of offline resolvers as
+overrides for online resolvers that are run in bulk data request scenarios. At a high
+level offline resolvers let you pull your feature data from data stores that are
+optimized for bulk data loading—this is exactly what we want for our reverse-ETL process.
+
+To set up a reverse-ETL process, we'll need to do three things:
+- set a staleness policy on your target feature,
+- add offline resolvers (technically optional, but strongly recommended),
+- create a scheduled query.
+
+### Setting a Max Staleness on Our Feature
 
 We can have Chalk [reverse-ETL](/docs/reverse-etl) our offline data into our online store by setting
 the [`max_staleness`](/api-docs#features.max_staleness) on a feature and using scheduled queries.
@@ -897,7 +922,10 @@ user it will be computed by the `get_average_time_between_transactions` resolver
 All subsequent times that the feature is requested it will be read from the
 online store (until the feature is evicted from the cache).
 
+### Adding Offline Resolvers
 
+
+### Creating a Scheduled Query
 
 ## API Calls
 
