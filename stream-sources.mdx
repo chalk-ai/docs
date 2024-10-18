@@ -7,14 +7,14 @@ import { Attribute, AttributeTable } from '@/components/AttributeTable'
 
 ---
 
-Chalk supports Kafka and Kinesis as [streaming sources](/docs/streams)
+Chalk supports Kafka, Kinesis, and PubSub as [streaming sources](/docs/streams)
 for `@stream` resolvers.
 
 ---
 
 ## Configuration options
 
-You can configure the Kafka- or Kinesis-specific options
+You can configure the Kafka-, Kinesis-, or PubSub-specific options
 either explicitly or through the Chalk dashboard.
 
 ### Named integration
@@ -31,8 +31,7 @@ stream configuration.
 
 ### Explicit configuration
 
-You can instead choose to configure the source in your code directly.
-For Kafka, the following configuration parameters must be set:
+You can instead choose to configure the source in your code directly for the following source types.
 
 <AttributeTable title={"Kafka Options"}>
 
@@ -90,7 +89,6 @@ For Kafka, the following configuration parameters must be set:
 </Attribute>
 </AttributeTable>
 
-For Kinesis, these parameters must be set:
 
 <AttributeTable title={"Kinesis Options"}>
 
@@ -124,6 +122,17 @@ For Kinesis, these parameters must be set:
 
 <Attribute field={'consumer_role_arn'} kind={'string?'}>
     An optional role ARN for the consumer to assume.
+</Attribute>
+</AttributeTable>
+
+<AttributeTable title={"PubSub Options"}>
+
+<Attribute field={'project_id'} kind={'string?'}>
+    The project id that your pubsub source resides in.
+</Attribute>
+
+<Attribute field={'subscription_id'} kind={'string?'}>
+    The subscription id of your pubsub source.
 </Attribute>
 </AttributeTable>
 
