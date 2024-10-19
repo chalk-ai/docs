@@ -108,7 +108,7 @@ PROJECT_NAME = os.environ['GOOGLE_CLOUD_PROJECT']
 
 # These should match the names given to your secrets in Google Secret Manager
 client_id_name = "chalk-client-id"
-client_secret_name   = "chalk-client-secret"
+client_secret_name  = "chalk-client-secret"
 
 # Get the project ID from google resources
 project_id = rm.ProjectsClient().get_project(
