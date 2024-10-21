@@ -16,15 +16,30 @@ Read more about how to use Pub/Sub as a streaming source [here](/docs/streams).
 
 ### Online/Offline Storage for Offline Queries
 
-Outputs for offline query can now be automatically transferred to online and offline storage with the parameters
-`store_online=True` and `store_offline=True` in `ChalkClient().offline_query()`.
-See [the docs](https://docs.chalk.ai/api-docs#ChalkClient.offline_query) for more details.
+You can automatically load offline query outputs to the online and offline store using the boolean parameters
+[`store_online`](/api-docs#ChalkClient.offline_query.store_online) and
+[`store_offline`](/api-docs#ChalkClient.offline_query.store_offline). Below is an example of how to
+use these parameters.
+
+```python
+from chalk.client import ChalkClient
+
+client = ChalkClient()
+ds = client.offline_query(
+    input={"user.id": [1, 2, 3, 4, 5]},
+    output=["user.num_interactions_l7d", "user.num_interactions_l30d", "user.num_interactions_l90d"],
+    store_online=True,
+    store_offline=True
+)
+```
 
 ### SQL explorer for query outputs in the dashboard
 
 Customers running gRPC servers can now run SQL queries on the [dataset](/docs/datasets)
 outputs of online and offline queries in the dashboard. To enable this feature for your deployment,
 please reach out to the team.
+
+![SQL Explorer for Query Outputs](/img/10_2024_query_output_explorer.png)
 
 ### Color updates in the dashboard
 
