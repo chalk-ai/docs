@@ -14,6 +14,12 @@ description: Updates to Chalk!
 We've enabled support for using [Pub/Sub](https://cloud.google.com/pubsub?hl=en) as a streaming source.
 Read more about how to use Pub/Sub as a streaming source [here](/docs/streams).
 
+### Online/Offline Storage for Offline Queries
+
+Outputs for offline query can now be automatically transferred to online and offline storage with the parameters
+`store_online=True` and `store_offline=True` in `ChalkClient().offline_query()`.
+See [the docs](https://docs.chalk.ai/api-docs#ChalkClient.offline_query) for more details
+
 ### SQL explorer for query outputs in the dashboard
 
 Customers running gRPC servers can now run SQL queries on the [dataset](/docs/datasets)
