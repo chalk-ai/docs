@@ -14,8 +14,7 @@ import { TipInfo } from '@/components/Tip'
 
 Chalk helps you build out feature pipelines for training and serving machine learning models.
 
-The building blocks of Chalk are [features](/docs/features) and resolvers. Features specify what
-you want your data to look like.
+The building blocks of Chalk are [features](/docs/features) and resolvers. Features specify what you want your data to look like.
 
 In Chalk, features are python classes with annotated attributes:
 
@@ -38,7 +37,8 @@ class User:
 
 <TipInfo>
   Features are the abstract underlying attributes of your data. In the example above `id`, `birthday`, `name`, `email`, `username`, `age`, and `is_adult`
-  are all features. The `User` class is a **feature class** (also sometimes referred to as a **feature set**). Specific instances
+  are all features. Features are grouped together (namespaced) in what are called feature
+  classes. For instance, the `User` class is a **feature class** (also sometimes referred to as a **feature set**). Specific instances
   of a feature class are **feature class instances**.
 </TipInfo>
 
@@ -100,7 +100,7 @@ select id, birthday, email, name from users
 ```
 
 By writing this file, you've defined a SQL resolver, named `get_users`, which knows
-how to resolve `birthday` or `name` for any given id in the `users` table. At this point,
+how to resolve `birthday`, `name`, or `email` for any given id in the `users` table. At this point,
 you might have noticed that the SQL query above doesn't explicitly know how to get
 the birthday or name of a given id, it just returns all users. Chalk gets around this
 by pushing filters into your SQL queries.
@@ -114,14 +114,14 @@ $ chalk query --in user.id=1 --out user.name
 Chalk will look at the resolvers you've defined and ask "given a User.id, can I calculate
 a `User.name`". It will see the SQL resolver defined above and realize that it can be
 used to get `User.name` from a `User.id`. It will push the id filter into the SQL query,
-running:
+running (in addition, a projection will be pushed down so that only the `name` column is queried):
 
 ```sh
-select id, birthday, name from users
+select name from users
 where id=1
 ```
 
-And will return the result.
+This will return the result.
 
 Getting this to work fully, will involve setting up a database connector to Chalk and deploying
 code, both of which we will cover later. For now it is important to note that the process of
