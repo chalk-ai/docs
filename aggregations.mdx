@@ -62,6 +62,37 @@ In this code, the windowed feature will return the sum of transaction amounts fo
 and 90 days. `_.ts > _.chalk_window` is a boolean condition checking that the current transaction's timestamp is greater
 than the start of the current window duration.
 
+### Nested windowed feature references
+
+Windowed features can also be referenced by other windowed features in the same feature class using
+[underscore expressions](/docs/underscore) and the `_.chalk_window` operator. For example, we can compute the average
+transaction amount over different time windows:
+
+```python
+@features
+class Transaction:
+    id: int
+    user_id: "User.id"
+    amount: float
+
+@features
+class User:
+    id: int
+    transactions: DataFrame[Transaction]
+    sum_transactions: Windowed[float] = windowed(
+        "30d", "60d", "90d",
+        expression=_.transactions[_.amount, _.ts > _.chalk_window].sum(),
+    )
+    count_transactions: Windowed[float] = windowed(
+        "30d", "60d", "90d",
+        expression=_.transactions[_.ts > _.chalk_window].count(),
+    )
+    avg_transaction_amount: Windowed[float] = windowed(
+        "30d", "60d", "90d",
+        expression=_.sum_transactions[_.chalk_window] / _.count_transactions[_.chalk_window],
+    )
+```
+
 ### Referencing windowed features
 
 A windowed feature can be referenced in a query or a resolver in the following, equivalent ways. Each

@@ -435,3 +435,40 @@ rules:
 
 This role must be granted to the management service account that Chalk uses to manage the cluster, and to the workload
 service account that runs the docker image building.
+
+### Logging
+
+In order to display logs in the Chalk web UI, Chalk requires permissions to be able to read Cloudwatch logs.
+If you use a separate logging service, you can [set up Fluent Bit as a DaemonSet to send logs to CloudWatch Logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-logs-FluentBit.html).
+Then, to view these logs we need the following permissions:
+
+```json
+{
+    "Statement": [
+        {
+            "Action": [
+                "logs:TestMetricFilter",
+                "logs:StartQuery",
+                "logs:StartLiveTail",
+                "logs:List*",
+                "logs:Get*",
+                "logs:FilterLogEvents",
+                "logs:Describe*"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:logs:us-east-1:<your account id>:log-group:<the log group path>:*",
+            "Sid": "readlogs"
+        },
+        {
+            "Action": [
+                "logs:StopQuery",
+                "logs:StopLiveTail"
+            ],
+            "Effect": "Allow",
+            "Resource": "*",
+            "Sid": "stopActions"
+        }
+    ],
+    "Version": "2012-10-17"
+}
+```
