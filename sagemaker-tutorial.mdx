@@ -241,7 +241,7 @@ def create_dataset(
 +        name=model_name,
 +    )
 +
-+    # Converting a chalk_dataset to a pandas (or polars) dataframe is 
++    # Converting a chalk_dataset to a pandas (or polars) dataframe is
 +    # efficient because both are backed by Apache Arrow.
 +    dataset = chalk_dataset.to_pandas()
 
@@ -438,6 +438,36 @@ if __name__ == "__main__":
 There are a number of different ways to deploy the model that you trained on SageMaker. We recommend deploying your
 model to an endpoint, which is documented
 [here](https://docs.aws.amazon.com/sagemaker/latest/dg/realtime-endpoints-deploy-models.html).
+
+## Efficient SageMaker inference with Chalk underscores
+
+Once you've defined your SageMaker endpoint, you can run predictions against SageMaker from Chalk. This
+can be accomplished by encoding your input features and then using the [`F.sagemaker_predict`](/api-docs#sagemaker_predict) underscore.
+function. You can specify your target SageMaker endpoint in the underscore function's parameters.
+
+```python
+import chalk.functions as F
+
+@features
+class Transaction:
+    id: int
+    amount: float
+    confirmed_fraud: bool
+    # Use strings to reference Customer because Customer is defined beneath this class
+    customer_id: "Customer.id"
+    customer: "Customer"
+    transacted_at: FeatureTime
+
+    encoded_features: str
+    transaction_fraud_prediction_raw: bytes = F.sagemaker_predict(
+      F.string_to_bytes(_.encoded_features),
+      endpoint="chalk-sagemaker-xgb-endpoint",
+    )
+
+@online
+def get_encoded_features(amount: Transaction.amount, customer_fico: Transaction.customer.fico, ...) -> Transaction.encoded_features:
+    return f"{amount},{customer_fico},..."
+```
 
 ## Conclusion
 In this tutorial, you got a look at how Chalk accelerates your feature engineering workflows by making it easy to
