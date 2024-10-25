@@ -463,7 +463,7 @@ class Transaction:
     )
 
 @online
-def get_encoded_features(amount: _.amount, customer_fico: _.customer.fico, ...) -> Transaction.encoded_features:
+def get_encoded_features(amount: Transaction.amount, customer_fico: Transaction.customer.fico, ...) -> Transaction.encoded_features:
     return f"{amount},{customer_fico},..."
 ```
 
