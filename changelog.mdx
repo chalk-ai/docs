@@ -7,6 +7,58 @@ description: Updates to Chalk!
 
 ---
 
+## October 28, 2024
+
+### Run predictions against Sagemaker from Chalk, and do so much more in underscore expressions
+
+We've added a new function [`chalk.functions.sagemaker_predict`](/api-docs#sagemaker_predict) that allows
+you to run predictions against a SageMaker endpoint to resolve features. Read more about how to define
+a Sagemaker endpoint, encode your input data, and run predictions in our [Sagemaker tutorial](/docs/sagemaker-tutorial).
+
+In addition to being able to make Sagemaker calls, [underscore expressions](/docs/underscore) now support a
+variety of new functions. With these functions imported from `chalk.functions`, you can perform encoding,
+decoding, math, datetime manipulation, string manipulation, and more! For example, say you have a Transaction
+feature, where you make a Sagemaker call to enrich the transaction data and provide a label for the transaction,
+and you parse this label for other features. You can now define all of these features related to transaction
+enrichment using underscore expressions and Chalk functions in the feature definition:
+
+```python
+from datetime import date
+import chalk.functions as F
+from chalk.features import _, features, Primary
+
+@features
+class Transaction:
+    id: Primary[str]
+    amount: float
+    date: date
+    day: int = F.day_of_year(_.date)
+    month: int = F.month_of_year(_.date)
+
+    sagemaker_input_data: bytes = F.string_to_bytes(_.id, encoding="utf-8")
+    transaction_enrichment_label: str = F.sagemaker_predict(
+        _.sagemaker_input_data,
+        endpoint="transaction-enrichment-model_2.0.2024_10_28",
+        target_model="model_v2.tar.gz",
+        target_variant="production_variant_3"
+    )
+    is_rent: bool = F.like(_.transaction_enrichment_label, "%rent%")
+    is_purchase: bool = F.like(_.transaction_enrichment_label, "%purchase%")
+
+```
+
+### Nested materialized windowed aggregation references!
+
+You can now reference other windowed aggregations in your windowed aggregation expressions. To read more about
+how to define your windowed aggregations, see our example [here](https://docs.chalk.ai/docs/aggregations#nested-windowed-feature-references).
+
+### Updated usage dashboard to view CPU and storage requests grouped by pod and namespace
+
+We've updated the Usage Dashboard with a new view under the Pod Resources tab that allows you to view CPU and storage
+requests by pod as grouped by cluster, environment, namespace, and service! If you have any questions about the usage
+dashboard, please reach out to the Chalk team. 
+
+
 ## October 21, 2024
 
 ### Pub/Sub streaming source
