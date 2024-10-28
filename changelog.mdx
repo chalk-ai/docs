@@ -9,16 +9,16 @@ description: Updates to Chalk!
 
 ## October 28, 2024
 
-### Run predictions against Sagemaker from Chalk, and do so much more in underscore expressions
+### Run predictions against SageMaker from Chalk, and do so much more in underscore expressions
 
 We've added a new function [`chalk.functions.sagemaker_predict`](/api-docs#sagemaker_predict) that allows
 you to run predictions against a SageMaker endpoint to resolve features. Read more about how to define
-a Sagemaker endpoint, encode your input data, and run predictions in our [Sagemaker tutorial](/docs/sagemaker-tutorial).
+a SageMaker endpoint, encode your input data, and run predictions in our [SageMaker tutorial](/docs/sagemaker-tutorial).
 
-In addition to being able to make Sagemaker calls, [underscore expressions](/docs/underscore) now support a
+In addition to being able to make SageMaker calls, [underscore expressions](/docs/underscore) now support a
 variety of new functions. With these functions imported from `chalk.functions`, you can perform encoding,
 decoding, math, datetime manipulation, string manipulation, and more! For example, say you have a Transaction
-feature, where you make a Sagemaker call to enrich the transaction data and provide a label for the transaction,
+feature, where you make a SageMaker call to enrich the transaction data and provide a label for the transaction,
 and you parse this label for other features. You can now define all of these features related to transaction
 enrichment using underscore expressions and Chalk functions in the feature definition:
 
@@ -36,14 +36,15 @@ class Transaction:
     month: int = F.month_of_year(_.date)
 
     sagemaker_input_data: bytes = F.string_to_bytes(_.id, encoding="utf-8")
-    transaction_enrichment_label: str = F.sagemaker_predict(
+    transaction_enrichment_label: bytes = F.sagemaker_predict(
         _.sagemaker_input_data,
         endpoint="transaction-enrichment-model_2.0.2024_10_28",
         target_model="model_v2.tar.gz",
         target_variant="production_variant_3"
     )
-    is_rent: bool = F.like(_.transaction_enrichment_label, "%rent%")
-    is_purchase: bool = F.like(_.transaction_enrichment_label, "%purchase%")
+    transaction_enrichment_label_str: str = F.bytes_to_string(_.transaction_enrichment_label, encoding="utf-8")
+    is_rent: bool = F.like(_.transaction_enrichment_label_str, "%rent%")
+    is_purchase: bool = F.like(_.transaction_enrichment_label_str, "%purchase%")
 
 ```
 
