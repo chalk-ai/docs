@@ -177,3 +177,22 @@ helm install chalk-metadata-plane oci://317932201237.dkr.ecr.us-east-1.amazonaws
   --values values.yaml \
   --values seed.yaml
 ```
+
+## Verifying the installation
+
+To verify that the installation was successful, you can run the following command:
+
+```bash
+kubectl get pods -n YOUR_METADATA_PLANE_KUBE_NAMESPACE
+```
+
+You should see pods starting up in your namespace. If you see any errors, you can run `kubectl describe pod <podname>`
+to get more information.
+
+Once your pods are started, visit the `frontend_host` you configured in your `values.yaml` file to see the Chalk
+frontend. You should be able to log in.
+
+## Next Steps
+
+Now that you have deployed the Chalk Metadata Plane, you can [configure your local environment](https://docs.chalk.ai/docs/setup-guide)
+to interact with your Chalk instance.
