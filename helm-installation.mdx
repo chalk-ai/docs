@@ -13,14 +13,16 @@ Chalk offers a hosted model ("Chalk Cloud") and
 a customer-hosted model ("Customer Cloud").
 Most companies choose to run Chalk in their own
 cloud using the Customer Cloud model.
-This page discusses the Customer Cloud deployment of Chalk on AWS and GCP.
+This page discusses the Customer Cloud deployment
+of Chalk on AWS and GCP.
 
-A Chalk deployment consists of a Metadata Plane and one or more Data Plane:
+A Chalk deployment consists of a Metadata Plane and one or more Data Planes:
 
 <ServiceDiagramSwitcher default_option={"AWS"} />
 
-This guide will walk you through deploying a Chalk instance in your cloud environment using Helm, an open-source
-package manager for Kubernetes.
+This guide will walk through deploying a Chalk instance
+in your cloud environment using [Helm](https://helm.sh/),
+an open-source package manager for Kubernetes.
 
 ---
 
@@ -28,14 +30,17 @@ package manager for Kubernetes.
 
 This guide requires a few pieces of software to be installed on your machine.
 
-0. First, begin by installing [kubectl](https://kubernetes.io/docs/reference/kubectl/)
-1. Then, make sure you have installed the [AWS cli](https://aws.amazon.com/cli/) for AWS, or the [gcloud cli](https://cloud.google.com/sdk/docs/install) for GCP.
-2. Next, install [Helm](https://helm.sh/docs/intro/install/).
-4. Finally, ensure that you are able to authenticate to your kubernetes cluster and run `helm list` to verify that `helm` is installed.
+1. First, begin by installing [kubectl](https://kubernetes.io/docs/reference/kubectl/).
+2. Then, make sure you have installed the [AWS CLI](https://aws.amazon.com/cli/) for AWS, or the [gcloud cli](https://cloud.google.com/sdk/docs/install) for GCP.
+3. Next, install [Helm](https://helm.sh/docs/intro/install/).
+4. Finally, ensure that you are able to authenticate to your Kubernetes cluster and run `helm list` to verify that `helm` is installed.
+
+---
 
 ## Configuring your Cloud Environment
 
-Before you can deploy Chalk, you will need to configure your cloud environment to support the deployment. Work
+Before you can deploy Chalk, you will need to configure
+your cloud environment to support the deployment. Work
 with your Chalk support team to create the following components:
 
 - A Kubernetes cluster in your cloud environment, configured with storage, networking, and relevant CRDs
@@ -46,11 +51,13 @@ with your Chalk support team to create the following components:
 - Online storage components
 - AWS SNS/SQS or Google PubSub for asynchronous processing
 
+---
+
 ## Authenticating to the Chalk Private Helm Registry
 
-Now, we'll authenticate to the Chalk Private Helm Registry so that you can access Chalk helm charts.
+Next, authenticate to the Chalk Private Helm Registry so that you can access Chalk Helm charts.
 
-1. Provide your AWS Account Id or Google Project ID to your Chalk representative. IAM principals in your
+1. Provide your AWS Account ID or Google Project ID to your Chalk representative. IAM principals in your
 account will be granted permission to access Chalk's private registries.
 2. Authenticate to the Chalk registry:
 
@@ -68,17 +75,18 @@ with the following location:
 us-docker.pkg.dev
 ```
 
-To verify that you are properly authenticated, you can perform a dry run of templating the Chalk Metadata Plane helm chart.
-This will print an error, because we have not configured important values for this chart, but this failure indicates
+To verify that you are properly authenticated, you can perform a dry run of templating the Chalk Metadata Plane Helm chart.
+This command will print an error, because we have not configured
+important values for this chart, but this failure indicates
 that you are properly fetching the chart and attempting to render it.
 
-To check, run:
+To check on AWS, run:
 
 ```bash
 helm template chalk-metadata-plane oci://754784422779.dkr.ecr.us-east-1.amazonaws.com/charts/chalk-metadata-plane
 ```
 
-or for GCP:
+on GCP, run:
 
 ```bash
 helm template chalk-metadata-plane oci://us-docker.pkg.dev/chalk-prod/charts/chalk-metadata-plane
@@ -94,20 +102,24 @@ Error: execution error at (chalk-metadata-plane/templates/frontend/deployment.ya
 
 This error is expected, as we have not yet configured the chart. If you see this error, you are ready to proceed.
 
+---
+
 ## Configuring your values file
 
-Next, we will configure the values file for the Chalk Metadata Plane. This file will contain all the necessary configuration
-for your Chalk deployment.
+Next, we will configure the values file for the Chalk Metadata Plane.
+This file will contain all the necessary configuration for your Chalk deployment.
 
 1. Create a new file called `values.yaml` and copy the following contents into it:
 
 ```yaml
 chalk:
   metadata:
-    # Your api host. Chalk's default host is api.chalk.ai, but you will need to configure one for your instance.
-    api_host: e.g. https://api.chalk.ai
-    # Your frontend host. Chalk's default host is chalk.ai, but you will need to configure one for your instance.
-    frontend_host: e.g. https://chalk.ai
+    # Your API host. Chalk's default host is api.chalk.ai,
+    # but you will need to configure one for your instance.
+    api_host: <YOUR API HOST, e.g. https://api.chalk.ai>
+    # Your frontend host. Chalk's default host is chalk.ai,
+    # but you will need to configure one for your instance.
+    frontend_host: <YOUR FRONTEND HOST, e.g. https://chalk.ai>
     api_server:
       metric_check_pull_subscription: foo
       metric_check_trigger_topic: foo
@@ -117,10 +129,12 @@ chalk:
 
 *Note*: `<YOUR FRONTEND IMAGE>` will be provided by Chalk.
 
+---
+
 ## Configuring your database seeding
 
-Next, we will configure the database seeding for the Chalk Metadata Plane. This file will contain
-the team, project, and environment configuration for your Chalk deployment. It will also contain initial users.
+Next, we will configure the database seeding for the Chalk Metadata Plane. This file contains
+the team, project, and environment configuration, and initial users for your Chalk deployment.
 
 1. Create a new file called `seed.yaml` and copy the following contents into it:
 
@@ -150,6 +164,8 @@ chalk:
           role: owner
 ```
 
+---
+
 ## Configuring Google OIDC
 
 Chalk supports various forms of SSO -- OIDC, SAML, and others. For this guide, we will configure Google OIDC.
@@ -161,13 +177,15 @@ GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECREET
 ```
 
-Then, create a kubernetes secret with this file:
+Then, create a Kubernetes secret with this file:
 
 ```bash
 kubectl create secret generic chalk-frontend-secrets \
   --namespace YOUR_METADATA_PLANE_KUBE_NAMESPACE \
   --from-env-file frontend-secrets.env
 ```
+
+---
 
 ## Deploying the Chalk Metadata Plane
 
@@ -180,7 +198,7 @@ helm install chalk-metadata-plane oci://317932201237.dkr.ecr.us-east-1.amazonaws
   --values seed.yaml
 ```
 
-## Verifying the installation
+### Verifying the installation
 
 To verify that the installation was successful, you can run the following command:
 
@@ -193,6 +211,8 @@ to get more information.
 
 Once your pods are started, visit the `frontend_host` you configured in your `values.yaml` file to see the Chalk
 frontend. You should be able to log in.
+
+---
 
 ## Next Steps
 
