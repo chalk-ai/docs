@@ -3,6 +3,8 @@ title: Chalk Installation (Helm)
 description: Customer Cloud installation with Helm
 ---
 
+import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
+
 ---
 
 ## Introduction
@@ -15,7 +17,7 @@ This page discusses the Customer Cloud deployment of Chalk on AWS and GCP.
 
 A Chalk deployment consists of a Metadata Plane and one or more Data Plane:
 
-<ArchitectureDiagram />
+<ServiceDiagramSwitcher default_option={"AWS"} />
 
 This guide will walk you through deploying a Chalk instance in your cloud environment using Helm, an open-source
 package manager for Kubernetes.
