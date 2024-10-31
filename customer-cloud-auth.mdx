@@ -27,7 +27,12 @@ chalk:
         -----END CERTIFICATE-----
 ```
 
-You can generate your own SAML cert, or use one provided by Chalk.
+IDP SAML cert is the certificate that your SAML provider uses to sign the SAML responses. This is typically found
+in, e.g., the Okta web UI.
+
+Note: this configuration must be aligned with the SAML_CERT and SAML_KEY that you used to configure your SAML
+provider. By default, Chalk automatically generates a unique SAML_CERT and SAML_KEY in the `chalk-generated-secrets`
+secret object.
 
 ## OIDC Configuration
 
