@@ -1,0 +1,217 @@
+---
+title: Chalk Dataplane Installation (Background Persistence)
+description: Background Persistence Installation Via the UI
+---
+
+import {
+    Attribute,
+    AttributeTable,
+} from '@/components/AttributeTable'
+
+---
+Chalk uses background writers hosted in the ("Customer Cloud") kubernetes cluster
+to write information about queries to various storage locations.
+
+## Prerequisites
+In order to install Chalk persistence writers, you need to have the following:
+
+- Namespace to deploy the database into
+
+If using Kafka:
+
+- Kafka brokers
+- Kafka topics for each bus
+- Kafka authentication secret stored in AWS Secrets Manager
+
+If using Pubsub:
+
+- Topics for each bus
+- Subscriptions for each bus
+
+## Creating a Background Persistence Writers
+Navigate to the `Settings/Team/Shared Resources/Background Persistence` page in the Chalk UI
+to view the background persistence configuration. If no background persistence is configured,
+you will see a message indicating that no background persistence is currently present, and the
+first save and apply will create background persistence writers.
+
+## Pubsub vs Kafka
+When using pubsub, topics and subscriptions are 2 separate entities, but for kafka, we use the same
+topic for both publishing and subscribing. Additionally, we need to provide kafka authentication
+credential, whereas pubsub uses its google identity to authenticate.
+
+## Example Configuration
+The following is an example configuration for background persistence writers:
+
+```json
+{
+  "common_persistence_specs": {
+    "bus_backend": "KAFKA",
+    "bus_writer_image_go": "<go bus writer image>",
+    "bus_writer_image_python": "<python bus writer image>",
+    "bus_writer_image_bswl": "<bswl bus writer image>",
+    "namespace": "background-persistence",
+    "service_account_name": "background-persistence-sa",
+    "secret_client": "AWS",
+    "bigquery_parquet_upload_subscription_id": "offline-store-bulk-insert-bus-1",
+    "bigquery_streaming_write_subscription_id": "offline-store-streaming-insert-bus-1",
+    "bigquery_streaming_write_topic": "offline-store-streaming-insert-bus-1",
+    "bigquery_upload_bucket": "s3://<your data bucket>",
+    "bigquery_upload_topic": "offline-store-bulk-insert-bus-1",
+    "metrics_bus_subscription_id": "metrics-bus-1",
+    "metrics_bus_topic_id": "metrics-bus-1",
+    "result_bus_metrics_subscription_id": "result-bus-1",
+    "result_bus_offline_store_subscription_id": "result-bus-1",
+    "result_bus_online_store_subscription_id": "result-bus-1",
+    "kafka_dlq_topic": "dlq-1",
+    "operation_subscription_id": "operation-bus-1"
+  },
+  "api_server_host": "<your api server here>",
+  "kafka_sasl_secret": "<your aws kafka auth secret here>",
+  "kafka_bootstrap_servers": "<bootstrap server1>:<port>, <bootstrap server2>:<port>, ...",
+  "kafka_security_protocol": "SASL_SSL",
+  "kafka_sasl_mechanism": "SCRAM-SHA-512",
+  "redis_is_clustered": "1",
+  "snowflake_storage_integration_name": "<snowflak integration name>",
+  "metadata_provider": "GRPC_SERVER",
+  "writers": [
+    {
+      "name": "go-metrics-bus-writer",
+      "bus_subscriber_type": "GO_METRICS_BUS_WRITER",
+      "request": {
+        "cpu": "200m",
+        "memory": "512Mi"
+      },
+      "limit": {
+        "cpu": "1",
+        "memory": "512Mi"
+      },
+      "version": "1.0",
+      "default_replica_count": 1
+    },
+    {
+      "name": "go-result-bus-metrics-writer",
+      "bus_subscriber_type": "GO_RESULT_BUS_METRICS_WRITER",
+      "request": {
+        "cpu": "400m",
+        "memory": "1024Mi"
+      },
+      "limit": {
+        "cpu": "1",
+        "memory": "1024Mi"
+      },
+      "version": "1.0",
+      "default_replica_count": 1
+    }
+  ]
+}
+```
+
+## Configuration Options (Common)
+<AttributeTable>
+<Attribute field={'bus_backend'} kind={'string'}>
+The backend to use for the bus. "KAFKA" for AWS, "PUBSUB" for GCP.
+</Attribute>
+<Attribute field={'bus_writer_image_go'} kind={'string'}>
+The docker image to use for Go bus writers.
+</Attribute>
+<Attribute field={'bus_writer_image_python'} kind={'string'}>
+The docker image to use for Python bus writers.
+</Attribute>
+<Attribute field={'bus_writer_image_bswl'} kind={'string'}>
+The docker image to use for BSWL bus writers.
+</Attribute>
+<Attribute field={'namespace'} kind={'string'}>
+The namespace to deploy the background persistence writers in.
+</Attribute>
+<Attribute field={'service_account_name'} kind={'string'}>
+The service account to use for the background persistence writers.
+</Attribute>
+<Attribute field={'secret_client'} kind={'string'}>
+The client to use for secrets. "AWS" for AWS Secrets Manager, "GCP" for GCP Secrets Manager.
+</Attribute>
+<Attribute field={'bigquery_parquet_upload_subscription_id'} kind={'string'}>
+The subscription ID used to read parquet files to into the offline store.
+</Attribute>
+<Attribute field={'bigquery_streaming_write_subscription_id'} kind={'string'}>
+The subscription ID to use for streaming writes to the offline store.
+</Attribute>
+<Attribute field={'bigquery_streaming_write_topic'} kind={'string'}>'
+The topic to use for streaming writes to the offline store.
+</Attribute>
+<Attribute field={'bigquery_upload_bucket'} kind={'string'}>
+The S3 bucket to use for uploading files to the offline store.
+</Attribute>
+<Attribute field={'bigquery_upload_topic'} kind={'string'}>
+The topic to use for uploading files to the offline store.
+</Attribute>
+<Attribute field={'metrics_bus_subscription_id'} kind={'string'}>
+The subscription ID to use for metrics bus.
+</Attribute>
+<Attribute field={'metrics_bus_topic_id'} kind={'string'}>
+The topic ID to use for metrics bus.
+</Attribute>
+<Attribute field={'result_bus_metrics_subscription_id'} kind={'string'}>
+The subscription ID to use for result bus metrics.
+</Attribute>
+<Attribute field={'result_bus_offline_store_subscription_id'} kind={'string'}>
+The subscription ID to use for result bus offline store.
+</Attribute>
+<Attribute field={'result_bus_online_store_subscription_id'} kind={'string'}>
+The subscription ID to use for result bus online store.
+</Attribute>
+<Attribute field={'kafka_dlq_topic'} kind={'string'}>
+The topic to use for Kafka dead letter queue.
+</Attribute>
+<Attribute field={'operation_subscription_id'} kind={'string'}>
+The subscription ID to use for operations.
+</Attribute>
+</AttributeTable>
+
+## Configuration Options (Writers)
+<AttributeTable>
+<Attribute field={'name'} kind={'string'}>
+The name of the writer.
+</Attribute>
+<Attribute field={'bus_subscriber_type'} kind={'string'}>
+The type of bus subscriber to use.
+</Attribute>
+<Attribute field={'request'} kind={'object'}>
+The resource requests for the writer.
+</Attribute>
+<Attribute field={'limit'} kind={'object'}>
+The resource limits for the writer.
+</Attribute>
+<Attribute field={'version'} kind={'string'}>
+The version of the writer.
+</Attribute>
+<Attribute field={'default_replica_count'} kind={'int'}>
+The default number of replicas to create for the writer.
+</Attribute>
+</AttributeTable>
+
+## Configuration Options (Other)
+<AttributeTable>
+<Attribute field={'api_server_host'} kind={'string'}>
+The hostname of the API server.
+</Attribute>
+<Attribute field={'kafka_sasl_secret'} kind={'string'}>
+The cloud secret to use for Kafka authentication.
+</Attribute>
+<Attribute field={'kafka_bootstrap_servers'} kind={'string'}>
+The Kafka bootstrap servers to use as a comma separated list.
+</Attribute>
+<Attribute field={'kafka_security_protocol'} kind={'string'}>
+The Kafka security protocol to use.
+</Attribute>
+<Attribute field={'kafka_sasl_mechanism'} kind={'string'}>
+The Kafka SASL mechanism to use.
+</Attribute>
+<Attribute field={'redis_is_clustered'} kind={'string'}>
+Whether Redis is clustered or not, if using a redis online store.
+</Attribute>
+<Attribute field={'snowflake_storage_integration_name'} kind={'string'}>
+The name of the Snowflake storage integration.
+</Attribute>
+<Attribute field={'metadata_provider'} kind={'string'}>
+The metadata provider to use ("GRPC_SERVER")
+</Attribute>
