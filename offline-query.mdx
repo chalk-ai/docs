@@ -195,7 +195,7 @@ More on these and other tips [here](/docs/debugging-queries).
 
 ### Running large offline queries
 
-Offline queries run on a large number of rows require their own compute resources and infrastructure
+Offline queries that run on a large number of rows require their own compute resources and infrastructure
 to ensure they complete and do not contend with resources from other workloads like the engine or branch server.
 Chalk handles this by launching a Kubernetes job that can runs asynchronously on dedicated compute nodes.
 To do so, set the `run_asynchronously` flag to `True` in the `offline_query` method.
