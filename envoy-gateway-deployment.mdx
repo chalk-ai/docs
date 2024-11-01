@@ -1,0 +1,100 @@
+---
+title: Chalk Self-Managed Deployments: Envoy Gateway
+description: Manage and Deploy the Envoy Gateway in your Chalk Cloud
+---
+
+import {
+Attribute,
+AttributeTable,
+} from '@/components/AttributeTable'
+
+---
+
+## Introduction
+
+Chalk uses an [Envoy Gateway](https://gateway.envoyproxy.io/docs/) to route traffic to the metadata and data planes
+when in a self-hosted model. Depending on how environments are set up and if they are in the same cluster,
+the same gateway can be used across multiple environments.
+
+## Prerequisites
+
+This guide is for users who are self-hosting the Chalk Cloud. Make sure you have set up Chalk either through the
+[self-guided helm installation](https://docs.chalk.ai/docs/helm-installation) or with guided support with the
+Chalk Team.
+
+Setting up and deploying an Envoy Gateway changes the way that traffic gets routed to the Chalk servers and engines
+living in the Metadata and Data Planes - this is a sensitive operation and requires Admin-level access or higher.
+
+Finally, this guide requires going through the [Envoy Quickstart](https://gateway.envoyproxy.io/docs/tasks/quickstart/)
+to get Envoy installed to your cloud instance.
+
+
+## Configuring an Envoy Gateway in Chalk
+
+Navigate to the `Settings/Team/Shared Resources/Envoy Gateway` page in the Chalk UI
+to view the current gateway configuration. If no gateway is configured,
+you will see a message indicating that no gateway is currently present, and the
+first save and apply will create a new gateway.
+
+
+## Configuration Options
+
+<AttributeTable>
+
+  <Attribute field={"namespace"} kind={"string"}>
+    The kubernetes namespace this gateway should be deployed in.
+  </Attribute>
+  <Attribute field={"gateway_name"} kind={"string"}>
+    A name to attach to this gateway.
+  </Attribute>
+  <Attribute field={"gateway_class_name"} kind={"string"}>
+    The name of the  [gateway class resource](https://gateway-api.sigs.k8s.io/api-types/gatewayclass/) to use,
+    for example `chalk-gateway-class`. This should be set up during Envoy quickstart.
+  </Attribute>
+  <Attribute field={"listeners"} kind={"Listener[]"}>
+    A list of listeners that configure which routes the proxy should use. See below section for more info on configuration
+  </Attribute>
+</AttributeTable>
+
+### Listener
+
+This is the scheme for individual listener objects:
+
+<AttributeTable>
+  <Attribute field={"name"} kind={"string"}>
+    A name used to reference this listener.
+  </Attribute>
+  <Attribute field={"port"} kind={"int"}>
+    The port to listen to.
+  </Attribute>
+  <Attribute field={"protocol"} kind={"string"}>
+    The protocol to use (ex. `HTTP` or `HTTPS`)
+  </Attribute>
+  <Attribute field={"allowed_routes"} kind={"Listener[]"}>
+    This configures the list of routes this listener is attached to, and which namespaces they can come from.
+    See [the kubernetes documentation](https://registry.terraform.io/providers/metio/k8s/latest/docs/data-sources/gateway_networking_k8s_io_gateway_v1beta1_manifest#allowed_routes)
+    for more detailed information about this field.
+  </Attribute>
+</AttributeTable>
+
+### Example configuration:
+
+```json
+{
+  "gateway_name": "chalk-gateway",
+  "gateway_class_name": "chalk-gateway-class",
+  "namespace": "chalk-networking",
+  "listeners": [
+    {
+      "name": "runway",
+      "port": 80,
+      "protocol": "HTTP",
+      "allowed_routes": {
+        "namespaces": {
+          "from": "All"
+        }
+      }
+    }
+  ]
+}
+```
