@@ -56,7 +56,7 @@ When you execute an offline query, Chalk will kick off a job that acquires the r
 every primary key/timestamp combination presented. This could take a few seconds!
 Since offline queries often lookup data for thousands of
 rows, they are not designed to be used to make millisecond-level decisions.
-See our guide on [querying training data](/docs/training-client)
+See our guide on [querying training data](/docs/query-offline)
 for a more in-depth treatment.
 
 |                  | online query                                                                                                                       | offline query                                                                                                                                                                                                                                                                           |
@@ -70,7 +70,7 @@ for a more in-depth treatment.
 ### Online-to-Offline
 
 After an online resolver runs, its values are copied into the [offline store](#storage).
-When you [query the offline store](/docs/training-client),
+When you [query the offline store](/docs/query-offline),
 you will receive data from both records of online runs and offline-specific resolvers.
 Which data you receive depends on which data was closest to the point-in-time
 that you queried.
