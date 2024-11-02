@@ -1,0 +1,108 @@
+---
+title: Named Queries
+description: Track and manage named queries in Chalk
+---
+
+With Chalk [NamedQuery](/api-docs#NamedQuery) objects, you can define and version
+your common query patterns in code. This provides a few advantages:
+- queries are preplanned on engine boot (reducing first-query latency),
+- boilerplate is reduced and query consistency increased because query outputs and
+parameters don't need to be hardcoded in every query,
+- common query patterns are easier to track and monitor
+
+## Defining a NamedQuery
+
+You can define a named query by using the `NamedQuery` class.
+
+To define a named query, add a `NamedQuery` object to your Chalk deployment:
+
+```python
+from chalk import NamedQuery
+from src.feature_sets import Book, Author
+
+NamedQuery(
+    name="book_key_information",
+    input=[Book.id],
+    output=[
+        Book.id,
+        Book.title,
+        Book.author.name,
+        Book.year,
+        Book.short_description
+    ],
+    tags=["team:analytics"],
+    staleness={
+        Book.short_description: "0s"
+    },
+    owner="mary.shelley@aol.com",
+    description=(
+        "Return a condensed view of a book, including its title, author, "
+        "year, and short description."
+    )
+)
+```
+
+Running `chalk apply` makes the query name available in your deployment.
+
+## Using Named Queries
+
+Named queries can be leveraged through any of our clients by specifying the `query_name` parameter.
+
+Using chalk CLI, this will looks something like so:
+
+```sh
+chalk query --in book.id=1 --query-name book_key_information
+```
+
+Because a named query has been specified, you don't need to explicitly pass in the tags and outputs
+for your query. The above command  will be equivalent to running the more complicated:
+```sh
+chalk query --in book.id=1 \
+  --out book.id \
+  --out book.title \
+  --out book.author \
+  --out book.year \
+  --out book.author.name \
+  --out book.short_description \
+  --staleness book.short_description=0s \
+  --tags team:analytics
+```
+
+This feature is also accessible in all of our API clients through the `query_name` parameter.
+For instance, in python, you can run:
+
+```python
+from chalk.client import ChalkClient
+
+client = ChalkClient()
+
+client.query(
+    input={"book.id": 1},
+    query_name="book_key_information",
+)
+```
+
+To see all the named queries you've defined in your current active deployment, you can run:
+```sh
+chalk named-query list
+```
+
+If you want to create multiple versions of a similar queries, you can use the [version](/api-docs#NamedQuery.__init__.version) parameter of the NamedQuery object
+and the [query_name_version](/api-docs#ChalkClient.query.query_name_version) parameter of our various clients.
+
+Note when executing a named query, both the query name and the query version must match.
+This means that if you've defined four named queries in your codebase:
+
+```python
+NamedQuery(name="book_id", input=[Book.id], output=[Book.id])
+NamedQuery(name="book_id", input=[Book.name], version=1, output=[Book.id])
+NamedQuery(name="book_id", input=[Book.author], version=2, output=[Book.id])
+NamedQuery(name="book_id", input=[Book.year], version=3, output=[Book.id])
+```
+And you run the following query:
+```sh
+chalk query --in book.id=1 --query-name book_id
+```
+We will return `Book.id` since the first named query has no version and no version was passed
+through `query-name-version`. Currently, to access a version named query, the version must be
+explicitly passed.
