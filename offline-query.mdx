@@ -189,15 +189,15 @@ as [online query](/docs/query-online).
 
 Like [online queries](/docs/query-basics),
 offline queries can be debugged using the `explain` flag, which logs the query execution plan, and
-the `store_plan_stages` flag, which stores the outputs of each of the plan stages,
+the `store_plan_stages` flag, which stores the inputs and outputs of each of the plan stages,
 which will be visible in the web dashboard's query detail view.
 More on these and other tips [here](/docs/debugging-queries).
 
 ### Running large offline queries
 
-Offline queries run on a large number of rows require their own compute resources and infrastructure
+Offline queries that run on a large number of rows require their own compute resources and infrastructure
 to ensure they complete and do not contend with resources from other workloads like the engine or branch server.
-Chalk handles this by launching a Kubernetes job that can runs asynchronously on dedicated compute nodes.
+Chalk handles this by launching a Kubernetes job that runs asynchronously on dedicated compute nodes.
 To do so, set the `run_asynchronously` flag to `True` in the `offline_query` method.
 
 ```python
@@ -211,7 +211,7 @@ client.offline_query(
 )
 ```
 
-If you'd like to adjust the resource compute or memory for the job,
+If you'd like to adjust the compute or memory resources for the job,
 set the `resources` parameter to a custom [`ResourceRequests`](/api-docs#ResourceRequests) object.
 Ensure that the request values are compatible with the resources available on Kubernetes cluster.
 
