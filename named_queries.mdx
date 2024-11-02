@@ -78,12 +78,13 @@ client.query(
     query_name="book_key_information",
 )
 ```
-## Versioning Named Queries
-
 To see all the named queries you've defined in your current active deployment, you can run:
+
 ```sh
 chalk named-query list
 ```
+
+## Versioning Named Queries
 
 If you want to create multiple versions of a similar queries, you can use the [version](/api-docs#NamedQuery.__init__.version) parameter of the NamedQuery object
 and the [query_name_version](/api-docs#ChalkClient.query.query_name_version) parameter of our various clients.
