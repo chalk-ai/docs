@@ -147,6 +147,12 @@ to `float | None`) or use [`coalesce`](/api-docs#coalesce) to fall back to a def
 The `chalk.functions` module exposes several helpful functions that can be used in
 combination with underscore references to transform features:
 
+#### Logic
+
+* [`if_then_else`](/api-docs#if_then_else)
+* [`map_dict`](/api-docs#map_dict)
+* [`coalesce`](/api-docs#coalesce)
+
 #### Encoding and decoding
 
 * [`bytes_to_string`](/api-docs#bytes_to_string)
@@ -182,12 +188,29 @@ combination with underscore references to transform features:
 * [`slice`](/api-docs#slice)
 * [`trim`](/api-docs#trim)
 * [`like`](/api-docs#like)
+* [`substr`](/api-docs#substr)
+* [`regexp_extract`](/api-docs#regexp_extract)
+* [`regexp_extract_all`](/api-docs#regexp_extract_all)
 * [`regexp_like`](/api-docs#regexp_like)
 * [`starts_with`](/api-docs#starts_with)
 * [`ends_with`](/api-docs#ends_with)
+* [`levenstein_distance`](/api-docs#levenstein_distance)
+* [`replace`](/api-docs#replace)
+
+#### URL Manipulation
+
+* [`url_extract_host`](/api-docs#url_extract_host)
+* [`url_extract_path`](/api-docs#url_extract_path)
+* [`url_extract_protocol`](/api-docs#url_extract_protocol)
+
+#### Array Manipulation
+
+* [`head`](/api-docs#head)
+* [`slice`](/api-docs#slice)
+* [`contains`](/api-docs#contains)
 
 #### Other
 
-* [`head`](/api-docs#head)
+* [`cast`](/api-docs#cast)
 * [`cosine_similarity`](/api-docs#cosine_similarity)
 * [`sagemaker_predict`](/api-docs#sagemaker_predict)

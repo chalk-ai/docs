@@ -7,6 +7,37 @@ description: Updates to Chalk!
 
 ---
 
+## November 4, 2024
+
+### Offline Query Specifications for shards and workers
+
+When running an asynchronous offline query, you can now specify the inputs `num_shards` and `num_workers` as
+parameters to allow for more granular control over the parallelization of your query execution. To see all of your
+offline query options, check out the [offline query documentation](/api-docs#ChalkClient.offline_query).
+
+In addition, offline query progress reporting now specifies progress by shard, to give developers more insight
+into where their offline query is in the execution progress.
+
+### ChalkClient can now use the default Github branch
+
+You can now default to using the name of your current Github branch when developing using the `ChalkClient`.
+For example, if you have checked out a branch named `my-very-own-branch` you can now set `ChalkClient(branch=True)`
+and all of your client calls will be directed at `my-very-own-branch`. To read more about how to use ChalkClient, see
+our [API documentation](/api-docs#ChalkClient).
+
+### Underscore expressions support functions for URL parsing, regular expressions, and more
+
+We've added more functions to `chalk.functions` that can be used in [underscore expressions](/docs/underscore).
+You can now use `regexp_like`, `regeexp_extract`, and `regexp_extract_all` to do regular expression matching and
+use `url_extract_host`, `url_extract_path`, and `url_extract_prtocol` to parse URL's. In addition, we've added
+helpful logical functions like `if_then_else`, `map_dict`, and `cast` to broaden the span of features that you can
+define using underscore expressions. To read more about all of our functions, check out our
+[API documentation](/api-docs#functions).
+
+### Deployment build logs for AWS environments
+
+We now provide more detailed build logs for deployments in AWS environments in the dashboard!
+
 ## October 28, 2024
 
 ### Run predictions against SageMaker from Chalk, and do so much more in underscore expressions
