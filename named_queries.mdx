@@ -9,6 +9,8 @@ your common query patterns in code. This provides a few advantages:
 - query outputs and parameters don't need to be hardcoded, reducing boilerplate code and ensuring consistency between your queries,
 - queries are grouped together on the web, making them easier to track, monitor, and debug.
 
+---
+
 ## Defining a NamedQuery
 
 To define a named query, add a `NamedQuery` object to your Chalk deployment:
@@ -41,6 +43,8 @@ NamedQuery(
 
 Running `chalk apply` makes the named query available in your deployment.
 
+---
+
 ## Using Named Queries
 
 Named queries can then be leveraged through any of our clients by specifying the `query_name` parameter.
@@ -66,7 +70,7 @@ chalk query --in book.id=1 \
 ```
 
 This feature is also accessible in all of our API clients through the `query_name` parameter.
-For instance, in python, you can run:
+For instance, in Python, you can run:
 
 ```python
 from chalk.client import ChalkClient
@@ -81,8 +85,11 @@ client.query(
 To see all the named queries you've defined in your current active deployment, you can run:
 
 ```sh
-chalk named-query list
+$ chalk named-query list
+<example output>
 ```
+
+---
 
 ## Versioning Named Queries
 
@@ -106,7 +113,7 @@ And you run the following query:
 chalk query --in book.id=1 --query-name book_id
 ```
 We will return `Book.id` since the first named query has no version and no version was passed
-through `query-name-version`. Currently, to access a version named query, the version must be
+through `query-name-version`. To access a version named query, the version must be
 explicitly passed. For example:
 ```sh
 chalk query --in book.id=1 --query-name book_id --query-name-version 1
