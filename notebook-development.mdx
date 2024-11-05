@@ -72,12 +72,15 @@ Select `Python 3.10` as the image under **Environment > Compute Profile**.
 
 ![Hex Python Image](/img/HexPythonImage.png)
 
-The Chalk client can then be initialized referencing the variables directly
+The Chalk client can then be initialized referencing the variables directly.
 
 ```python notebook.ipynb
 from chalk import ChalkClient
 
-client = ChalkClient()
+client = ChalkClient(
+  client_id=CHALK_CLIENT_ID,
+  client_secret=CHALK_CLIENT_SECRET
+)
 ```
 
 ## Creating a branch
