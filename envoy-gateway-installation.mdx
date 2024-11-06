@@ -37,6 +37,9 @@ first save and apply will create a new gateway.
 
 ## Configuration Options
 
+See documentation from kubernetes on [the gateway class ](https://gateway-api.sigs.k8s.io/api-types/gatewayclass/)
+for more information about the gateway.
+
 <AttributeTable>
 
   <Attribute field={"namespace"} kind={"string"}>
@@ -46,7 +49,7 @@ first save and apply will create a new gateway.
     A name to attach to this gateway.
   </Attribute>
   <Attribute field={"gateway_class_name"} kind={"string"}>
-    The name of the  [gateway class resource](https://gateway-api.sigs.k8s.io/api-types/gatewayclass/) to use,
+    The name of the gateway class resource to use,
     for example `chalk-gateway-class`. This should be set up during Envoy quickstart.
   </Attribute>
   <Attribute field={"listeners"} kind={"Listener[]"}>
@@ -56,7 +59,8 @@ first save and apply will create a new gateway.
 
 ### Listener
 
-This is the scheme for individual listener objects:
+This is the scheme for individual listener objects. For more information about allowed routes, refer to the
+[kubernetes documentation](https://registry.terraform.io/providers/metio/k8s/latest/docs/data-sources/gateway_networking_k8s_io_gateway_v1beta1_manifest#allowed_routes) on allowed syntax:
 
 <AttributeTable>
   <Attribute field={"name"} kind={"string"}>
@@ -70,8 +74,6 @@ This is the scheme for individual listener objects:
   </Attribute>
   <Attribute field={"allowed_routes"} kind={"Listener[]"}>
     This configures the list of routes this listener is attached to, and which namespaces they can come from.
-    See [the kubernetes documentation](https://registry.terraform.io/providers/metio/k8s/latest/docs/data-sources/gateway_networking_k8s_io_gateway_v1beta1_manifest#allowed_routes)
-    for more detailed information about this field.
   </Attribute>
 </AttributeTable>
 
