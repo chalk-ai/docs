@@ -114,7 +114,9 @@ Provides information about the number of times a feature was computed.
 </Attribute>
 
 <Attribute field={'resolver_request'} kind={'Counter'}>
-Provides information about the number of times a resolver was computed.
+Provides information about the number of times a resolver was computed. This metric informs the number of
+    times that resolvers are being called and the context in which they are called, for example in a cron
+    run as part of a scheduled job or in inference as part of a query plan. 
 
 <SubAttributeTable title={'Tags'}>
   <SubAttribute field={'id'} kind={'String'}>
@@ -134,7 +136,9 @@ Provides information about the number of times a resolver was computed.
 </Attribute>
 
 <Attribute field={'cron_run_request'} kind={'Counter'}>
-Provides information about the number of times a cron run was executed.
+Provides information about the number of times a cron run was executed. This metric is useful for
+    monitoring the status of resolver runs that are scheduled or triggered via API to load data into
+    the online and/or offline store.
 
 <SubAttributeTable title={'Tags'}>
   <SubAttribute field={'id'} kind={'String'}>
@@ -148,7 +152,9 @@ Provides information about the number of times a cron run was executed.
 </Attribute>
 
 <Attribute field={'cron_feature_writes'} kind={'Counter'}>
-Provides information about the number of features computed by cron written to online / offline store.
+Provides information about the number of features computed by cron written to online / offline store. This
+    metric is useful for monitoring the status of resolver runs that are scheduled or triggered via API to
+    load data into the online and/or offline store.
 
 <SubAttributeTable title={'Tags'}>
     <SubAttribute field={'id'} kind={'String'}>
