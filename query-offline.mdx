@@ -16,15 +16,13 @@ Offline queries pull data from the offline store or calculate features through
     requested feature.
 </TipInfo>
 
-In an offline query you can request features for multiple entities at distinct time points.
+In an offline query, you can request features for multiple entities at distinct time points.
 By default, an offline query returns a row for each primary key containing the most recent
 computed value for each requested output feature. The main use case for offline queries is
 creating datasets.
 
 Chalk supports a number of clients for offline queries. In this section, our examples
 use our Python client, which integrates nicely with Jupyter notebooks.
-
-<JupyterNotebook/>
 
 ## Making offline queries
 
@@ -35,7 +33,7 @@ from chalk.client import ChalkClient
 from datetime import datetime
 
 client = ChalkClient()
-client.offline_query(
+dataset = client.offline_query(
   input={'user.id': [1,2,3,4]},         # Input
   output=['user.name'],                 # Output
   # tags=['test'],                      # Environment
@@ -46,6 +44,7 @@ client.offline_query(
   # lower_bound=datetime(2024, 10, 12), # Bounds
   # upper_bound=datetime(2024, 10, 20),
 )
+df = dataset.get_data_as_pandas()
 ```
 
 Offline queries return Chalk [Datasets](/api-docs#Dataset), which we cover in more detail in the
@@ -56,13 +55,14 @@ in downstream ML tasks.
 ### Input
 
 [Offline queries](/api-docs#ChalkClient.offline_query) can receive input from a DataFrame, mapping, or SQL query.
-Regardless of the format, the primary key feature must be included.
+Regardless of the format, the primary key feature of the feature class must be included in the input.
 
 #### DataFrames and mappings as input
 
 The [input](/api-docs#ChalkClient.offline_query.input) parameter accepts [chalk.DataFrame](/docs/dataframe),
-[pandas.DataFrame](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html), or a mapping. DataFrames should
-include one column for each known feature in the input. Mappings should map from each feature to a list of its values:
+[pandas.DataFrame](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html), or a mapping (like a Python dictionary).
+DataFrames should include one column for each known feature in the input.
+Mappings should map from each feature to a list of its values:
 
 ```python
 input={
@@ -71,9 +71,22 @@ input={
 }
 ```
 
+### Input times
+
+Timestamps can be be passed in the [input_times](/api-docs#ChalkClient.offline_query.input_times) argument.
+If none are provided, Chalk will use the current time.
+
+```py
+input={
+    User.id: ['id1', 'id1'],
+}
+input_times=[datetime.now() - timedelta(days=1), datetime.now() - timedelta(days=2)]
+```
+
+
 #### SQL queries as input
-`offline_query` also takes [spine_sql_query](/api-docs#ChalkClient.offline_query.spine_sql_query) as an alternative
-input parameter for retrieving feature values from your offline data store. 
+`offline_query` can also take [spine_sql_query](/api-docs#ChalkClient.offline_query.spine_sql_query) as an alternative
+input parameter for retrieving feature values from your offline data store.
 
 Spine SQL queries are recommended in the following scenarios:
 
@@ -91,6 +104,7 @@ The "ts" column is always interpreted as the query execution time for the row. S
 consistency](/docs/temporal-consistency) for more details.
 
 ```python
+# This spine_sql_query queries the table `transactions` in the Snowflake offline store instance.
 output = chalk_client.offline_query(
     spine_sql_query=f"""
         SELECT
@@ -118,18 +132,6 @@ output = chalk_client.offline_query(
 
 ```
 
-
-### Input times
-
-Timestamps can be also be passed in the [input_times](/api-docs#ChalkClient.offline_query.input_times) argument instead.
-
-```py
-input={
-    User.id: ['id1', 'id1'],
-}
-input_times=[datetime.now() - timedelta(days=1), datetime.now() - timedelta(days=2)]
-```
-
 ### Output
 
 This argument describes a list of features to sample.
@@ -148,7 +150,7 @@ output=[
 
 ### Recompute features
 
-Users can request that certain features be recomputed by resolvers
+Users can request that features (or a subset of features) be recomputed by resolvers
 at query time instead of sampled from the offline store.
 For more information, see [recompute_features](/api-docs#ChalkClient.offline_query.recompute_features).
 
@@ -159,6 +161,7 @@ and instead would like to see results within a period of time.
 The user can then leave the `inputs` argument empty and supply a
 [lower bound](/api-docs#ChalkClient.offline_query.lower_bound) and an
 [upper bound](/api-docs#ChalkClient.offline_query.upper_bound) along with the requested output features.
+The parameter `max_samples` can also be used to limit the number of rows returned.
 
 ```py
 dataset: Dataset = ChalkClient().offline_query(
@@ -180,4 +183,73 @@ The user can specify
 [environment](/docs/resolver-environments),
 or [branch](/docs/branches)
 as parameters to `offline_query` in the same fashion
-as [online query](/docs/query-basics).
+as [online query](/docs/query-online).
+
+### Debugging offline queries
+
+Like [online queries](/docs/query-basics),
+offline queries can be debugged using the `explain` flag, which logs the query execution plan, and
+the `store_plan_stages` flag, which stores the inputs and outputs of each of the plan stages,
+which will be visible in the web dashboard's query detail view.
+More on these and other tips [here](/docs/debugging-queries).
+
+### Running large offline queries
+
+Offline queries that run on a large number of rows require their own compute resources and infrastructure
+to ensure they complete and do not contend with resources from other workloads like the engine or branch server.
+Chalk handles this by launching a Kubernetes job that runs asynchronously on dedicated compute nodes.
+To do so, set the `run_asynchronously` flag to `True` in the `offline_query` method.
+
+```python
+from chalk.client import ChalkClient
+
+client = ChalkClient()
+client.offline_query(
+  input={'user.id': range(1_000_000)},
+  output=['user.name'],
+  run_asynchronously=True,
+)
+```
+
+If you'd like to adjust the compute or memory resources for the job,
+set the `resources` parameter to a custom [`ResourceRequests`](/api-docs#ResourceRequests) object.
+Ensure that the request values are compatible with the resources available on Kubernetes cluster.
+
+Another option to consider is to parallelize the computation of the offline query by dividing the input into shards.
+If the `num_shards` parameter is set,
+Chalk will split the input into `num_shards` shards and run each shard in a separate pod.
+The `num_workers` parameter sets the maximum number of pods that can run concurrently.
+If the number of shards is large compared to the size of the Kubernetes cluster,
+set the `num_workers` parameter to a smaller number to ensure that Chalk can launch enough pods to run the query.
+
+```python
+from chalk.client import ChalkClient
+
+client = ChalkClient()
+client.offline_query(
+  input={'user.id': range(1_000_000)},
+  output=['user.name'],
+  run_asynchronously=True,
+  num_shards=50,
+  num_workers=10,
+)
+```
+
+For the above example, Chalk will split the input spine into 50 shards of 20,000 rows each.
+It will then launch jobs for each shard, while not exceeding 10 concurrent pods at once.
+
+If you lose track of the state of a long-running offline query, you'll always be able to retrieve the outputs later.
+First, check the offline query dashboard: you'll be able to download all shards of the output,
+individually or as a group, there.
+You can also retrieve the outputs via Python with the [`ChalkClient.get_dataset`](api-docs#ChalkClient.get_dataset) method:
+simply copy and paste the `Query Id` from the offline query dashboard into your function call.
+
+```python
+from chalk.client import ChalkClient
+
+client = ChalkClient()
+dataset = client.get_dataset("21d9ceb7-c1ef-4c08-a39c-f8381e825a66") # your query id
+df = dataset.get_data_as_pandas()
+```
+
+### Running offline queries on a schedule

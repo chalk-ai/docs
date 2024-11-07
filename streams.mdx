@@ -9,15 +9,17 @@ Chalk enables users to convert and aggregate streaming messages into Chalk featu
 
 The first step towards building a streaming environment with Chalk
 is creating a streaming source from one of Chalk's integrations.
-Chalk supports [Kafka](https://kafka.apache.org/) and [Kinesis](https://aws.amazon.com/kinesis/) for streaming.
+Chalk supports [Kafka](https://kafka.apache.org/), [Kinesis](https://aws.amazon.com/kinesis/),
+and [PubSub](https://cloud.google.com/pubsub) for streaming.
 Like other integration sources, source parameters and credentials
 may be specified in either the dashboard or the source instantiation in code.
 
 ```py
-from chalk.streams import KafkaSource, KinesisSource
+from chalk.streams import KafkaSource, KinesisSource, PubSubSource
 
 kafka_source = KafkaSource(name="...")
 kinesis_source = KinesisSource(name="...")
+pubsub_source = PubSubSource(name="...")
 ```
 
 Now, let's set up the Chalk features you'd like to materialize upon stream message ingestion.
@@ -31,14 +33,14 @@ class StreamFeature:
     value: str
 ```
 
-Streaming resolvers produce feature values in a similar manner as online and offline resolvers.
-These features must be marked with a max staleness in order to store result values in offline cache.
+Streaming resolvers produce feature values similarly to online and offline resolvers.
+These features must be marked with a max staleness so processed results will be stored in offline cache.
 `etl_offline_to_online` should be set to `True` to access these values in online cache as well.
 If both of these parameters are set, once these features are created,
 they can accessed via online and offline query and used downstream by other online and offline resolvers.
 
 Chalk supports three kinds of streaming resolvers: mapping, windowed, and continuous.
-On this page, we will focus on mapping, which creates one Chalk feature instance per message.
+On this page, we will focus on mapping resolvers, which create one Chalk feature instance per message.
 Both windowed and continuous streaming will be covered in the [aggregations](/docs/aggregations) page.
 
 This is an example of a mapping resolver that maps from a `bytes` message to an instance of `StreamFeature`.
@@ -229,7 +231,7 @@ def kinesis_stream(
     ...
 ```
 
-Assuming you have the above resolver, you can pull off messages from Kinesis and just insert them into your resolver.
+Assuming you have the above resolver, you can pull messages from Kinesis and just insert them into your resolver.
 Like regular resolvers, stream resolvers should be unit-testable as regular Python functions.
 
 ```py

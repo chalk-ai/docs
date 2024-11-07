@@ -1,0 +1,86 @@
+---
+title: Chalk Customer Cloud Auth Configuration (Helm)
+description: Configure SAML and OIDC providers for Chalk
+---
+
+
+## SAML Configuration (e.g. Okta)
+
+Before configuring SAML, please ensure that you have the information for configuring your SAML provider.
+For Okta, please view [this documentation](/docs/okta-saml).
+
+To configure SAML for your Chalk deployment, you will need to add the following information to your
+your `values.yaml`:
+
+```
+chalk:
+  metadata:
+    frontend:
+      custom_auth_providers: '[{"id":"YOUR TEAM ID","type":"saml","name":"Okta"}]'
+      saml_issuer: SAML_ISSUER
+      saml_login_url: SAML_LOGIN_URL
+      saml_logout_url: SAML_LOGOUT_URL
+      saml_team: YOUR TEAM ID
+      idp_saml_cert: |
+        -----BEGIN CERTIFICATE-----
+        <your saml cert here>
+        -----END CERTIFICATE-----
+```
+
+IDP SAML cert is the certificate that your SAML provider uses to sign the SAML responses. This is typically found
+in, e.g., the Okta web UI.
+
+Note: this configuration must be aligned with the SAML_CERT and SAML_KEY that you used to configure your SAML
+provider. By default, Chalk automatically generates a unique SAML_CERT and SAML_KEY in the `chalk-generated-secrets`
+secret object.
+
+## OIDC Configuration
+
+To configure OIDC for your Chalk deployment, you will need to add the following information to your
+your `values.yaml`:
+
+```
+chalk:
+  metadata:
+    frontend:
+      custom_auth_providers: '[{"id":"YOUR TEAM ID","type":"oauth","name":"PROVIDER NAME"}]'
+```
+
+where `PROVIDER NAME` is the name of the provider you are configuring. The acceptable values for `PROVIDER NAME` are:
+
+- `google`
+- `azure-ad`
+- `github`
+- `keycloak`
+
+You will also need to add the following information to your `chalk-frontend-secrets` secret:
+
+### Google
+```
+GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET
+```
+
+### Azure AD
+
+```
+AZURE_AD_CLIENT_ID=YOUR_AZURE_AD_CLIENT_ID
+AZURE_AD_CLIENT_SECRET=YOUR_AZURE_AD
+AZURE_AD_TENANT_ID=YOUR_AZURE_AD_TENANT_ID
+```
+
+### GitHub
+
+```
+GH_CLIENT_ID=YOUR_GITHUB_CLIENT_ID
+GH_CLIENT_SECRET=YOUR_GITHUB_CLIENT_SECRET
+```
+
+### Keycloak
+
+Note: this configuration is for Keycloak operating as an OIDC provider, rather than a SAML provider.
+
+```
+KEYCLOAK_CLIENT_ID=YOUR_KEYCLOAK_CLIENT_ID
+KEYCLOAK_CLIENT_SECRET=YOUR_KEYCLOAK_CLIENT_SECRET
+```

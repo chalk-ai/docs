@@ -55,9 +55,9 @@ You can then initialize Chalk by running the following code in a cell:
 
 ```python notebook.ipynb
 import os
-from chalk import ChalkClient
+from chalk.client import ChalkClient
 
-client = ChalkClient()
+client = ChalkClient(branch="new-feature")
 ```
 
 ### Hex
@@ -73,9 +73,68 @@ Select `Python 3.10` as the image under **Environment > Compute Profile**.
 The Chalk client can then be initialized referencing the variables directly
 
 ```python notebook.ipynb
-from chalk import ChalkClient
+from chalk.client import ChalkClient
 
-client = ChalkClient()
+client = ChalkClient(branch="new-feature")
+```
+
+### Vertex & Google Colab Enterprise
+
+On Google Colab Enterprise, you can set up secrets using the Google Secret Manager.
+Add secrets named `chalk-client-id` and `chalk-client-secret` to Google Secret Manager
+that correspond to your Chalk client id and client secret.
+
+![Google Colab Secret](/img/ColabSecret.png)
+
+Add three dependencies to your notebook environment: `google-cloud-secret-manager`,
+`google-cloud-resource-manager`, and `chalkpy`.
+
+You can now read your credentials securely from the Google Secret Manager and
+initialize your Chalk client!
+
+```python
+# !pip install google-cloud-secret-manager
+# !pip install google-cloud-resource-manager
+# !pip install chalkpy
+import os
+
+from google.cloud import secretmanager as sm
+from google.cloud import resourcemanager_v3 as rm
+
+from chalk.client import ChalkClient
+
+# Create the Secret Manager client.
+PROJECT_NAME = os.environ['GOOGLE_CLOUD_PROJECT']
+
+# These should match the names given to your secrets in Google Secret Manager
+client_id_name = "chalk-client-id"
+client_secret_name  = "chalk-client-secret"
+
+# Get the project ID from google resources
+project_id = rm.ProjectsClient().get_project(
+    request=rm.GetProjectRequest(
+      name=f"projects/{PROJECT_NAME}"
+    )
+).name
+
+# Get CHALK_CLIENT_ID and CHALK_CLIENT_SECRET using the secret manager
+secret_client = sm.SecretManagerServiceClient()
+
+CHALK_CLIENT_ID = secret_client.access_secret_version(
+    name=f"{project_id}/secrets/{client_id_name}/versions/1"
+).payload.data.decode("utf-8")
+
+CHALK_CLIENT_SECRET = secret_client.access_secret_version(
+    name=f"{project_id}/secrets/{client_secret_name}/versions/1"
+).payload.data.decode("utf-8")
+
+
+# Instantiate your Chalk Client
+chalk_client = ChalkClient(
+    client_id=CHALK_CLIENT_ID,
+    client_secret=CHALK_CLIENT_SECRET,
+    branch="new-feature"
+)
 ```
 
 ## Creating a branch

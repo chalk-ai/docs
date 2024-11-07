@@ -1,0 +1,158 @@
+---
+title: Chalk Dataplane Installation (Metrics)
+description: Metrics Database Installation Via the UI
+---
+
+import {
+    Attribute,
+    AttributeTable,
+} from '@/components/AttributeTable'
+
+---
+Chalk uses a database hosted in the ("Customer Cloud") kubernetes cluster
+to store metrics data. This database is part of the environment dataplane,
+and stores information and metrics about queries run in a Chalk environment.
+
+## Prerequisites
+In order to install a Chalk metrics database, you need to have the following:
+
+- Cloud Native PostgreSQL [helm chart](https://github.com/cloudnative-pg/charts/blob/main/README.md) installed
+- IAM Role for Backup to S3
+- S3 Bucket for backups
+- Namespace to deploy the database into
+- Storage class to back the metrics database PVC
+
+## Creating a Metrics Database
+Navigate to the `Settings/Team/Shared Resources/Metrics Database` page in the Chalk UI
+to view the current metrics database configuration. If no metrics database is configured,
+you will see a message indicating that no metrics database is currently present, and the
+first save and apply will create a new database. This will also automatically create a cloud
+secret that is used by your Chalk deployment to talk to the metrics database.
+
+## Example Configuration
+The following is an example configuration for a metrics database:
+
+```json
+{
+  "timescale_image": "ghcr.io/imusmanmalik/timescaledb-postgis:16-3.4-54",
+  "database_name": "chalk-metrics-db",
+  "database_replicas": 1,
+  "storage": "200Gi",
+  "storage_class": "gp2",
+  "namespace": "chalk-metrics",
+  "request": {
+    "cpu": "1",
+    "memory": "500Mi"
+  },
+  "limit": {
+    "cpu": "1",
+    "memory": "500Mi"
+  },
+  "connection_pool_replicas": 3,
+  "connection_pool_max_connections": "100",
+  "connection_pool_size": "10",
+  "backup_bucket": "s3://<your backup bucket>",
+  "backup_iam_role_arn": "arn:aws:iam::<your aws account ID>:role/<your backup role name>",
+  "secret_name": "chalk-metrics-uri"
+}
+```
+
+## Configuration Options
+<AttributeTable>
+<Attribute field={'timescale_image'} kind={'string'}>
+The docker image to use for the metrics database.
+This must be a postgres image with the Timescale plugin installed.
+</Attribute>
+<Attribute field={'database_name'} kind={'string'}>
+The name of the database to create.
+</Attribute>
+<Attribute field={'database_replicas'} kind={'int'}>
+The number of replicas to create for the database.
+</Attribute>
+<Attribute field={'storage'} kind={'string'}>
+The amount of storage to allocate for the database using a PVC.
+</Attribute>
+<Attribute field={'storage_class'} kind={'string'}>
+The storage class to use for the PVC.
+</Attribute>
+<Attribute field={'namespace'} kind={'string'}>
+The namespace to deploy the database in.
+</Attribute>
+<Attribute field={'request'} kind={'object'}>
+The resource requests for the database.
+</Attribute>
+<Attribute field={'limit'} kind={'object'}>
+The resource limits for the database.
+</Attribute>
+<Attribute field={'connection_pool_replicas'} kind={'int'}>
+The number of replicas to create for the pgbouncer connection pool.
+</Attribute>
+<Attribute field={'connection_pool_max_connections'} kind={'int'}>
+The maximum number of connections to allow in the connection pool.
+</Attribute>
+<Attribute field={'connection_pool_size'} kind={'int'}>
+The number of connections to keep open in the connection pool.
+</Attribute>
+<Attribute field={'backup_bucket'} kind={'string'}>
+The S3 bucket to use for backups using Barman.
+</Attribute>
+<Attribute field={'backup_iam_role_arn'} kind={'string'}>
+The IAM role to use for backups to access the S3 bucket.
+</Attribute>
+<Attribute field={'secret_name'} kind={'string'}>
+The name of the AWS secret to store the database URI in.
+</Attribute>
+</AttributeTable>
+
+## Backups
+Backups are done by streaming the WAL log to an S3 bucket using Barman.
+The IAM role provided must have access to the S3 bucket to perform backups,
+trust the oidc provider for the cluster containing the Chalk Deployment.
+
+## Example Backup IAM Role Policy Document
+```json
+{
+    "Statement": [
+        {
+            "Action": [
+                "s3:GetBucketLocation",
+                "s3:ListAllMyBuckets"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        },
+        {
+            "Action": "s3:*",
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::<your backup bucket>",
+                "arn:aws:s3:::<your backup bucket>/*"
+            ]
+        }
+    ]
+}
+```
+
+## Example Backup IAM Role Policy Document
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::<your AWS account>:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/<oidc ID>"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "oidc.eks.us-east-1.amazonaws.com/id/<oidc ID>:sub": "system:serviceaccount:<namespace>:<database name>",
+                    "oidc.eks.us-east-1.amazonaws.com/id/<oidc ID>:aud": "sts.amazonaws.com"
+                }
+            }
+        }
+    ]
+}
+```
+
+

@@ -7,6 +7,268 @@ description: Updates to Chalk!
 
 ---
 
+## November 4, 2024
+
+### Offline Query Specifications for shards and workers
+
+When running an asynchronous offline query, you can now specify the inputs `num_shards` and `num_workers` as
+parameters to allow for more granular control over the parallelization of your query execution. To see all of the
+offline query options, check out the [offline query documentation](/api-docs#ChalkClient.offline_query).
+
+In addition, offline query progress reporting now specifies progress by shard, giving developers more insight
+into where their offline query is in the execution progress.
+
+### ChalkClient can now use the default Git branch
+
+You can now default to using the name of your current Git branch when developing using the `ChalkClient`.
+For example, if you have checked out a branch named `my-very-own-branch` you can now set `ChalkClient(branch=True)`
+and all of your client calls will be directed at `my-very-own-branch`. To read more about how to use ChalkClient, see
+our [API documentation](/api-docs#ChalkClient).
+
+### Underscore expressions support functions for URL parsing, regular expressions, and more
+
+We've added more functions to `chalk.functions` that can be used in [underscore expressions](/docs/underscore).
+You can now use `regexp_like`, `regexp_extract`, `split_part`, and `regexp_extract_all` to do regular expression matching and
+use `url_extract_host`, `url_extract_path`, and `url_extract_prtocol` to parse URL's. In addition, we've added
+helpful logical functions like `if_then_else`, `map_dict`, and `cast` to broaden the span of features that you can
+define using underscore expressions. To read more about all of our functions, check out our
+[API documentation](/api-docs#functions).
+
+### Deployment build logs for AWS environments
+
+We now provide more detailed build logs for deployments in AWS environments in the dashboard!
+
+---
+
+## October 28, 2024
+
+### Run predictions against SageMaker from Chalk, and do so much more in underscore expressions
+
+We've added a new function [`chalk.functions.sagemaker_predict`](/api-docs#sagemaker_predict) that allows
+you to run predictions against a SageMaker endpoint to resolve features. Read more about how to define
+a SageMaker endpoint, encode your input data, and run predictions in our [SageMaker tutorial](/docs/sagemaker-tutorial).
+
+In addition to being able to make SageMaker calls, [underscore expressions](/docs/underscore) now support a
+variety of new functions. With these functions imported from `chalk.functions`, you can perform encoding,
+decoding, math, datetime manipulation, string manipulation, and more! For example, say you have a Transaction
+feature, where you make a SageMaker call to enrich the transaction data and provide a label for the transaction,
+and you parse this label for other features. You can now define all of these features related to transaction
+enrichment using underscore expressions and Chalk functions in the feature definition:
+
+```python
+from datetime import date
+import chalk.functions as F
+from chalk.features import _, features, Primary
+
+@features
+class Transaction:
+    id: Primary[str]
+    amount: float
+    date: date
+    day: int = F.day_of_year(_.date)
+    month: int = F.month_of_year(_.date)
+
+    sagemaker_input_data: bytes = F.string_to_bytes(_.id, encoding="utf-8")
+    transaction_enrichment_label: bytes = F.sagemaker_predict(
+        _.sagemaker_input_data,
+        endpoint="transaction-enrichment-model_2.0.2024_10_28",
+        target_model="model_v2.tar.gz",
+        target_variant="production_variant_3"
+    )
+    transaction_enrichment_label_str: str = F.bytes_to_string(_.transaction_enrichment_label, encoding="utf-8")
+    is_rent: bool = F.like(_.transaction_enrichment_label_str, "%rent%")
+    is_purchase: bool = F.like(_.transaction_enrichment_label_str, "%purchase%")
+
+```
+
+### Nested materialized windowed aggregation references!
+
+You can now reference other windowed aggregations in your windowed aggregation expressions. To read more about
+how to define your windowed aggregations, see our example [here](https://docs.chalk.ai/docs/aggregations#nested-windowed-feature-references).
+
+### Updated usage dashboard to view CPU and storage requests grouped by pod and namespace
+
+We've updated the Usage Dashboard with a new view under the Pod Resources tab that allows you to view CPU and storage
+requests by pod as grouped by cluster, environment, namespace, and service! If you have any questions about the usage
+dashboard, please reach out to the Chalk team. 
+
+### Dropping support for Python 3.8
+
+From `chalkpy==2.55.0`, Chalk is dropping support for Python 3.8,
+which has reached [end-of-life](https://devguide.python.org/versions/).
+If you are still using Python 3.8, please upgrade to Python 3.9 or higher.
+
+## October 21, 2024
+
+### Pub/Sub streaming source
+
+We've enabled support for using [Pub/Sub](https://cloud.google.com/pubsub?hl=en) as a streaming source.
+Read more about how to use Pub/Sub as a streaming source [here](/docs/streams).
+
+### Online/Offline Storage for Offline Queries
+
+You can automatically load offline query outputs to the online and offline store using the boolean parameters
+[`store_online`](/api-docs#ChalkClient.offline_query.store_online) and
+[`store_offline`](/api-docs#ChalkClient.offline_query.store_offline). Below is an example of how to
+use these parameters.
+
+```python
+from chalk.client import ChalkClient
+
+client = ChalkClient()
+ds = client.offline_query(
+    input={"user.id": [1, 2, 3, 4, 5]},
+    output=["user.num_interactions_l7d", "user.num_interactions_l30d", "user.num_interactions_l90d"],
+    store_online=True,
+    store_offline=True
+)
+```
+
+### SQL explorer for query outputs in the dashboard
+
+Customers running gRPC servers can now run SQL queries on the [dataset](/docs/datasets)
+outputs of online and offline queries in the dashboard. To enable this feature for your deployment,
+please reach out to the team.
+
+![SQL Explorer for Query Outputs](/img/10_2024_query_output_explorer.png)
+
+### Color updates in the dashboard
+
+We've updated our color scheme in the dashboard to more clearly differentiate between successes and failures
+in metrics graphs!
+
+![Red for failures and green for successes](/img/10_2024_color_updates_dashboard.png)
+
+## October 14, 2024
+
+### SQL explorer in dashboard for datasets
+
+Customers can now run SQL queries on [dataset](/docs/datasets) outputs
+in the dashboard. To use this feature, navigate to the `Datasets` page in the menu, select a dataset,
+and click on the `Output Explorer` tab.
+
+![SQL Explorer for Datasets](/img/sql_explorer_datasets.png)
+
+### Optionally evict nulls from your DynamoDB online store
+
+Last week we enabled the option to decide whether to persist null values for features in Redis lightning
+online stores, and this week we have enabled this feature in DynamoDB online stores. By default, null
+values are persisted in the online store for features defined as `Optional`, but you can set `cache_nulls=False`
+in the `feature` method to evict null values. Read more about how to use the `cache_nulls` parameter
+[here](/api-docs#feature.cache_nulls).
+
+### Set environment variables and more in the Advanced section of the Cloud Resource Configurations page in the dashboard
+
+You can set cloud resource configurations for your environment by navigating to `Settings > Resources` in the
+dashboard. In addition to specifying resource configurations for resource groups like instance counts and CPU,
+you can now also set environment variables and other settings like Kubernetes Node Selectors. The Kubernetes Node 
+Selector enables you to specify the machine family you would like to use for your deployment. For example, 
+this would map to [EC2 Instance Types](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html) 
+for AWS deployments or [Compute Engine Machine Families](https://cloud.google.com/compute/docs/machine-resource) 
+for GCP deployments. If you have any questions about how to use any of these settings in the configuration page, 
+please reach out to the team.
+
+![Cloud Resource Configurations Advanced Settings](/img/cloud_resource_configuration_advanced_10_2024.png)
+
+## October 7, 2024
+
+### Underscore expressions support datetime subtraction and total_seconds
+
+[Underscore expressions](/docs/underscore) now support datetime subtraction and the use of a new
+library function `chalk.functions.total_seconds`. This allows you to compute the number of seconds
+in a time duration and define more complex time interval calculations using performant underscore
+expressions.
+
+For example, to define a feature that computes the difference between two date features in days and weeks,
+we can use `chalk.functions.total_seconds` and underscore date expressions together.
+
+```python
+from chalk.functions as F
+from chalk.features import _, features, Primary
+from datetime import date
+@features
+class User:
+    id: Primary[str]
+    created_at: date
+    last_activity: date
+    days_since_last_activity: float = F.total_seconds(date.today() - _.last_activity) / (60 * 60 * 24)
+    num_weeks_active: float = F.total_seconds(_.last_activity - _.created_at) / (60 * 60 * 24 * 7)
+```
+
+### Optionally evict nulls from your Redis lightning online store
+
+You can now select whether to persist null values for features in the Redis lightning online store
+using the `cache_nulls` parameter in the `feature` method. By default, null values are persisted in the
+online store for features defined as `Optional`. If you set `cache_nulls=False`, null values will
+not be persisted in the online store.
+
+```python
+from chalk import feature
+from chalk.features import features, Primary, Optional
+
+@features
+class RestaurantRating:
+    id: Primary[str]
+    cleanliness_score: Optional[float] = feature(cache_nulls=False) # null values will not be persisted
+    service_score: Optional[float] = feature(cache_nulls=True) # null values will be persisted. This is the default behavior.
+    overall_score: float # null values are not persisted for required features
+```
+
+### Feature value metrics from gRPC server and feature table updates
+
+Customers running the gRPC server can now reach out to enable feature value metrics. Feature value metrics include
+the number of observations, number of unique values, and percentage of null values over all queries, as well as the
+running average and maximum of features observed. Please reach out if you'd like to enable feature value metrics.
+
+![Feature value metrics](/img/feature_value_metrics.png)
+
+Additionally, the feature table in the dashboard has been updated to allow for customization of columns displayed,
+which enables viewing request counts over multiple time ranges in the same view.
+
+## September 30, 2024
+
+### Compute cosine similarity between two vector features
+
+`chalk.functions` now offers a [`cosine_similarity`](/api-docs#cosine_similarity) function:
+
+```diff-py
+import chalk.functions as F
+from chalk.features import _, embedding, features
+
+@features
+class Shopper:
+      id: str
+      preferences_embedding: Vector[1536]
+
+@features
+class Product:
+      id: str
+      description_embedding: Vector[1536]
+
+@features
+class ShopperProduct:
+      id: str
+      shopper_id: Shopper.id
+      shopper: Shopper
+      product_id: Product.id
+      product: Product
++     similarity: float = F.cosine_similarity(_.shopper.preferences_embedding, _.product.description_embedding)
+```
+
+Cosine similarity is useful when handling vector embeddings, which are often used when analyzing unstructured text. You
+can also use [`embedding`](/docs/embeddings) to compute vector embeddings with Chalk.
+
+### Dashboard now shows metrics for offline query runs
+
+When looking at an offline query run in the dashboard, you'll now find a new Metrics tab showing query metadata, CPU utilization,
+and memory utilization.
+
+### Configuration option for recomputing features on cache misses
+
+We have a new offline query configuration option for recomputing features *only* when they are not already available in
+the offline store. This option is useful for workloads with computationally expensive features that cannot easily be
+recomputed. Please reach out if you'd like to try this feature.
+
 ## September 23, 2024
 
 ### Configurable retry policy for SQL resolvers
@@ -381,7 +643,7 @@ With ChalkPy v2.38.8 or later, you can now pass [spine_sql_query](/api-docs#Chal
 to offline queries. The resulting rows of the SQL query will be used as input to the offline query. Chalk will compute
 an efficient query plan to retrieve your SQL data without requiring you to load the data and transform it into input
 before sending it back to Chalk. For more details, check out [our
-documentation](/docs/training-client#sql-queries-as-input).
+documentation](/docs/query-offline#sql-queries-as-input).
 
 ### Static planning of underscore expressions
 

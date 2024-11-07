@@ -137,10 +137,10 @@ The Chalk CLI should be used to run simple online queries. For more complex use 
 ### Run large queries asynchronously
 
 When sending large or long-running queries, use
-[`run_asynchronously`](/api-docs#ChalkClient.offline_query.run_asynchronously) to set up a separate Kubernetes pod for
-running your query separately from your production and branch servers. You can configure resources for asynchronous
-offline queries in your dashboard settings. You can also terminate asynchronous queries through the dashboard by
-terminating the pod or canceling the query within the dashboard, which is not possible for synchronous queries.
+[`run_asynchronously`](/api-docs#ChalkClient.offline_query.run_asynchronously) to set up one Kubernetes pod per input,
+separate from your production and branch servers. You can configure resources for asynchronous offline queries in your
+dashboard settings. You can also terminate asynchronous queries through the dashboard by terminating the pod or
+canceling the query within the dashboard, which is not possible for synchronous queries.
 
 ### Create named queries for your commonly executed queries
 
