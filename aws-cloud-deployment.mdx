@@ -385,6 +385,18 @@ rules:
       - patch
       - watch
       - delete
+  # For managing PodDisruptionBudgets.
+  - apiGroups:
+      - policy
+    resources:
+      - poddisruptionbudgets
+    verbs:
+      - get
+      - list
+      - create
+      - update
+      - patch
+      - watch
 
   # OPTIONAL: For showing thread dumps & profiling for batch backfills + some support use-cases.
   - apiGroups:
