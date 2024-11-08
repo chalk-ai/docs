@@ -8,12 +8,14 @@ import { highlightedCode as integrationTest } from '@/samples/features/integrati
 
 ---
 
-Chalk resolvers are callable and [unit-testable](/docs/unit-tests) Python functions.
-However, you may want to test the interactions between Chalk
-resolvers with an integration test.
+In the previous section, we talked about how to [unit-testindividual resolvers](/docs/unit-tests)—this process is easy since each resolver is a callable Python functions and you can assert on the expected output. In this section we will talk about writing integration tests. Chalk provides two features that make integration testing really easy:
+- Branch deployment,
+- The `check` method of the python Chalk client.
 
-With branch deploys, you can deploy and test your changes before
-shipping your code to production.
+With branch deploys, you can deploy and test your changes in an isolated environment before
+shipping your code into production.
+
+With Chalk `check`, you can set up simple integration tests that assert on the expected outputs of your queries.
 
 ---
 
@@ -53,6 +55,99 @@ pull feature values:
 ```
 
 The flag [`--branch`](/cli/query) tells this query to target the branch set during `chalk apply`.
+
+Branch deployments are a great way to quickly test whether the changes you have made to features
+or resolvers are behaving as expected when they are composed and executed in response to Chalk
+queries.
+
+However, if you want to write conrete integration tests, we recommend using the `check` method of
+the Chalk python client.
+
+---
+
+## Writing Integration Tests
+
+Suppose you have the following features defined in chalk:
+
+```python
+from chalk.features import DataFrame, features, FeatureTime
+
+@features
+def Transaction:
+    id: int
+    user_id: "User.id"
+    amount: float
+    ts: FeatureTime
+
+@features
+def User:
+    id: int
+    transactions: DataFrame[Transaction]
+    transaction_count: Windowed[int] =  windowed(
+        "1d", "3d"
+        expression=_.transactions[_.ts > _.chalk_window].count(),
+    )
+    transaction_mean: Windowed[float] =  windowed(
+        "1d", "3d"
+        expression=_.transactions[_.ts > _.chalk_window].mean(),
+    )
+```
+
+You can write integration tests with the `ChalkClient` by leveraging the `check` method. The `check` method allows assertion on values, errors, and cache hits. Mismatches between expected
+and resolved data will be printed in a table.
+
+```python
+from chalk.client import ChalkClient
+from chalk.features import DataFrame
+from src.feature_sets import Transaction, User
+import datetime as dt
+import pytest
+
+client = ChalkClient()
+
+@pytest.fixture()
+def client():
+    return ChalkClient(local=True)
+    # return ChalkClient(branch=True) # Uses your current git branch
+
+
+def test_transaction_aggregations():
+    now = dt.now()
+
+    result = client.check(
+        input={
+            User.id: 1,
+            User.transactions: DataFrame([
+                Transaction(id=1, amount=10, ts=now - dt.timedelta(days=1)),
+                Transaction(id=2, amount=20, ts=now - dt.timedelta(days=2)),
+                Transaction(id=3, amount=30, ts=now - dt.timedelta(days=3)),
+                Transaction(id=4, amount=40, ts=now - dt.timedelta(days=4)),
+                Transaction(id=5, amount=50, ts=now - dt.timedelta(days=5)),
+                Transaction(id=6, amount=60, ts=now - dt.timedelta(days=6)),
+                Transaction(id=7, amount=70, ts=now - dt.timedelta(days=7)),
+                Transaction(id=8, amount=80, ts=now - dt.timedelta(days=8)),
+                Transaction(id=9, amount=90, ts=now - dt.timedelta(days=9)),
+            ])
+        },
+        assertions={
+            User.transaction_sum["3d"]: 60,
+            User.transaction_sum["1d"]: 10,
+            User.transaction_mean["1d"]: 10,
+            User.transaction_mean["3d"]: 21,    # oops, this is wrong
+        }
+    )
+```
+
+if you run `pytest -s tests/test_transaction_aggregations.py`, you will get the following output:
+
+Note, since the user's transactions are explicitly passed—they will not be fetched from any online resolver
+you've defined to pull transactions (for example from a database).
+
+---
+
+## Writing Integration Tests
+
+Mocking Inputs Using Tagged Resolvers
 
 ---
 
@@ -113,6 +208,7 @@ jobs:
                       --out user.email \
                       --json \
                       --include-meta
+
           # Alternatively, run the integration test suite, which should make queries with the branch parameter.
-          python -m unittest ./tests/integration_tests.py
+          pytest -s ./tests
 ```
