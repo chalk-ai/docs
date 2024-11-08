@@ -149,61 +149,64 @@ combination with underscore references to transform features:
 
 #### Logic
 
+* [`coalesce`](/api-docs#coalesce)
+* [`is_null`](/api-docs#is_null)
 * [`if_then_else`](/api-docs#if_then_else)
 * [`map_dict`](/api-docs#map_dict)
-* [`coalesce`](/api-docs#coalesce)
-* [`when`](/api-docs#when)
-* [`then`](/api-docs#then)
 * [`otherwise`](/api-docs#otherwise)
-* [`is_null`](/api-docs#is_null)
+* [`then`](/api-docs#then)
+* [`when`](/api-docs#when)
+
+#### String Manipulation
+
+* [`ends_with`](/api-docs#ends_with)
+* [`levenshtein_distance`](/api-docs#levenshtein_distance)
+* [`like`](/api-docs#like)
+* [`lower`](/api-docs#lower)
+* [`regexp_extract`](/api-docs#regexp_extract)
+* [`regexp_extract_all`](/api-docs#regexp_extract_all)
+* [`regexp_like`](/api-docs#regexp_like)
+* [`replace`](/api-docs#replace)
+* [`reverse`](/api-docs#reverse)
+* [`split_part`](/api-docs#split_part)
+* [`starts_with`](/api-docs#starts_with)
+* [`substr`](/api-docs#substr)
+* [`trim`](/api-docs#trim)
 
 #### Encoding and decoding
 
 * [`bytes_to_string`](/api-docs#bytes_to_string)
-* [`string_to_bytes`](/api-docs#string_to_bytes)
 * [`gunzip`](/api-docs#gunzip)
-* [`md5`](/api-docs#md5)
-* [`coalesce`](/api-docs#coalesce)
 * [`json_value`](/api-docs#json_value)
-
-#### Datetime Manipulation
-
-* [`total_seconds`](/api-docs#total_seconds)
-* [`hour_of_day`](/api-docs#hour_of_day)
-* [`day_of_week`](/api-docs#day_of_week)
-* [`day_of_month`](/api-docs#day_of_month)
-* [`day_of_year`](/api-docs#day_of_year)
-* [`week_of_year`](/api-docs#week_of_year)
-* [`month_of_year`](/api-docs#month_of_year)
-* [`unix_milliseconds`](/api-docs#unix_milliseconds)
-* [`unix_seconds`](/api-docs#unix_seconds)
+* [`md5`](/api-docs#md5)
+* [`string_to_bytes`](/api-docs#string_to_bytes)
 
 #### Math
 
+* [`abs`](/api-docs#abs)
+* [`asin`](/api-docs#asin)
+* [`ceil`](/api-docs#ceil)
 * [`cos`](/api-docs#cos)
-* [`sin`](/api-docs#sin)
+* [`cosine_similarity`](/api-docs#cosine_similarity)
 * [`exp`](/api-docs#exp)
+* [`floor`](/api-docs#floor)
+* [`haversine`](/api-docs#haversine)
 * [`ln`](/api-docs#ln)
 * [`power`](/api-docs#power)
-* [`floor`](/api-docs#floor)
-* [`ceil`](/api-docs#ceil)
-* [`abs`](/api-docs#abs)
+* [`sin`](/api-docs#sin)
+* [`sqrt`](/api-docs#sqrt)
 
-#### String Manipulation
+#### Datetime Manipulation
 
-* [`reverse`](/api-docs#reverse)
-* [`slice`](/api-docs#slice)
-* [`trim`](/api-docs#trim)
-* [`like`](/api-docs#like)
-* [`substr`](/api-docs#substr)
-* [`regexp_extract`](/api-docs#regexp_extract)
-* [`regexp_extract_all`](/api-docs#regexp_extract_all)
-* [`regexp_like`](/api-docs#regexp_like)
-* [`starts_with`](/api-docs#starts_with)
-* [`ends_with`](/api-docs#ends_with)
-* [`levenshtein_distance`](/api-docs#levenshtein_distance)
-* [`replace`](/api-docs#replace)
-* [`split_part`](/api-docs#split_part)
+* [`day_of_month`](/api-docs#day_of_month)
+* [`day_of_week`](/api-docs#day_of_week)
+* [`day_of_year`](/api-docs#day_of_year)
+* [`hour_of_day`](/api-docs#hour_of_day)
+* [`month_of_year`](/api-docs#month_of_year)
+* [`total_seconds`](/api-docs#total_seconds)
+* [`unix_milliseconds`](/api-docs#unix_milliseconds)
+* [`unix_seconds`](/api-docs#unix_seconds)
+* [`week_of_year`](/api-docs#week_of_year)
 
 #### URL Manipulation
 
@@ -220,6 +223,5 @@ combination with underscore references to transform features:
 #### Other
 
 * [`cast`](/api-docs#cast)
-* [`cosine_similarity`](/api-docs#cosine_similarity)
 * [`sagemaker_predict`](/api-docs#sagemaker_predict)
 * [`haversine`](/api-docs#haversine)
