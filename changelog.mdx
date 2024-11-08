@@ -7,6 +7,47 @@ description: Updates to Chalk!
 
 ---
 
+## November 11, 2024
+
+### Idempotency in triggered resolver runs
+
+We now provide an [idempotency key](/cli/trigger#idempotency-key) parameter for triggering resolver runs
+so that you can ensure that only one job will be kicked off per idempotency key provided.
+
+### ChalkClient.check() function for easy integration testing
+
+The [ChalkClient](/api-docs#ChalkClient) now has a `check` function that enables you to run a query and
+check whether the query outputs match your expected outputs. This function should be used with
+[pytest](https://docs.pytest.org/en/stable/) for integration testing. To read more about different
+methods and best practices for integration testing, see our [integration test docs](/docs/integration-tests).
+
+### Underscore expressions support more mathematical and logical functions
+
+This week, we've added mathematical functions `floor`, `ceil`, and `abs` to `chalk.functions`, along with
+the logical functions `when`, `then`, `otherwise`, and `is_null`. We've also added the `haversine` function
+for computing the Haversine distance between two points on Earth given their latitude and longitude. These
+points can be used in [underscore expressions](/docs/underscore) to define features with code that can be
+statically compiled in C++ for faster execution. See the full list of functions you can use in underscore
+expressions in our [API docs](/api-docs#functions).
+
+### Dashboard improvements for providing more insights into resolver performance and execution
+
+In the dashboard, users can now view the P50, P75, P95, and P99 latencies for resolvers in the table under
+the `Resolver` tab of the menu. You can also customize which columns are displayed in the table by clicking
+the gear icon in the top left corner of the table.
+
+In addition, we've added a SQL Explorer for examining resolver output for queries that are run with the
+`store_plan_stages=True` parameter.
+
+### chalk healthcheck in CLI
+
+You can now use the `chalk healthcheck` command in the CLI to view information on the health of Chalk's API
+server and its services. The healthcheck provides information for the API server based on the active
+[environment](/cli/environment) and [project](/cli/project). To read more about the healthcheck command, see
+the [CLI documentation](/cli/healthcheck).
+
+---
+
 ## November 4, 2024
 
 ### Offline Query Specifications for shards and workers
