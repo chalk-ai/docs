@@ -230,8 +230,8 @@ associated transaction data as a performance optimization.
 Finally, to query for spend at a specific merchant, we can access one of the groups:
 
 ```diff-py
-from chalk.features import features, _, Windowed, DataFrame, windowed
-from chalk.streams import group_by_windowed
+from chalk.features import features, _, DataFrame
+from chalk.streams import group_by_windowed, Windowed, windowed
 
 @features
 class User:
