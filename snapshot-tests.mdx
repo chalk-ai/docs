@@ -4,18 +4,52 @@ description: Snapshot testing with Chalk
 ---
 
 Snapshot testing is a really effective way of ensuring that your features are not dramatically changing
-between deployments. You can set up snashot testing in Chalk by leveraging Chalk [Datasets]. Typically,
-snapshot testing will be part of a CI (continuous integration) workflow. Pull requests will automatically
-trigger tests which verify that your feature distributions and properties are consistent in light
-of your new code changes.
+between deployments. You can set up snashot testing in Chalk by leveraging Chalk [Datasets].
+
+Typically, snapshot testing will be part of a CI (continuous integration) workflow. Pull requests will automatically
+trigger tests which verify that code changes have not caused feature distributions shifts.
 
 In this section, we'll demonstrate the process of writing snashot tests using pytest and Github Actions.
 
 ## Overview
 
+To set up snapshot testing, we'll write a couple pytest fixtures and a test. The fixtures will pull your current
+snaphot data and create a new snapshot based on your current code. The test will then compare the distributions of
+the features in your old and new datasets.
+
+In this example we'll be testing that snapshot testing the features on the following feature class:
+
+```python
+from chalk.features import features
+import datetime as dt
+
+@features
+class User:
+    id: int
+    full_name: name
+    birthday: dt.datetime
+    age: float
+```
+
+In this example, lets say we resolve the `full_name` and birthday of our User's from from a postgres database. The age, we calculate using an online resolver:
+```python
+from chalk import online
+from chalk.features import Now
+
+@online
+def birthday_resolver(bday: User.birthday, now: Now) -> User.age:
+    return now.year - bday.year - ((now.month, now.day) < (bday.month, bday.day))
+```
+
+Though this is a pretty trivial example, lets set some examples on how we expect the data to drift between invocations:
+- We expect a User's birthday to never change,
+- We expect User's full_name to change in a maximum of 0.001% of our users (1/100,000),
+- We expect age to change by a maximum amount of 30 days (in reality average age will increase by exactly the amount of times between invocations of our snapshot test).
+
 ## Writing the Test
 
-First you'll want to write a test that compares
+First we'll write two fixtures: the first sets up a Chalk Client and the second creates your new snapshot (using
+the previous snaphot to make sure that the exact same ids are being pulled).
 
 ```
 from chalk.client import ChalkClient
@@ -33,8 +67,6 @@ def client():
 
 @pytest.fixture(scope="session")
 def snapshots(client: ChalkClient):
-
-
     # The dataset name will be set to the latest commit on the branch
     branch_commit = os.environ["GITHUB_SHA"]
 
