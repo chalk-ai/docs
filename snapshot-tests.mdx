@@ -78,6 +78,7 @@ def snapshots(client: ChalkClient):
 
     branch_snapshot = client.offline_query(
         input=active_snapshot[User.id].to_list(),
+        recompute_features=True,
         wait=True,
         dataset_name=branch_commit
     )
