@@ -100,7 +100,7 @@ class User:
     )
     transaction_mean: Windowed[float] =  windowed(
         "1d", "3d",
-        expression=_.transactions[_.ts > _.chalk_window].mean(),
+        expression=_.transactions[_.amount, _.ts > _.chalk_window].mean(),
     )
 ```
 
@@ -151,18 +151,29 @@ def test_transaction_aggregations(client):
 You can then run `pytest -s tests/test_transaction_aggregations.py`, where you will see a result like this:
 
 ```bash
+$ pytest tests/test_transaction_aggs.py -s
+==================================================== test session starts =====================================================================
+platform darwin -- Python 3.10.14, pytest-8.3.3, pluggy-1.5.0
+rootdir: /Users/chalk/deployment/
+configfile: pyproject.toml
+plugins: anyio-4.4.0
+collected 1 item
 
-Chalk Feature Value Mismatch
-┏━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
-┃ Kind   ┃ Name                        ┃ Value     ┃
-┡━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
-│ Expect │ user.transaction_mean__3d__ │    20     │
-│ Actual │ user.transaction_mean__3d__ │    21     │
-└────────┴─────────────────────────────┴───────────┘
+tests/test_transaction_aggs.py
+
+Chalk Feature Value Check Table
+┏━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Kind   ┃ Name                       ┃ Value ┃
+┡━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ Match  │ user.transaction_count[1d] │ 1     │
+│ Match  │ user.transaction_count[3d] │ 3     │
+│ Match  │ user.transaction_mean[1d]  │ 10.0  │
+│ Expect │ user.transaction_mean[3d]  │ 21.0  │
+│ Actual │ user.transaction_mean[3d]  │ 20.0  │
+└────────┴────────────────────────────┴───────┘
+{'user.transaction_count__259200__': 3, 'user.transaction_count__86400__': 1, 'user.transaction_mean__86400__': 10.0, 'user.transaction_mean__259200__': 20.0}
+F
 ```
-
-Note that since the user's transactions are explicitly passed in as input, there is no need to run any resolvers
-that have been defined to compute the transactions for a user.
 
 ---
 
