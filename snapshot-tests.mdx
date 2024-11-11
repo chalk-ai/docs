@@ -1,0 +1,132 @@
+---
+title: Snapshot Tests
+description: Snapshot testing with Chalk
+---
+
+Snapshot testing is a really effective way of ensuring that your features are not dramatically changing
+between deployments. You can set up snashot testing in Chalk by leveraging Chalk [Datasets]. Typically,
+snapshot testing will be part of a CI (continuous integration) workflow. Pull requests will automatically
+trigger tests which verify that your feature distributions and properties are consistent in light
+of your new code changes.
+
+In this section, we'll demonstrate the process of writing snashot tests using pytest and Github Actions.
+
+## Overview
+
+## Writing the Test
+
+First you'll want to write a test that compares
+
+```
+from chalk.client import ChalkClient
+from chalk.features import DataFrame
+from src.feature_sets import Transaction, User
+import datetime as dt
+import pytest
+import pandas as pd
+
+
+@pytest.fixture(scope="session")
+def client():
+    return ChalkClient(branch=True) # Uses your current git branch
+
+
+@pytest.fixture(scope="session")
+def snapshots(client: ChalkClient):
+
+
+    # The dataset name will be set to the latest commit on the branch
+    branch_commit = os.environ["GITHUB_SHA"]
+
+    # The snapshot will find the dataset with the
+    latest_commit = os.environ["GITHUB_HEAD_REF"]
+
+    main_snapshot = client.get_dataset(dataset_name=latest_commit)
+    main_snapshot_df = snapshot.to_pandas()
+
+    branch_snapshot = client.offline_query(
+        input=active_snapshot[User.id].to_list(),
+        wait=True,
+        dataset_name=branch_commit
+    )
+    branch_snapshot_df = branch_snapshot.to_pandas()
+
+    return active_snapshot_df, branch_snapshot_df
+
+def test_transaction_aggregations(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]):
+    main_snapshot, branch_snapshot = snapshot_dfs
+
+    compare_snapshots(main_snapshot, branch_snapshot)
+```
+
+## Writing the Github Action
+
+The Gihub Action, sets up the environment and then runs pytest. Because the
+Github Action is set to run on `pull`, we have access to not only the
+active commit (in the environment variable `GITHUB_SHA`), but also the
+target commit of the pull request (`GITHUB_HEAD_REF`).
+
+```yaml
+name: Chalk Integration Test
+
+on: pull
+
+jobs:
+  chalk-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - uses: chalk-ai/deploy-action@v2
+        with:
+          client-id: ${{secrets.CHALK_CLIENT_ID}}
+          client-secret: ${{secrets.CHALK_CLIENT_SECRET}}
+          # Deploys Chalk to a branch environment
+          branch: ${{ GITHUB_REF_NAME }}
+          # Waits for the deployment to succeed (Optional, default false)
+          await: true
+
+      - name: Runs the Snaphot Test
+        run: |
+          # Example of making a query directly against a branch
+          pytest -s ./tests
+```
+
+## Bootstrapping the Github Action
+
+Before this works fully, we will need to bootstrap the snapshot test. If you tried
+to run the action above, you'd get an error calling `client.get_dataset()`, which
+would indicate that the dataset was not found. To bootstrap the snaphots, you'll
+want to run an `offline_query` to create a named dataset with the current `HEAD`
+commit of your github repository.
+
+To get the latest commit in your repo, you can run
+```sh
+$ git checkout main > /dev/null; git rev-parse @
+```
+
+in your terminal. This should give you a commit that looks something like: `9e0399983458045bedcfa413d7a37fd89a419bd1`.
+
+You can now run an offline query using the python client to create the first snapshot:
+```python
+from src.feature_sets import User
+
+client.offline_query(
+    output=[User],
+     # This can be however many you want to include in your snapshot
+    max_samples=50_000,
+    dataset_name="9e0399983458045bedcfa413d7a37fd89a419bd1"
+)
+```
+
+With your initial shapshot created, future pull requests will be able to automatically execute a snapshot test
+against your main deployment.
