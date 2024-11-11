@@ -16,6 +16,9 @@ When working in a branch users have a number of useful capabilities, including:
 - Quickly `recompute` datasets to see the effects of changes
 - Branches have a consistent name across deployments
 
+However, branch deployments do not pick up changes to environment variables or secrets,
+so these changes would require a new non-branch deployment to take effect. 
+
 ---
 
 ## Create a Branch Deployment
