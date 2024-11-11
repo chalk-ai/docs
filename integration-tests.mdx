@@ -115,9 +115,9 @@ import datetime as dt
 import pytest
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def client():
-    return ChalkClient(local=True)
+    return ChalkClient(local=True) # this will deploy your local changes to a branch using the name of your current git branch
     # return ChalkClient(branch=True) # Uses your current git branch
 
 
