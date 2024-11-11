@@ -51,7 +51,7 @@ Though this is a rather trivial example, lets set some expectations for our feat
 First we'll write two fixtures: the first sets up a Chalk Client and the second creates your new snapshot (using
 the previous snaphot to make sure that the exact same ids are being pulled).
 
-```
+```python
 from chalk.client import ChalkClient
 from chalk.features import DataFrame
 from src.feature_sets import Transaction, User
@@ -74,22 +74,31 @@ def snapshots(client: ChalkClient):
     latest_commit = os.environ["GITHUB_HEAD_REF"]
 
     main_snapshot = client.get_dataset(dataset_name=latest_commit)
-    main_snapshot_df = snapshot.to_pandas()
+    main_snapshot_df = snapshot.to_pandas().set_index(User.id)
 
     branch_snapshot = client.offline_query(
-        input=active_snapshot[User.id].to_list(),
+        input=main_snapshot_df.index.to_list(),
         recompute_features=True,
         wait=True,
         dataset_name=branch_commit
     )
-    branch_snapshot_df = branch_snapshot.to_pandas()
+    branch_snapshot_df = branch_snapshot.to_pandas().set_index(User.id)
 
     return active_snapshot_df, branch_snapshot_df
 
 def test_transaction_aggregations(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]):
     main_snapshot, branch_snapshot = snapshot_dfs
 
+    # Birthdays should not change
+    assert main_snapshot[User.birthday] == branch_snapshot[User.birthday]
+
+    # Full names should not change in more than 0.001% of users
+    assert (main_snapshot[User.full_name] != branch_snapshot[User.full_name]).mean() < 0.00001
+
+    # Age should not change by more than 30 days
+    assert (main_snapshot[User.age]-branch_snapshot[User.age]).dt.days.abs().max() < 30
     compare_snapshots(main_snapshot, branch_snapshot)
+
 ```
 
 ## Writing the Github Action
