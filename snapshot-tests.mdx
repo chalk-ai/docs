@@ -41,7 +41,7 @@ def birthday_resolver(bday: User.birthday, now: Now) -> User.age:
     return now.year - bday.year - ((now.month, now.day) < (bday.month, bday.day))
 ```
 
-Though this is a rather trivial example, lets set some expectations for our feature distribution shifts:
+Though this is a rather trivial example, lets set some expectations for our feature distribution shifts between snapshots:
 - We expect a User's birthday to never change,
 - We expect User's full_name to change in a maximum of 0.001% of our users (1/100,000),
 - We expect age to change by a maximum amount of 30 days (in reality average age will increase by exactly the amount of times between invocations of our snapshot test).
