@@ -137,17 +137,17 @@ jobs:
 ## Bootstrapping the Github Action
 
 Before this works fully, we will need to bootstrap the snapshot test. If you tried
-to run the action above, you'd get an error calling `client.get_dataset()`, which
-would indicate that the dataset was not found. To bootstrap the snaphots, you'll
+to run the action above, you'd get an error when running `client.get_dataset(...)`, which
+would indicate that the dataset was not found. To bootstrap your snaphots, you'll
 want to run an `offline_query` to create a named dataset with the current `HEAD`
 commit of your github repository.
 
-To get the latest commit in your repo, you can run
+To get the latest commit in your repo, go to your terminal and run:
 ```sh
 $ git checkout main > /dev/null; git rev-parse @
 ```
 
-in your terminal. This should give you a commit that looks something like: `9e0399983458045bedcfa413d7a37fd89a419bd1`.
+This should give you a commit that looks something like: `9e0399983458045bedcfa413d7a37fd89a419bd1`.
 
 You can now run an offline query using the python client to create the first snapshot:
 ```python
@@ -156,7 +156,9 @@ from src.feature_sets import User
 client.offline_query(
     output=[User],
      # This can be however many you want to include in your snapshot
-    max_samples=50_000,
+    max_samples=200_000,
+    recompute_features=True,
+    run_asynchrounously=True,
     dataset_name="9e0399983458045bedcfa413d7a37fd89a419bd1"
 )
 ```
