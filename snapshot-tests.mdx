@@ -86,6 +86,8 @@ def snapshots(client: ChalkClient):
 
     return active_snapshot_df, branch_snapshot_df
 
+# Note, we skip this test locally since we only want to run it in CI
+@pytest.mark.skipif(os.getenv("CI") is None, reason="Skipping on local machine")
 def test_transaction_aggregations(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]):
     main_snapshot, branch_snapshot = snapshot_dfs
 
@@ -97,13 +99,11 @@ def test_transaction_aggregations(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]
 
     # Age should not change by more than 30 days
     assert (main_snapshot[User.age]-branch_snapshot[User.age]).dt.days.abs().max() < 30
-    compare_snapshots(main_snapshot, branch_snapshot)
-
 ```
 
 ## Writing the GitHub Action
 
-The GitHub Action, sets up the environment and then runs Pytest. Because the
+The GitHub Action sets up the environment and then runs `pytest`. Because the
 GitHub Action is set to run on `pull`, we have access to not only the
 active commit (in the environment variable `GITHUB_SHA`), but also the
 target commit of the pull request (in the environment variable `GITHUB_HEAD_REF`).
@@ -145,10 +145,10 @@ jobs:
 
 ## Bootstrapping the GitHub Action
 
-Before this works fully, we will need to bootstrap the snapshot test. If you tried
-to run the action above, you'd get an error when running `client.get_dataset(...)`, which
-would indicate that the dataset was not found. To bootstrap your snapshot, you'll
-want to run an `offline_query` to create a named dataset with the current `HEAD`
+Before this works fully, we need to bootstrap the snapshot test. If you tried
+to run the action above, you'd get an error when running `client.get_dataset(...)`:
+the error would indicate that the dataset was not found. To bootstrap your snapshot,
+you'll want to run an `offline_query` to create a named dataset with the current `HEAD`
 commit of your GitHub repository.
 
 To get the latest commit in your repo, go to your terminal and run:
