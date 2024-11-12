@@ -122,7 +122,7 @@ dataset.recompute_features(branch=branch, wait=True, run_asynchrounously=True)
 ## Writing the GitHub Action
 
 We will write two GitHub actions: one will run when we create a pull requests, the other
-will run when we merge into our main branch.
+will run when we merge code into our main branch.
 
 The first GitHub Action sets up the environment and then runs `pytest`. The
 GitHub Action is set to run on `pull`, which means it will run when we open a
