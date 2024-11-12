@@ -92,7 +92,7 @@ def test_transaction_aggregations(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]
     main_snapshot, branch_snapshot = snapshot_dfs
 
     # Birthdays should not change
-    assert main_snapshot[User.birthday] == branch_snapshot[User.birthday]
+    assert main_snapshot[User.birthday].equals(branch_snapshot[User.birthday])
 
     # Full names should not change in more than 0.001% of users
     assert (main_snapshot[User.full_name] != branch_snapshot[User.full_name]).mean() < 0.00001
