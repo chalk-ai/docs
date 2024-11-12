@@ -77,7 +77,7 @@ def snapshots(client: ChalkClient):
     main_snapshot_df = snapshot.to_pandas().set_index(User.id)
 
     branch_snapshot = client.offline_query(
-        input=main_snapshot_df.index.to_list(),
+        input={User.id: main_snapshot_df.index.to_list()},
         recompute_features=True,
         wait=True,
         dataset_name=branch_commit
