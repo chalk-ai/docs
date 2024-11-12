@@ -104,7 +104,7 @@ def test_transaction_aggregations(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]
 ## Writing the GitHub Action
 
 The GitHub Action sets up the environment and then runs `pytest`. Because the
-GitHub Action is set to run on `pull`, we have access to not only the
+GitHub Action is set to run on `pull`, we automatically have access to not only the
 active commit (in the environment variable `GITHUB_SHA`), but also the
 target commit of the pull request (in the environment variable `GITHUB_HEAD_REF`).
 
