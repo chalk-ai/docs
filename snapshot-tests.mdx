@@ -199,10 +199,9 @@ jobs:
 Before this works fully, we need to bootstrap the snapshot test. If you tried
 to run the action above, you'd get an error when running `client.get_dataset(...)`:
 the error would indicate that the dataset was not found. To bootstrap your snapshot,
-you'll want to run an `offline_query` to create a named dataset with the current `HEAD`
-commit of your GitHub repository.
+you'll want to run an `offline_query` to create a dataset named `user_snapshot`.
 
-You can do this by running an offline query using the python client to create the first snapshot:
+You can do this by running an offline query:
 
 ```python
 from src.feature_sets import User
