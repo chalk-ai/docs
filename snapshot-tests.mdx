@@ -76,7 +76,7 @@ def snapshots(client: ChalkClient):
         input={User.id: main_snapshot_df.index.to_list()},
         recompute_features=True,
         wait=True,
-        run_asynchrounously=True
+        run_asynchronously=True
     )
     branch_snapshot_df = branch_snapshot.to_pandas().set_index(User.id)
 
