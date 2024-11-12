@@ -70,7 +70,7 @@ def snapshots(client: ChalkClient):
     # The dataset name will be set to the latest commit on the branch
     branch_commit = os.environ["GITHUB_SHA"]
 
-    # The snapshot will find the dataset of the last merged snapshot
+    # The snapshot will find the dataset associated with the last merged snapshot
     latest_commit = os.environ["GITHUB_HEAD_REF"]
 
     main_snapshot = client.get_dataset(dataset_name=latest_commit)
