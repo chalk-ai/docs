@@ -131,7 +131,9 @@ pull request against main:
 ```yaml
 name: Chalk Integration Test
 
-on: pull
+on:
+  pull_request:
+    branches: [main]
 
 jobs:
   chalk-test:
@@ -162,14 +164,12 @@ jobs:
           pytest -s ./tests
 ```
 
-The second GitHub Action runs our update script to update the `user_snapshot` dataset
-with our latest snapshot.
+The second GitHub Action runs our update script to update the `user_snapshot` dataset with our latest snapshot. In runs whenever we push code to the main branch.
 
 ```yaml
 on:
   push:
-    branches:
-      - master
+    branches: [main]
 jobs:
   update-snapshot:
     steps:
