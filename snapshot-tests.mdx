@@ -83,7 +83,7 @@ def snapshots(client: ChalkClient):
     return active_snapshot_df, branch_snapshot_df
 ```
 
-These fixtures serve to output two Pandas DataFrames: the main snapshot (which we store in
+These fixtures serve to output two Pandas DataFrames: the main_snapshot_df (which is stored in
 a dataset called `user_snapshot`) and the branch snapshot (which is generated
 on the fly with an offline query).
 
