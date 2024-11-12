@@ -1,0 +1,175 @@
+---
+title: Snapshot Tests
+description: Snapshot testing with Chalk
+---
+
+Snapshot testing is an effective way of ensuring that your features are not dramatically changing
+between deployments. You can set up snapshot testing in Chalk by leveraging [Datasets](/docs/datasets).
+
+Typically, snapshot testing will be part of a CI (continuous integration) workflow. Pull requests will automatically
+trigger tests which verify that code changes have not caused feature distribution shifts.
+
+In this section, we'll walk through the process of creating snapshot tests using Pytest and GitHub Actions.
+
+## Overview
+
+To set up snapshot testing, we'll write a couple Pytest fixtures and a test. The fixtures will pull your current
+snapshot data and create a new snapshot based on your current code. The test will then compare the distributions of
+the features in your old and new datasets.
+
+In this example we'll be snapshot testing the features on the following feature class:
+
+```python
+from chalk.features import features
+import datetime as dt
+
+@features
+class User:
+    id: int
+    full_name: name
+    birthday: dt.datetime
+    age: int
+```
+
+In this example, we resolve the `full_name` and birthday of our User's from a Postgres database. The age feature is calculated using an online resolver:
+```python
+from chalk import online
+from chalk.features import Now
+
+@online
+def get_age_in_years(bday: User.birthday, now: Now) -> User.age:
+    return now.year - bday.year - ((now.month, now.day) < (bday.month, bday.day))
+```
+
+Though this is a rather trivial example, lets set some expectations for our feature distribution shifts between snapshots:
+- We expect a User's birthday to never change,
+- We expect a User's full_name to change in a maximum of 0.001% of our users (1/100,000),
+- We expect a User's age to change by a maximum amount of 2 years (in reality, average age will increase by precisely the amount of time between invocations of our snapshot test).
+
+## Writing the Test
+
+First we'll write two fixtures: the first sets up a Chalk Client and the second creates your new snapshot (using
+the previous snapshot to make sure that the exact same User ids are being pulled).
+
+```python
+from chalk.client import ChalkClient
+from chalk.features import DataFrame
+from src.feature_sets import Transaction, User
+import datetime as dt
+import pytest
+import pandas as pd
+
+
+@pytest.fixture(scope="session")
+def client():
+    return ChalkClient(branch=True) # Uses your current git branch
+
+
+@pytest.fixture(scope="session")
+def snapshots(client: ChalkClient):
+    # The dataset name will be set to the latest commit on the branch
+    branch_commit = os.environ["GITHUB_SHA"]
+
+    # The snapshot will find the dataset associated with the last merged snapshot
+    latest_commit = os.environ["GITHUB_HEAD_REF"]
+
+    main_snapshot = client.get_dataset(dataset_name=latest_commit)
+    main_snapshot_df = snapshot.to_pandas().set_index(User.id)
+
+    branch_snapshot = client.offline_query(
+        input={User.id: main_snapshot_df.index.to_list()},
+        recompute_features=True,
+        wait=True,
+        dataset_name=branch_commit
+    )
+    branch_snapshot_df = branch_snapshot.to_pandas().set_index(User.id)
+
+    return active_snapshot_df, branch_snapshot_df
+
+# Note, we skip this test locally since we only want to run it in CI
+@pytest.mark.skipif(os.getenv("CI") is None, reason="Skipping on local machine")
+def test_transaction_aggregations(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]):
+    main_snapshot, branch_snapshot = snapshot_dfs
+
+    # Birthdays should not change
+    assert main_snapshot[User.birthday].equals(branch_snapshot[User.birthday])
+
+    # Full names should not change in more than 0.001% of users
+    assert (main_snapshot[User.full_name] != branch_snapshot[User.full_name]).mean() < 0.00001
+
+    # Age should not change by more than 2 years between runs
+    assert (main_snapshot[User.age] - branch_snapshot[User.age]).max() <= 2
+```
+
+## Writing the GitHub Action
+
+The GitHub Action sets up the environment and then runs `pytest`. Because the
+GitHub Action is set to run on `pull`, we automatically have access to not only the
+active commit (in the environment variable `GITHUB_SHA`), but also the
+target commit of the pull request (in the environment variable `GITHUB_HEAD_REF`).
+
+```yaml
+name: Chalk Integration Test
+
+on: pull
+
+jobs:
+  chalk-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - uses: chalk-ai/deploy-action@v2
+        with:
+          client-id: ${{secrets.CHALK_CLIENT_ID}}
+          client-secret: ${{secrets.CHALK_CLIENT_SECRET}}
+          # Deploys Chalk to a branch environment
+          branch: ${{ GITHUB_REF_NAME }}
+          # Waits for the deployment to succeed (Optional, default false)
+          await: true
+
+      - name: Runs the Snapshot Test
+        run: |
+          pytest -s ./tests
+```
+
+## Bootstrapping the GitHub Action
+
+Before this works fully, we need to bootstrap the snapshot test. If you tried
+to run the action above, you'd get an error when running `client.get_dataset(...)`:
+the error would indicate that the dataset was not found. To bootstrap your snapshot,
+you'll want to run an `offline_query` to create a named dataset with the current `HEAD`
+commit of your GitHub repository.
+
+To get the latest commit in your repo, go to your terminal and run:
+```sh
+$ git checkout main > /dev/null; git rev-parse @
+```
+
+This should give you a commit that looks something like: `9e0399983458045bedcfa413d7a37fd89a419bd1`.
+
+You can now run an offline query using the python client to create the first snapshot:
+```python
+from src.feature_sets import User
+
+client.offline_query(
+    output=[User],
+     # This can be however many you want to include in your snapshot
+    max_samples=200_000,
+    recompute_features=True,
+    run_asynchrounously=True,
+    dataset_name="9e0399983458045bedcfa413d7a37fd89a419bd1"
+)
+```
+
+With your initial snapshot created, future pull requests will be able to automatically execute a snapshot test
+against your main deployment.
