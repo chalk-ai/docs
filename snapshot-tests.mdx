@@ -4,17 +4,17 @@ description: Snapshot testing with Chalk
 ---
 
 Snapshot testing is an effective way of ensuring that your features are not dramatically changing
-between deployments. You can set up snashot testing in Chalk by leveraging [Datasets](/docs/datasets).
+between deployments. You can set up snapshot testing in Chalk by leveraging [Datasets](/docs/datasets).
 
 Typically, snapshot testing will be part of a CI (continuous integration) workflow. Pull requests will automatically
 trigger tests which verify that code changes have not caused feature distributions shifts.
 
-In this section, we'll walk through the process of creating snapshot tests using pytest and Github Actions.
+In this section, we'll walk through the process of creating snapshot tests using Pytest and GitHub Actions.
 
 ## Overview
 
-To set up snapshot testing, we'll write a couple pytest fixtures and a test. The fixtures will pull your current
-snaphot data and create a new snapshot based on your current code. The test will then compare the distributions of
+To set up snapshot testing, we'll write a couple Pytest fixtures and a test. The fixtures will pull your current
+snapshot data and create a new snapshot based on your current code. The test will then compare the distributions of
 the features in your old and new datasets.
 
 In this example we'll be snapshot testing the features on the following feature class:
@@ -31,7 +31,7 @@ class User:
     age: float
 ```
 
-In this example, we resolve the `full_name` and birthday of our User's from from a Postgres database. The age feature is calculated using an online resolver:
+In this example, we resolve the `full_name` and birthday of our User's from a Postgres database. The age feature is calculated using an online resolver:
 ```python
 from chalk import online
 from chalk.features import Now
@@ -49,7 +49,7 @@ Though this is a rather trivial example, lets set some expectations for our feat
 ## Writing the Test
 
 First we'll write two fixtures: the first sets up a Chalk Client and the second creates your new snapshot (using
-the previous snaphot to make sure that the exact same ids are being pulled).
+the previous snapshot to make sure that the exact same ids are being pulled).
 
 ```python
 from chalk.client import ChalkClient
@@ -101,12 +101,12 @@ def test_transaction_aggregations(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]
 
 ```
 
-## Writing the Github Action
+## Writing the GitHub Action
 
-The Gihub Action, sets up the environment and then runs pytest. Because the
-Github Action is set to run on `pull`, we have access to not only the
+The GitHub Action, sets up the environment and then runs Pytest. Because the
+GitHub Action is set to run on `pull`, we have access to not only the
 active commit (in the environment variable `GITHUB_SHA`), but also the
-target commit of the pull request (`GITHUB_HEAD_REF`).
+target commit of the pull request (in the environment variable `GITHUB_HEAD_REF`).
 
 ```yaml
 name: Chalk Integration Test
@@ -143,13 +143,13 @@ jobs:
           pytest -s ./tests
 ```
 
-## Bootstrapping the Github Action
+## Bootstrapping the GitHub Action
 
 Before this works fully, we will need to bootstrap the snapshot test. If you tried
 to run the action above, you'd get an error when running `client.get_dataset(...)`, which
-would indicate that the dataset was not found. To bootstrap your snaphots, you'll
+would indicate that the dataset was not found. To bootstrap your snapshot, you'll
 want to run an `offline_query` to create a named dataset with the current `HEAD`
-commit of your github repository.
+commit of your GitHub repository.
 
 To get the latest commit in your repo, go to your terminal and run:
 ```sh
@@ -172,5 +172,5 @@ client.offline_query(
 )
 ```
 
-With your initial shapshot created, future pull requests will be able to automatically execute a snapshot test
+With your initial snapshot created, future pull requests will be able to automatically execute a snapshot test
 against your main deployment.
