@@ -105,7 +105,7 @@ def test_snapshot__user_feature_drift(snaphot_dfs: tuple[pd.DataFrame, pd.DataFr
 ```
 
 In addition to the tests, we'll create a script which will run when we merge pull requests—this
-script will update the `user_snapshot` dataset with the latest branch code.
+script will update the `user_snapshot` dataset with the one generated with our latest code.
 
 ```python
 import os
