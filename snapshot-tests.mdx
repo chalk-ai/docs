@@ -97,7 +97,7 @@ def test_transaction_aggregations(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]
     # Full names should not change in more than 0.001% of users
     assert (main_snapshot[User.full_name] != branch_snapshot[User.full_name]).mean() < 0.00001
 
-    # Age should not change by more than 30 days
+    # Age should not change by more than 2 years between runs
     assert (main_snapshot[User.age] - branch_snapshot[User.age]).max() <= 2
 ```
 
