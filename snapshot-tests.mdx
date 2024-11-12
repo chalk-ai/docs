@@ -191,8 +191,7 @@ jobs:
           environment: ${{ secrets.CHALK_ENVIRONMENT }}
 
       - name: Update snapshot
-        run: |
-            python3 scripts/update_user_snapshot.py
+        run: python3 scripts/update_user_snapshot.py
 ```
 
 ## Bootstrapping the GitHub Action
