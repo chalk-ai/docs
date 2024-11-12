@@ -13,9 +13,10 @@ In this section, we'll walk through the process of creating snapshot tests using
 
 ## Overview
 
-To set up snapshot testing, we'll write a couple Pytest fixtures and a test. The fixtures will pull your current
-snapshot data and create a new snapshot based on your current code. The test will then compare the distributions of
-the features in your old and new datasets.
+To set up snapshot testing, we'll write a couple Pytest fixtures, a test, and a helper script. The fixtures will pull
+your current snapshot data and create a new snapshot based on your current code. The test will then compare the distributions of
+the features in your old and new datasets. The helper script will update the main snapshot and will be run when a PR is
+merged.
 
 In this example we'll be snapshot testing the features on the following feature class:
 
@@ -46,7 +47,7 @@ Though this is a rather trivial example, lets set some expectations for our feat
 - We expect a User's full_name to change in a maximum of 0.001% of our users (1/100,000),
 - We expect a User's age to change by a maximum amount of 2 years (in reality, average age will increase by precisely the amount of time between invocations of our snapshot test).
 
-## Writing the Test
+## Writing the Test and Helper Script
 
 First we'll write two fixtures: the first sets up a Chalk Client and the second creates your new snapshot (using
 the previous snapshot to make sure that the exact same User ids are being pulled).
@@ -68,27 +69,29 @@ def client():
 @pytest.fixture(scope="session")
 def snapshots(client: ChalkClient):
     # The dataset name will be set to the latest commit on the branch
-    branch_commit = os.environ["GITHUB_SHA"]
-
-    # The snapshot will find the dataset associated with the last merged snapshot
-    latest_commit = os.environ["GITHUB_HEAD_REF"]
-
-    main_snapshot = client.get_dataset(dataset_name=latest_commit)
+    main_snapshot = client.get_dataset(dataset_name="user_snapshot")
     main_snapshot_df = snapshot.to_pandas().set_index(User.id)
 
     branch_snapshot = client.offline_query(
         input={User.id: main_snapshot_df.index.to_list()},
         recompute_features=True,
         wait=True,
-        dataset_name=branch_commit
+        run_asynchrounously=True
     )
     branch_snapshot_df = branch_snapshot.to_pandas().set_index(User.id)
 
     return active_snapshot_df, branch_snapshot_df
+```
 
+These fixtures serve to output two Pandas DataFrames: the main snapshot (which we store in
+a dataset called `user_snapshot`) and the branch snapshot (which is generated
+on the fly with an offline query).
+
+Next, we will use those snapshots in a test:
+```python
 # Note, we skip this test locally since we only want to run it in CI
 @pytest.mark.skipif(os.getenv("CI") is None, reason="Skipping on local machine")
-def test_transaction_aggregations(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]):
+def test_snapshot__user_feature_drift(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]):
     main_snapshot, branch_snapshot = snapshot_dfs
 
     # Birthdays should not change
@@ -101,12 +104,29 @@ def test_transaction_aggregations(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]
     assert (main_snapshot[User.age] - branch_snapshot[User.age]).max() <= 2
 ```
 
+In addition to the tests, we'll create a script which will run when we merge pull requests—this
+script will update the `user_snapshot` dataset with the latest branch code.
+
+```python
+import os
+from chalk.client import ChalkClient
+
+branch = os.environ["GITHUB_REF_NAME"]
+client = ChalkeClient(branch=branch)
+
+dataset = client.get_dataset(dataset_name="user_snapshot")
+
+dataset.recompute_features(branch=branch, wait=True, run_asynchrounously=True)
+```
+
 ## Writing the GitHub Action
 
-The GitHub Action sets up the environment and then runs `pytest`. Because the
-GitHub Action is set to run on `pull`, we automatically have access to not only the
-active commit (in the environment variable `GITHUB_SHA`), but also the
-target commit of the pull request (in the environment variable `GITHUB_HEAD_REF`).
+We will write two GitHub actions: one will run when we create a pull requests, the other
+will run when we merge into our main branch.
+
+The first GitHub Action sets up the environment and then runs `pytest`. The
+GitHub Action is set to run on `pull`, which means it will run when we open a
+pull request against main:
 
 ```yaml
 name: Chalk Integration Test
@@ -142,6 +162,39 @@ jobs:
           pytest -s ./tests
 ```
 
+The second GitHub Action runs our update script to update the `user_snapshot` dataset
+with our latest snapshot.
+
+```yaml
+on:
+  push:
+    branches:
+      - master
+jobs:
+  update-snapshot:
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - uses: chalk-ai/cli-action@main
+        with:
+          client-id: ${{ secrets.CHALK_CLIENT_ID }}
+          client-secret: ${{ secrets.CHALK_CLIENT_SECRET }}
+          environment: ${{ secrets.CHALK_ENVIRONMENT }}
+
+      - name: Update snapshot
+        run: |
+            python3 scripts/update_user_snapshot.py
+```
+
 ## Bootstrapping the GitHub Action
 
 Before this works fully, we need to bootstrap the snapshot test. If you tried
@@ -150,14 +203,8 @@ the error would indicate that the dataset was not found. To bootstrap your snaps
 you'll want to run an `offline_query` to create a named dataset with the current `HEAD`
 commit of your GitHub repository.
 
-To get the latest commit in your repo, go to your terminal and run:
-```sh
-$ git checkout main > /dev/null; git rev-parse @
-```
+You can do this by running an offline query using the python client to create the first snapshot:
 
-This should give you a commit that looks something like: `9e0399983458045bedcfa413d7a37fd89a419bd1`.
-
-You can now run an offline query using the python client to create the first snapshot:
 ```python
 from src.feature_sets import User
 
@@ -167,7 +214,7 @@ client.offline_query(
     max_samples=200_000,
     recompute_features=True,
     run_asynchrounously=True,
-    dataset_name="9e0399983458045bedcfa413d7a37fd89a419bd1"
+    dataset_name="user_snapshot"
 )
 ```
 
