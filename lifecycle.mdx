@@ -131,7 +131,7 @@ chalk query --in user.id=1 --out user.name_email_match_score
 The `user.name_email_match_score` feature is live!
 But historically, this feature did not exist,
 and you won't be able to sample its values at previous times
-until you backfill the values, which you can do with the ['chalk trigger'](cli/trigger) command.
+until you backfill the values, which you can do with the ['chalk trigger'](/cli/trigger) command.
 
 ```bash
 chalk trigger --resolver example.name_email_match_scorer --lower-bound 2020-05-05T12:00:00+00:00 --persist-offline=True
