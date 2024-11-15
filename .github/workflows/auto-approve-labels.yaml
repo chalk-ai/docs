@@ -18,6 +18,6 @@ jobs:
       - name: Force merge pull request
         if: contains(github.event.pull_request.labels.*.name, 'force-merge')
         run: |
-          gh pr --repo chalk-ai/chalk-private merge ${{ github.event.pull_request.number }} --admin --squash --delete-branch
+          gh pr --repo chalk-ai/docs merge ${{ github.event.pull_request.number }} --admin --squash --delete-branch
         env:
           GITHUB_TOKEN: ${{ secrets.CI_SERVICES_GITHUB_TOKEN }}
