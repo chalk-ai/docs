@@ -5,6 +5,48 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## November 18, 2024
+
+### View Kubernetes resources created by each deployment in the dashboard
+
+You can now view the Kubernetes pods created by each deployment in the dashboard along with additional
+details like the pod states and the resources requested by each pod.
+
+![Pod Resources in Deployment Page](/img/deployment_pods_nov_2024.png)
+
+### Resolve list features with underscore expressions
+
+We've added the `array_agg` function to `chalk.functions` to help you resolve list features with [underscore
+expressions](/docs/underscore). For example, you can now express the following features to aggregate
+all categories of videos watched for a user.
+
+```python
+import chalk.functions as F
+from chalk import DataFrame
+from chalk.features import _, features
+
+@features
+class VideoInteraction:
+    id: str
+    video_url: str
+    video_category: str
+    user_id: "User.id"
+
+@features
+class User:
+    id: str
+    videos_watched: DataFrame[VideoInteraction]
+    all_watched_video_categories: list[str] = F.array_agg(_.videos[_.category])
+```
+
+To see all of the `chalk.functions` that you can use in underscore expressions, see
+our [API documentation](/api-docs#functions).
+
+### View usage information through the Chalk CLI
+
+Users can now use the [`chalk usage` commands](/cli/usage_export) to view usage information for their
+projects and environments. If you have any questions, please reach out to the Chalk team.
+
 ---
 
 ## November 11, 2024
