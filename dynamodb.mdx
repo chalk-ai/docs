@@ -7,6 +7,7 @@ published: true
 Chalk supports [DynamoDB](https://aws.amazon.com/dynamodb/) as a [SQL source](/docs/sql).
 
 ## Adding DynamoDB
+
 Follow the [AWS instructions](/docs/aws) to give Chalk access to application credentials for your AWS account. Chalk
 will use these credentials to access DynamoDB.
 
@@ -39,16 +40,34 @@ SELECT
     TransactionVolume AS transaction_volume
 FROM
     UserTable
+LIMIT 10
 ```
 
 This file resolves the `User.transaction_volume` feature. Please note that the `--source: my_dynamo` line is necessary
 and should match the `name` provided to your `DynamoDBSource`.
 
-Chalk uses [PartiQL](https://partiql.org/) to execute SQL queries on your DynamoDB connection. Chalk extends PartiQL to
-support alias syntax so that you can rename your result columns to match your feature names. The above example
-demonstrates aliasing with `TransactionVolume AS transaction_volume`.
+## Chalk's DynamoDB Query Language
 
-You can use [batch execution with
+Chalk uses [PartiQL](https://partiql.org/) to execute SQL queries on your DynamoDB connection. Chalk extends PartiQL to
+support aliasing and limits: you can rename your result columns to match your feature names
+and limit results. The above example demonstrates aliasing with `TransactionVolume AS transaction_volume`.
+
+Chalk extends PartiQL with the following syntax:
+
+```
+--- Amazon PartiQL
+SELECT expression  [, ...]
+FROM table[.index]
+[ WHERE condition ] [ ORDER BY key [DESC|ASC] , ...]
+
+--- Chalk PartiQL
+SELECT expression [AS alias] [, ...]
+FROM table[.index]
+[ WHERE condition ] [ ORDER BY key [DESC|ASC] , ...]
+[ LIMIT limit ]
+```
+
+You can also use [batch execution with
 PartiQL](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.multiplestatements.batching.html)
 to retrieve multiple records in a single request via [`ChalkClient.query_bulk`](/api-docs#ChalkClient.query_bulk). Batch
 execution is only supported for single table queries.
