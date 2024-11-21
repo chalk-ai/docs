@@ -93,3 +93,22 @@ To define optional relationships, use the `typing.Optional[...]` keyword:
 
 Note, resolvers that take optional features as inputs need to handle the `None` case. This is
 covered in more detail in [the resolver's section of the docs](/docs/resolver-inputs#optional-has-one).
+
+---
+
+## Querying for Has-One Relationships
+
+You can also query for a feature that is joined through a has-one relationship by
+referencing the root namespace. For example, to query for the `Profile` features
+associated with a `User` continuing from the example above, you can write:
+
+```python
+from chalk.client import ChalkClient
+from src.features import User
+
+client =  ChalkClient()
+client.query(
+    input={User.id: "1"},
+    output=[User.profile.id, User.profile.email_age_years]
+)
+```
