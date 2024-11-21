@@ -129,6 +129,25 @@ def get_events() -> DataFrame[Transfer.uuid, Transfer.amount, Transfer.ts]:
     return DataFrame.read_csv(...)
 ```
 
+Say you wanted to return many instances of a feature class, including nested features,
+from a resolver, then you can the DataFrame class for your return type and in your
+resolver definition.
+
+```python
+@online
+def get_user_employer_information(id: User.id) -> Dataframe[User.id, User.name, User.employer.name, User.employer.category]:
+    return DataFrame([
+        User(
+            id="1",
+            name="Jennifer Doudna",
+            employer=Employer(
+                name="University of California, Berkeley",
+                category="Education"
+            )
+        )
+    ])
+```
+
 For more info on how to load batch data,
 see the [Data Sources](/docs/sql) sections.
 `DataFrame`-returning resolvers don't need inputs.
