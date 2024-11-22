@@ -37,11 +37,11 @@ deployment. For example, this would map to [EC2 Instance Types](https://docs.aws
 for AWS deployments or [Compute Engine Machine Families](https://cloud.google.com/compute/docs/machine-resource)
 for GCP deployments.
 
-In addition, you can set Environment Variable Overrides. One common example of an Environment Variable Override
-is `AUTO_SHUTDOWN_PERIOD`, which you can set to the amount of seconds of inactivity after which you'd like the
+The `Auto Shutdown Period` dropdown enables you to select the amount of time of inactivity after which you'd like the
 branch server to spin down.
 
-If you have any questions about how to best configure your environment for your use case, reach out to the Chalk team.
+In addition, you can set Environment dyVariable Overrides. If you have any questions about how to best configure
+your environment for your use case, reach out to the Chalk team.
 
 ### Kubernetes
 
@@ -53,3 +53,8 @@ debugging and monitoring the health of your environment.
 
 Under `Settings > Connections`, you can view all of the connections that your environment has to external
 resources, such as your online and offline stores, and the branch server.
+
+### User Permissions
+
+Under `Settings > User Permissions`, you can view the roles associated with each user, as well as whether those
+roles are granted directly or via SCIM.
