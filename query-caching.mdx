@@ -48,7 +48,7 @@ at the time of requesting features for the credit model:
 You can specify whether to cache null or default feature values using the
 [`cache_nulls`](/api-docs#feature.cache_nulls) and [`cache_defaults`](/api-docs#feature.cache_defaults)
 parameters in the feature definition. Additionally, customers with a DynamoDB or
-Redis Lightning online store can specify `feature(cache_nulls="evict_nulls")` to evict
+Redis online store can specify `feature(cache_nulls="evict_nulls")` to evict
 any entry that would have been null from the cache, and similarly `feature(cache_defaults="evict_defaults")` to evict
 any entry that would have been a default value from the cache if it exists. For more
 information on how to configure these parameters for your use case, check out our
