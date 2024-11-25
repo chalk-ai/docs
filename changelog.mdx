@@ -5,6 +5,77 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## November 25, 2024
+
+### Offline query now accepts parquet inputs and relative input times
+
+[Offline queries](/docs/query-offline) can now accept parquet files as input by passing in a `”s3://“` or `”gs://“`
+URL as the `offline_query(input=“…”)` parameter. In addition, you can now define upper and lower bounds for offline
+queries with a timedelta that is set relative to the min/max input times per shard. For example, you can now
+set `offline_query(lower_bound=timedelta(days=-30)` to set the lower bound to be 30 days before the earliest input_time
+or `offline_query(upper_bound=timedelta(days=30)` to set the upper bound to be 30 days after the latest input_time.
+To read more about offline query parameters, see our [API docs](https://docs.chalk.ai/api-docs#ChalkClient.offline_query).
+
+### Backfill materialized window aggregations over comptued features
+
+You can now define a materialized aggregate backfill over features that are returned by multiple resolvers
+rather than just one resolver. Read more about the `chalk aggregate backfill` command in our
+[CLI docs](https://docs.chalk.ai/cli/aggregate_backfill).
+
+### Underscore expressions now support more array and encoding functions
+
+We've added more functions to `chalk.functions` that can be used in [underscore expressions](/docs/underscore).
+You can now use [`array_join`](/api-docs#array_join) to concatenate array elements into a string,
+[`cardinality`](/api-docs#cardinality) to count the number of elements in an array, as well as
+[`max`](/api-docs#max) and [`min`](/api-docs#min) to find the maximum and minimum values, respectively, in an array.
+You can also use [`max_by`](/api-docs#max_by) and [`min_by`](/api-docs#min_by) to find the row with the maximum and
+minimum values in a given column in a DataFrame. For mathematical operations, you can now [`round`](/api-docs#round)
+numbers and use [`from_base`](/api-docs#from_base) for base conversion. For encoding, you can now compute
+the [`sha1`](/api-docs#sha1), [`sha256`](/api-docs#sha256), and [`sha512`](/api-docs#sha512) hashes of strings.
+Finally, you can use [`format_datetime`](/api-docs#format_datetime) to format datetime features using a format string
+and [`strpos`](/api-docs#strpos) to find the first position of a substring in a string. To read more about all of the
+`chalk.functions` in your toolbox for writing underscore expressions, check out our
+[`API docs`](/api-docs#section-Functions).
+
+### Optionally cache nulls or default feature values in the online store
+
+Where you could previously choose whether to cache `null` feature values in the online store,
+you can now use the [`cache_defaults`](/api-docs#feature.cache_defaults) parameter to optionally cache default feature
+values in the online store. Customers with DynamoDB or Redis online stores can also choose to
+`evict_defaults` from the online store, evicting the entry that would have been a default value from the online
+store if it exists. Read more about how to use `cache_defaults` and `cache_nulls` in our
+[API docs](/api-docs#feature.cache_defaults).
+
+### Define features as map types
+
+You can now define features as map types and reference these map features in underscore expressions.
+
+```python
+from chalk.features import features
+
+@features
+class User:
+    id: str
+    user_preferences: dict[str, bool] = {"Advertising cookies": True, "Functional cookies": True}
+```
+
+### Retrieve map types from DynamoDB data sources as either dicts or strings
+
+You can now retrieve [Map document types](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html#HowItWorks.DataTypes)
+from DynamoDB data sources as either dicts or strings, using the new map feature type.
+
+### Dashboard updates for viewing Kubernetes logs
+
+We’ve exposed much more granularity for Kubernetes logs in the dashboard. You can now filter logs by pod name,
+component, resource group, and deployment. These filters are set in the page query params, which means that you can
+send a link to pre-filtered log views. The links that are newly exposed in the Kubernetes pod view now directs to a
+pre-filtered logs viewer page. Finally, you can now view pod conditions in the Kubernetes pod view, which can include
+useful information for debugging failed or pending pods.
+
+![Detailed Kubernetes logs in dashboard](/img/k8s-dashboard-logs-nov-2024.png)
+
+---
+
 ## November 18, 2024
 
 ### View Kubernetes resources created by each deployment in the dashboard
