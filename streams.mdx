@@ -29,17 +29,15 @@ Now, let's set up the Chalk features you'd like to materialize upon stream messa
 ```py
 from chalk.features import features, Features
 
-@features(max_staleness="1d", etl_offline_to_online=True)
+@features(max_staleness="1d")
 class StreamFeature:
     id: str
     value: str
 ```
 
-Streaming resolvers produce feature values similarly to online and offline resolvers.
-These features must be marked with a max staleness so processed results will be stored in offline cache.
-`etl_offline_to_online` should be set to `True` to access these values in online cache as well.
-If both of these parameters are set, once these features are created,
-they can accessed via online and offline query and used downstream by other online and offline resolvers.
+Streaming resolvers produce feature values that are persisted to the offline store. Similar
+to other resolvers, streaming resolvers can also persist computed feature values to the online
+store by setting `etl_offline_to_online=True` or `max_staleness` in the `@features` decorator.
 
 Chalk supports three kinds of streaming resolvers: mapping, windowed, and continuous.
 On this page, we will focus on mapping resolvers, which create one Chalk feature instance per message.

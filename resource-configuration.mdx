@@ -1,0 +1,60 @@
+---
+title: Resource Configuration
+description: Configure resources for your Chalk project.
+---
+
+## Overview
+
+The `Settings` page of the dashboard exposes many useful configurations that you can use to
+tune your Chalk environments to scale to handle your specific workload and latency requirements.
+
+### Cloud Resource Configuration
+
+Under `Settings > Resources`, you will find the Cloud Resource Configuration page. In this page, you
+can specify how you would like to scale the different resource groups in your Chalk environment, and
+even create new resource groups.
+
+Under each resource group, for each service, you can specify the targets for resource requests,
+resource limits, scaling, and parallelism. For most use cases, adjusting the `Requests` and `Scaling`
+targets will help you optimize your environment for your workload. The `Requests` will specify
+the resources to be allocated to an instance of your service, and the `Scaling` will define upper
+and lower bounds for the number of instances of your service. In terms of scaling, there are two
+ways to auto-scale your services:
+
+1. **CPU-based Scaling**: If you set `Target CPU %` in the Cloud Resource Configuration, then Chalk will
+   scale the service based on the CPU utilization of the service. If the CPU utilization is above the
+   target, Chalk will scale up the service, and if it is below the target, Chalk will scale down the service.
+2. **Scheduled Scaling**: You can specify scaling resources up or down on a schedule by modifying the
+    spec config in the `JSON` tab of the `Cloud Resource Configuration` page. In order to do scheduled
+    scaling, you must have KEDA configured in your environment. Please reach out to the Chalk team if
+    you are interested in scheduled scaling.
+
+In addition to specifying resource targets, you can also navigate to the `Advanced` configurations for
+even more fine-grained control over your resources.
+
+The Kubernetes Node Selector enables you to specify the machine family you would like to use for your
+deployment. For example, this would map to [EC2 Instance Types](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html)
+for AWS deployments or [Compute Engine Machine Families](https://cloud.google.com/compute/docs/machine-resource)
+for GCP deployments.
+
+The `Auto Shutdown Period` dropdown enables you to select the amount of time of inactivity after which you'd like the
+branch server to spin down.
+
+In addition, you can set Environment dyVariable Overrides. If you have any questions about how to best configure
+your environment for your use case, reach out to the Chalk team.
+
+### Kubernetes
+
+Under `Settings > Kubernetes`, you can view all of the pods in your Kubernetes cluster under the namespace
+for your environment, in addition to their phase and creation timestamp. This can be very useful for
+debugging and monitoring the health of your environment.
+
+### Connections
+
+Under `Settings > Connections`, you can view all of the connections that your environment has to external
+resources, such as your online and offline stores, and the branch server.
+
+### User Permissions
+
+Under `Settings > User Permissions`, you can view the roles associated with each user, as well as whether those
+roles are granted directly or via SCIM.

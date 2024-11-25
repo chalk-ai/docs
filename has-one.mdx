@@ -96,6 +96,34 @@ covered in more detail in [the resolver's section of the docs](/docs/resolver-in
 
 ---
 
+## Chained Has-One Joins
+
+You can chain has-one joins to traverse multiple relationships. For example, you could define
+the following features to represent a user's profile and preferences in an application.
+
+```python
+from chalk.features import features, Primary
+
+@features
+class User:
+    id: str
+    email: str
+
+@features
+class Profile:
+    id: Primary[User.id]
+    username: str
+
+@features
+class Preferences:
+    id: Primary[Profile.id]
+    dark_mode: bool
+
+
+```
+
+---
+
 ## Querying for Has-One Relationships
 
 You can also query for a feature that is joined through a has-one relationship by
@@ -112,3 +140,4 @@ client.query(
     output=[User.profile.id, User.profile.email_age_years]
 )
 ```
+

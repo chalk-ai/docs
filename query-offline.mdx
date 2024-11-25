@@ -191,7 +191,10 @@ Like [online queries](/docs/query-basics),
 offline queries can be debugged using the `explain` flag, which logs the query execution plan, and
 the `store_plan_stages` flag, which stores the inputs and outputs of each of the plan stages,
 which will be visible in the web dashboard's query detail view.
-More on these and other tips [here](/docs/debugging-queries).
+
+In addition, the offline query output is a [Dataset](/api-docs#Dataset) object that you can inspect
+within the dashboard using the Output Explorer. With the Output Explorer you can run SQL queries
+on the output to do more testing and validation. More on these and other tips [here](/docs/debugging-queries).
 
 ### Running large offline queries
 
@@ -252,4 +255,3 @@ dataset = client.get_dataset("21d9ceb7-c1ef-4c08-a39c-f8381e825a66") # your quer
 df = dataset.get_data_as_pandas()
 ```
 
-### Running offline queries on a schedule
