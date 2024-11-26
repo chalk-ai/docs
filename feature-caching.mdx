@@ -5,7 +5,7 @@ description: Set max staleness to introduce caching.
 
 ---
 
-When a feature is expensive or slow to compute, you may wish to cache its value.
+When a feature is expensive or slow to compute, you may wish to cache its value in the online store.
 Chalk uses the terminology "maximum staleness" to describe how recently a feature
 value needs to have been computed to be returned without re-running a resolver.
 
@@ -28,9 +28,7 @@ class User:
     )
 ```
 
-Max staleness durations can be given in
-[natural language](/api-docs#Duration),
-or specified using
+Max staleness durations can be given in [natural language](/api-docs#Duration), or specified using
 [datetime.timedelta](https://docs.python.org/3/library/datetime.html#timedelta-objects).
 You can specify a max staleness of "infinity" to indicate that Chalk should cache computed feature
 values forever. This makes sense for data that never becomes invalid, or for data that you wish
