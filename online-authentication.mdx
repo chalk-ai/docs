@@ -12,26 +12,34 @@ import { RequestUrl } from '@/components/RequestUrl'
 
 ---
 
-Chalk implements OAuth for authentication to the online query interface. There are two kinds of credentials that can be used to access Chalk resources:
+Chalk implements OAuth for authentication to the online query interface. There are two kinds of credentials that
+can be used to access Chalk resources:
 
 - **Personal Credentials:** Full access to all resources on your account. This allows a client to act as you.
 - **Service Credentials:** Access scoped to a specific project and environment. Used for computers to talk to Chalk. Generated via the web dashboard.
 
-Both personal and service credentials can be used to query Chalk, and potentially to modify your Chalk deployment's settings. This means that **these credentials are sensitive and must be kept secret.**
+Both personal and service credentials can be used to query Chalk, and potentially to modify your Chalk deployment's
+settings. This means that **these credentials are sensitive and must be kept secret.**
 
-When you use the CLI to create credentials, you will be asked to authenticate yourself on Chalk's web dashboard. Then, you will receive a `client_id` and `client_secret`. Once generated, `client_id` cannot be changed. However, `client_secret` can be rotated if your security practices require this or if you suspect that `client_secret` has been compromised.
+You can create and manage service credentials in the Chalk dashboard or using the [Chalk CLI](/cli/chalk).
+When you use the CLI to create credentials, you will be asked to authenticate yourself on Chalk's web dashboard.
+Then, you will receive a `client_id` and `client_secret`. Once generated, `client_id` cannot be changed. However,
+`client_secret` can be rotated if your security practices require this or if you suspect that `client_secret` has
+been compromised.
 
 Once you have generated your `client_id` and `client_secret`, you can proceed to make authenticated requests to Chalk.
 
 ## Authenticating an API client
 
-Chalk has published API client libraries for several languages. These libraries handle exchanging a `client_id` and `client_secret` for an `access_token` which can be used to access Chalk.
+Chalk has published API client libraries for several languages. These libraries handle exchanging a `client_id`
+and `client_secret` for an `access_token` which can be used to access Chalk.
 
 <CreatingAClient />
 
 ## Authenticating CURL
 
-We recommend using the chalk cli tool to authenticate a curl request. You can use `chalk token` to acquire an `access_token` that is suitable for use as a `Bearer token`:
+We recommend using the chalk cli tool to authenticate a curl request. You can use `chalk token` to acquire an
+`access_token` that is suitable for use as a `Bearer token`:
 
 ```
 curl -H "Authorization: Bearer $(chalk token)" \
@@ -40,10 +48,11 @@ curl -H "Authorization: Bearer $(chalk token)" \
 
 ## Fetching an Access Token
 
-If you're implementing a custom API client for a language that Chalk hasn't published a library for, you may need to fetch an `access_token` using the
-[OAuth Client Credentials](https://www.oauth.com/oauth2-servers/access-tokens/client-credentials/) grant flow. You can use the `token` endpoint in Chalk's API to execute this flow:
+If you're implementing a custom API client for a language that Chalk hasn't published a library for, you may need to
+fetch an `access_token` using the [OAuth Client Credentials](https://www.oauth.com/oauth2-servers/access-tokens/client-credentials/)
+grant flow. You can use the `token` endpoint in Chalk's API to execute this flow:
 
-## Request
+### Request
 
 <RequestUrl url="https://api.chalk.ai/v1/oauth/token" type="POST" />
 
@@ -63,7 +72,7 @@ If you're implementing a custom API client for a language that Chalk hasn't publ
 
 </AttributeTable>
 
-## Response
+### Response
 
 <AttributeTable>
 
@@ -78,17 +87,27 @@ This field will always be "Bearer"
 </Attribute>
 </AttributeTable>
 
+### Creating a Service Token in the Dashboard
+
+You can create a service token in the Chalk dashboard by navigating to the "Service Tokens" tab in the "Settings" page.
+You can then specify permissions for the token, as well as datasource and feature tags for datasource-based and
+feature-based RBAC (Role-Based Access Control), respectively.
+
+![Service Token Creation](/img/datasource-feature-rbac.png)
+
 ---
 
 ### Authenticating a Request Using an Access Token
 
-Use the token obtained from the Client Credentials grant flow in the `Authorization: Bearer <ACCESS_TOKEN>` header that your client sends along all authenticated requests. For example:
+Use the token obtained from the Client Credentials grant flow in the `Authorization: Bearer <ACCESS_TOKEN>` header
+that your client sends along all authenticated requests. For example:
 
 ```
 curl -H "Authorization: Bearer <ACCESS_TOKEN>" https://api.chalk.ai/v1/who-am-i
 ```
 
-will return a 200 response and a JSON object containing a short description of the requesting user. This is convenient for verifying that you are using a valid `access_token`.
+will return a 200 response and a JSON object containing a short description of the requesting user. This is
+convenient for verifying that you are using a valid `access_token`.
 
 ## Role-based access control (RBAC)
 
