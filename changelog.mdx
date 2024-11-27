@@ -5,6 +5,43 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## December 2, 2024
+
+### We now support Poetry for managing Python dependencies
+
+You can now use [Poetry](https://python-poetry.org/) to manage Python dependencies in your Chalk project. Simply
+set the `requirements` field in your `chalk.yaml` file to `pyproject.toml` to use Poetry for dependency management.
+Read more about how to use configuration files [here](/docs/configuration).
+
+```yaml
+project: no-fun-project-names
+environments:
+    default:
+        runtime: "python310"
+        requirements: pyproject.toml
+```
+
+### Underscore expressions now support more datetime, JSON, string, and math functions
+
+We've added more functions to `chalk.functions` that can be used in [underscore expressions](/docs/underscore).
+You can now use [json_extract_array](/api-docs#json_extract_array) to extract arrays of strings, bools, numbers, or
+nulls from a JSON feature, [safe_divide](/api-docs#safe_divide) to divide two numbers safely, returning `None` if the
+denominator is zero, [to_iso8601](/api-docs#to_iso8601) to convert a datetime feature to an ISO 8601 string,
+[from_unix_seconds](/api-docs#from_unix_seconds) and [from_unix_milliseconds](/api-docs#from_unix_milliseconds) to
+convert a Unix timestamp in seconds or milliseconds to a datetime feature, and finally
+[regexp_replace](/api-docs#regexp_replace) to replace substrings in a string using a regular expression. To read more
+about all of the `chalk.functions` in your toolbox for writing underscore expressions, check out our
+[`API docs`](/api-docs#section-Functions).
+
+### Warning banners in dashboard for deployments
+
+We've added warning banners in the dashboard to alert you to potential issues in your deployments, such as when
+pods fail to start up cleanly. These banners will help with monitoring and observability for deployment health.
+
+![Warning banners in dashboard](/img/warning-banners-dec-2024.png)
+
+---
+
 ## November 25, 2024
 
 ### Offline query now accepts parquet inputs and relative input times
