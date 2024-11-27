@@ -1,0 +1,47 @@
+---
+title: Spanner
+description: Integrate with Spanner.
+published: true
+---
+
+Chalk supports [Spanner](https://cloud.google.com/spanner/?hl=en) as a natively accelerated [SQL source](/docs/sql).
+
+## Adding DynamoDB
+
+Follow the [GCP instructions](/docs/gcp) to give Chalk access to application credentials for your GCP account. Chalk
+will use these credentials to access Spanner.
+
+## Integration
+
+Add your Spanner data source in a Python file and give it a `name`. This line is required for all Spanner
+integrations. In this file, we'll also define a `User` feature class with a `transaction_volume` feature which will be
+resolved with Spanner.
+
+```python
+from chalk.features import features
+from chalk.sql import SpannerSource
+
+SpannerSource(name="my_spanner")  # required for Chalk to be aware of this source
+
+@features
+class User:
+    id: str
+    transaction_volume: float
+```
+
+Now, you are all set to use Spanner with [SQL file resolvers](/docs/sql#sql-file-resolvers):
+
+```sql
+-- type: online
+-- resolves: User
+-- source: my_spanner
+SELECT
+    id,
+    TransactionVolume AS transaction_volume
+FROM
+    UserTable
+LIMIT 10
+```
+
+This file resolves the `User.transaction_volume` feature. Please note that the `--source: my_spanner` line is necessary
+and should match the `name` provided to your [`SpannerSource`](/api-docs#SpannerSource).

@@ -12,7 +12,42 @@ import { RequestUrl } from '@/components/RequestUrl'
 ---
 
 In addition to [scheduling resolver executions](/docs/resolver-cron),
-Chalk allows you to trigger resolver executions programmatically via the REST API.
+Chalk allows you to trigger resolver executions programmatically via the Chalk Client, CLI and REST API.
+
+---
+
+## Trigger a Run via Chalk Client
+
+Using the Chalk Client, you can trigger a resolver run using the `trigger_resolver_run` command.
+
+```python
+from chalk.client import ChalkClient
+
+ChalkClient().trigger_resolver_run(resolver_fqn="load_user_data", store_online=True)
+```
+To read more about how to specify parameters like upper_bound, lower_bound, store_online, store_offline,
+and idempotency_key, check out our [API documentation](/api-docs#ChalkClient.trigger_resolver_run).
+
+---
+
+## Trigger a Run via CLI
+
+The `chalk trigger` command allows you to trigger a resolver execution via the CLI.
+
+```bash
+$ chalk trigger --resolver my.module.fn
+ID:     j-2qtwuxpskm2pbg
+Status: Received
+URL:    https://chalk.ai/runs/j-2qtwuxpskm2pbg
+```
+
+To read more about how to specify flags like deployment, persist-online, persist-offline, and
+idempotency-key, check out our [CLI documentation](/cli/trigger).
+
+---
+
+## Trigger a Run via API
+
 Using the `trigger` API endpoint allows you to build custom integrations with other
 data orchestration tools like Airflow.
 
@@ -26,7 +61,7 @@ details page for the resolver you would like to run. The same input parameters a
 Note: if you use a user-scoped token (i.e. one that's derived from `chalk login`) you will need to
 specify the environment in which to trigger your resolver via the `X-Chalk-Env-id` header.
 
-## Trigger a run
+###  Trigger a run
 
 <RequestUrl url="https://api.chalk.ai/v1/runs/trigger" type="POST" />
 
@@ -39,15 +74,15 @@ specify the environment in which to trigger your resolver via the `X-Chalk-Env-i
   The lower bound timestamp to use when sampling input features to run this resolver on. Example: '2021-01-01T00:00:00Z'.
 </Attribute>
 <Attribute field={'upper_bound'} kind={'timestamp'}>
-  The upper bound timestamp to use when sampling input features to run this resolver on. Example: '2023-01-02T00:00:00Z'.
+  The upper bound
 </Attribute>
 <Attribute field={'max_samples'} kind={'number'}>
-  The maximum number of samples to pull from the offline store when running this resolver. Example: 1000.
+    The maximum number of samples to pull from the offline store when running this resolver. Example: 1000.
 </Attribute>
 
 </AttributeTable>
 
-## Response
+### Response
 
 <AttributeTable>
 <Attribute field={'id'} kind={'string'}>ID of the relevant run.</Attribute>
@@ -56,7 +91,7 @@ specify the environment in which to trigger your resolver via the `X-Chalk-Env-i
     </Attribute>
 </AttributeTable>
 
-## Example
+### Example
 
 ```bash
 curl -XPOST -H "Authorization: Bearer $(chalk token)" \
@@ -73,7 +108,7 @@ curl -XPOST -H "Authorization: Bearer $(chalk token)" \
 }
 ```
 
-## Query run status
+### Query run status
 
 <RequestUrl url="https://api.chalk.ai/v1/runs/:id" type="GET" />
 
@@ -81,7 +116,7 @@ curl -XPOST -H "Authorization: Bearer $(chalk token)" \
     <Attribute field={'id'}>URL Param. ID of the relevant run.</Attribute>
 </AttributeTable>
 
-## Response
+### Response
 
 <AttributeTable>
     <Attribute field={'id'} kind={'string'}>ID of the relevant run.</Attribute>
@@ -90,7 +125,7 @@ curl -XPOST -H "Authorization: Bearer $(chalk token)" \
 </Attribute>
 </AttributeTable>
 
-## Example
+### Example
 
 ```bash
 curI -H "Authorization: Bearer $(chalk token)" \

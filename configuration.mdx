@@ -18,7 +18,8 @@ Your Chalk project's configuration is shared across the following files:
 
 1. `chalk.yaml` (or `chalk.yml`): Configuration for your project's deployment
 1. `.chalkignore`: Files to exclude from your project's deployment
-1. `requirements.txt`: Default Python requirements for Chalk to install via `pip` (can be overridden in `chalk.yaml`)
+1. A requirements file: Default Python requirements for Chalk to install via `pip` (can be overridden in `chalk.yaml`).
+This can either be `requirements.txt` or `pyproject.toml`.
 
 Here's our recommended repository structure:
 
@@ -64,7 +65,8 @@ features and resolvers.
           The Python version for the Chalk project.
         </SubAttribute>
         <SubAttribute field='requirements' kind='str'>
-          Python requirements file to install with <code>pip</code>.
+          Python requirements file to install with <code>pip</code>. This can either be a `requirements.txt` file or
+            a `pyproject.toml` file.
         </SubAttribute>
         <SubAttribute field='dockerfile' kind='str'>
           Path to an alternative Dockerfile that will be used to build a base image for your Chalk deploys.
