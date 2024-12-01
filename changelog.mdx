@@ -53,7 +53,7 @@ set `offline_query(lower_bound=timedelta(days=-30)` to set the lower bound to be
 or `offline_query(upper_bound=timedelta(days=30)` to set the upper bound to be 30 days after the latest input_time.
 To read more about offline query parameters, see our [API docs](https://docs.chalk.ai/api-docs#ChalkClient.offline_query).
 
-### Backfill materialized window aggregations over comptued features
+### Backfill materialized window aggregations over computed features
 
 You can now define a materialized aggregate backfill over features that are returned by multiple resolvers
 rather than just one resolver. Read more about the `chalk aggregate backfill` command in our
