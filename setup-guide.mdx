@@ -24,8 +24,8 @@ directory.
 ```bash Terminal
 # Install Homebrew
 $ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-# Use Homebrew to install python3
-$ brew install python
+# Use Homebrew to install python3.11
+$ brew install python@3.11
 ```
 3. Install the [Chalk command line tool](/cli/). The Chalk CLI allows you to create, update, and
 manage your feature pipelines directly from your terminal
@@ -34,7 +34,7 @@ curl -s -L https://api.chalk.ai/install.sh | sh
 ```
 4. Create a Python virtual environment within your repository root directory and activate it
 ```bash
-$ python3.10 -m venv .venv
+$ python3.11 -m venv .venv
 $ source .venv/bin/activate
 ```
 You can run `source .venv/bin/activate` to activate the virtual environment, and `deactivate` to deactivate.
@@ -52,14 +52,15 @@ root_directory/
 └── requirements.txt
 ```
 The first file, `chalk.yaml`, stores configuration information about your project. You can edit this so it
-contains the following:
- ```
- project: {YOUR_PROJECT_NAME}
- environments:
-   default:
-     requirements: requirements.txt
-     runtime: python312
-```
+contains the following
+   ```
+   project: {YOUR_PROJECT_NAME}
+   environments:
+     default:
+       requirements: requirements.txt
+       runtime: python312
+   ```
+
 The second file, `README.md`, contains some basic commands you can use with the Chalk CLI.
 The third file, `requirements.txt` should look something like this:
 ```
