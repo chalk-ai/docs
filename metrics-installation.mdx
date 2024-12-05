@@ -38,7 +38,6 @@ The following is an example configuration for a metrics database:
   "database_name": "chalk-metrics-db",
   "database_replicas": 1,
   "storage": "200Gi",
-  "storage_class": "gp2",
   "namespace": "chalk-metrics",
   "request": {
     "cpu": "1",
@@ -48,14 +47,30 @@ The following is an example configuration for a metrics database:
     "cpu": "1",
     "memory": "500Mi"
   },
+  "postgres_parameters": {
+    "max_connections": "200"
+  },
+  "connection_pool_mode": "transaction",
   "connection_pool_replicas": 3,
-  "connection_pool_max_connections": "100",
-  "connection_pool_size": "10",
+  "connection_pool_max_connections": "300",
+  "connection_pool_size": "40",
+  "service_type": "cluster-ip",
   "backup_bucket": "s3://<your backup bucket>",
   "backup_iam_role_arn": "arn:aws:iam::<your aws account ID>:role/<your backup role name>",
   "secret_name": "chalk-metrics-uri"
 }
 ```
+
+## Database Routing Between Clusters
+In order for Chalk to properly function, all metrics databases must be routable from the Chalk Metadata Server.
+For metrics servers in the same cluster as the metadata server this is trivial, as all the kubernetes services are
+easily accessed, and no special considerations are needed. For a metrics database in a different cluster, the `service-type`
+must be set to `load-balancer` in order to get a dns name that will route into the cluster. Routing can then be done in one of
+two ways:
+1. Set `internal` to `false`, so that the clusters can route together over the open internet. For this to work, you
+   must have public subnets attached to your VPC and an internet gateway etc.
+2. Set up VPC peering to allow the clusters to route to one another, while still keeping the traffic internal.
+Note that if the clusters are in the same VPC, simply setting the `service-type` to `load-balancer` will be sufficient.
 
 ## Configuration Options
 <AttributeTable>
@@ -73,7 +88,7 @@ The number of replicas to create for the database.
 The amount of storage to allocate for the database using a PVC.
 </Attribute>
 <Attribute field={'storage_class'} kind={'string'}>
-The storage class to use for the PVC.
+The storage class to use for the PVC. Omit to pick up cluster default.
 </Attribute>
 <Attribute field={'namespace'} kind={'string'}>
 The namespace to deploy the database in.
@@ -93,6 +108,12 @@ The maximum number of connections to allow in the connection pool.
 <Attribute field={'connection_pool_size'} kind={'int'}>
 The number of connections to keep open in the connection pool.
 </Attribute>
+<Attribute field={'connection_pool_mode'} kind={'string'}>
+    Pgbouncer connection pool mode, either "transaction" or "session".
+</Attribute>
+<Attribute field={'service_type'} kind={'string'}>
+    The type of kubernetes service exposing the database pooler. Options are "load-balancer" or "cluster-ip".
+</Attribute>
 <Attribute field={'backup_bucket'} kind={'string'}>
 The S3 bucket to use for backups using Barman.
 </Attribute>
@@ -101,6 +122,9 @@ The IAM role to use for backups to access the S3 bucket.
 </Attribute>
 <Attribute field={'secret_name'} kind={'string'}>
 The name of the AWS secret to store the database URI in.
+</Attribute>
+<Attribute field={'internal'} kind={'bool'}>
+    Whether the connection pool load balancer attaches to interal or external subnets. Not used if the service type is "cluster-ip".
 </Attribute>
 </AttributeTable>
 
