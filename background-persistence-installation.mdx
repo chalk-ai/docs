@@ -9,7 +9,7 @@ import {
 } from '@/components/AttributeTable'
 
 ---
-Chalk uses background writers hosted in the ("Customer Cloud") kubernetes cluster
+Chalk uses background writers hosted in the ("Customer Cloud") Kubernetes cluster
 to write information about queries to various storage locations.
 
 ## Prerequisites
@@ -35,8 +35,8 @@ you will see a message indicating that no background persistence is currently pr
 first save and apply will create background persistence writers.
 
 ## Pubsub vs Kafka
-When using pubsub, topics and subscriptions are 2 separate entities, but for kafka, we use the same
-topic for both publishing and subscribing. Additionally, we need to provide kafka authentication
+When using pubsub, topics and subscriptions are 2 separate entities, but for Kafka, we use the same
+topic for both publishing and subscribing. Additionally, we need to provide Kafka authentication
 credential, whereas pubsub uses its google identity to authenticate.
 
 ## Configuration Options (Common)
@@ -80,7 +80,7 @@ The Kafka security protocol to use.
 The Kafka SASL mechanism to use.
 </Attribute>
 <Attribute field={'redis_is_clustered'} kind={'string'}>
-Whether Redis is clustered or not, if using a redis online store.
+Whether Redis is clustered or not, if using a Redis online store.
 </Attribute>
 <Attribute field={'snowflake_storage_integration_name'} kind={'string'}>
 The name of the Snowflake storage integration.
