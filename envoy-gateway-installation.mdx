@@ -37,13 +37,13 @@ first save and apply will create a new gateway.
 
 ## Configuration Options
 
-See documentation from kubernetes on [the gateway class ](https://gateway-api.sigs.k8s.io/api-types/gatewayclass/)
+See documentation from Kubernetes on [the gateway class ](https://gateway-api.sigs.k8s.io/api-types/gatewayclass/)
 for more information about the gateway.
 
 <AttributeTable>
 
   <Attribute field={"namespace"} kind={"string"}>
-    The kubernetes namespace this gateway should be deployed in.
+    The Kubernetes namespace this gateway should be deployed in.
   </Attribute>
   <Attribute field={"gateway_name"} kind={"string"}>
     A name to attach to this gateway.
@@ -60,7 +60,7 @@ for more information about the gateway.
 ### Listener
 
 This is the scheme for individual listener objects. For more information about allowed routes, refer to the
-[kubernetes documentation](https://registry.terraform.io/providers/metio/k8s/latest/docs/data-sources/gateway_networking_k8s_io_gateway_v1beta1_manifest#allowed_routes) on allowed syntax:
+[Kubernetes documentation](https://registry.terraform.io/providers/metio/k8s/latest/docs/data-sources/gateway_networking_k8s_io_gateway_v1beta1_manifest#allowed_routes) on allowed syntax:
 
 <AttributeTable>
   <Attribute field={"name"} kind={"string"}>
