@@ -1,0 +1,28 @@
+---
+title: OpenTelemetry Collection
+published: false
+---
+
+
+# OpenTelemetry Metrics & Traces
+
+Chalk provides a simple way to collect metrics and traces from your applications using OpenTelemetry. This guide
+assumes that you have deployed the OpenTelemetry Collector in your cluster. If you haven't done so, please do that first.
+
+Chalk respects standard OTLP environment variables for configuring the OpenTelemetry Collector.
+
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: The endpoint to send OTLP data to. This can be a URL or a Unix domain socket.
+- `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` and `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`: The endpoint to send OTLP traces and metrics to. If not set, the value of `OTEL_EXPORTER_OTLP_ENDPOINT` is used.
+
+
+In Kubernetes, you will probably want to set values that look like this:
+
+```yaml
+OTEL_EXPORTER_OTLP_ENDPOINT: http://xray-collector-service.your-collector-namespace:4317
+```
+  
+where `xray-collector-service` is the name of the service that exposes the OpenTelemetry Collector, 
+and `your-collector-namespace` is the namespace where the collector is deployed. You can set these values using
+Settings -> Variables, or Settings -> Resources.
+
+
