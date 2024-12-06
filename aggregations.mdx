@@ -181,6 +181,29 @@ represents a separate timeseries. When possible, Chalk will use the same timeser
 Bucket shows the current bucket size. Retention shows the maximum time window of any feature that depends on the given
 timeseries. Dependent features list the features that are served by the given timeseries.
 
+### Continuous Backfills
+
+Rather than streaming new data to keep the timeseries buckets up to date, you may instead opt to use continuous backfills. First, choose a schedule to determine when and how frequently backfills should occur. In the following example, the `total_transaction_amount` features will be backfilled every day.
+
+```python
+@features
+class User:
+    id: int
+    transactions: DataFrame[transactions]
+    total_transaction_amount: Windowed[int] = windowed(
+        "10d",
+        "90d",
+        materialization={
+            "bucket_duration": "1d",
+            "backfill_schedule": "0 0 * * *",
+            "continuous_buffer_duration": "36h",
+        },
+        expression=_.transactions[_.amount].sum(),
+    )
+```
+
+To ensure that the computed aggregate uses the most recent data, you can set a `continuous_buffer_duration`. This tells Chalk to include the past 36 hours of data as computed directly from your online resolvers. The rest of the window is computed from the pre-aggregated buckets which are backfilled every day.
+
 ---
 
 ## Grouped materialized window aggregations
