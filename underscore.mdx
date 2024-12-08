@@ -15,6 +15,48 @@ Underscore expressions are useful because Chalk statically analyzes and optimize
 when compared to equivalent Python resolvers. They are also useful for succinctly defining common features, such as the
 number of times a user failed a login attempt over the past 30 days or the total amount spent at a given merchant.
 
+## Nested References
+
+Underscore expressions can be used to access nested attributes from other features in a feature class, whether these
+other features are struct dataclasses, features, DataFrames of features, or JSON's.
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class LatLonLocation:
+    lat: float
+    lon: float
+
+@dataclasses.dataclass
+class NestedLatLon:
+    lat: float | None
+    lon: int | None
+    foo: List[str] | None
+
+
+@dataclasses.dataclass
+class LatLon:
+    bar: str | None
+    lat: float | None
+    lon: int | None
+    foo: List[str] | None
+    nested_latlon: NestedLatLon | None
+
+
+@features
+class StructAttributeAccess:
+    id: int
+    latlng: LatLon
+    bar: str | None = _.latlng.bar
+    lat: float | None = _.latlng.lat
+    lon: float | None = _.latlng.lon
+    foo: List[str] | None = _.latlng.foo
+    nested_lat: float | None = _.latlng.nested_latlon.lat
+    nested_lon: int | None = _.latlng.nested_latlon.lon
+    nested_foo: List[str] | None = _.latlng.nested_latlon.foo
+```
+
 ## Arithmetic
 
 In this example, we have a Transaction feature class with `total` and `sales_tax` features and we want to define
@@ -186,6 +228,8 @@ combination with underscore references to transform features:
 * [`sha1`](/api-docs#sha1)
 * [`sha256`](/api-docs#sha256)
 * [`sha512`](/api-docs#sha512)
+* [`spooky_hash_v2_32`](/api-docs#spooky_hash_v2_32)
+* [`spooky_hash_v2_64`](/api-docs#spooky_hash_v2_64)
 * [`string_to_bytes`](/api-docs#string_to_bytes)
 
 #### Math
@@ -217,6 +261,7 @@ combination with underscore references to transform features:
 * [`from_unix_milliseconds`](/api-docs#from_unix_milliseconds)
 * [`from_unix_seconds`](/api-docs#from_unix_seconds)
 * [`hour_of_day`](/api-docs#hour_of_day)
+* [`is_us_federal_holiday`](/api-docs#is_us_federal_holiday)
 * [`month_of_year`](/api-docs#month_of_year)
 * [`to_iso8601`](/api-docs#to_iso8601)
 * [`total_seconds`](/api-docs#total_seconds)
@@ -233,9 +278,12 @@ combination with underscore references to transform features:
 #### Array Manipulation
 
 * [`array_agg`](/api-docs#array_agg)
+* [`array_count_value`](/api-docs#array_count_value)
 * [`array_join`](/api-docs#array_join)
+* [`array_sort`](/api-docs#array_sort)
 * [`cardinality`](/api-docs#cardinality)
 * [`head`](/api-docs#head)
+* [`element_at`](/api-docs#element_at)
 * [`max`](/api-docs#max)
 * [`max_by`](/api-docs#max_by)
 * [`min`](/api-docs#min)
