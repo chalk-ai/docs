@@ -5,6 +5,44 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## December 9, 2024
+
+### Underscore expressions support struct field access and more functions
+
+You can now reference dataclass struct fields with [underscore expressions](/docs/underscore).
+We've also added more functions to `chalk.functions` that can be used in underscore expressions,
+including `is_us_federal_holiday` for determining if a date is a federal holiday in the United States,
+`array_sort` for sorting the elements of an array by ascending or descending order, and `element_at` for
+retrieving the element at a specified index in an array. To read more about all of the `chalk.functions`
+in your toolbox for writing underscore expressions, check out our [`API docs`](/api-docs#section-Functions).
+
+### New overview page and dashboard updates for viewing stack traces and recent feature values
+
+We've updated the overview page in the dashboard to show an overview of query activity and cluster health for
+your environment. You can now view graphs and metrics for online and offline queries, resolver runs, query latency,
+online store activity, deployments, incidents, errors, and connections. Please reach out to the Chalk team if you have
+any questions about any of these metrics
+
+![Overview page in dashboard](/img/overview-page-dec-2024.png)
+
+In addition, you can now view the latest stack trace for a pod in your cluster under `Settings > Kubernetes`, which can
+be helpful for debugging offline queries or scheduled runs. Cusotmers with a gRPC engine can also use the new
+`Values Preview` tab on the Features page to view recently observed feature values as loaded from the offline store.
+
+![Stack trace for pods in the cluster](/img/stack-trace-dec-2024.png)
+
+### Postgres Native SQL driver improvements
+
+The Postgres Native SQL driver now supports parameters, as well as returning relationships and scalar aggregations,
+expanding the kinds of SQL resolvers querying Postgres sources that we can support with performant C++ execution.
+
+### Read our updated documentation on windowed aggregations
+
+We've updated our documentation on [windowed aggregations](/docs/aggregations) to include more information on how to
+fuse real-time aggregations with materialized pre-aggregations for windowed features.
+
+---
+
 ## December 2, 2024
 
 ### We now support Poetry for managing Python dependencies
