@@ -63,9 +63,9 @@ The following is an example configuration for a metrics database:
 
 ## Database Routing Between Clusters
 In order for Chalk to properly function, all metrics databases must be routable from the Chalk Metadata Server.
-For metrics servers in the same cluster as the metadata server this is trivial, as all the kubernetes services are
+For metrics servers in the same cluster as the metadata server this is trivial, as all the Kubernetes services are
 easily accessed, and no special considerations are needed. For a metrics database in a different cluster, the `service-type`
-must be set to `load-balancer` in order to get a dns name that will route into the cluster. Routing can then be done in one of
+must be set to `load-balancer` in order to get a DNS name that will route into the cluster. Routing can then be done in one of
 two ways:
 1. Set `internal` to `false`, so that the clusters can route together over the open internet. For this to work, you
    must have public subnets attached to your VPC and an internet gateway etc.
@@ -76,7 +76,7 @@ Note that if the clusters are in the same VPC, simply setting the `service-type`
 <AttributeTable>
 <Attribute field={'timescale_image'} kind={'string'}>
 The docker image to use for the metrics database.
-This must be a postgres image with the Timescale plugin installed.
+This must be a Postgres image with the Timescale plugin installed.
 </Attribute>
 <Attribute field={'database_name'} kind={'string'}>
 The name of the database to create.
