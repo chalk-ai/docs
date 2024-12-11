@@ -4,24 +4,37 @@ description: Integrate with Spanner.
 published: true
 ---
 
+import { AddSpannerIntegration } from '@/components/shared/spanner';
+import { getNamedIntegrationText } from "@/components/NamedIntegration";
+
+---
+
 Chalk supports [Spanner](https://cloud.google.com/spanner/?hl=en) as a natively accelerated [SQL source](/docs/sql).
 
-## Adding DynamoDB
+## Adding Spanner
 
 Follow the [GCP instructions](/docs/gcp) to give Chalk access to application credentials for your GCP account. Chalk
-will use these credentials to access Spanner.
+will use these credentials to access Spanner. On the dashboard, you can plug in the configuration for your
+Spanner database:
 
-## Integration
+<AddSpannerIntegration onSubmit={(e) => e.preventDefault()} />
+
+
+## Single Integration
 
 Add your Spanner data source in a Python file and give it a `name`. This line is required for all Spanner
 integrations. In this file, we'll also define a `User` feature class with a `transaction_volume` feature which will be
 resolved with Spanner.
 
-```python
+If you have only one Spanner connection that you'd like
+to add to Chalk, you do not need to specify any arguments
+to construct the source in your code.
+
+```py
 from chalk.features import features
 from chalk.sql import SpannerSource
 
-SpannerSource(name="my_spanner")  # required for Chalk to be aware of this source
+spanner_source = SpannerSource()
 
 @features
 class User:
@@ -29,12 +42,24 @@ class User:
     transaction_volume: float
 ```
 
-Now, you are all set to use Spanner with [SQL file resolvers](/docs/sql#sql-file-resolvers):
+## Multiple Integrations
+
+<span>{getNamedIntegrationText()}</span>
+
+```py
+from chalk.sql import SpannerSource
+
+spanner_source_txns = SpannerSource(name="**SPANNER_TRANSACTIONS**")
+spanner_source_marketing = SpannerSource(name="**SPANNER_MARKETING**")
+
+```
+
+Now, you are all set to use Spanner with [SQL file resolvers](/docs/sql#sql-file-resolvers).
 
 ```sql
 -- type: online
 -- resolves: User
--- source: my_spanner
+-- source: SPANNER_TRANSACTIONS
 SELECT
     id,
     TransactionVolume AS transaction_volume
@@ -44,4 +69,5 @@ LIMIT 10
 ```
 
 This file resolves the `User.transaction_volume` feature. Please note that the `--source: my_spanner` line is necessary
-and should match the `name` provided to your [`SpannerSource`](/api-docs#SpannerSource).
+and should match the `name` provided to your [`SpannerSource`](/api-docs#SpannerSource). If you have a single integration,
+you should use the name that is defined in the dashboard.
