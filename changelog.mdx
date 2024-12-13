@@ -5,6 +5,31 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## December 16, 2024
+
+### Source code viewer in dashboard supports text search
+
+The source code viewer in the Deployments page of the dashboard now supports fuzzy text search across the source code
+for the linked deployment.
+
+![Source code viewer with text search](/img/source-code-viewer-dec-2024.png)
+
+### Dataset revision metadata get and set
+
+[`DatasetRevision`](/api-docs#DatasetRevision) objects now have `get_metadata` and `set_metadata` methods to get and
+set metadata as a dictionary. This can be useful for storing information such as whether a dataset has been ingested
+to the online or offline store, or for tagging and labeling datasets. Read more about all of the `DatasetRevision`
+methods in our [API documentation](/api-docs#DatasetRevision).
+
+### Underscore expressions support more array functions
+
+The `chalk.functions` library now supports more array functions that can be used in [underscore expressions](/docs/underscore).
+`array_max` and `array_min` return the maximum and minimum values in an array, respectively. `array_distinct` returns
+a list of the distinct elements in an array, and `array_sort` sorts the elements of an array by ascending or descending
+order. Read more about all of the `chalk.functions` available for writing underscore expressions in our [`API docs`](/api-docs#section-Functions).
+
+---
+
 ## December 9, 2024
 
 ### Underscore expressions support struct field access and more functions
