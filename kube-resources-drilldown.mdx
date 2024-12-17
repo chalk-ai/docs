@@ -1,0 +1,151 @@
+---
+title: Kubernetes Resources Overview
+description: A description of each kind of Kubernetes resource used by Chalk
+---
+
+import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
+
+---
+
+## Overview
+
+Chalk's [metadata and data planes](/docs/architecture) can both be deployed to [Kubernetes](https://kubernetes.io) clusters running in your cloud.
+This page provides an overview of the Kubernetes resources used by Chalk, so that you can understand how to
+configure, monitor, and troubleshoot your Chalk deployment.
+
+### Metadata Plane
+
+The Metadata Plane is responsible for storing and serving non-feature data (like alert and RBAC configurations).
+It orchestrates machines in the Data Plane using the Kubernetes API to do things like scaling deployments,
+and running batch jobs.
+
+The metadata plane currently consists of the following primary kubernetes components:
+
+- `go-api-server`: presents a gRPC interface for driving orchestration.
+- `api-server`: presents a REST and GraphQL interface for driving orchestration.
+- `frontend-server`: This is a web application that serves the Chalk UI.
+- Cluster Ingress: Either Envoy, Amazon Application Load Balancer, or Google Load Balancer. This routes traffic to the API server and frontend server.
+
+You may deploy these components yourself using a [helm chart](/docs/helm-installation), or Chalk
+may manage the deployment as part of our standard Customer Cloud deployment model.
+
+Typically these components do not scale with you query volume and represent a roughly fixed cost. Most online query
+traffic will *not* flow through these components -- it will flow directly to the data plane.
+
+### Data Plane
+
+The Data Plane consists of components that execute your feature pipelines, your online store, and your offline store.
+
+The data plane currently consists of the following primary Kubernetes components:
+
+- `engine` deployments: These are feature pipeline execution engines. These pods execute your Python code in Chalk's execution environment.
+- `engine-grpc` deployments: Same as `engine` deployments, but with a gRPC interface. Query semantics are the same, but the network runtime is C++ instead of Python.
+- `branch` deployments: A stateful set or deployment object that runs your [branch](/docs/branches) deployments.
+- `job` kubernetes jobs: These are batch jobs that run your Python code in Chalk's execution environment for [scheduled tasks](/docs/runs).
+- `query job` kubernetes jobs: These are batch jobs that run your Python code in Chalk's execution environment for [async offline query](/docs/query-offline) tasks.
+- `streaming` statefulset: A stateful set that runs your [streaming](/docs/streaming) deployments. These are long-running processes that consume from a message queue and write to the online and offline store.
+
+
+### Configuring Data Plane Resources
+
+The Data Plane is the component that scales with your query volume. Each component in the data plane can be
+configuring via the Settings -> Resources page in the Chalk UI. The key scaling dimensions are:
+
+- replica count: The number of pods that will be running for a given service
+- CPU and memory requests and limits: The amount of CPU and memory that each replica will use
+
+Depending on your workload, you may want to scale different components in the data plane in different ways.
+
+### Online Query Scaling
+
+The online query path is typically the most critical component in Chalk. It is the component that your application will use to query features in real-time.
+This workload is served by the `engine` and `engine-grpc` deployments. These deployments are stateless and can be scaled horizontally to handle more query volume.
+The key scaling dimensions are:
+
+- replica count
+- CPU and memory requests and limits
+
+Horizontal scaling is achieved via autoscaling. `min_instances` and `max_instances` are set in the Chalk UI, and the
+autoscaler will scale the number of replicas based on the query volume. Simple CPU-based autoscaling is supported
+out of the box via the "Target CPU %" setting, and more advanced autoscaling can be achieved by setting up custom
+[KEDA scalers](https://keda.sh/docs/), controlled via the `JSON` field in the Chalk UI.
+
+Different query workloads require different ratios of CPU and memory. The `engine` and `engine-grpc` deployments
+have a `resources` section in their deployment spec that can be customized to match your workload. Typically,
+workloads which execute more Python code will require more CPU. Workloads which have a smaller working set of data
+will tend to scale more efficiently with more small replicas, while workloads with a larger working set of data
+will tend to scale more efficiently with fewer larger replicas.
+
+### Configuring Online Query Parameters
+
+Chalk recommends setting scaling parameters by running realistic query workloads and monitoring the performance of
+your queries. The Overview page in the Chalk UI reports CPU and Memory utilization metrics for your online queries,
+and you can use these to tune your resources appropriately.
+
+If you see high CPU utilization, you may want to increase the CPU requests and limits for your deployments, or increase
+the number of instances. For optimal tail latency, you may wish to maintain CPU significantly below 100%. If you
+see high tail latency and low cpu utilization, contact Chalk Support -- you may need to tune your Python code or
+configure thread pools or connections pools.
+
+A given set of configuration for a deployment will support a particular query volume. If you see high latency or
+high error rates, you may need to scale your deployment up or out. If you see latency that increases with
+query volume, you may have an underscaling problem that is causing request queueing.
+
+### Offline Query Scaling
+
+The offline query path is typically used for training models, generating training sets, and other batch processing tasks.
+This workload is served `async offline query` jobs. These jobs consume no resources while they are not running, because
+Kubernetes Job objects are used to run them. The key scaling dimensions are:
+
+- CPU and memory requests and limits
+- `num_workers` parameter to the `offline_query` method
+- `num_shards` parameter to the `offline_query` method
+
+The `num_workers` parameter controls the number of parallel workers that will be used to execute the query. The `num_shards`
+parameter controls the number of shards that the query will be split into. By default, `num_workers = num_shards`, and
+this is a good starting point for most workloads. However, you may want to increase `num_workers` to horizontally scale
+your workload. You may want to use more shards if you experience memory pressure and the working set is easily partitionable.
+
+You should tune your `resources` section in the `offline_query` method to match your workload. The Offline Query details
+page reports CPU and Memory utilization metrics for your offline queries, and you can use these to tune your resources
+appropriately.
+
+Typically, we recommend increasing CPU if you see high CPU utilization, and increasing memory if you see
+out-of-memory errors.
+
+### Workload Isolation with Resource Groups
+
+Chalk supports workload isolation via Resource Groups. Typically, resource groups are used to isolate workloads
+that have different scaling characteristics, different cost accounting requirements, or to ensure limited blast
+radius in service of production resilience.
+
+Resource Groups allow you to specify isolated node
+pools for different workloads. For example, you may want to run your online query workload on a separate
+node pool from your offline training workload. This can be achieved by setting up separate Resource Groups
+for each workload and specifying the `resource_group=` parameter for offline queries, and the `query_server` parameter
+for online query `ChalkClient` instances.
+
+More advanced configurations are also possible. Chalk Support can assist in routing traffic by `query_name`,
+or by random sampling for experiment workflows.
+
+
+### Other Components
+
+`cluster ingress`: The cluster ingress is a component that routes traffic to the metadata and data planes. It is typically
+deployed as a separate component from the metadata and data planes, and is responsible for routing traffic
+to the correct component based on the request path.
+
+Typically you will not need to scale this component. Monitoring it can be useful to ensure that there are no
+HTTP or gRPC layer errors.
+
+`metrics database`: The metrics database is a component that stores metrics data for Chalk. Typically,
+this is a TimescaleDB instance, and one is deployed per Chalk environment. The metrics database is
+responsible for storing information and metrics about queries run in a Chalk environment.
+For self-hosted deployments, you should monitor disk usage in the associated persistent disks.
+
+`background persistence`: The background persistence component is responsible for persisting batch, streaming, and
+online query results to the online and offline stores. This component also computes value metrics and persists them
+to the metrics database. This component uses KEDA to autoscale queue consumers, and is not typically manually scaled.
+Error logs from this component can be useful for diagnosing issues with query persistence. Issues typically
+do immediately impact online query performance, but can impact the ability to generate training sets or certain caching
+workflows.
