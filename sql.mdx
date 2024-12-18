@@ -64,7 +64,9 @@ Like other resolvers, SQL file resolvers can take features as input. In this exa
 -- type: online
 -- resolves: user
 -- source: PG
-select id, email, full_name from user_table where id = ${email_user.id}
+select id, email, full_name
+from user_table
+where id = ${user.id}
 ```
 
 Use `${}` with snake case to reference the desired feature.
