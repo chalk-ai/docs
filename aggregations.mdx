@@ -20,21 +20,33 @@ Here is an example of a [`windowed`](/api-docs/#windowed) feature representing t
 failed logins in the last 10 minutes, 30 minutes, and 1 day:
 
 ```py
+from chalk import Windowed, windowed
+from chalk.features import DataFrame
+
+@features
+class LoginAttempt:
+    id: int
+    user: "User.id"
+    status: str
+
 @features
 class User:
     id: int
+    login_attempts: DataFrame[LoginAttempt]
     num_failed_logins: Windowed[int] = windowed(
         "10m", "30m", "1d",
         max_staleness="10m",
+        expression=_.login_attempts[_.status=="failed", _.ts > _.chalk_window].count(),
         default=0,
     )
 ```
 
 Windowed features support much of the same functionality as normal features. They are most often used alongside
 [`max_staleness`](/api-docs#windowed.max_staleness) and
-[`etl_offline_to_online`](/api-docs#windowed.etl_offline_to_online) to allow the features to be sent to online store and
+[`etl_offline_to_online`](/api-docs#windowed.etl_offline_to_online) to allow the features to be sent to the online store and
 offline store after each window period. Windowed features often use [`default`](/api-docs#windowed.default) to set a
-default value to return when there are no messages within a time period.
+default value to return. Windowed features are typically resolved inline by expressions or
+by a stream resolver.
 
 ### Querying by windowed time range
 
