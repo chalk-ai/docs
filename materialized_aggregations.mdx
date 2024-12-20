@@ -21,7 +21,7 @@ class User:
         "10d",
         "90d",
         materialization={ # materialize your features in a single line
-            "bucket_duration": "1d", # specify the interval
+            "bucket_duration": "1d", # specify the bucket
         },
         expression=_.transactions[_.amount].sum(),
     )
@@ -69,16 +69,15 @@ For example, `"* * * * *"` or `"1h"`.
 
 The minimum period of time for which to sample data directly via online query, rather than from the backfilled aggregations.
 
-## Continuous backfills
+### Backfilling data and managing aggregation
 
-You can integrate fresh data into your windowed features using continuous backfills.
+You can control how your aggregations are backfilled by:
 
-First, set a schedule to determine when and how frequently backfills should occur.
-In the following example, the `total_transaction_amount` features will be backfilled every day.
+1. Supplying a cron expression ([CronTab](https://docs.chalk.ai/api-docs#CronTab)) to the `backfill_schedule` keyword parameter
+1. Supplying a [Duration](https://docs.chalk.ai/api-docs#Duration)] to `continuous_buffer_duration`
+1. Triggering a backfill job using the Chalk ClI
 
 ```python
-from chalk.streams import Windowed, windowed
-
 @features
 class User:
     id: int
@@ -95,17 +94,20 @@ class User:
     )
 ```
 
-Second, set a `continuous_buffer_duration` to indicate the time window of data to aggregate and compute directly from your online resolvers.
-The rest of the window is computed from the pre-aggregated buckets.
+In the example above, we supply a cron expression that's set to run daily at midnight (`"0 0 * * *"`) into the `backfill_schedule` paramater of the `materialization` config.
+Now `backfill_schedule` has been set, `total_transaction_amount` feature will be backfilled every day.
 
-### Managing aggregations
+In addition to backfilling your aggregation with recurring batch job, you can also integrate fresh data into your windowed aggregation with continuous backfills.
+Continuous backills can be configured by supplying a [Duration](https://docs.chalk.ai/api-docs#Duration)] to the `continuous_buffer_duration` e.g. `"36h"`.
+Chalk will compute data within your `continuous_buffer_duration` directly from your online resolvers.
 
-Use [`chalk aggregate backfill`](/cli/aggregate_backfill) to backfill aggregation for a windowed feature.
+Note: Chalk includes all of the data contained in overlapping buckets.
+We suggest shorening the bucket duration, if the time delta between the end of your window interval and the boundary of the last overlapping bucket exceeds the constraints of your use case.
+
+Use [`chalk aggregate backfill`](/cli/aggregate_backfill) to trigger a backfill aggregation for a windowed feature.
 This command is useful if you change your feature's time windows or `bucket_duration` values.
 
 To view existing aggregations, use [`chalk aggregate list`](/cli/aggregate_list).
-
-Each of these commands outputs a table of your aggregations:
 
 ```
  Series  Namespace    Group                Agg     Bucket  Retention  Aggregation  Dependent Features
