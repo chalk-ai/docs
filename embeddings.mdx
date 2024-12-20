@@ -39,7 +39,7 @@ It is recommended to use the `all-MiniLM-L6-v` model, though all
 [pre-trained models](https://www.sbert.net/docs/pretrained_models.html) are supported.
 
 ```python
-from chalk.features import embedding, features, Vector
+from chalk.features import embed, features, Vector
 
 @features
 class Document:
@@ -60,7 +60,7 @@ See the available models [here](https://github.com/xlang-ai/instructor-embedding
 If the instruction is the same for every row, you can use a literal (constant) string.
 
 ```python
-from chalk.features import embedding, features, Vector
+from chalk.features import embed, features, Vector
 
 @features
 class Document:
@@ -76,7 +76,7 @@ However, if we have multiple types of documents, then you can use another featur
 and define a resolver to compute the instruction.
 
 ```python
-from chalk.features import embedding, features, online, Vector
+from chalk.features import embed, features, online, Vector
 
 @features
 class Document:
@@ -104,7 +104,7 @@ To minimize usage, we highly recommend specifying an appropriate max staleness i
 embeddings are cached.
 
 ```python
-from chalk.features import embedding, features, Vector
+from chalk.features import embed, features, Vector
 
 @features
 class Document:
@@ -125,7 +125,7 @@ in Chalk. All Cohere requests will be attributed to your API key. To minimize us
 appropriate max staleness in Chalk, which will ensure that embeddings are cached.
 
 ```python
-from chalk.features import embedding, features, Vector
+from chalk.features import embed, features, Vector
 
 @features
 class Document:
@@ -148,7 +148,7 @@ object store (such as AWS S3 or GCS) rather than including them your source code
 using a [boot hook](/docs/generic#initializing).
 
 ```python
-from chalk.features import before_all, DataFrame, embedding, features, online, Vector
+from chalk.features import before_all, DataFrame, embed, features, online, Vector
 
 my_model = MyModel()
 
