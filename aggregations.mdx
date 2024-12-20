@@ -41,10 +41,12 @@ class User:
 
 Windowed features support much of the same functionality as normal features. They are most often used alongside
 [`max_staleness`](/api-docs#windowed.max_staleness) and
-[`etl_offline_to_online`](/api-docs#windowed.etl_offline_to_online) to allow the features to be sent to the online store and
-offline store after each window period. Windowed features often use [`default`](/api-docs#windowed.default) to set a
-default value to return. Windowed features are typically resolved inline by expressions or
-by a stream resolver.
+[`etl_offline_to_online`](/api-docs#windowed.etl_offline_to_online).
+
+Windowed features are typically resolved, either:
+- inline by expressions,
+- by stream resolvers, or
+- by materialized aggregates.
 
 ### Querying by windowed time range
 
@@ -286,14 +288,15 @@ class User:
 +   )
 ```
 
-[//]: # (#### Limitations)
-[//]: # (At this time, Chalk does not support direct referencing of the grouped windowed feature, as they are intended as an)
-[//]: # (intermediary computation for producing scalar features. As a result, they also cannot be used as input into other)
-[//]: # (resolvers. The grouped windowed feature must be resolved by passing an [underscore expression]&#40;/docs/underscore&#41; to)
-[//]: # (the `expression` parameter.)
+[//]: # "#### Limitations"
+[//]: # "At this time, Chalk does not support direct referencing of the grouped windowed feature, as they are intended as an"
+[//]: # "intermediary computation for producing scalar features. As a result, they also cannot be used as input into other"
+[//]: # "resolvers. The grouped windowed feature must be resolved by passing an [underscore expression](/docs/underscore) to"
+[//]: # "the `expression` parameter."
 
 ---
 
 ## Windowed streaming
+
 To learn more about using windowed features with streaming data sources, see our
 documentation on [windowed streaming](/docs/windowed-streaming).
