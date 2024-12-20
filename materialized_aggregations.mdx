@@ -49,23 +49,23 @@ Materialize a feature aggregation in Chalk, by supplying the [`materialization`]
 
 The materialization parameter takes in a dictionary that adheres to the schema outlined by MaterializationWindowConfig:
 
-- `bucket_duration`: [Duration](https://docs.chalk.ai/api-docs#Duration)
+- `bucket_duration`: [Duration](/api-docs#Duration)
 
 Duration of each bucket in the window e.g. "1h"
 
-- `bucket_durations`: Mapping\[[Duration](https://docs.chalk.ai/api-docs#Duration), Sequence[[Duration](https://docs.chalk.ai/api-docs#Duration)] | [Duration](https://docs.chalk.ai/api-docs#Duration)]\]
+- `bucket_durations`: Mapping\[[Duration](/api-docs#Duration), Sequence[[Duration](/api-docs#Duration)] | [Duration](/api-docs#Duration)]\]
 
 A dictionary that specifically maps bucket_durations to your window intervals e.g. if you wanted to use `"10m"` bucket durations for your 1d window interval and `"3d"` bucket durations for your `"30d"` window interval.
 We recommend explicitly mapping bucket durations to each window if your window intervals have a wide discrepancy e.g. ten minute bucket duration with a one year window interval.
 
 Any window intervals not explicitly included in the `bucket_durations` dictionary will use your supplied `bucket_duration` by default.
 
-`backfill_schedule`: \[[CronTab](https://docs.chalk.ai/api-docs#CronTab) | None\]
+`backfill_schedule`: \[[CronTab](/api-docs#CronTab) | None\]
 
 The schedule on which to automatically backfill the aggregation.
 For example, `"* * * * *"` or `"1h"`.
 
-`continuous_buffer_duration`: \[[Duration](https://docs.chalk.ai/api-docs#Duration)\] | None
+`continuous_buffer_duration`: \[[Duration](/api-docs#Duration)\] | None
 
 The minimum period of time for which to sample data directly via online query, rather than from the backfilled aggregations.
 
@@ -73,8 +73,8 @@ The minimum period of time for which to sample data directly via online query, r
 
 You can control how your aggregations are backfilled by:
 
-1. Supplying a cron expression ([CronTab](https://docs.chalk.ai/api-docs#CronTab)) to the `backfill_schedule` keyword parameter
-1. Supplying a [Duration](https://docs.chalk.ai/api-docs#Duration)] to `continuous_buffer_duration`
+1. Supplying a cron expression ([CronTab](/api-docs#CronTab)) to the `backfill_schedule` keyword parameter
+1. Supplying a [Duration](/api-docs#Duration)] to `continuous_buffer_duration`
 1. Triggering a backfill job using the Chalk ClI
 
 ```python
@@ -98,7 +98,7 @@ In the example above, we supply a cron expression that's set to run daily at mid
 Now `backfill_schedule` has been set, `total_transaction_amount` feature will be backfilled every day.
 
 In addition to backfilling your aggregation with recurring batch job, you can also integrate fresh data into your windowed aggregation with continuous backfills.
-Continuous backills can be configured by supplying a [Duration](https://docs.chalk.ai/api-docs#Duration)] to the `continuous_buffer_duration` e.g. `"36h"`.
+Continuous backills can be configured by supplying a [Duration](/api-docs#Duration)] to the `continuous_buffer_duration` e.g. `"36h"`.
 Chalk will compute data within your `continuous_buffer_duration` directly from your online resolvers.
 
 Note: Chalk includes all of the data contained in overlapping buckets.
