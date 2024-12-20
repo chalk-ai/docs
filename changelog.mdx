@@ -5,6 +5,43 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## December 23, 2024
+
+### Search and filter logs by query name, log message, deployment, and more!
+
+You can now search logs in the Logs Explorer in the dashboard using a key-value pair query format:
+`key1: value1 key2: value2 ...`. This allows you to combine multiple filters at once. The Logs Explorer
+displays the available keys for filtering, shown below.
+
+![Updated log explorer](/img/log-search-filters.png)
+
+### Search by file name in the source code viewer
+
+In the Source Code viewer, found in the Deployments page of the dashboard, you can now search for files by name
+in addition to the existing text search through the source code from the linked deployment.
+
+![Source code viewer with file search](/img/view-source-file-explorer.png)
+
+### Include query context in metadata field
+
+The Chalk Client now offers an [include_metadata](/api-docs#ChalkClient.query.include_meta) option to associate
+a key-value dictionary with a query. This can be useful for storing information such as context about the query
+or for tagging and labeling queries.
+
+### Expressions support more string, encoding, and date functions
+
+The `chalk.functions` library now supports more string, encoding, and date functions that can be used in
+[Chalk expressions](/docs/underscore). You can now use [`jaro_winkler_distance`](/api-docs#jaro_winkler_distance)
+to compute the Jaro-Winkler distance between two strings, [`partial_ratio`](/api-docs#partial_ratio) to compute
+the [fuzzywuzzy](https://pypi.org/project/fuzzywuzzy/) partial ratio between two strings, and
+[`length`](/api-docs#length) to compute the length of a string. We've also added
+[`struct_pack`](/api-docs#struct_pack) to construct a struct from a mapping, [`year`](/api-docs#year) to extract
+the year from a date, and [`last_day_of_month`](/api-docs#last_day_of_month) to return the last date in the month
+given a date. To read more about all of the `chalk.functions` available for writing underscore expressions, check
+out our [`API docs`](/api-docs#coalesce).
+
+---
+
 ## December 16, 2024
 
 ### Source code viewer in dashboard supports text search
