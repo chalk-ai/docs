@@ -77,6 +77,8 @@ First, set a schedule to determine when and how frequently backfills should occu
 In the following example, the `total_transaction_amount` features will be backfilled every day.
 
 ```python
+from chalk.streams import Windowed, windowed
+
 @features
 class User:
     id: int
