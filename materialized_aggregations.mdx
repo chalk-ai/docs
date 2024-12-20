@@ -27,6 +27,8 @@ class User:
     )
 ```
 
+---
+
 ## Why are materialized aggregations useful?
 
 Windowed features are typically computed using either raw data or pre-aggregated data.
@@ -69,13 +71,17 @@ For example, `"* * * * *"` or `"1h"`.
 
 The minimum period of time for which to sample data directly via online query, rather than from the backfilled aggregations.
 
-### Backfilling data and managing aggregation
+## Backfilling data and managing aggregation
+
+Chalk provides multiple ways to backfill and update your windowed aggregations.
 
 You can control how your aggregations are backfilled by:
 
 1. Supplying a cron expression ([CronTab](/api-docs#CronTab)) to the `backfill_schedule` keyword parameter
 1. Supplying a [Duration](/api-docs#Duration)] to `continuous_buffer_duration`
 1. Triggering a backfill job using the Chalk ClI
+
+### Cron expression
 
 ```python
 @features
@@ -97,12 +103,16 @@ class User:
 In the example above, we supply a cron expression that's set to run daily at midnight (`"0 0 * * *"`) into the `backfill_schedule` paramater of the `materialization` config.
 Now `backfill_schedule` has been set, `total_transaction_amount` feature will be backfilled every day.
 
+### Continuous buffer
+
 In addition to backfilling your aggregation with recurring batch job, you can also integrate fresh data into your windowed aggregation with continuous backfills.
 Continuous backills can be configured by supplying a [Duration](/api-docs#Duration)] to the `continuous_buffer_duration` e.g. `"36h"`.
 Chalk will compute data within your `continuous_buffer_duration` directly from your online resolvers.
 
 Note: Chalk includes all of the data contained in overlapping buckets.
 We suggest shorening the bucket duration, if the time delta between the end of your window interval and the boundary of the last overlapping bucket exceeds the constraints of your use case.
+
+### Triggering a backfill through the Chalk CLI
 
 Use [`chalk aggregate backfill`](/cli/aggregate_backfill) to trigger a backfill aggregation for a windowed feature.
 This command is useful if you change your feature's time windows or `bucket_duration` values.
