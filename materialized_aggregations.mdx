@@ -6,9 +6,11 @@ description: Cache and materialize a feature aggregation
 published: true
 ---
 
-Machine learning teams often build and maintain separate pre-aggregation pipelines that are then ingested--as standalone features--into a feature store to reduce the latency of computing expensive features.
+Machine learning teams often build and maintain separate pre-aggregation pipelines that are then ingested--as standalone
+features--into a feature store to reduce the latency of computing expensive features.
 
-With Chalk, teams don’t need to spin up separate pipelines, developers can materialize aggregations to improve performance all without compromising on flexibility, with just a single line of code:
+With Chalk, teams don’t need to spin up separate pipelines, developers can materialize aggregations to improve
+performance all without compromising on flexibility, with just a single line of code:
 
 ```py
 from chalk.streams import Windowed, windowed
@@ -18,14 +20,17 @@ class User:
     id: int
     transactions: DataFrame[transactions]
     total_transaction_amount: Windowed[int] = windowed(
-        "10d",
-        "90d",
+        "1d",
+        "7d",
+        "30d",
         materialization={ # materialize your features in a single line
             "bucket_duration": "1d", # specify the bucket
         },
         expression=_.transactions[_.amount].sum(),
     )
 ```
+
+![Materialized Windowed Aggregations](/img/mat_windowed_aggs/mat_window_agg.png)
 
 ---
 
@@ -46,8 +51,9 @@ When serving windowed queries, Chalk uses all buckets containing any overlap wit
 
 ## How do I use materialized aggregations with Chalk?
 
-Materialize a feature aggregation in Chalk, by supplying the [`materialization`](/api-docs#windowed.materialization) parameter of the windowed function of the feature you want to aggregate.
- In the example above, we specify a `bucket_duration` of `"1d"`.
+Materialize a feature aggregation in Chalk, by supplying the [`materialization`](/api-docs#windowed.materialization) parameter of the windowed
+function of the feature you want to aggregate.
+In the example above, we specify a `bucket_duration` of `"1d"`.
 
 The materialization parameter takes in a dictionary that adheres to the schema outlined by MaterializationWindowConfig:
 
@@ -57,10 +63,13 @@ Duration of each bucket in the window e.g. "1h"
 
 - `bucket_durations`: Mapping\[[Duration](/api-docs#Duration), Sequence[[Duration](/api-docs#Duration)] | [Duration](/api-docs#Duration)]\]
 
-A dictionary that specifically maps bucket_durations to your window intervals e.g. if you wanted to use `"10m"` bucket durations for your 1d window interval and `"3d"` bucket durations for your `"30d"` window interval.
-We recommend explicitly mapping bucket durations to each window if your window intervals have a wide discrepancy e.g. ten minute bucket duration with a one year window interval.
+A dictionary that specifically maps bucket_durations to your window intervals e.g. if you wanted to use `"10m"` bucket
+durations for your 1d window interval and `"3d"` bucket durations for your `"30d"` window interval.
+We recommend explicitly mapping bucket durations to each window if your window intervals have a wide discrepancy e.g.
+ten minute bucket duration with a one year window interval.
 
-Any window intervals not explicitly included in the `bucket_durations` dictionary will use your supplied `bucket_duration` by default.
+Any window intervals not explicitly included in the `bucket_durations` dictionary will use your supplied
+`bucket_duration` by default.
 
 `backfill_schedule`: \[[CronTab](/api-docs#CronTab) | None\]
 
@@ -100,17 +109,35 @@ class User:
     )
 ```
 
-In the example above, we supply a cron expression that's set to run daily at midnight (`"0 0 * * *"`) into the `backfill_schedule` paramater of the `materialization` config.
+In the example above, we supply a cron expression that's set to run daily at midnight (`"0 0 * * *"`) into the
+`backfill_schedule` parameter of the `materialization` config.
 Now `backfill_schedule` has been set, `total_transaction_amount` feature will be backfilled every day.
 
 ### Continuous buffer
 
-In addition to backfilling your aggregation with recurring batch job, you can also integrate fresh data into your windowed aggregation with continuous backfills.
-Continuous backills can be configured by supplying a [Duration](/api-docs#Duration)] to the `continuous_buffer_duration` e.g. `"36h"`.
+In addition to backfilling your aggregation with recurring batch job, you can also integrate fresh data into your
+windowed aggregation with continuous backfills.
+Continuous backfills can be configured by supplying a [Duration](/api-docs#Duration)] to the `continuous_buffer_duration` e.g. `"36h"`.
 Chalk will compute data within your `continuous_buffer_duration` directly from your online resolvers.
 
-Note: Chalk includes all of the data contained in overlapping buckets.
-We suggest shorening the bucket duration, if the time delta between the end of your window interval and the boundary of the last overlapping bucket exceeds the constraints of your use case.
+Note: Chalk includes all the data contained in overlapping buckets.
+We suggest shortening the bucket duration, if the time delta between the end of your window interval and the boundary
+of the last overlapping bucket exceeds the constraints of your use case.
+
+If `continuous_buffer_duration` is not set, then Chalk will only serve data from the backfilled aggregations.
+
+![no continuous buffer duration](/img/mat_windowed_aggs/no_cont_buf_dur.png)
+
+If `continuous_buffer_duration` is set, and the time window between the end of the last bucket and the current time
+is greater than the `continuous_buffer_duration`, Chalk will run online resolvers to compute the data for this
+time window.
+
+![12h continuous buffer duration](/img/mat_windowed_aggs/12h_cont_buf_dur.png)
+
+If the `continuous_buffer_duration` is longer than the time window between the end of the last bucket and the current time,
+Chalk will run online resolvers to compute the data from the start of the most recently filled bucket to now.
+
+![20h continuous buffer duration](/img/mat_windowed_aggs/20h_cont_buf_dur.png)
 
 ### Triggering a backfill through the Chalk CLI
 
@@ -128,7 +155,8 @@ To view existing aggregations, use [`chalk aggregate list`](/cli/aggregate_list)
 ```
 
 The series column shows the unique ID of the timeseries data underlying our aggregation system.
-Each unique combination of [namespace](/docs/features#namespacing), group (see `group_by_windowed`), and agg (the feature to aggregate) columns represents a separate timeseries.
+Each unique combination of [namespace](/docs/features#namespacing), group (see `group_by_windowed`), and agg (the feature to aggregate) columns
+represents a separate timeseries.
 When possible, Chalk will use the same timeseries data to serve multiple features.
 
 Bucket shows the current bucket size.
