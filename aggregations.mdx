@@ -1,18 +1,20 @@
 ---
-title: Windowed
+title: Windowed Aggregations
 metaTitle: Windowed Aggregations
 metaDescription: Chalk windowed features are a fast way to define data aggregations over arbitrary time ranges.
 description: Define features as aggregations of data over sliding time ranges.
 published: true
 ---
 
-Windowed features are features defined over time ranges. For example, you can use windowed
-features to count the number of login attempts made by a user over the past 10 minutes, or
+Create a data aggregation over a time range using a Windowed Feature.
+For example, use windowed features to count the number of login attempts made by a user over the past 10 minutes, or
 to track the largest purchase amount a cardholder has made in the past 30 days.
 
 ---
 
-## Feature definition
+Note: Chalk has first-class support for [materializing aggregations, see the docs!](/materialized_aggregations)
+
+## Set up a data aggregation using windowed features
 
 Here is an example of a [`windowed`](/api-docs/#windowed) feature representing the number of
 failed logins in the last 10 minutes, 30 minutes, and 1 day:
@@ -120,93 +122,7 @@ def account_under_attack(
 
 ---
 
-## Materialized window aggregations
-
-Windowed features are typically computed using either raw data or pre-aggregated data. Raw data has the most accuracy,
-but can be slow if you request longer time windows or large volumes of data. Some systems improve performance by serving
-features from pre-aggregated batch data. Pre-aggregated data mitigates the performance issue by reducing the number of
-data points needed, but prevents your application from accessing the newest data entering your system.
-
-Chalk balances accuracy and performance by combining both approaches. We aggregate historical data while continuously
-updating as new data arrives. To have Chalk aggregate your data, pass
-[`materialization`](/api-docs#windowed.materialization) to your windowed feature and use `bucket_duration` to set the size
-of each aggregated time window:
-
-```python
-@features
-class User:
-    id: int
-    transactions: DataFrame[transactions]
-    total_transaction_amount: Windowed[int] = windowed(
-        "10d",
-        "90d",
-        materialization={"bucket_duration": "1d"},
-        expression=_.transactions[_.amount].sum(),
-    )
-```
-
-Because this code shows a `bucket_duration` of 1 day, Chalk will aggregate transaction data into 1 day buckets of
-timeseries data. Chalk will then use this timeseries data to serve `total_transaction_amount` for the past 30 days and
-90 days. As new data arrives, the relevant timeseries buckets are modified to include the data. Over time, the oldest
-buckets are removed from your online store once they cannot be used by any time window.
-
-The number of buckets is determined by your longest time window divided by your bucket duration. For example, if your
-time window is 90 days and your bucket duration is 1 day, you would have 90 buckets. If your bucket duration is set to 1
-minute, you would instead have 129,600 buckets.
-
-Buckets are aligned starting from the Unix epoch, ignoring leap seconds. To serve windowed feature queries, Chalk uses
-all buckets containing any overlap with the requested time window.
-
-### Managing aggregations
-
-Use [`chalk aggregate backfill`](/cli/aggregate_backfill) to backfill aggregation for a windowed feature. This command
-is useful if you change your feature's time windows or `bucket_duration` values.
-
-To view existing aggregations, use [`chalk aggregate list`](/cli/aggregate_list).
-
-Each of these commands outputs a table of your aggregations:
-
-```
- Series  Namespace    Group                Agg     Bucket  Retention  Aggregation  Dependent Features
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
- 1       transaction  user_id merchant_id  amount  1d      30d        sum          user.txn_sum_by_merchant merchant.txn_sum_by_user
- 1       transaction  user_id merchant_id  amount  1d      30d        count        user.txn_count_by_merchant
- 2       transaction  user_id              amount  1d      30d        sum          user.txn_sum
-```
-
-The series column shows the unique ID of the timeseries data underlying our aggregation system. Each unique combination
-of [namespace](/docs/features#namespacing), group (see `group_by_windowed`), and agg (the feature to aggregate) columns
-represents a separate timeseries. When possible, Chalk will use the same timeseries data to serve multiple features.
-
-Bucket shows the current bucket size. Retention shows the maximum time window of any feature that depends on the given
-timeseries. Dependent features list the features that are served by the given timeseries.
-
-### Continuous Backfills
-
-Rather than streaming new data to keep the timeseries buckets up to date, you may instead opt to use continuous backfills. First, choose a schedule to determine when and how frequently backfills should occur. In the following example, the `total_transaction_amount` features will be backfilled every day.
-
-```python
-@features
-class User:
-    id: int
-    transactions: DataFrame[transactions]
-    total_transaction_amount: Windowed[int] = windowed(
-        "10d",
-        "90d",
-        materialization={
-            "bucket_duration": "1d",
-            "backfill_schedule": "0 0 * * *",
-            "continuous_buffer_duration": "36h",
-        },
-        expression=_.transactions[_.amount].sum(),
-    )
-```
-
-To ensure that the computed aggregate uses the most recent data, you can set a `continuous_buffer_duration`. This tells Chalk to include the past 36 hours of data as computed directly from your online resolvers. The rest of the window is computed from the pre-aggregated buckets which are backfilled every day.
-
----
-
-## Grouped materialized window aggregations
+## Grouped window aggregations
 
 Similar to SQL `GROUP BY` clauses, you can group your windowed feature by one or more other features with
 [`group_by_windowed`](/api-docs#group_by_windowed).
@@ -239,7 +155,6 @@ class User:
     spend_by_merchant: DataFrame = group_by_windowed(
         "30d",
         "90d",
-        materialization={"bucket_duration": "1d"},
         expression=_.transactions.group_by(_.merchant_id).agg(_.amount.sum()),
     )
 ```
@@ -264,7 +179,6 @@ class User:
     spend_by_merchant: DataFrame = group_by_windowed(
         "30d",
         "90d",
-        materialization={"bucket_duration": "1d"},
         expression=_.transactions.group_by(_.merchant_id).agg(_.amount.sum()),
     )
 +   spend_at_most_common_merchant: Windowed[float] = windowed(
