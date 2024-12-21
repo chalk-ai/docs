@@ -43,7 +43,7 @@ The data plane currently consists of the following primary Kubernetes components
 - `branch` deployments: A stateful set or deployment object that runs your [branch](/docs/branches) deployments.
 - `job` kubernetes jobs: These are batch jobs that run your Python code in Chalk's execution environment for [scheduled tasks](/docs/runs).
 - `query job` kubernetes jobs: These are batch jobs that run your Python code in Chalk's execution environment for [async offline query](/docs/query-offline) tasks.
-- `streaming` statefulset: A stateful set that runs your [streaming](/docs/streaming) deployments. These are long-running processes that consume from a message queue and write to the online and offline store.
+- `streaming` statefulset: A stateful set that runs your [streaming](/docs/streams) deployments. These are long-running processes that consume from a message queue and write to the online and offline store.
 
 
 ### Configuring Data Plane Resources
