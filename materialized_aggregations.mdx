@@ -30,8 +30,6 @@ class User:
     )
 ```
 
-![Materialized Windowed Aggregations](/img/mat_windowed_aggs/mat_window_agg.png)
-
 ---
 
 ## Why are materialized aggregations useful?
@@ -48,6 +46,8 @@ Buckets that become stale i.e. no longer relevant to any of your active time win
 
 Chalk aligns buckets on Unix epoch (ignoring leap seconds).
 When serving windowed queries, Chalk uses all buckets containing any overlap with the requested time window.
+
+![Materialized Windowed Aggregations](/img/mat_windowed_aggs/mat_window_agg.png)
 
 ## How do I use materialized aggregations with Chalk?
 
