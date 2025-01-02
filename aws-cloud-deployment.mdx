@@ -38,7 +38,8 @@ In order to manage infrastructure in your cloud account, Chalk requires certain
 IAM permissions. At a high level, Chalk needs the ability
 to provision the key components of your infrastructure:
 
-- Storage resources (buckets for dataset storage and bulk insertion into offline storage)
+- Storage resources (buckets for [Dataset](/docs/datasets) storage and bulk insertion into offline
+storage)
 - Networking resources (LBs, VPCs, etc.)
 - IAM resources (e.g. creating service accounts for workload identity, etc.)
 - Kubernetes resources (EKS)
@@ -157,7 +158,7 @@ infrastructure in your cloud account:
 - `ecr`: ECR image management for deployments
 - `eks`: EKS cluster management for running feature engineering workloads
 - `kms`: Encryption keys for secrets
-- `secretsmanager`: Encrypting datasource secrets from the web UI
+- `secretsmanager`: Encrypting data source secrets from the web UI
 
 ---
 
@@ -427,8 +428,8 @@ rules:
   verbs: ["get", "list", "watch"]
 ```
 
-If you use in-cluster docker image building powered by koniko and Argo, Chalk requires this role on the namespace
-where the docker image building is happening:
+If you use in-cluster docker image building powered by kaniko and Argo, Chalk requires this role on
+the namespace where the docker image building is happening:
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1

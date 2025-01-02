@@ -63,7 +63,7 @@ $ chalk query --in animal.id=Cow --out animal.sound@2 --branch test
 When you create a versioned feature, the default version is 1.
 You can control this default version and change the behavior of querying and resolvers.
 
-1. Replace the contents of `versioned_feature.py` with the following Python code.  Note that we didn't specify `@2` in `resolver_2`.  We can do that because `2` is the default version of `Animal.sound`.
+1. Replace the contents of `versioned_feature.py` with the following Python code. Note that we didn't specify `@2` in `resolver_2`. We can do that because `2` is the default version of `Animal.sound`.
 ```python
 from chalk.features import feature, features, online
 

@@ -36,7 +36,7 @@ with the input values.
 ## Batch custom sinks
 
 You can also use custom sinks to handle many events in bulk.
-Simply request the data you want as a dataframe with the features
+Simply request the data you want as a DataFrame with the features
 you'd like to have:
 
 ```py
@@ -59,12 +59,12 @@ event hit the buffer.
 ## SQLAlchemy integration
 
 Chalk has a tight integration with SQLAlchemy for simple data export.
-You can use this integration for any of the supported sql-like integrations.
+You can use this integration for any of the supported SQL-like integrations.
 
 ### Inserts
 
 By default, Chalk creates a new row in your table for every run of the function.
-To specify the integration, pass the sql source via the `integration` keyword argument.
+To specify the integration, pass the SQL source via the `integration` keyword argument.
 
 ```py
 pg_db = PostgreSQLSource()

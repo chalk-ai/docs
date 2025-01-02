@@ -80,8 +80,9 @@ If you have been running this resolver in production for a long time, then simpl
 running [`chalk apply`](/cli/apply) will not ingest historical color preferences because the `incremental` timestamp
 lower bound will prevent the query from returning "old" rows which include these historical `favorite_color` observations.
 
-Instead, run an offline query to obtain a dataset of the feature values you want to ingest and then call
-`.ingest` to either [store online or offline](/api-docs#DatasetRevision.ingest).
+Instead, run an offline query to obtain a [Dataset](/docs/datasets) of the feature values you want
+to ingest and then call `.ingest` to either [store online or
+offline](/api-docs#DatasetRevision.ingest).
 
 ```py
 from chalk.client import ChalkClient

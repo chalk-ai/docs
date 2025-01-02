@@ -9,7 +9,7 @@ description:  Execute resolvers that connect to external systems
 
 Many resolvers generate features by connecting to external, production-like systems (e.g. databases and APIs).
 It can be challenging to validate these resolvers since they involve communication between several systems.
-This guide will help you execute resolvers that communicate with those external systems on your local environment. 
+This guide will help you execute resolvers that communicate with those external systems on your local environment.
 
 ---
 
@@ -36,7 +36,7 @@ PG_PGPASSWORD=password
 
 ## Exercise your resolvers
 
-Once the environment variables are setup correctly, you can execute your resolver like any python code.  
+Once the environment variables are setup correctly, you can execute your resolver like any python code.
 For example if the file `chalkproject/resolvers.py` includes a resolver like `get_transactions_from_snowflake`, you can execute it any python environment.
 ```bash
 $ source .venv/bin/activate
