@@ -956,8 +956,88 @@ online store (until the feature is evicted from the cache).
 
 ### Adding Offline Resolvers
 
+By setting up offline SQL resolvers, we are telling Chalk that there are
+time when we don't want to pull data from our Postgres data source and instead
+want to get our data from a bulk data store. There are a couple reasons why
+we might want to do this:
+1). We don't want to overwhelm our Postgres data source with requests that
+don't require real time data,
+2). We want to query for large chunks of data (which is the purpose of a database like snowflake).
+
+In the case of reverse-ETLing data, we have decided that we are tolerating some
+degree of staleness in our `average_time_between_transactions_30d` feature in
+exchange for being able to serve the feature faster. As a result, it makes
+sense to read the new data from snowflake.
+
+To connect our feature classes to Snowflake, we'll write three more SQL resolvers,
+this time labeling them with `type: offline` and `source: snowflake`.
+
+```sql src/get_user_offline.chalk.sql
+-- get users from snowflake.
+-- resolves: User
+-- source: snowflake
+-- type: offline
+select
+    id,
+    full_name as name,
+    email
+from users
+```
+
+```sql src/get_accounts.chalk.sql
+-- get accounts from snowflake.
+-- resolves: Account
+-- source: snowflake
+-- type: offline
+select
+    id,
+    user_id,
+    balance,
+from accounts
+```
+
+```sql src/get_transactions.chalk.sql
+-- get transactions from snowflake.
+-- resolves: Transaction
+-- source: snowflake
+-- type: offline
+select
+    id,
+    account_id,
+    amount,
+    status,
+    created_at
+from transactions
+```
 
 ### Creating a Scheduled Query
+
+With our offline SQL resolvers defined, we can now write a `ScheduledQuery` which
+will periodically run and write updated `average_time_between_transactions_30d` features
+to the online store.
+
+```python
+from chalk import ScheduledQuery
+
+ScheduledQuery(
+    name="user-transaction-reverse-etl-features",
+    schedule="0 * * * *",
+    output=[User.average_time_between_transactions_30d],
+    online=True,
+    offline=True,
+    incremental_resolvers="get_transactions_offline",
+)
+```
+
+Our schedule "`0 * * * *`",  means that we will run this query and update the
+online store every hour. This means our features will be one hour fresh (disregarding
+the snowflake data source lag). Note, this allows really precise and granular trade-offs
+between staleness, latency, and compute.
+
+In addition, by specifying an incremental resolver, we are telling Chalk to remember
+the high ingest time from the previous run and only pull data that is fresher
+than that high water mark. Again Chalk is processing the minimum amount of
+information it requires to calculate the `average_time_between_transactions_30d`.
 
 ## API Calls
 
