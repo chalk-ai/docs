@@ -516,8 +516,8 @@ select
 from users
 ```
 
-The `resolves` key (`--resolvers: User`) tells Chalk which feature class the columns
-in the `select` statement should be mapped to. Then, the target names of the query are
+The `resolves` key (`--resolves: User`) tells Chalk which feature class the columns
+in the `select` statement should be mapped into. Then, the target names of the query are
 compared against the names of the features on the specified feature class.
 If the names match after stripping underscores and lower-casing,
 the select target is mapped to the feature.
