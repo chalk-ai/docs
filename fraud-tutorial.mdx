@@ -114,14 +114,15 @@ $ chalk query --in user.id=1 --out user.name
 Chalk will look at the resolvers you've defined and ask "given a User.id, can I calculate
 a `User.name`". It will see the SQL resolver defined above and realize that it can be
 used to get `User.name` from a `User.id`. It will push the id filter into the SQL query,
-running (in addition, a projection will be pushed down so that only the `name` column is queried):
+running.
 
 ```sh
 select name from users
 where id=1
 ```
-
-This will return the result.
+In addition to the filter a projection will be pushed into your SQL query: only the `name` column
+is requested. When running a query, Chalk processes the minimum amount of data required to calculate
+a desired output features.
 
 Getting this to work fully, will involve setting up a database connector to Chalk and deploying
 code, both of which we will cover later. For now it is important to note that the process of
@@ -129,7 +130,12 @@ defining resolvers is incredibly modular.
 
 Now lets look into defining a non-root resolver, which computes a User's email username.
 
-In Chalk, Non-root resolvers are python functions with feature annotations.
+In Chalk, Non-root resolvers take one of two forms:
+1. python functions with feature annotations,
+2. inline expressions.
+
+We will look at both variants, but functionally they are similar. Both take input features
+and generate output features.
 
 ```python
 from chalk import online
@@ -153,7 +159,33 @@ def get_email_username(email: User.email) -> User.username:
     return email.split('@')[0]
 ```
 
-By writing the `get_email_username` python function, we've defined another resolver. If we deploy
+As mentioned above, this could also be written as an inline expression, like so:
+
+```python
+from chalk import online
+from chalk.features import features
+import datetime as dt
+
+@features
+class User:
+    id: int
+    birthday: dt.datetime
+    name: str
+    email: str
+
+    # computed features
+    username: str = F.split_part(_.email, delimiter="@", index=0)
+    age: int
+    is_adult: bool
+```
+
+<TipInfo>
+    The advantage of inline expressions is that they are statically compiled into the execution
+    engine, which often provides performance advtantages. Chalk also tries to statically
+    compile Python resolvers by parsing the AST of the function!
+</TipInfo>
+
+By writing the `get_email_username` Python function, we've defined another resolver. If we deploy
 this new code to Chalk, we can now query for the username of a user with a given id.
 
 ```sh
