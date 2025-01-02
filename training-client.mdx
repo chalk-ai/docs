@@ -1,0 +1,133 @@
+---
+title: Offline Queries
+description: Fetch offline feature values.
+---
+
+import {JupyterNotebook} from '@/components/home/Jupyter'
+import {TipInfo} from '@/components/Tip'
+
+---
+
+Offline queries pull data from the offline store or calculate features through
+[resolvers that are marked as offline](/docs/resolver-offline-online).
+
+<TipInfo>
+    Offline queries can also execute online resolvers if no offline resolver is available for a
+    requested feature.
+</TipInfo>
+
+In an offline query you can request features for multiple entities at distinct time points.
+By default, an offline query returns a row for each primary key containing the most recent
+computed value for each requested output feature. The main use case for offline queries is
+creating datasets.
+
+Chalk supports a number of clients that can run offline queries. In this section, our examples
+focus on our python client, which integrates nicely with jupyter notebooks.
+
+<JupyterNotebook/>
+
+## Making Offline Queries
+
+As mentioned earlier, offline queries can be made through one of Chalk's API clients.
+
+```python
+from chalk.client import ChalkClient
+from datetime import datetime
+
+client = ChalkClient()
+client.offline_query(
+  input={'user.id': [1,2,3,4]},         # Input
+  output=['user.name'],                 # Output
+  # tags=['test'],                      # Environment
+  # branch='branch',
+  # recompute_features=True,            # Run Resolvers
+  # run_asynchronously=True,            # Run Configuration
+  # max_samples = 10,
+  # lower_bound=datetime(2024, 10, 12), # Bounds
+  # upper_bound=datetime(2024, 10, 20),
+)
+```
+
+In the Python client, offline queries return Chalk `Dataset`s, which we cover, in detail, in the
+next [section](/docs/datasets). However, at a high level, Chalk `Dataset`s are flexible wrappers
+around the results of your offline query that can be converted to pandas or polars—this makes them
+easy to use for downstream ML tasks.
+
+### Input
+
+As [input](/api-docs#ChalkClient.offline_query.input), `offline_query` takes a
+[chalk.DataFrame](/docs/dataframe) or [pandas.DataFrame](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html)
+with one column for each known feature in the input.
+The primary key feature must be included among the inputs.
+
+Alternatively, instead of a `DataFrame`, users can pass a mapping from features to a list of values for each feature.
+
+```python
+input={
+    User.id: ['id1', 'id2'],
+    User.age: [23, 40]
+}
+```
+
+### Input Times
+
+Timestamps can be also be passed in the [input_times](/api-docs#ChalkClient.offline_query.input_times) argument instead.
+
+```py
+input={
+    User.id: ['id1', 'id1'],
+}
+input_times=[datetime.now() - timedelta(days=1), datetime.now() - timedelta(days=2)]
+```
+
+### Output
+
+This argument describes a list of features to sample.
+
+```py
+output=[
+    User.returned_transactions_last_60,
+    User.user_account_name_match_score,
+    User.socure_score,
+    User.identity.has_verified_phone,
+    User.identity.is_voip_phone,
+    User.identity.account_age_days,
+    User.identity.email_age,
+]
+```
+
+### Recompute Features
+
+Users can request that certain features be recomputed by resolvers
+at query time instead of sampled from the offline store.
+For more information, read [here](/api-docs#ChalkClient.offline_query.recompute_features).
+
+### Time Bounds
+
+In some cases, users may not have a list of primary keys to sample with,
+and instead would like to see results within a period of time.
+The user can then leave the `inputs` argument empty and supply a
+[lower bound](/api-docs#ChalkClient.offline_query.lower_bound) and an
+[upper bound](/api-docs#ChalkClient.offline_query.upper_bound) along with the requested output features.
+
+```py
+dataset: Dataset = ChalkClient().offline_query(
+     output=[
+         User.id,
+         User.fullname,
+         User.email,
+         User.name_email_match_score,
+     ],
+     lower_bound=datetime.now() - timedelta(days=7),
+     upper_bound=datetime.now(),
+)
+```
+
+### Environment
+
+The user can specify
+[tags](/docs/resolver-tags),
+[environment](/docs/resolver-environments),
+or [branch](/docs/branches)
+as parameters to `offline_query` in the same fashion
+as [online query](/docs/query-basics).
