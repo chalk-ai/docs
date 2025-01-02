@@ -23,9 +23,9 @@ resources that must be provisioned.
 
 ## Major Components
 
-- **Chalk API Server** -- this is a simple API server that manages oauth token exchange, SSO, and controls deployments to the Chalk Compute Cluster.
+- **Chalk API Server** -- this is a simple API server that manages OAuth token exchange, SSO, and controls deployments to the Chalk Compute Cluster.
 - **Chalk Metadata Database** -- this is a Postgres database that is used to store relatively low-volume metadata about objects that Chalk manages (deployments, feature definitions, system users, etc).
-- **Chalk Compute Cluster** -- Kubernetes deployments, statefulsets, and other resources that perform feature derivation and serve feature queries.
+- **Chalk Compute Cluster** -- Kubernetes deployments, StatefulSets, and other resources that perform feature derivation and serve feature queries.
 - **Online Storage** -- a low-latency data store that is used to serve cached features for online queries. On GCP, Chalk supports [Memorystore](https://cloud.google.com/memorystore), [Bigtable](https://cloud.google.com/bigtable), or Postgres 15 (via [Cloud SQL](https://cloud.google.com/sql/docs/postgres) or otherwise). These options have different performance characteristics, and we will help you make the right choice for your use case.
 - **Offline Storage** -- a data warehouse that is used to store historical feature data for offline analysis and training set generation. On GCP, Chalk supports [Bigquery](https://cloud.google.com/bigquery).
 - **Docker Image Storage** -- Chalk requires a Docker image registry to store images for the Chalk Compute Cluster. On Google Cloud, we recommend [Google Artifact Registry](https://cloud.google.com/artifact-registry).

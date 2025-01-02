@@ -662,7 +662,7 @@ behavior more precisely.
 
 ## Tagged SQL sources
 
-Chalk supports applying [tags](/docs/resolver-tags) to sql sources. This allows you to define a single resolver that routes traffic
+Chalk supports applying [tags](/docs/resolver-tags) to SQL sources. This allows you to define a single resolver that routes traffic
 to multiple different backing databases depending on tags supplied at query time. This is useful for limiting
 the blast-radius of traffic from different use-cases.
 
@@ -689,7 +689,8 @@ def users() -> DataFrame[User]:
     return sql_group.query_string("select id, name from users").all()
 ```
 
-Then, when you submit queries, the query tags will control which datasource is used to execute the query:
+Then, when you submit queries, the query tags will control which data source is used to execute the
+query:
 
 ```py
 client = ChalkClient()
@@ -697,7 +698,7 @@ client = ChalkClient()
 # This query uses the risk datasource
 client.query(input={User.id: 1}, output=[User.name], tags=['risk'])
 
-# This query uses the analytics datasource
+# This query uses the analytics data source
 
 client.query(input={User.id: 1}, output=[User.name], tags=['analytics'])
 

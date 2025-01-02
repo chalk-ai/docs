@@ -8,13 +8,13 @@ description: Rigorously update your features as their meaning changes.
 ## What are feature versions
 
 Feature versions allow you to manage a feature as its
-definition changes over time.  You can reference versions
+definition changes over time. You can reference versions
 of a feature when querying, in resolvers, in migrations,
 and anywhere you use features!
 
 The ability to maintain multiple versions of a feature is
 especially useful as your use cases evolve and the definition
-of a feature changes.  This might be because your old feature
+of a feature changes. This might be because your old feature
 had a bug, or maybe you want to improve the feature to be
 even more useful.
 
@@ -47,7 +47,7 @@ class Trial:
 ## Querying
 
 You can refer to a specific version of a feature using the
-`@` operator.  You can query versioned features from any client,
+`@` operator. You can query versioned features from any client,
 including the CLI, Python, etc.
 
 ```bash
@@ -59,7 +59,7 @@ $ chalk query --in trial.id=1 --out trial.code@2
 ## Default versions
 
 When you define a versioned feature, that feature always
-has a default version.  When you reference a versioned feature
+has a default version. When you reference a versioned feature
 without the `@` operator, you reference the default version.
 The default version can be controlled by adding the
 `default_version` keyword argument to the feature function.
@@ -114,7 +114,7 @@ def fn2(d: Trial.raw_data) -> Trial.code @ 2:
 
 ## Limitations
 
-Only scalar features can be versioned.  Other kinds of
+Only scalar features can be versioned. Other kinds of
 features cannot be versioned. These include:
 * `has_one` and `has_many`
 * `FeatureTime` 
