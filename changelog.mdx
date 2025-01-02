@@ -32,7 +32,7 @@ for online queries, bulk online queries, and offline queries for both `ChalkClie
 ### Expressions support more string, encoding, and date functions
 
 The `chalk.functions` library now supports more string, encoding, and date functions that can be used in
-[Chalk expressions](/docs/underscore). You can now use [`jaro_winkler_distance`](/api-docs#jaro_winkler_distance)
+[Chalk expressions](/docs/expression). You can now use [`jaro_winkler_distance`](/api-docs#jaro_winkler_distance)
 to compute the Jaro-Winkler distance between two strings, [`partial_ratio`](/api-docs#partial_ratio) to compute
 the [fuzzywuzzy](https://pypi.org/project/fuzzywuzzy/) partial ratio between two strings, and
 [`length`](/api-docs#length) to compute the length of a string. We've also added
@@ -61,7 +61,7 @@ methods in our [API documentation](/api-docs#DatasetRevision).
 
 ### Underscore expressions support more array functions
 
-The `chalk.functions` library now supports more array functions that can be used in [underscore expressions](/docs/underscore).
+The `chalk.functions` library now supports more array functions that can be used in [underscore expressions](/docs/expression).
 `array_max` and `array_min` return the maximum and minimum values in an array, respectively. `array_distinct` returns
 a list of the distinct elements in an array, and `array_sort` sorts the elements of an array by ascending or descending
 order. Read more about all of the `chalk.functions` available for writing underscore expressions in our [`API docs`](/api-docs#section-Functions).
@@ -72,7 +72,7 @@ order. Read more about all of the `chalk.functions` available for writing unders
 
 ### Underscore expressions support struct field access and more functions
 
-You can now reference dataclass struct fields with [underscore expressions](/docs/underscore).
+You can now reference dataclass struct fields with [underscore expressions](/docs/expression).
 We've also added more functions to `chalk.functions` that can be used in underscore expressions,
 including `is_us_federal_holiday` for determining if a date is a federal holiday in the United States,
 `array_sort` for sorting the elements of an array by ascending or descending order, and `element_at` for
@@ -128,7 +128,7 @@ environments:
 
 ### Underscore expressions now support more datetime, JSON, string, and math functions
 
-We've added more functions to `chalk.functions` that can be used in [underscore expressions](/docs/underscore).
+We've added more functions to `chalk.functions` that can be used in [underscore expressions](/docs/expression).
 You can now use [json_extract_array](/api-docs#json_extract_array) to extract arrays of strings, bools, numbers, or
 nulls from a JSON feature, [safe_divide](/api-docs#safe_divide) to divide two numbers safely, returning `None` if the
 denominator is zero, [to_iso8601](/api-docs#to_iso8601) to convert a datetime feature to an ISO 8601 string,
@@ -166,7 +166,7 @@ rather than just one resolver. Read more about the `chalk aggregate backfill` co
 
 ### Underscore expressions now support more array and encoding functions
 
-We've added more functions to `chalk.functions` that can be used in [underscore expressions](/docs/underscore).
+We've added more functions to `chalk.functions` that can be used in [underscore expressions](/docs/expression).
 You can now use [`array_join`](/api-docs#array_join) to concatenate array elements into a string,
 [`cardinality`](/api-docs#cardinality) to count the number of elements in an array, as well as
 [`max`](/api-docs#max) and [`min`](/api-docs#min) to find the maximum and minimum values, respectively, in an array.
@@ -235,7 +235,7 @@ details like the pod states and the resources requested by each pod.
 ### Resolve list features with underscore expressions
 
 We've added the `array_agg` function to `chalk.functions` to help you resolve list features with [underscore
-expressions](/docs/underscore). For example, you can now express the following features to aggregate
+expressions](/docs/expression). For example, you can now express the following features to aggregate
 all categories of videos watched for a user.
 
 ```python
@@ -286,7 +286,7 @@ methods and best practices for integration testing, see our [integration test do
 This week, we've added mathematical functions `floor`, `ceil`, and `abs` to `chalk.functions`, along with
 the logical functions `when`, `then`, `otherwise`, and `is_null`. We've also added the `haversine` function
 for computing the Haversine distance between two points on Earth given their latitude and longitude. These
-points can be used in [underscore expressions](/docs/underscore) to define features with code that can be
+points can be used in [underscore expressions](/docs/expression) to define features with code that can be
 statically compiled in C++ for faster execution. See the full list of functions you can use in underscore
 expressions in our [API docs](/api-docs#functions).
 
@@ -328,7 +328,7 @@ our [API documentation](/api-docs#ChalkClient).
 
 ### Underscore expressions support functions for URL parsing, regular expressions, and more
 
-We've added more functions to `chalk.functions` that can be used in [underscore expressions](/docs/underscore).
+We've added more functions to `chalk.functions` that can be used in [underscore expressions](/docs/expression).
 You can now use `regexp_like`, `regexp_extract`, `split_part`, and `regexp_extract_all` to do regular expression matching and
 use `url_extract_host`, `url_extract_path`, and `url_extract_prtocol` to parse URL's. In addition, we've added
 helpful logical functions like `if_then_else`, `map_dict`, and `cast` to broaden the span of features that you can
@@ -349,7 +349,7 @@ We've added a new function [`chalk.functions.sagemaker_predict`](/api-docs#sagem
 you to run predictions against a SageMaker endpoint to resolve features. Read more about how to define
 a SageMaker endpoint, encode your input data, and run predictions in our [SageMaker tutorial](/docs/sagemaker-tutorial).
 
-In addition to being able to make SageMaker calls, [underscore expressions](/docs/underscore) now support a
+In addition to being able to make SageMaker calls, [underscore expressions](/docs/expression) now support a
 variety of new functions. With these functions imported from `chalk.functions`, you can perform encoding,
 decoding, math, datetime manipulation, string manipulation, and more! For example, say you have a Transaction
 feature, where you make a SageMaker call to enrich the transaction data and provide a label for the transaction,
@@ -475,7 +475,7 @@ please reach out to the team.
 
 ### Underscore expressions support datetime subtraction and total_seconds
 
-[Underscore expressions](/docs/underscore) now support datetime subtraction and the use of a new
+[Underscore expressions](/docs/expression) now support datetime subtraction and the use of a new
 library function `chalk.functions.total_seconds`. This allows you to compute the number of seconds
 in a time duration and define more complex time interval calculations using performant underscore
 expressions.
@@ -697,7 +697,7 @@ in your table as a CSV for further analysis.
 The new `chalk.functions` module contains several helper functions for feature computation. For example, if you have a
 feature representing a raw value in GZIP-compressed value, you can use [`gunzip`](/api-docs#gunzip) with an underscore
 reference to create an unzipped feature. The full list of available functions can be found at the bottom of our
-[underscore expression documentation](/docs/underscore#additional-functions).
+[underscore expression documentation](/docs/expression#additional-functions).
 
 ### JSON feature type
 
@@ -835,7 +835,7 @@ Chalk automatically has access to your DynamoDB instance, which you can query wi
 
 ### Underscore expressions support references to the target window duration
 
-[Underscore expressions](/docs/underscore) on [windowed](/docs/aggregations) features can now include the special
+[Underscore expressions](/docs/expression) on [windowed](/docs/aggregations) features can now include the special
   expression `_.chalk_window` to reference the target window duration. Use `_.chalk_window` in [windowed aggregation
   expressions](/docs/aggregations#querying-by-windowed-time-range) to define aggregations across multiple window sizes
   at once:
@@ -948,7 +948,7 @@ documentation](/docs/query-offline#sql-queries-as-input).
 
 ### Static planning of underscore expressions
 
-We shipped static planning of [underscore expressions](/docs/underscore). Underscore expressions
+We shipped static planning of [underscore expressions](/docs/expression). Underscore expressions
 enable you to define and resolve features from operations on other features. When you use underscore expressions, we
 now do static analysis of your feature definition to transform it into performant C++ code.
 
