@@ -110,6 +110,13 @@ def fn2(d: Trial.raw_data) -> Trial.code @ 2:
     return d['data']['code']
 ```
 
+```sql
+-- resolves: Trial@2
+-- source: pg_trial
+
+select id, code from trial_table;
+```
+
 ---
 
 ## Limitations

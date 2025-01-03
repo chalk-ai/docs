@@ -4,9 +4,47 @@ description: Predict and train.
 ---
 ---
 
-Chalk is composed of an online and an offline store. The online store is a cache used to make
-realtime requests for data extremely fast, while the offline store is a data warehouse that stores
+Chalk is composed of an online and an offline store. The online store is used to cache data to make
+realtime data requests extremely fast, while the offline store is a data warehouse that stores
 all the features that you've computed—enabling monitoring and dataset generation for training.
+Chalk enables you to query the online and offline store, and run online and offline resolvers, to fetch
+data for your online and offline queries. These online/offline interactions are detailed below.
+
+## Defining Online and Offline Resolvers
+
+There are three types of resolvers--Python resolvers, SQL resolvers, and expressions.
+By default, Chalk [expressions](/docs/expression) are online resolvers, while Python
+and SQL resolvers can be either online or offline.
+
+To define a Python resolver as online or offline, use the `@online` or `@offline` decorator.
+
+```python
+from chalk.features import online, offline
+from src.features import User
+
+@online
+def my_online_resolver(
+    name: User.name
+):
+    return 1
+
+@offline
+def my_offline_resolver(
+    txns: User.transactions
+):
+    return 1
+```
+
+To define a SQL resolver as online or offline, use the `type` field in the resolver comment.
+
+```sql
+-- resolves: user
+-- source: pg_users
+-- type: online
+
+select id, name, age, transactions
+from users;
+```
 
 ## Storage
 

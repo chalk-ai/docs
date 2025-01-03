@@ -7,7 +7,7 @@ description: Using Chalk expressions to define features
 
 ## Overview
 
-Chalk expressions are used to derive features from operations on other features. In feature definitions, `_`
+Chalk expressions are used to resolve features from operations on other features. In feature definitions, `_`
 represents a reference to the containing feature class and is used to access other features in the same instance. In
 addition to arithmetic operations, expressions can also be used to filter and aggregate data.
 
@@ -141,6 +141,29 @@ class User:
 To compute `User.total_spend`, we needed to create a projection of the `User.transactions` DataFrame limited to only the
 `Transaction.total` column so that the `sum` aggregation could work. In contrast, no projection was needed for
 `num_large_transaction`'s `count` aggregation because `count` works on DataFrames with any number of columns.
+
+## Run conditions
+
+To specify run conditions such as environment, tags, and versions for a feature that is resolved through an expression,
+you can use the [`feature`](/api-docs#feature) function and pass in the expression as an argument.
+
+```python
+from chalk.features import Primary, features, feature
+
+@features
+class User:
+    id: Primary[int]
+
+    purchases: DataFrame[Purchase]
+    # Uses a default value of 0 when one cannot be computed.
+    num_purchases: int = feature(
+        expression=_.purchases.count(),
+        default=0,
+        environment=["staging", "dev"],
+        tags=["fraud", "credit"],
+        version=1,
+    )
+```
 
 ## All supported operations
 
