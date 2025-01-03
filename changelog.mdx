@@ -27,7 +27,7 @@ In addition to searching for keywords in your source code, you can now also sear
 The Chalk Client now offers a [query_context](/api-docs#ChalkClient.query.query_context) field that can be accessed
 by Python resolvers, allowing you to pass additional information in your queries. The `query_context` is available
 for online queries, bulk online queries, and offline queries for both `ChalkClient` and
-`ChalkGRPCClient`, and can be tested using `ChalkClient.check`. 
+`ChalkGRPCClient`, and can be tested using `ChalkClient.check`.
 
 ### Expressions support more string, encoding, and date functions
 
@@ -219,7 +219,7 @@ useful information for debugging failed or pending pods.
 ### Improved stacktrace rendering in Chalk CLI
 
 We've drastically improved the rendering of stacktraces in the [Chalk CLI](/cli/chalk) with improved syntax highlighting
-and clearer formatting to make debugging easier. 
+and clearer formatting to make debugging easier.
 
 ---
 
@@ -391,7 +391,7 @@ how to define your windowed aggregations, see our example [here](https://docs.ch
 
 We've updated the Usage Dashboard with a new view under the Pod Resources tab that allows you to view CPU and storage
 requests by pod as grouped by cluster, environment, namespace, and service! If you have any questions about the usage
-dashboard, please reach out to the Chalk team. 
+dashboard, please reach out to the Chalk team.
 
 ### Dropping support for Python 3.8
 
@@ -462,11 +462,11 @@ in the `feature` method to evict null values. Read more about how to use the `ca
 
 You can set cloud resource configurations for your environment by navigating to `Settings > Resources` in the
 dashboard. In addition to specifying resource configurations for resource groups like instance counts and CPU,
-you can now also set environment variables and other settings like Kubernetes Node Selectors. The Kubernetes Node 
-Selector enables you to specify the machine family you would like to use for your deployment. For example, 
-this would map to [EC2 Instance Types](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html) 
-for AWS deployments or [Compute Engine Machine Families](https://cloud.google.com/compute/docs/machine-resource) 
-for GCP deployments. If you have any questions about how to use any of these settings in the configuration page, 
+you can now also set environment variables and other settings like Kubernetes Node Selectors. The Kubernetes Node
+Selector enables you to specify the machine family you would like to use for your deployment. For example,
+this would map to [EC2 Instance Types](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html)
+for AWS deployments or [Compute Engine Machine Families](https://cloud.google.com/compute/docs/machine-resource)
+for GCP deployments. If you have any questions about how to use any of these settings in the configuration page,
 please reach out to the team.
 
 ![Cloud Resource Configurations Advanced Settings](/img/cloud_resource_configuration_advanced_10_2024.png)
@@ -743,7 +743,7 @@ reference a given feature as input or output.
 
 We added a new Aggregations page to the dashboard where you can see the results of [`aggregate
 backfill`](/cli/aggregate_backfill) commands. Check it out to see what resolvers were run for a backfill, the backfill's
-status, and other details that will help you drill down to investigate performance. 
+status, and other details that will help you drill down to investigate performance.
 
 For more details on aggregate backfills, see our documentation on [managing windowed
 aggregations](/docs/materialized_aggregations).
@@ -899,12 +899,12 @@ query output. `summary` shows summary statistics of the query output. Here's an 
 
 Chalk resource groups create separate independent deployments of the query server to prevent resource contention. For
 example, one team may want to make long-running analytics queries and another may want to make low-latency queries in
-line with customer requests. 
+line with customer requests.
 
 We have updated the Cloud Resource Configuration page! You can now configure resource groups to use completely independent
 node pools to ensure your workflows run on separate computer hardware. The configuration page also allows you to specify
 exactly what kind of hardware will be available in each resource group so you can optimize the balance between cost and
-performance. 
+performance.
 
 This feature is currently available for customers running Chalk in EKS, but will be available soon for customers using
 GKE.
