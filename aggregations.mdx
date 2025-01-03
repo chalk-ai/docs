@@ -54,7 +54,7 @@ Windowed features are typically resolved, either:
 
 ### Querying by windowed time range
 
-Windowed features resolved via [underscore expressions](/docs/expression) can reference the current windowed time range
+Windowed features resolved via [expressions](/docs/expression) can reference the current windowed time range
 using the `_.chalk_window` operator:
 
 ```python
@@ -83,7 +83,7 @@ than the start of the current window duration.
 ### Nested windowed feature references
 
 Windowed features can also be referenced by other windowed features in the same feature class using
-[underscore expressions](/docs/expression) and the `_.chalk_window` operator. For example, we can compute the average
+[expressions](/docs/expression) and the `_.chalk_window` operator. For example, we can compute the average
 transaction amount over different time windows:
 
 ```python
