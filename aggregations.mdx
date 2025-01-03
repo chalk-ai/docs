@@ -48,13 +48,13 @@ Windowed features support much of the same functionality as normal features. The
 [`etl_offline_to_online`](/api-docs#windowed.etl_offline_to_online).
 
 Windowed features are typically resolved, either:
-- inline by [expressions](/docs/underscore),
+- inline by [expressions](/docs/expression),
 - by [stream resolvers](/docs/streams), or
 - by materialized aggregates.
 
 ### Querying by windowed time range
 
-Windowed features resolved via [underscore expressions](/docs/underscore) can reference the current windowed time range
+Windowed features resolved via [expressions](/docs/expression) can reference the current windowed time range
 using the `_.chalk_window` operator:
 
 ```python
@@ -83,7 +83,7 @@ than the start of the current window duration.
 ### Nested windowed feature references
 
 Windowed features can also be referenced by other windowed features in the same feature class using
-[underscore expressions](/docs/underscore) and the `_.chalk_window` operator. For example, we can compute the average
+[expressions](/docs/expression) and the `_.chalk_window` operator. For example, we can compute the average
 transaction amount over different time windows:
 
 ```python
@@ -207,7 +207,7 @@ class User:
 [//]: # "#### Limitations"
 [//]: # "At this time, Chalk does not support direct referencing of the grouped windowed feature, as they are intended as an"
 [//]: # "intermediary computation for producing scalar features. As a result, they also cannot be used as input into other"
-[//]: # "resolvers. The grouped windowed feature must be resolved by passing an [underscore expression](/docs/underscore) to"
+[//]: # "resolvers. The grouped windowed feature must be resolved by passing an [underscore expression](/docs/expression) to"
 [//]: # "the `expression` parameter."
 
 ---

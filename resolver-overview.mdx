@@ -14,14 +14,14 @@ their relationships, and their properties), resolvers define how your feature va
 are computed.
 
 <TipInfo>
-    If you haven't read the section on feature classes, you are strongly encourage to do so. Understanding feature classes
-    will help you understand resolvers.
+    If you haven't read the section on feature classes, you are strongly encouraged to do so.
+    Understanding feature classes will help you understand resolvers.
 </TipInfo>
 
 Resolvers have four main components: inputs, outputs, code, and run conditions.
 
-The first three of these are rather straightforward. The **inputs** to a resolver
-are the features it uses to compute its output. The **outputs** of a resolver
+The first three of these are rather straightforward. The [**inputs**](/docs/resolver-inputs) to a resolver
+are the features it uses to compute its output. The [**outputs**](/docs/resolver-outputs) of a resolver
 are the features that it computes. The code of the resolver is the logic that
 transforms your input features into your output features.
 
@@ -40,20 +40,11 @@ resolvers run depending on how you are requesting data from Chalk.
 ## Writing Resolvers
 
 Chalk allows you to write resolvers in three different ways:
-- as SQL queries, with comments specifying data sources and output features,
-- as python functions, with type annotations specifying the input and output features,
-- inline in your feature definitions, with the underscore module.
+- as SQL queries, with comments specifying data sources and output features.
+- as python functions, with type annotations specifying the input and output features.
+- as an [expression](/docs/expression), inline in your feature definitions.
 
-<TipInfo>
-    You will likely write mostly python and SQL resolvers, so most of our examples
-    will be for these two variants. However, underscore resolvers are a succinct and
-    optimized way to write resolvers, which can be quite practical in certain cases.
-    We will cover them at the end of the resolver section.
-</TipInfo>
-
-## A Quick Example
-
-Below, we provide an example of how to write SQL and python resolvers in Chalk
+Below is an example of how to write the three kinds of resolvers in Chalk
 for a `User` feature class. In this example, we assume that a Postgres data source
 called `pg_users` has been configured and connected to Chalk.
 
@@ -70,6 +61,7 @@ class User:
   hobbies: list[str]
 
   is_runner: bool  # computed feature
+  athleticism_score: float # computed feature
 ```
 
 Now we define our resolvers:
@@ -87,19 +79,43 @@ select id, name, age, hobbies
 from users;
 ```
 
-We now use a python resolver to compute the `is_runner` feature for our users.
-The `get_is_runner` resolver takes the `hobbies` feature as an input and computes
-a new feature: `is_runner`.
+To compute the `is_runner` feature for users, we simply check whether `running` is in
+the list of hobbies, which we can do with an expression. Chalk expressions utilize low-latency
+C++ for efficient execution. Chalk expressions can use any of the `chalk.functions` to express
+a variety of computations.
 
-```python
+```python src/user.py
+import chalk.functions as F
+from chalk.features import features, _
+
+@features
+class User:
+  id: str
+  name: str
+  age: int
+  hobbies: list[str]
+
+  is_runner: bool = F.contains(_.hobbies, "running")
+  athleticism_score: float # computed feature
+```
+
+We now use a python resolver to compute the `athleticism_socre` feature for our users.
+Python resolvers are useful for integrating existing libraries, and executing more complex
+logic, such as API calls.
+
+```python src/resolvers.py
 from chalk import online
+from src.user import User
+from utils.athleticism import is_athletic
 
 @online
 def get_is_runner(
-    name: User.hobbies
-) -> User.is_runner:
-    return "runner" in hobbies
+    hobbies: User.hobbies
+) -> User.athleticism_score:
+    num_athletic_hobbies = sum([is_athletic(hobby) for hobby in hobbies])
+    return num_athletic_hobbies / len(hobbies)
 ```
+
 
 ## When Do Resolvers Run
 
@@ -107,7 +123,7 @@ A question that often crops up at this point is, "I have defined a resolver, but
 I make it run?"
 
 Just like features, the idea behind resolvers is that they are declarative. Resolvers
-don't run when you define them and they don't run exhaustively over your data. They run
+don't run when you define them, and they don't run exhaustively over your data. They run
 only in response to a request for the features that they are responsible for computing. In
 practice, this means that they run in response to "queries".
 

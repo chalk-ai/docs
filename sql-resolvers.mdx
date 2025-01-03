@@ -1,0 +1,52 @@
+---
+title: SQL Resolvers
+description: Define feature resolvers as a SQL query.
+---
+
+---
+
+SQL resolvers enable you to load and transform data from your data sources as feature values.
+
+## Defining SQL Resolvers
+
+There are two ways to define SQL resolvers. The first is to write a SQL query in a file with the
+`.chalk.sql` extension, and the second is to use the [`make_sql_file_resolver`](/api-docs#make_sql_file_resolver)
+function, which will generate a SQL file resolver based on the function arguments at build time.
+
+### SQL File Resolvers
+
+To define a SQL resolver in a file, create a file with the `.chalk.sql` extension, add comments to specify
+the data source the SQL query will run on and the feature class whose features it will resolve, and write
+the SQL query.
+
+```sql src/get_user.chalk.sql
+-- source: pg_users
+-- resolves: User
+
+select id, name, age, hobbies from users;
+
+```
+
+The output column names in the SQL query must match the feature names in the feature class specified in the
+`resolves` comment. The data source specified in the `source` comment must also match the name of the data
+source configured in the Chalk dashboard. Each SQL file resolver must only resolve features within the
+same feature class, but a resolver does not have to resolve all features within the feature class.
+
+### Generating SQL File Resolvers
+
+To generate SQL file resolvers at build time, use the [`make_sql_file_resolver`](/api-docs#make_sql_file_resolver)
+function. This function enables you to define one or many SQL file resolvers at a time that may have slight
+variations, for example querying a different data source in a different environment. The following code
+would generate an equivalent SQL file resolver to the one above:
+
+```python src/make_user_resolver.py
+from chalk import make_sql_file_resolver
+
+make_sql_file_resolver(
+    name="get_user",
+    source="pg_users",
+    resolves="User",
+    query="select id, name, age, hobbies from users;"
+)
+```
+
