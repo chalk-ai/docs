@@ -9,25 +9,22 @@ description: Updates to Chalk!
 
 ## Reduced cloud costs from optimized resource usage with KEDA
 
-We’re excited to share that we’ve implemented **KEDA (Kubernetes-based Event Driven Autoscaler)** and are rolling it out over the next few weeks.
+We’ve implemented [**KEDA (Kubernetes-based Event Driven Autoscaler)**](https://keda.sh/) and are rolling it out to all customer clusters over the next few weeks.
 With KEDA, your environment now dynamically scales up and down--even to **zero machines** when there’s reduced or no workload.
-With automatic scaling, we're able to optimize resource usage and reduce cloud costs--expect to see a drop in your cloud spend as a result.
+With automatic scaling we're able to optimize resource usage and reduce cloud costs--expect to see a drop in your cloud spend as a result.
 
-## View logs using the CLI
+## View logs and export metrics using the CLI
 
-View logs using the Chalk CLI! Inspect your log stream the same way you would from the GUI but via the command line!
+View logs using the Chalk CLI; inspect your log stream the same way you would from the Chalk dashboard but via the command line.
 `chalk logs [--query="the same string you can put in the web ui"]`
-
-## Export and view metrics using the CLI
-
-View and export metrics using the Chalk CLI!
-In addition to exporting metrics with a custom OpenMetrics compatible collector, you can now also export metrics directly using the CLI.
-`chalk metrics export`
+In addition to exporting metrics with a custom OpenMetrics compatible collector, you can now also export metrics directly using the CLI with `chalk metrics export`.
+Read more about how to [view logs](https://docs.chalk.ai/cli/chalk) and how to [export metrics](https://docs.chalk.ai/cli/chalk) using the [Chalk CLI in our docs.](Read more about how to )
 
 ## Visualize and trace your feature's data lineage with a Graph View
 
-A new **graph view** in the web GUI--use the graph view to visualize the data lineage of your features and trace how your features are created and connected!
-You can also track the named queries that reference each feature.
+The Chalk dashboard now features a brand-new graph view on the Data Lineage page.
+Visualize your features' data lineage, making it easier than ever to trace how your features are created and connected.
+Track the named queries that reference each feature, check which sources a feature is deriveded from, and see which features are referenced by other features.
 
 ---
 
