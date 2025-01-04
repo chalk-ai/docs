@@ -2,8 +2,12 @@
 title: Materialized Windowed Aggregations
 metaTitle: Materialized Windowed Aggregations
 metaDescription: With Chalk, machine learning teams don’t need to spin up separate pipelines, developers can (cache) materialize aggregations and improve performance of expensive computations with just a single line of code
-description: Cache and materialize a feature aggregation
+description: Cache and materialize feature aggregations
 published: true
+---
+
+import { Attribute, AttributeTable } from '@/components/AttributeTable'
+
 ---
 
 Machine learning teams often build and maintain separate pre-aggregation pipelines that relay data--as standalone
@@ -57,7 +61,7 @@ The materialization parameter takes in a dictionary that adheres to the schema o
 
 <AttributeTable title={'Materialization Configuration'}>
     <Attribute field={'bucket_duration'} kind={'Duration'}>
-        The [Duration](/api-docs#Duration) of each bucket in the window e.g. "1h"
+        The <a href="/api-docs#Duration">Duration</a> of each bucket in the window e.g. "1h"
     </Attribute>
     <Attribute field={'bucket_durations'} kind={'Mapping[Duration, Sequence[Duration] | Duration]'}>
         A dictionary that specifically maps bucket durations to your window intervals e.g.
@@ -66,7 +70,6 @@ The materialization parameter takes in a dictionary that adheres to the schema o
         <code className="dark:text-white">"3d"</code> bucket durations for your <code className="dark:text-white">"30d"</code> window interval.
         We recommend explicitly mapping bucket durations to each window if your window intervals have a wide discrepancy e.g.
         ten minute bucket duration with a one year window interval.
-
         Any window intervals not explicitly included in the <code className="dark:text-white">"bucket_durations"</code>
         dictionary will use your supplied <code className="dark:text-white">"bucket_duration"</code> by default.
     </Attribute>
@@ -74,7 +77,7 @@ The materialization parameter takes in a dictionary that adheres to the schema o
         The schedule on which to automatically backfill the aggregation.
         For example, <code className="dark:text-white">"* * * * *"</code>
         or <code className="dark:text-white">"1h"</code>.
-        See [CronTab](/api-docs#CronTab) for more details.
+        See <a href="/api-docs#CronTab">CronTab</a> for more details.
     </Attribute>
     <Attribute field={'continuous_buffer_duration'} kind={'Duration | None'}>
         The minimum period of time for which to sample data directly via online query, rather than from the backfilled aggregations.
