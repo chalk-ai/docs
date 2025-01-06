@@ -15,16 +15,18 @@ With automatic scaling we're able to optimize resource usage--expect to see a dr
 
 ## View logs and export metrics using the CLI
 
-View logs using the Chalk CLI; inspect your log stream the same way you would from the Chalk dashboard but via the command line.
+View logs using the Chalk CLI; inspect your log stream the same way you would from the Chalk dashboard but with the command line:
+
 `chalk logs [--query="the same string you can put in the web ui"]`
-In addition to exporting metrics with a custom OpenMetrics compatible collector, you can now also export metrics directly using the CLI with `chalk metrics export`.
+
+Chalk supports directly exporting metrics to an OpenMetrics compatible collector, you can now also view a sample of your metrics export using the CLI with `chalk metrics export`.
+This helps considerably when experimenting with deploying a new collector.
 Read more about how to [view logs](https://docs.chalk.ai/cli/chalk) and how to [export metrics](https://docs.chalk.ai/cli/chalk) using the [Chalk CLI in our docs.](Read more about how to )
 
 ## Visualize and trace your feature's data lineage with a Graph View
 
-The Chalk dashboard now features a brand-new graph view on the Data Lineage page.
-Visualize your features' data lineage, making it easier than ever to trace how your features are created and connected.
-Track the named queries that reference each feature, check which sources a feature is deriveded from, and see which features are referenced by other features.
+The Data Lineage page of your Chalk dashboard lets you track your features--how each one is derived, referenced, Named Queries, etc.
+In addition to the default list view, we've implemented a graph view, making it easier than ever to trace how your features are created and connected.
 
 ---
 
