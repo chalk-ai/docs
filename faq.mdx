@@ -217,7 +217,7 @@ from src.feature_sets import User
 client = ChalkClient()
 
 dataset = client.offline_query(
-  output=[User.id, User.name, User.age
+  output=[User.id, User.name, User.age],
   max_samples=10,
   recompute_features=True
 )
