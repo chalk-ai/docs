@@ -202,6 +202,27 @@ offline query is a combination of checking the query run in dashboard and the st
 visibility, you can also add the `run_asynchronously=True` argument to `ChalkClient.offline_query` to explicitly run
 your offline query on an isolated worker so you can use the worker status as a query status.
 
+### How do I sample instances of a feature class?
+
+You can query for random instances of a feature class by running an offline query and specifying the `max_samples`
+parameter. For instance, running the example query below will sample ten random users from the `User` feature class,
+returning the features specified by the output parameters: [`User.id`, `User.name`, `User.age`].
+
+```python
+from chalk.client import ChalkClient
+from datetime import datetime
+
+from src.feature_sets import User
+
+client = ChalkClient()
+
+dataset = client.offline_query(
+  output=[User.id, User.name, User.age],
+  max_samples=10,
+  recompute_features=True
+)
+df = dataset.get_data_as_pandas()
+```
 ---
 
 ## Deployment
@@ -225,7 +246,7 @@ or performance impact from old branches.
 
 ### Is my (resolver / query) running?
 
-See answers above under `Resolvers` and `Querying` respectfully!
+See answers above under `Resolvers` and `Querying` respectively!
 
 ### How do I setup a sensor so that I can run something else after a resolver run?
 
