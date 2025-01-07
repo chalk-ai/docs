@@ -31,6 +31,8 @@ https://github.com/chalk-ai/chalk/blob/main/Makefile
 
 Update the pyproject toml in docsgen to point to the new release version: https://github.com/chalk-ai/chalk-private/blob/dev/docsgen/pyproject.toml#L27
 
+Update the table of contents: https://github.com/chalk-ai/chalk-private/blob/dev/docsgen/docsgen/toc.py
+
 Run docsgen github action: https://github.com/chalk-ai/chalk-private/actions/workflows/codegen-chalkpy-docs.yml
 
 Check that the PR was created and merged; cut a release in chalk-private, then check Vercel
