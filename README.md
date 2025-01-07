@@ -7,7 +7,7 @@ is auto-generated from the tools themselves.
 
 ## Updating the Chalk CLI and Python SDK
 
-## CLI
+### CLI
 
 Update the [CLI repository](https://github.com/chalk-ai/cli/tree/main) with the new command!
 
