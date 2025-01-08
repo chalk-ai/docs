@@ -47,6 +47,24 @@ When serving windowed queries, Chalk uses all buckets containing any overlap wit
 
 ![Materialized Windowed Aggregations](/img/mat_windowed_aggs/mat_window_agg.png)
 
+## What types of aggregations does Chalk support?
+
+Chalk supports a number of aggrgations out of box--Chalk builtins are very performant as they're optimized and also run natively (in C++ +/ Rust).
+Aggregations automatically skip null or `None` values.
+The following table lists the supported aggregations along with some notes.
+
+| Function | Notes |
+| ---  | --- |
+| `sum` | |
+| `min` | |
+| `max` | |
+| `mean` | Feature type must be `float` or <code>float &#124; None</code>. `None` values are skipped, meaning they are not included in the mean calculation.  |
+|`count` | |
+|`std` | Standard deviation. Requires at least 2 values. |
+|`var` | Variance. Same requirements as `std`. |
+|`approx_count_distinct` | An approximation of the cardinality of non-null data. |
+
+
 ## How do I use materialized aggregations with Chalk?
 
 Users can materialize a feature aggregation in Chalk by supplying the [`materialization`](/api-docs#windowed.materialization)
@@ -121,7 +139,6 @@ windowed aggregation with continuous backfills.
 Continuous backfills can be configured by supplying a [Duration](/api-docs#Duration)] to the `continuous_buffer_duration` e.g. `"36h"`.
 Chalk will compute data within your `continuous_buffer_duration` directly from your online resolvers.
 
-
 <TipInfo>Note: Chalk includes all the data contained in overlapping buckets.
 We suggest shortening the bucket duration, if the time delta between the end of your window interval and the boundary
 of the last overlapping bucket exceeds the constraints of your use case.</TipInfo>
@@ -163,20 +180,3 @@ When possible, Chalk will use the same timeseries data to serve multiple feature
 Other useful information here is the `Bucket` column, which shows the current bucket size.
 The `Retention` column shows the maximum time window of any feature that depends on the given timeseries.
 The `Dependent Features` column lists the features that are served by the given timeseries.
-
-## What aggregations can I materialize?
-
-Chalk materialized windowed aggregations support several types of aggregations. These aggregations will skip any `None`
-values. The following table lists the supported aggregations along with some notes.
-
-| Function | Notes |
-| ---  | --- |
-| `sum` | |
-| `min` | |
-| `max` | |
-| `mean` | Feature type must be `float` or <code>float &#124; None</code>. `None` values are skipped, meaning they are not included in the mean calculation.  |
-|`count` | |
-|`std` | Standard deviation. Requires at least 2 values. |
-|`var` | Variance. Same requirements as `std`. |
-|`approx_count_distinct` | An approximation of the cardinality of non-null data. |
-
