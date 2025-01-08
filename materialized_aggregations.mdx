@@ -163,3 +163,20 @@ When possible, Chalk will use the same timeseries data to serve multiple feature
 Other useful information here is the `Bucket` column, which shows the current bucket size.
 The `Retention` column shows the maximum time window of any feature that depends on the given timeseries.
 The `Dependent Features` column lists the features that are served by the given timeseries.
+
+## What aggregations can I materialize?
+
+Chalk materialized windowed aggregations support several types of aggregations. These aggregations will skip any `None`
+values. The following table lists the supported aggregations along with some notes.
+
+| Function | Notes |
+| ---  | --- |
+| `sum` | |
+| `min` | |
+| `max` | |
+| `mean` | Feature type must be `float` or <code>float &#124; None</code>. `None` values are skipped, meaning they are not included in the mean calculation.  |
+|`count` | |
+|`std` | Standard deviation. Requires at least 2 values. |
+|`var` | Variance. Same requirements as `std`. |
+|`approx_count_distinct` | An approximation of the cardinality of non-null data. |
+
