@@ -1,0 +1,76 @@
+---
+title: Metrics Parameters
+description: Changing Timescale and Postgres Parameters
+---
+
+Depending on your deployment, you may need adjust the parameters for the metrics database.
+You can do this using the [Chalk CLI](/cli) tool. If you do not have the Chalk CLI
+installed, you can install it by following the instructions [here](/cli/install).
+
+## Change Metrics Parameters
+
+Follow along with the instructions below in your terminal. 
+
+1. Select the correct env:
+`chalk env`
+
+2. Get the metrics db configuration
+`chalk infra describe metrics --json > metrics.json`
+
+`cat metrics.json`
+```
+{
+    "timescaleImage":  "ghcr.io/imusmanmalik/timescaledb-postgis:16-3.4-54",
+    "databaseName":  "chalk-metrics",
+    "databaseReplicas":  1,
+    "storage":  "200Gi",
+    "namespace":  "chalk-metrics",
+    "request":  {
+        "cpu":  "1",
+        "memory":  "1000Mi"
+    },
+    "limit":  {
+        "cpu":  "1",
+        "memory":  "1000Mi"
+    },
+    "connectionPoolReplicas":  3,
+    "connectionPoolMaxConnections":  "500",
+    "connectionPoolSize":  "50",
+    "connectionPoolMode":  "transaction",
+    "backupBucket":  "s3://chalk-cicd-test-metrics-backup-bucket",
+    "backupIamRoleArn":  "arn:aws:iam::009160067517:role/chalk-cicd-test-metrics-backup",
+    "secretName":  "local-api-host-timescale-uri",
+    "internal":  false,
+    "postgresParameters":  {
+        "max_connections":  "200"
+    }
+}
+```
+
+3. Update the desired parameters
+Update the postgres parameters key in metrics.json to include the desired configuration
+```
+"postgres_parameters": {
+    "max_connections": "200",
+    "max_parallel_workers": "32",
+    "max_worker_processes": "64",
+    "timescaledb.max_background_workers": "32"
+}
+```
+
+4. Apply the update
+This should generate a diff that contains the changes to the postgres config
+
+`chalk infra apply metrics -f metrics.json`
+```
+Changes to spec:
+@ ["postgres_parameters","max_parallel_workers"]
++ "32"
+@ ["postgres_parameters","max_worker_processes"]
++ "64"
+@ ["postgres_parameters","timescaledb.max_background_workers"]
++ "32"
+```
+If this looks correct, press `y` to apply. This may cause downtime as the database restarts.
+
+
