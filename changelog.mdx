@@ -5,6 +5,32 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## January 15, 2025
+
+### Improved the granularity at which Chalk services can be rolled back
+
+We improved our CI/CD to support releasing new Chalk images in parallel.
+We also extended both the quantity and types of builds (across various Chalk microservices) that we cache, improving the speed and flexibility of Chalk rollbacks!
+
+### Kubernetes node UI enhanced for readability
+
+We improved the Kubernetes Node UI to display additional data about the nodes in your cluster and polished the UI for compactness and readability.
+
+### Chalk dashboard bubbles up feature value metrics
+
+The feature section of the Chalk dashboard will now show salient metrics for your top feature values.
+The number of observations, when features were observed, the most observed features, and more.
+Metrics can be sliced and grouped by filters like deployment ID, resolver, and operation type, which helps in debugging (at a glance insight into) deployments.
+
+### Query plan viewer now supports node lookups
+
+The Chalk dashboard now also supports query plan node look ups via resolver name, node type, and the input/output features associated with the node.
+This makes it easier to trace the behavior of a resolver in complex query plans.
+
+![Feature metrics view](/img/changelog-25_01_15-feature_metrics.png)
+
+---
+
 ## January 6, 2025
 
 ### Optimized resource usage with KEDA
