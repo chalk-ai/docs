@@ -7,20 +7,21 @@ description: Updates to Chalk!
 
 ## January 22, 2025
 
-### Chalk's C++ SQL driver now supports Spanner DB (GCP)
+### Chalk's C++ SQL driver now speeds up parameterized Spanner queries
 
-Chalk’s C++ driver is steadily advancing towards SQLAlchemy parity, with the notable addition of formal Spanner support.
-Spanner queries now run faster, with some query latencies reducing from 24ms to 10ms.
+Chalk’s C++ driver now supports Spanner queries that explicitly accept input parameters.
+These resolvers now run faster, with some query latencies dropping from 24ms to 10ms.
 
 ### Enhanced visibility into your Chalk deployment
 
-The Chalk query plan viewer now colors nodes for Chalk expressions and SQL resolvers run with Chalk's C++ driver as orange.
+The Chalk query plan viewer now highlights nodes for Chalk expressions and SQL resolvers using Chalk's C++ driver in orange.
 Differentiate between various node types at a glance to debug Chalk queries in less time.
 
 The Kubernetes resource page in the Chalk dashboard has been enhanced to include data from the Kubernetes events API, increasing visibility into nodes, pods, and more objects to come.
-Expanding the types of events and their granularity increases visibility into issues and jobs like node removal, pod scheduling, and deployment failures.
+Expanding the types of events and their granularity provides better insights into issues and jobs.
+These include node removal, pod scheduling, and deployment failures.
 
-Fixed a bug with breadcrumbs not correctly hyperlinking to a feature’s parent (feature) within the query plan viewer, enabling quicker traversal through a feature’s lineage.
+Fixed a bug where breadcrumbs did not correctly hyperlink to a feature's parent in the query plan viewer, enabling quicker traversal through a feature's lineage.
 
 ![Colored nodes in Chalk's query plan viewer](/img/changelog-25_01_22-query_plan_viewer.png)
 
