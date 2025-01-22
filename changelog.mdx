@@ -5,6 +5,42 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## January 22, 2025
+
+### Chalk's C++ SQL driver now supports Spanner DB (GCP)
+
+Chalk’s C++ driver is steadily advancing toward SQLAlchemy parity, with the notable addition of formal Spanner support.
+Spanner queries now run faster, with some query latencies reducing from 24ms to 10ms.
+
+### Support for composite (primary) keys with Chalk expressions
+
+Added support for defining composite keys with Chalk expressions!
+This works with basic resolvers, parent-child relationships, and DataFrame resolvers.
+Chalk automatically computes primary keys for stores requiring single-key inputs, opening up new ways to dynamically join data!
+
+```python
+@feature
+class Student:
+    id: str = _.first_initial + _.last_name + _.class_year
+    first_initial: str
+    last_name: str
+    class_year: str
+```
+
+### Enhanced visibility into your Chalk deployment
+
+The Chalk query plan viewer now colors SQL resolver nodes and Chalk expression nodes as orange.
+Differentiate between various node types at a glance to debug Chalk queries in less time.
+
+The Kubernetes resource page in the Chalk dashboard has been enhanced to include data from the Kubernetes events API, increasing visibility into nodes, pods, and more objects to come.
+Expanding the types of events and their granularity increases visibility into issues and jobs like node removal, pod scheduling, and deployment failures.
+
+Fixed a bug with breadcrumbs not correctly hyperlinking to a feature’s parent (feature) within the query plan viewer, enabling quicker traversal through a feature’s lineage.
+
+![Colored nodes in Chalk's query plan viewer](/img/changelog-25_01_22-query_plan_viewer.png)
+
+---
+
 ## January 15, 2025
 
 ### Improved the granularity at which Chalk services can be rolled back
