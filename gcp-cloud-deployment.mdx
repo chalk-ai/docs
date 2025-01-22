@@ -1003,3 +1003,36 @@ Chalk's support team will work with you to scope permissions down to what are ne
 The precise details depend on the level of ongoing support that your team needs and your compliance requirements.
 In principle, Chalk does not require ongoing access to data, or to the ability to edit IAM permissions,
 but Chalk requires ongoing access to update the software deployed in your environment.
+
+## Adding a Private Cloud SQL Data Source
+
+If you would like to add a private Cloud SQL instance as a data source, this requires the deployment of a
+cloud-sql-proxy sidecar and connecting to the source like a regular PostgreSQL or MySQL source, with a
+hostname of `127.0.0.1`.
+
+First, ensure that Chalk's customer-scoped management service account has the following IAM permissions for the
+instance and project in which your Cloud SQL source is set up.
+
+```txt
+Cloud SQL Client
+Cloud SQL Instance User
+Cloud SQL Viewer
+```
+
+Then, in the dashboard, navigate to `Settings > Resources` and click on the `Edit JSON` button. Add the following
+to the resource configuration JSON:
+
+```txt
+  "sidecars": [
+    {
+      "instance_connection_name": "{PROJECT_NAME}:{REGION_NAME}:{INSTANCE_NAME}",
+      "name": "cloudsql",
+      "port": 5432, # or 3306 for MySQL
+      "private_ip": false
+    }
+  ]
+```
+
+Once you're done editing the JSON, click on the `Save and Apply Changes` button to deploy your sidecar.
+
+If you have any questions or need help, please reach out to Chalk's support team.
