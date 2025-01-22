@@ -12,24 +12,9 @@ description: Updates to Chalk!
 Chalk’s C++ driver is steadily advancing towards SQLAlchemy parity, with the notable addition of formal Spanner support.
 Spanner queries now run faster, with some query latencies reducing from 24ms to 10ms.
 
-### Support for composite (primary) keys with Chalk expressions
-
-Added support for defining composite keys with Chalk expressions!
-This works with basic resolvers, parent-child relationships, and DataFrame resolvers.
-Chalk automatically computes primary keys for stores requiring single-key inputs, opening up new ways to dynamically join data!
-
-```python
-@feature
-class Student:
-    id: str = _.first_initial + _.last_name + _.class_year
-    first_initial: str
-    last_name: str
-    class_year: str
-```
-
 ### Enhanced visibility into your Chalk deployment
 
-The Chalk query plan viewer now colors SQL resolver nodes and Chalk expression nodes as orange.
+The Chalk query plan viewer now colors nodes for Chalk expressions and SQL resolvers run with Chalk's C++ driver as orange.
 Differentiate between various node types at a glance to debug Chalk queries in less time.
 
 The Kubernetes resource page in the Chalk dashboard has been enhanced to include data from the Kubernetes events API, increasing visibility into nodes, pods, and more objects to come.
