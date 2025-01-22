@@ -1006,7 +1006,7 @@ but Chalk requires ongoing access to update the software deployed in your enviro
 
 ## Adding a Private Cloud SQL Data Source
 
-If you would like to add a private CLoud SQL instance as a data source, this requires the deployment of a
+If you would like to add a private Cloud SQL instance as a data source, this requires the deployment of a
 cloud-sql-proxy sidecar and connecting to the source like a regular PostgreSQL or MySQL source, with a
 hostname of `127.0.0.1`.
 
@@ -1027,7 +1027,7 @@ to the resource configuration JSON:
     {
       "instance_connection_name": "{PROJECT_NAME}:{REGION_NAME}:{INSTANCE_NAME}",
       "name": "cloudsql",
-      "port": 5432,
+      "port": 5432, # or 3306 for MySQL
       "private_ip": false
     }
   ]
