@@ -9,19 +9,19 @@ description: Updates to Chalk!
 
 ### Chalk's C++ SQL Driver for Spanner now supports inputs (parameterized queries)
 
-Chalk’s C++ driver now supports Spanner queries that explicitly accept input parameters.
+Chalk’s C++ driver now supports [Spanner](https://cloud.google.com/spanner) queries that explicitly accept input parameters.
 These resolvers now run faster, with some query latencies dropping from 24ms to 10ms.
 
 ### Enhanced visibility into your Chalk deployment
 
-The Chalk query plan viewer now highlights nodes for Chalk expressions and SQL resolvers using Chalk's C++ driver in orange.
+The Chalk query plan viewer now highlights nodes for [Chalk expressions](https://docs.chalk.ai/docs/expression) and [SQL resolvers](https://docs.chalk.ai/docs/sql-resolvers) using Chalk's C++ driver in orange.
 Differentiate between various node types at a glance to debug Chalk queries in less time.
 
 The Kubernetes resource page in the Chalk dashboard has been enhanced to include data from the Kubernetes events API, increasing visibility into nodes, pods, and more objects to come.
 Expanding the types of events and their granularity provides better insights into jobs.
 These include events like node removal, pod scheduling, and deployment failures.
 
-Fixed a bug where breadcrumbs did not correctly hyperlink to a feature's parent in the query plan viewer, enabling quicker traversal through a feature's lineage.
+The query plan viewer in the Chalk dashboard now supports breadcrumbs to hyperlink to a feature’s parent in the query plan viewer, enabling quicker traversal through a feature’s lineage.
 
 ![Colored nodes in Chalk's query plan viewer](/img/changelog-25_01_22-query_plan_viewer.png)
 
