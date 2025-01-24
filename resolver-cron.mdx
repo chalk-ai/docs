@@ -35,6 +35,17 @@ def region_average(
     )
 ```
 
+In SQL resolvers you can also use the `cron` keyword in the comments.
+
+```sql
+-- type: offline
+-- resolves: user_seller_features
+-- source: snowflake
+-- owner: disco
+-- tags: ["team:discoml","type:simulated"]
+-- cron: "0 0 * * *"
+```
+
 ---
 
 ## Scheduling with arguments
