@@ -1,0 +1,85 @@
+---
+title: Online and Offline Stores
+description: Selecting an online and offline store for your environment
+---
+
+When setting up a new environment, Chalk provides several options for choosing a storage provider
+for your online and offline store. The DBMS (Database Management System) that you choose will depend on your
+specific requirements, as well as your cloud deployment provider.
+
+## Online Store Options
+
+The Chalk online store is used for low-latency serving of real-time feature values. Although Chalk's query engine
+is optimized for efficient computation of feature values by compiling Python and SQL resolvers into Rust and C++,
+caching computed values in the online store can further improve performance.
+
+### GCP Online Store Options
+
+| Store       | Description                              | Performance | Scalability | Cost |
+|-------------|------------------------------------------|-------------|-------------|------|
+| Cloud SQL   | Postgres (relational database)           | milliseconds, disk IO bottlenecks possible
+| Memorystore | Redis (in-memory key-value NoSQL store)  | microseconds, in-memory
+| Big Table   | Distributed wide-column NoSQL database   |
+
+
+### AWS
+
+Postgres (Amazon RDS)
+Redis (Amazon Elasticache)
+DynamoDB
+
+### Azure
+
+Postgres (Azure Database for PostgreSQL)
+Redis (Azure Cache for Redis)
+
+
+## Offline Store Options
+
+### GCP
+
+Big Query
+
+### AWS
+
+Amazon Redshift
+
+### Azure
+
+
+Chalk uses several storage technologies
+
+we offer four types of online stores:
+postgres ( amazon rds, google cloudsql)
+redis (elasticache, google memorystore, amazon elasticache)
+dynamodb
+big table
+we offer four types of offline stores?
+Google Big Query
+Amazon Redshift
+Snowflake
+Dbricks Delta Lake
+
+Online Store Options
+1. Redis or DynamoDB
+- Tradeoffs:
+- Performance: High throughput and low latency are achieved with Redis, making it suitable for key-value access patterns.
+- Scalability: DynamoDB is highly scalable but may introduce some latency due to its distributed nature.
+- Cost: Redis can be more cost-effective for smaller datasets, while DynamoDB’s pricing can grow with large-scale data usage.
+2. BigTable (if considering horizontal scalability)
+- Tradeoffs:
+- Scalability: Excellent for massive datasets and high-throughput applications.
+- Cost: May be more expensive than traditional key-value stores depending on the usage pattern and data size.
+Offline Store Options
+1. Snowflake, BigQuery, or Delta Lake
+- Tradeoffs:
+- Storage & Computation: Optimized for storing historical feature values and performing batch queries. They are excellent for analytics and larger datasets.
+- Cost & Complexity: Snowflake and BigQuery can incur costs based on usage, and managing large datasets may require more complex query optimizations compared to simpler storage solutions.
+2. TimescaleDB (if considering time-series data)
+- Tradeoffs:
+- Time-Series Capabilities: Great for time-series data with robust querying capabilities.
+- Cost: Can offer savings for specific data access patterns compared to more general-purpose data warehouses.
+General Considerations
+- Feature Caching: Using an online store allows for the usage of max_staleness, enabling faster response times and cache hits.
+- Data Latency & Freshness: The choice of the online store impacts how fresh data is served. For real-time applications, using a fast online store with caching features is vital.
+- Integration Complexity: Some options may require additional setup or configuration, depending on the selected technology stack and your environment's architecture.
