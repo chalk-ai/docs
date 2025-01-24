@@ -42,9 +42,16 @@ You can define schemas, specify relationships, and add metadata
 to help your team share and re-use work.
 
 ```py
-from chalk.features import features
 from chalk import _, DataFrame
 import chalk.functions as F
+from chalk.features import features
+
+@features
+class Transaction:
+    id: int
+    amount: float
+    user_id: "User.id"
+    user: User
 
 @features
 class User:
@@ -57,29 +64,6 @@ class User:
         "1m", "1d", "30d",
         _.txns.count()
     )
-```
-
-```py
-from datetime import datetime
-from chalk.features import features, DataFrame
-
-@features
-class Transaction:
-    id: int
-    amount: float
-    user_id: "User.id"
-    user: User
-
-@features
-class User:
-    id: int
-    full_name: str
-    nickname: str | None
-    email: str | None
-    birthday: datetime
-    credit_score: float
-    datawarehouse_feature: float
-    transactions: DataFrame[Transaction]
 ```
 
 ### Resolvers
