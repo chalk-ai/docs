@@ -42,8 +42,9 @@ You can define schemas, specify relationships, and add metadata
 to help your team share and re-use work.
 
 ```py
-from datetime import datetime
-from chalk.features import features, DataFrame
+from chalk import _, DataFrame
+import chalk.functions as F
+from chalk.features import features
 
 @features
 class Transaction:
@@ -55,13 +56,14 @@ class Transaction:
 @features
 class User:
     id: int
-    full_name: str
-    nickname: str | None
-    email: str | None
-    birthday: datetime
-    credit_score: float
-    datawarehouse_feature: float
-    transactions: DataFrame[Transaction]
+    name: str
+    email: str
+    name_match: float = F.levenstein_distance(_.name, _.email)
+    txns: DataFrame[Transaction]
+    count_txns: Windowed[int] = windowed(
+        "1m", "1d", "30d",
+        _.txns.count()
+    )
 ```
 
 ### Resolvers
