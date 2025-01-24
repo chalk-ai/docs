@@ -42,6 +42,24 @@ You can define schemas, specify relationships, and add metadata
 to help your team share and re-use work.
 
 ```py
+from chalk.features import features
+from chalk import _, DataFrame
+import chalk.functions as F
+
+@features
+class User:
+    id: int
+    name: str
+    email: str
+    name_match: float = F.levenstein_distance(_.name, _.email)
+    txns: DataFrame[Transaction]
+    count_txns: Windowed[int] = windowed(
+        "1m", "1d", "30d",
+        _.txns.count()
+    )
+```
+
+```py
 from datetime import datetime
 from chalk.features import features, DataFrame
 
