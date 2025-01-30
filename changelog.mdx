@@ -5,6 +5,57 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## January 30, 2025
+
+
+### Support for embedding models from Vertex AI (GCP)
+
+Chalk can automatically create embeddings for vector feature types through Open AI.
+We've expanded our native embed function to support Vertex, Google Cloud's AI platform.
+
+### Extended support for `Now`--a Chalk primitive for referencing the current time
+
+Now is a Chalk built-in that enables us to incorporate the current time as a filter.
+Extending the support for Now unlocks new design patterns; build resolvers and queries that take in
+- multiple ids at a single point in time
+- a single id at various points in time
+- multiple ids at various points in time
+
+Easily sample historical state like all the transactions for 3 users from a particular date or include the current time when calling out to a microservice.
+
+```python
+sample_some_transactions = offline_query(
+    input={Transaction.user_id: [103, 150, 170]},
+    input_times=[datetime(2024, 1, 1, tzinfo=timezone.utc)] * 3,
+    output=[Transaction],
+    recompute_features=True,
+)
+```
+
+### Chalk branches can be deployed without requiring a local Chalkpy installation
+
+Chalk checks your features for errors locally before deploying them to a remote branch.
+Normally, if chalkpy (Chalk’s Python SDK) isn’t installed locally, running chalk apply would fail.
+However, we can now lint branches remotely and show your validation errors in the CLI as usual.
+
+### Breaking change in the 1.0.0 major release of Chalk's Java client
+
+This release introduces performance improvements to `OnlineQueryResult.unmarshal`, but with a few breaking changes:
+- Unrequested features are now left as null instead of being initialized as empty objects, similarly so for unrequested dataclass features (subclasses of `StructFeaturesClass`).
+- `OnlineQueryResult.unmarshal` now consumes scalarsTable, resulting in `getScalarsTable()` returning an empty table post unmarshaling.
+Please create a copy of your results if they need to be retained with `.copy()`.
+
+### Chalk dashboard improvements
+
+Drag to zoom: Click and drag within a chart or online query to zoom into the selected timeframe; this helps drill down into your charts.
+Faster chart loads: We've improved the load times of charts in the Chalk dashboard!
+Offline queries that run with explain=True now have a performance summary tab that helps trace query performance. Identify operations with their memory consumption, input size, output size, and whether the operation was blocked before executing.
+The Chalk dashboard now supports directly exporting (as Parquet) any view that uses our output explorer: feature previews, datasets, offline queries, and online queries that get persisted to the offline store.
+
+![Profiling an offline query](/img/changelog-25_01_30-offline_query_performance.png)
+
+---
+
 ## January 22, 2025
 
 ### Chalk's C++ SQL Driver for Spanner now supports inputs (parameterized queries)
