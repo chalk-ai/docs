@@ -21,11 +21,11 @@ There are three options for online stores for customers on GCP (Google Cloud Pla
 |-------------|------------------------------------------|--------------|------------|
 | Cloud SQL   | Postgres (relational database)           | milliseconds | vertical   |
 | Memorystore | Redis (in-memory key-value NoSQL store)  | microseconds | vertical   |
-| Big Table   | Distributed wide-column NoSQL database   | milliseconds | horizontal |
+| Bigtable    | Distributed wide-column NoSQL database   | milliseconds | horizontal |
 
 Generally, customers will choose the data store that they already use within their data platform. However,
 we would generally recommend Memorystore for low-latency queries, Cloud SQL for general query caching and
-costs, and Big Table for huge storage needs.
+costs, and Bigtable for huge storage needs.
 
 ### AWS
 
@@ -34,10 +34,10 @@ There are three options for customers on AWS (Amazon Web Services):
 | Store       | Description                    | Performance  | Scaling     |
 |-------------|--------------------------------|--------------|-------------|
 | RDS         | Postgres (relational database) | milliseconds | vertical    |
-| Elasticache | Redis (in-memory store)        | microseconds | vertical    |
+| ElastiCache | Redis (in-memory store)        | microseconds | vertical    |
 | DynamoDB    | Key-Value NoSQL database       | milliseconds | auto-scales |
 
-We generally recommend DynamoDB for high performance and Elasticache for low-latency and greater storage capacity
+We generally recommend DynamoDB for high performance and ElastiCache for its low-latency and greater storage capacity
 for large rows. However, some customers may choose to use RDS depending on their existing data platform.
 
 ### Azure
@@ -60,11 +60,11 @@ We offer four options for offline stores:
 
 | Store                 | Storage                     |
 |-----------------------|-----------------------------|
-| Google Big Query      | Columnar (BigTable-based)   |
+| Google BigQuery       | Columnar (Bigtable-based)   |
 | Amazon Redshift       | Columnar (Parquet)          |
 | Snowflake             | Columnar (Micro-partitions) |
 | Databricks Delta Lake | Columnar (Parquet)          |
 
-For customers with GCP cloud deployments, we generally recommend Google Big Query for its performance in
+For customers with GCP cloud deployments, we generally recommend Google Big Query for its performance with
 analytical queries. However, generally, customers will choose the data store that they already use within
 their data platform.
