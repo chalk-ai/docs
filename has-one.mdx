@@ -64,6 +64,30 @@ class User:
   The <code>lambda</code> solves forward references, letting you reference <code>User</code> before it is defined.
 </TipInfo>
 
+### Composite Join Keys
+
+You can also specify a composite join key for a has-one relationship. For example, if a `User` is linked to a
+`Profile` by both `user_id` and `email`, you can define the join as follows:
+
+```python
+from chalk.features import features, has_one
+from datetime import datetime
+
+@features
+class Profile:
+    id: str
+    user_id: int
+    user_email: str
+    created_at: datetime
+
+@features
+class User:
+    id: int
+    email: str
+
+    profile: Profile = has_one(lambda: (Profile.user_email == User.email) & (Profile.user_id == User.id))
+```
+
 ---
 
 ## Back-references
