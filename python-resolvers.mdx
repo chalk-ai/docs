@@ -347,6 +347,32 @@ def get_total_spent(
     return txns.sum()
 ```
 
+### Time dependencies
+
+To set a time-based dependency in your resolver, you can use the `Now` keyword. Resolvers with a dependency on `Now`
+can use the input times passed in at query-time to compute either scalar or DataFrame outputs.
+
+```python
+from chalk import online, DataFrame, Now
+from chalk.features import features
+from datetime import datetime
+
+@features
+class Account:
+    id: str
+    balance: float
+    updated: datetime
+
+@online
+def get_daily_balance(now: Now) -> DataFrame[Account]:
+    return DataFrame([
+        Account(id="1", balance=100, updated=now),
+        Account(id="2", balance=200, updated=now),
+    ])
+```
+
+Read more about time-based dependencies [here](/docs/time).
+
 ## Outputs
 
 Python resolvers can output either scalar features or a DataFrame of features.
