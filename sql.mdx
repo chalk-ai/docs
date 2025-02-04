@@ -325,6 +325,10 @@ The following are supported keys that may be included in `.chalk.sql` file comme
     partitioned by a particular set of columns.
     This is most common with data-warehouse sources like Snowflake, BigQuery or Databricks.
 </Attribute>
+<Attribute field='total' kind='bool'>
+    Whether this resolver returns all ids of a given namespace.
+    To have this annotation, the resolver must take no arguments and return a DataFrame.
+</Attribute>
 </AttributeTable>
 
 ### Proper comment formatting
