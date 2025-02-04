@@ -50,3 +50,33 @@ make_sql_file_resolver(
 )
 ```
 
+## SQL Resolver Configurations
+
+As with Python resolvers, SQL resolvers can be configured through many optional parameters. For generating SQL
+file resolvers, these parameters are passed as arguments to the [`make_sql_file_resolver`](/api-docs#make_sql_file_resolver)
+function. For SQL file resolvers, these parameters are specified in the comments at the top of the file.
+
+```sql
+-- These parameters are required in all SQL file resolvers
+-- source: pg
+-- resolves: User
+
+-- These parameters are optional in all SQL file resolvers
+-- kind: online <-- default is "online," but can also be "offline" or "streaming"
+-- incremental: <-- read more about incremental resolvers here: https://docs.chalk.ai/docs/sql#incremental-queries
+--   mode: row
+--   lookback_period: 60m
+--   incremental_column: updated_at
+-- count: 1 <-- the number of rows the resolver should return. This can be set to 1, 'one', 'one_or_none', or 'all'
+-- timeout: 5m <-- the maximum time the resolver should run before timing out
+-- cron: 0 0 * * * <-- a cron expression to schedule the resolver to run at a specific time
+-- owner: 'helly@lumonindustries.com' <-- the email of the owner of the resolver. Alerts can be routed to owners.
+-- tags: ['user', 'profile'] <-- tags to help organize resolvers in the Chalk dashboard
+-- environment: 'production' <-- the environment in which the resolver should run
+--total: True <-- whether this resolver returns all ID's of a given namespace.
+
+
+select id, name, age, hobbies, updated_at from users;
+```
+
+For the full list of configurations, see [here](/docs/sql#configuration).
