@@ -10,18 +10,18 @@ description: Updates to Chalk!
 
 ### Support for embedding models from Vertex AI (GCP)
 
-Chalk can automatically create embeddings for [vector feature types](https://docs.chalk.ai/docs/feature-types#vectors) through Open AI.
+Chalk can automatically create embeddings for [vector feature types](/docs/feature-types#vectors) through Open AI.
 We've expanded our native embed function to support [Vertex, Google Cloud's AI platform.](https://cloud.google.com/vertex-ai)
 
 ### Extended support for `Now`--a Chalk primitive for referencing the current time
 
 `Now` is a Chalk built-in that enables us to incorporate the current time as a filter.
-Extending the support for `Now` unlocks new design patterns; build resolvers and queries that take in
+Extending the support for `Now` unlocks [new design patterns](/docs/python-resolvers#time-dependencies); build resolvers and queries that take in
 - multiple ids at a single point in time
 - a single id at various points in time
 - multiple ids at various points in time
 
-[Easily sample historical state](https://docs.chalk.ai/docs/temporal-consistency) like all the transactions for 3 users from a particular date or include the current time when calling out to a microservice.
+[Easily sample historical state](/docs/temporal-consistency) like all the transactions for 3 users from a particular date or include the current time when calling out to a microservice.
 
 ```python
 sample_some_transactions = offline_query(
@@ -34,7 +34,7 @@ sample_some_transactions = offline_query(
 
 ### Chalk branches can be deployed without requiring a local Chalkpy installation
 
-Chalk checks your features for errors locally before [deploying them to a remote branch.](https://docs.chalk.ai/docs/branches)
+Chalk checks your features for errors locally before [deploying them to a remote branch.](/docs/branches)
 Normally, if chalkpy (Chalk’s Python SDK) isn’t installed locally, running chalk apply would fail.
 However, we can now lint branches remotely and show your validation errors in the CLI as usual.
 
@@ -65,7 +65,7 @@ These resolvers now run faster, with some query latencies dropping from 24ms to 
 
 ### Enhanced visibility into your Chalk deployment
 
-The Chalk query plan viewer now highlights nodes for [Chalk expressions](https://docs.chalk.ai/docs/expression) and [SQL resolvers](https://docs.chalk.ai/docs/sql-resolvers) using Chalk's C++ driver in orange.
+The Chalk query plan viewer now highlights nodes for [Chalk expressions](/docs/expression) and [SQL resolvers](https://docs.chalk.ai/docs/sql-resolvers) using Chalk's C++ driver in orange.
 Differentiate between various node types at a glance to debug Chalk queries in less time.
 
 The Kubernetes resource page in the Chalk dashboard has been enhanced to include data from the Kubernetes events API, increasing visibility into nodes, pods, and more objects to come.
