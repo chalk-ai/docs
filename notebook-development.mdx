@@ -6,36 +6,38 @@ description: Use Chalk in your notebook of choice.
 published: true
 ---
 
-## Installation
+Chalk makes it really easy to write and test out new features from a notebook.
 
-### Dependencies
+To get started, you'll want to install and connect Chalk to your notebook environment. Generally
+this involves two steps:
 
-Install Chalk in your notebook environment by running the following command in a cell:
+- Installing the `chalkpy[runtime]` package,
+- Authenticating to Chalk (using the `chalk` cli or environment variables)
 
-```python notebook.ipynb
-!pip install chalkpy[all]
-```
+We walk through how to do this for [Deepnote](/docs/notebook-development#deepnote) and [Hex](/docs/notebook-development#hex), but the process should be similar
+for other notebooks.
 
-### Authentication
+## Setup
 
-To use Chalk in a notebook, we will need to generate a client ID and secret key pair.
+To install dependencies, run the `!pip install "chalkpy[runtime]"` bash command directly in a cell (using `!`)
+
+To authenticate, we recommend generating a client ID and secret key pair.
 
 In the Chalk Dashboard, under **Settings > Access Tokens**,
 generate a client ID and secret key pair by clicking on **New Token** and selecting all necessary permissions.
 
-We will need the client ID and client secret we generated to initialize
-a Chalk client in our notebook.
-
 ---
 
-## Environment Setup
+## Connecting Your Notebook to Chalk
 
-You can use the `ChalkClient` from any Jupyter notebook environment.
+You can connect Chalk to any Jupyter notebook environment. In this section, we provide a walkthrough
+for running Chalk either locally, with Deepnote, or with Hex. That said, the process should be similar
+for other notebooks.
 
 ### Local
 
 If you are working with a local notebook, Chalk will pick up your credentials
-generated from running `chalkpy login` in your terminal.
+generated from running `chalk login` in your terminal.
 
 All you need to do is initialize the client:
 
@@ -79,9 +81,56 @@ from chalk import ChalkClient
 
 client = ChalkClient(
   client_id=CHALK_CLIENT_ID,
-  client_secret=CHALK_CLIENT_SECRET
+  client_secret=CHALK_CLIENT_SECRET,
+  branch='notebook',
 )
 ```
+
+## Loading Features
+
+To load your Chalk features into your notebook, you'll want to run:
+
+````
+```python notebook.ipynb
+from chalk import ChalkClient
+
+client.load_features()
+````
+
+This will load your Chalk features into your notebook. For instance, I've your team has defined and deployed
+the following features to Chalk, they should now be accessible in your notebook:
+
+```python
+@features
+class Transaction:
+    id: int
+    user_id: int
+    amount: float
+    ts: datetime
+
+@features
+class User:
+    id: int
+    sum_transaction_amount: float
+    transactions: DataFrame[Transaction] = has_many(lambda: Transaction.user_id == User.id)
+```
+
+You can test this by running the following in a notebook cell:
+
+```python notebook.ipynb
+User
+```
+
+## Building New Features
+
+To add new features, you'll want to define them onto the features you've loaded into the Notebook.
+For instance, say we want to add an `is_large` feature to our Transaction feature class. You can
+do so by running the following command:
+
+```python notebook.ipynb
+Transaction.is_large = Transaction.amount > 100
+```
+
 
 ## Creating a branch
 
@@ -132,7 +181,6 @@ We therefore use the `as` keyword to rename the column in our resolver.
 
 ## Inline Syntax
 
-
 In notebooks, you can define features inline using the syntax shown below.
 
 Consider the following feature class definition for `RocketEngine`
@@ -149,7 +197,6 @@ class RocketEngine:
 ```
 
 If we wanted to define a feature inline in a notebook cell, we could do so using the underscore syntax below:
-
 
 ```python notebook.ipynb
 RocketEngine.density: float = _.mass / _.volume
