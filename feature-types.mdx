@@ -48,25 +48,6 @@ class Book:
     chapters: list[Chapter]
 ```
 
----
-
-## JSON
-
-Features can be defined as a JSON type. You can then reference the JSON feature in resolver and query
-definitions, and retrieve scalar values from JSON features using
-[`chalk.functions.json_value`](https://docs.chalk.ai/api-docs#json_value).
-
-```python
-import chalk.functions as F
-from chalk import JSON
-from chalk.features import _, features
-
-@features
-class User:
-   id: str
-   profile: JSON
-   favorite_color: str = F.json_value(_.raw, "$.prefs.color")
-```
 
 ---
 
