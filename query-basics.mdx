@@ -62,7 +62,7 @@ Read more about the parameters to this method [here](/api-docs#ChalkClient.query
   are input as lists, and <a href={'/docs/feature-types#dataclass'}>struct features</a> are input as JSON.
 
   An example of passing a user with two credit cards as input:
-  ```{user.id: '1', user.cards: [card.id: 'xyz', card.id:'abc']}```
+  ```{user.id: '1', user.cards: [Card(id='xyz'), Card(id='abc')]}```
 </Attribute>
 
 <Attribute field={'outputs'} kind={'string[]'}>
