@@ -5,8 +5,20 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
-## January 30, 2025
+## February 06, 2025
 
+### Chalk dashboard improvements
+
+- Added a configuration page for modifying Chalk's connection to your artifact registry e.g. AWS CodeArtifact and Google Artifact Registry
+- The deployments overview page now includes hyperlinks to the source code associated with each deployment
+- Added a unified page for viewing scheduled resolvers, queries, and pending backfills
+- The detailed performance metrics now displays metrics from a query's physical plan e.g. peak memory, input bytes, output rows
+
+![Scheduled queries](/img/changelog-2025_02_06-scheduled_runs.png)
+
+---
+
+## January 30, 2025
 
 ### Support for embedding models from Vertex AI (GCP)
 
@@ -47,10 +59,10 @@ Please create a copy of your results if they need to be retained with `.copy()`.
 
 ### Chalk dashboard improvements
 
-Drag to zoom: Click and drag within a chart or online query to zoom into the selected timeframe; this helps drill down into your charts.
-Faster chart loads: We've improved the load times of charts in the Chalk dashboard!
-Offline queries that run with `explain=True` now have a performance summary tab that helps trace query performance. Identify operations with their memory consumption, input size, output size, and whether the operation was blocked before executing.
-The Chalk dashboard now supports directly exporting (as Parquet) any view that uses our output explorer: feature previews, datasets, offline queries, and online queries that get persisted to the offline store.
+- Drag to zoom: Click and drag within a chart or online query to zoom into the selected timeframe; this helps drill down into your charts.
+- Faster chart loads: We've improved the load times of charts in the Chalk dashboard!
+- Offline queries that run with `explain=True` now have a performance summary tab that helps trace query performance. Identify operations with their memory consumption, input size, output size, and whether the operation was blocked before executing.
+- The Chalk dashboard now supports directly exporting (as Parquet) any view that uses our output explorer: feature previews, datasets, offline queries, and online queries that get persisted to the offline store.
 
 ![Profiling an offline query](/img/changelog-25_01_30-offline_query_performance.png)
 
