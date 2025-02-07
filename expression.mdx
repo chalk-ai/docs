@@ -11,9 +11,11 @@ Chalk expressions are used to resolve features from operations on other features
 represents a reference to the containing feature class and is used to access other features in the same instance. In
 addition to arithmetic operations, expressions can also be used to filter and aggregate data.
 
-Expressions are useful because Chalk statically analyzes and optimizes them, leading to better performance
-when compared to equivalent Python resolvers. They are also useful for succinctly defining common features, such as the
-number of times a user failed a login attempt over the past 30 days or the total amount spent at a given merchant.
+Expressions are useful both for optimizing performance and for succinctly defining features from the common to the
+complex. Chalk statically analyzes and optimizes expressions, pulling out shared dependencies and computing only once
+to reduce redundancies, while running low-latency C++ code. Chalk expressions make it easy to define common features,
+such as the number of times a user failed a login attempt over the past 30 days or the total amount spent at a given
+merchant.
 
 ## Nested References
 
