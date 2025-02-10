@@ -179,17 +179,23 @@ When building new features on the Director class, features from joined classes c
 Director.average_movie_runtime = _.movies[_.runtime].mean()
 ```
 
-In the above example, we define
+In the above example, the two different `_`'s refer to two different feature class namespaces.
 
+- `_.movies` can be thought of as `Director.movies`,
+- `_.runtime` can be thought of as `Movie.runtime`.
 
 ### Using Chalk Functions
 
 Chalk exposes a number of functions that can be called and composed—a full list of them can be found on our [expressions page](/docs/expression#additional-functions).
+For,
 
-For instance, if we want to define a new feature on our Movie class that turns or str genres
+```python notebook.ipynb
+Movie.is_directors_usual_genre = F.contains(_.director.genres, _.primary_genre)
+```
 
 ## Translating this Code into Production Code
 
 Defining features as these expressions provides a couple really significant advantages:
+
 1. You build out really modular and granular features that can be composed.
-2. Your features translate really easily into really performant code—everything we've written in this tutorial can be translated to your Chalk feature store and run performantly!
+2. Your features translate directly into performant code—everything we've written in this tutorial can be directly translated to your Chalk feature store and run efficiently.
