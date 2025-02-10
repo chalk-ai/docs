@@ -7,10 +7,14 @@ published: true
 Chalk supports [DynamoDB](https://aws.amazon.com/dynamodb/) as a natively accelerated [SQL source](/docs/sql). After connecting your AWS
 credentials, you will be able to query your DynamoDB instance through Chalk with [PartiQL](https://partiql.org/).
 
+---
+
 ## Adding DynamoDB
 
 Follow the [AWS instructions](/docs/aws) to give Chalk access to application credentials for your AWS account. Chalk
 will use these credentials to access DynamoDB.
+
+---
 
 ## Integration
 
@@ -22,30 +26,35 @@ resolved with DynamoDB.
 from chalk.features import features
 from chalk.sql import DynamoDBSource
 
-DynamoDBSource(name="my_dynamo")  # required for Chalk to be aware of this source
+DynamoDBSource(name="user_data")  # required for Chalk to be aware of this source
 
 @features
 class User:
     id: str
     transaction_volume: float
+    high_volume: bool = _.transaction_volume > 1000
 ```
 
 Now, you are all set to use DynamoDB with [SQL file resolvers](/docs/sql#sql-file-resolvers):
 
 ```sql
 -- type: online
--- resolves: user
--- source: my_dynamo
+-- resolves: User
+-- source: user_data
 SELECT
     id,
     TransactionVolume AS transaction_volume
-FROM
-    UserTable
-LIMIT 10
+FROM UserTable
 ```
 
-This file resolves the `User.transaction_volume` feature. Please note that the `--source: my_dynamo` line is necessary
-and should match the `name` provided to your `DynamoDBSource`.
+This file resolves two features of the feature class `User`: `User.transaction_volume` and `User.id`.
+When the `User.transaction_volume` feature is required (or if it's needed for computing a downstream feature
+like `User.high_volume`), Chalk will execute the SQL query on your DynamoDB instance and
+return the result.
+The `-- source: user_data` comment tells Chalk to use the `DynamoDBSource` with the name `user_data` to resolve this
+query.
+
+---
 
 ## Chalk's DynamoDB Query Language
 
