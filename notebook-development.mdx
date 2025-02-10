@@ -18,7 +18,8 @@ We provide specific setup instructions for [Deepnote](/docs/notebook-development
 
 ## Installing the Chalk Python Dependency
 
-To install dependencies, run the `!pip install "chalkpy[runtime]"` bash command directly in a cell (using `!`)
+To install dependencies, run the `!pip install "chalkpy[runtime]"` bash command directly in a cell (using `!`). Alternatively,
+you can add the `chalkpy[runtime]` dependency to your kernel's virtual environment.
 
 ---
 
@@ -26,8 +27,8 @@ To install dependencies, run the `!pip install "chalkpy[runtime]"` bash command 
 
 To authenticate, we recommend generating a client ID and secret key pair.
 
-In the Chalk Dashboard, under **Settings > Access Tokens**,
-generate a client ID and secret key pair by clicking on **New Token** and selecting all necessary permissions.
+To do this, open the Chalk Dashboard. Under **Settings > Access Tokens**, generate a
+client ID and secret key pair by clicking on **New Token** and selecting all necessary permissions.
 
 You can use these access credentials to connect Chalk to any Jupyter notebook environment—we walk through
 this process for a few different notebook environments in our [notebook setup docs](/docs/notebook-setup).
@@ -96,8 +97,8 @@ Movie
 
 We'll use the data schema above for the rest of this tutorial.
 
-You can now use these features to build new features! Before getting started you'll want to import `_` from
-Chalk `_` (underscore) allows you to build out features on your feature classes. ```
+Before we get started writing features, you'll want to import `_` from
+Chalk `_` (underscore) allows you to build out features on your feature classes.
 
 ```python notebook.ipynb
 from chalk.features import _
@@ -114,11 +115,12 @@ Director.exclaimed_name = _.name + "!"
 
 In this example, the underscore acts as a reference to the `Director` feature class`.
 
-We have now created a new feature in our notebook and can query for it in either an online or offline context
+We have now created a new feature in our notebook and can query for it in either an online or offline context.
 
 ## Querying for features
 
-To query for your new features, pass them as outputs to the `ChalkClient` query methods. For instance, to run an online query for your new `Director.exclaimed_name` feature, you can run the following:
+To query for your new features, pass them as outputs to the `ChalkClient` query methods. For instance, to run an
+online query for your new `Director.exclaimed_name` feature, you can run the following:
 
 ```python notebook.ipynb
 new_features = client.query(
@@ -148,12 +150,24 @@ chalk_dataset = client.offline_query(
     },
     recompute_features=True,
     run_asynchronously=True,
+    dataset_name="<dataset_name>",
 )
 
 df = chalk_dataset.to_pandas()
 ```
 
-Running the code above creates a Pandas `DataFrame` with the columns `Director.id`, `Director.name`, and `Director.name_exclaimed` (alongside some metadata columns). This `DataFrame` will have one row for your Directors with ids 0 to 999.
+Running the offline query above creates a Pandas `DataFrame` with the columns `Director.id`, `Director.name`, and `Director.name_exclaimed` (alongside
+some metadata columns). This `DataFrame` will have one row for your Directors with ids 0 to 999.
+
+By providing a `dataset_name` to the offline_query, we've created a named dataset. Named datasets can easily be shared with other team members.
+
+Any historical dataset can be accessed using the `ChalkClient`. Named datasets can be accessed as follows:
+
+```python notebook.ipynb
+client = ChalkClient()
+
+client.get_dataset(name="<datset_name>")
+```
 
 ## Building Out More Complex Features
 
@@ -163,11 +177,15 @@ You can use underscores to build out more complex features: generally these more
 
 In the schema we've defined above a Movie is in a has-one relationship with its Director (even if this is not necessarily true in practice).
 
-When building new features on the Movie class, features from joined classes can be directly accessed. For instance, lets say we want to define `Movie.is_latest_release`. We can accomplish this by defining a feature that reaches through the has_one join:
+When building new features on the Movie class, features from joined classes can be directly accessed. For instance, lets say we want to define `Movie.is_latest_release`.
+We can accomplish this by defining a feature that reaches through the has_one join:
 
 ```python notebook.ipynb
 Movie.is_latest_release= _.director.num_movies == _.release_number
 ```
+
+The expression above defines a boolean feature which tests whether the release number for a movie (`_.release_number`) is equal to the number of movies a director
+has released (`_.director.num_movies`).
 
 ### Using Has-many Relationships
 
@@ -184,28 +202,50 @@ In the above example, the two different `_`'s refer to two different feature cla
 - `_.movies` can be thought of as `Director.movies`,
 - `_.runtime` can be thought of as `Movie.runtime`.
 
+The expression above gets a directors movies (`_.movies`), specifies that the aggregation is hapening on the
+runtime field of those movies (`_.movies[_.runtime]`) and then calculates the mean.
+
+Filters can also be passed to these expressions. For instance, say we want to filter out any movie
+that has a primary or secondary genre of `short` from the average runtime. This can be done as follows:
+
+```python notebook.ipynb
+Director.average_movie_runtime_filtered = _.movies[
+    _.runtime,                      # aggregation column
+    _.primary_genre != "short",     # filter
+    _.secondary_genre != "short"    # additional filter
+].mean()
+```
+
 ### Using Chalk Functions
 
 Chalk exposes a number of functions that can be called and composed—a full list of them can be found on our [expressions page](/docs/expression#additional-functions).
 
+_Identify whether a movie was released:_
 
-*Identify whether a movie was released
 ```python notebook.ipynb
 Movie.is_directors_usual_genre = F.contains(_.director.genres, _.primary_genre)
 ```
 
-*Get whether a movie was released on a federal holiday*
+_Get whether a movie was released on a federal holiday:_
+
 ```python notebook.ipynb
 Movie.released_on_holiday = F.is_us_federal_holiday(_.release_daate)
 ```
-Get release_date of Director's last movie.
+
+_Get release_date of Director's last movie:_
+
 ```python notebook.ipynb
 Director.latest_movie_release = F.max_by(_.movies[_.release_date], _.release_date)
 ```
 
 ### Composing New Features
 
-New features can also be used to
+The features you've defined in your notebook can also be composed—they can be used to define new features.
+For instance, you can define the `Director.makes_movies_that_are_too_long` feature:
+
+```python notebook.ipynb
+Director.makes_movies_that_are_too_long = _.average_movie_runtime > 150
+```
 
 ## Translating this Code into Production Code
 
