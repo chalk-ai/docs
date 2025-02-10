@@ -187,11 +187,25 @@ In the above example, the two different `_`'s refer to two different feature cla
 ### Using Chalk Functions
 
 Chalk exposes a number of functions that can be called and composed—a full list of them can be found on our [expressions page](/docs/expression#additional-functions).
-For,
 
+
+*Identify whether a movie was released
 ```python notebook.ipynb
 Movie.is_directors_usual_genre = F.contains(_.director.genres, _.primary_genre)
 ```
+
+*Get whether a movie was released on a federal holiday*
+```python notebook.ipynb
+Movie.released_on_holiday = F.is_us_federal_holiday(_.release_daate)
+```
+Get release_date of Director's last movie.
+```python notebook.ipynb
+Director.latest_movie_release = F.max_by(_.movies[_.release_date], _.release_date)
+```
+
+### Composing New Features
+
+New features can also be used to
 
 ## Translating this Code into Production Code
 
