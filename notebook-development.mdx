@@ -12,25 +12,24 @@ To get started, you'll want to install and connect Chalk to your notebook enviro
 this involves two steps:
 
 - Installing the `chalkpy[runtime]` package,
-- Authenticating to Chalk (using the `chalk` cli or environment variables)
+- Authenticating to Chalk (using the `chalk` cli or by setting environment variables)
 
-We provide specific setup instructions for [Deepnote](/docs/notebook-development#deepnote), [Hex](/docs/notebook-development#hex) and [Vertex](/docs/notebook-development#vertex-and-google-collab-enterprise) but the process should be similar for other notebooks environments.
+We provide specific setup instructions for [Deepnote](/docs/notebook-development#deepnote), [Hex](/docs/notebook-development#hex) and [Vertex](/docs/notebook-development#vertex-and-google-collab-enterprise), but the process should be similar for other notebook environments.
 
 ## Installing the Chalk Python Dependency
 
-To install dependencies, run the `!pip install "chalkpy[runtime]"` bash command directly in a cell (using `!`). Alternatively,
-you can add the `chalkpy[runtime]` dependency to your kernel's virtual environment.
+To install dependencies, run the `!pip install "chalkpy[runtime]"` bash command directly in a cell. Alternatively,
+you can add and install the `chalkpy[runtime]` dependency in your kernel's virtual environment.
 
 ---
 
 ## Connecting Your Notebook to Chalk
 
-To authenticate, we recommend generating a client ID and secret key pair.
+To authenticate, we recommend generating a client ID and client secret pair.
 
-To do this, open the Chalk Dashboard. Under **Settings > Access Tokens**, generate a
-client ID and secret key pair by clicking on **New Token** and selecting all necessary permissions.
+To do this, open the Chalk Dashboard. Go to **Settings > Access Tokens** and click on **New Token**, selecting all necessary permissions (generally, you'll want: online query, offline query, and preview deployment permissions).
 
-You can use these access credentials to connect Chalk to any Jupyter notebook environment—we walk through
+You can now use these access credentials to connect Chalk to any Jupyter notebook environment—we walk through
 this process for a few different notebook environments in our [notebook setup docs](/docs/notebook-setup).
 
 ## Verifying the Setup
@@ -44,11 +43,11 @@ client = ChalkClient()
 client.whoami()
 ```
 
-If everything is properly setup, you should see your `user_id`, `team_id` and `environment_id` come back.
+If everything is properly configured, you should see your `user_id`, `team_id` and `environment_id` come back.
 
 ## Loading Features
 
-With everything configured, we can start building some new features!
+Now we can start building some new features!
 
 To load your Chalk features into your notebook, you'll want to run:
 
@@ -98,11 +97,19 @@ Movie
 We'll use the data schema above for the rest of this tutorial.
 
 Before we get started writing features, you'll want to import `_` from
-Chalk `_` (underscore) allows you to build out features on your feature classes.
+Chalk `_` (underscore) allows you to build out features on your feature classes. If you want to create and work from a new branch, run the following command:
 
 ```python notebook.ipynb
 from chalk.features import _
+
+client.get_or_create_branch(branch_name="<your-branch-name>")
 ```
+
+This command will:
+1. create a new Chalk branch deployment that has the same features defined as your main chalk deployment.
+2. point your client to that new branch.
+
+If the branch already exists, your client will just be updated to point to that branch.
 
 ## Building New Features
 
