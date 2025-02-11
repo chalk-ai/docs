@@ -1,0 +1,90 @@
+---
+title: "Querying Iceberg Data from AWS Glue Catalog"
+---
+
+## Introduction
+
+[Apache Iceberg](https://iceberg.apache.org/) is a high-performance table format designed for managing large,
+evolving datasets, providing features such as schema evolution and time travel.
+The [AWS Glue Catalog](https://docs.aws.amazon.com/glue/latest/dg/catalog-and-crawler.html),
+on the other hand, is a fully managed metadata catalog that simplifies data discovery and schema management for data
+lakes. Chalk provides functionality to query Iceberg-formatted data stored in an AWS Glue Catalog using the `scan_iceberg` function.
+
+## Scanning Iceberg Data
+
+The `scan_iceberg` function is designed to query Iceberg-formatted data using metadata from a Hive-like catalog. The function takes the following arguments:
+
+```python
+def scan_iceberg(target: str, catalog: BaseCatalog, columns: Sequence[str]):
+```
+
+- `target`: The name of the Iceberg table to read from. Formatted like `database_name.table_name`
+- `catalog`: The catalog to use for metadata. Must be an instance of `BaseCatalog`, e.g. a `GlueCatalog`
+- `columns`: A sequence of column names to read from the table
+
+This function is intended for use in resolvers marked with `static=True`, which indicates to the Chalk query planner
+that the resolver can be executed at query planning time, rather than query execution time.
+
+## Example
+
+Here's a simple example of how to use the `scan_iceberg` function to read data from an Iceberg table stored in an AWS Glue Catalog:
+
+```python
+from chalk.integrations import GlueCatalog
+from chalk.operators import scan_iceberg
+
+# Instantiate the GlueCatalog with AWS credentials and configuration.
+glue_catalog = GlueCatalog(
+    name="aws_glue_catalog",
+    aws_region="us-west-2",
+    aws_role_arn="arn:aws:iam::123456789012:role/YourCatalogueAccessRole",
+)
+
+# Define a function to read data using the offline decorator.
+@offline(static=True)
+def read_data() -> DataFrame[Transaction.id, Transaction.amount, Transaction.timestamp]:
+    return scan_iceberg(
+        target="banking.transactions",
+        catalog=glue_catalog,
+        columns=("id", "amount", "timestamp")
+    )
+```
+
+Note that the column names in the `columns` argument must match the column names in the Iceberg table schema.
+The `target` argument specifies the Iceberg table to read from, and the `catalog` argument specifies the catalog to use for metadata.
+
+## Pushdown Filters and Projections
+
+The `scan_iceberg` function supports pushdown filters and projections to optimize query performance.
+Chalk's query planner will automatically push down filters and projections to the underlying Iceberg table when possible.
+This means that not all columns need to be read from the table, and filters can be applied to reduce the amount of data read.
+
+Note: date and datetime partition pushdown is supported for `day(...)` transformed columns only, e.g., `day(timestamp_column)`.
+
+## Permissions
+
+To successfully query Iceberg data through AWS Glue, ensure that the IAM role or user used in your AWS credentials has the following permissions:
+
+### Catalog Access Permissions
+
+These permissions allow access to the AWS Glue metadata:
+
+```txt
+glue:GetDatabase
+glue:GetTable
+glue:GetPartition
+glue:GetTableVersion
+glue:GetTableVersions
+```
+
+### Underlying Data Access Permissions
+
+These permissions allow reading of the actual data stored in your data lake (e.g., in Amazon S3):
+
+```txt
+s3:GetObject
+s3:ListBucket
+```
+
+Properly configuring these permissions is crucial to ensure that your queries can access both the Glue
+catalog metadata and the underlying data without encountering authorization issues.
