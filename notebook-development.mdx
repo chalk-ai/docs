@@ -97,23 +97,27 @@ Movie
 We'll use the data schema above for the rest of this tutorial.
 
 Before we get started writing features, you'll want to import `_` from
-Chalk `_` (underscore) allows you to build out features on your feature classes. If you want to create and work from a new branch, run the following command:
+Chalk `_` (underscore) allows you to build out features on your feature classes.
 
 ```python notebook.ipynb
 from chalk.features import _
+```
 
+Additionally, if you want to create and work from a new branch (which is recommended), run the following command:
+
+```python notebook.ipynb
 client.get_or_create_branch(branch_name="<your-branch-name>")
 ```
 
 This command will:
-1. create a new Chalk branch deployment that has the same features defined as your main chalk deployment.
+1. create a new Chalk branch deployment that has the same features defined as your main chalk deployment,
 2. point your client to that new branch.
 
-If the branch already exists, your client will just be updated to point to that branch.
+If the branch already exists, your client will just be updated to point to that branch (no new branch deployment will be created).
 
 ## Building New Features
 
-Lets say we want to write a new exclaimed name feature, which is a director's name with an exclamation mark tacked on.
+Lets say we want to write a new "exclaimed name" feature, which is a director's name with an exclamation mark tacked on.
 To do this, run the following code in a cell:
 
 ```python notebook.ipynb
@@ -164,7 +168,7 @@ df = chalk_dataset.to_pandas()
 ```
 
 Running the offline query above creates a Pandas `DataFrame` with the columns `Director.id`, `Director.name`, and `Director.name_exclaimed` (alongside
-some metadata columns). This `DataFrame` will have one row for your Directors with ids 0 to 999.
+some metadata columns). This `DataFrame` will have one row for every Directors with an id between 0 and 999.
 
 By providing a `dataset_name` to the offline_query, we've created a named dataset. Named datasets can easily be shared with other team members.
 
@@ -173,16 +177,16 @@ Any historical dataset can be accessed using the `ChalkClient`. Named datasets c
 ```python notebook.ipynb
 client = ChalkClient()
 
-client.get_dataset(name="<datset_name>")
+dataset = client.get_dataset(name="<datset_name>")
 ```
 
 ## Building Out More Complex Features
 
-You can use underscores to build out more complex features: generally these more complex features are composed of: has-one relationships, has-many relationships, and chalk functions.
+You can use expressions to build out more complex features. Generally these more complex features are composed of: has-one relationships, has-many relationships, and chalk functions.
 
 ### Using Has-one Relationships
 
-In the schema we've defined above a Movie is in a has-one relationship with its Director (even if this is not necessarily true in practice).
+In the schema we've defined above, a Movie is in a has-one relationship with its Director (even if this is not necessarily true in practice).
 
 When building new features on the Movie class, features from joined classes can be directly accessed. For instance, lets say we want to define `Movie.is_latest_release`.
 We can accomplish this by defining a feature that reaches through the has_one join:
@@ -196,7 +200,7 @@ has released (`_.director.num_movies`).
 
 ### Using Has-many Relationships
 
-In the schema we've defined above a Director is in a has-many relationship with their Movies.
+In the schema we've defined above, a Director is in a has-many relationship with their Movies.
 
 When building new features on the Director class, features from joined classes can be directly accessed. For instance, lets say we want to define `Director.average_movie_runtime`. We can accomplish this by defining an aggregation feature:
 
@@ -204,13 +208,12 @@ When building new features on the Director class, features from joined classes c
 Director.average_movie_runtime = _.movies[_.runtime].mean()
 ```
 
-In the above example, the two different `_`'s refer to two different feature class namespaces.
-
+In the above example, the two different `_`'s refer to two different feature class namespaces:
 - `_.movies` can be thought of as `Director.movies`,
 - `_.runtime` can be thought of as `Movie.runtime`.
 
-The expression above gets a directors movies (`_.movies`), specifies that the aggregation is hapening on the
-runtime field of those movies (`_.movies[_.runtime]`) and then calculates the mean.
+The expression above gets a directors movies (`_.movies`), specifies that the aggregation is happening on the
+runtime field of those movies (`_.movies[_.runtime]`) and then calculates the mean (`.mean()`).
 
 Filters can also be passed to these expressions. For instance, say we want to filter out any movie
 that has a primary or secondary genre of `short` from the average runtime. This can be done as follows:
@@ -225,15 +228,18 @@ Director.average_movie_runtime_filtered = _.movies[
 
 ### Using Chalk Functions
 
-Chalk exposes a number of functions that can be called and composed—a full list of them can be found on our [expressions page](/docs/expression#additional-functions).
+Chalk exposes a number of functions that can be called and composed as part of expressions—a full list of these functions
+can be found on our [expressions page](/docs/expression#additional-functions).
 
-_Identify whether a movie was released:_
+Below, we provide a few examples of how these functions can be used to create new features:
+
+_Identify whether a movie belongs to a Director's typical genres:_
 
 ```python notebook.ipynb
 Movie.is_directors_usual_genre = F.contains(_.director.genres, _.primary_genre)
 ```
 
-_Get whether a movie was released on a federal holiday:_
+_Identify whether a movie was released on a US federal holiday:_
 
 ```python notebook.ipynb
 Movie.released_on_holiday = F.is_us_federal_holiday(_.release_daate)
