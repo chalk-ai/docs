@@ -88,3 +88,23 @@ s3:ListBucket
 
 Properly configuring these permissions is crucial to ensure that your queries can access both the Glue
 catalog metadata and the underlying data without encountering authorization issues.
+
+## Reading Chalk Datasets from Glue
+
+To read Chalk datasets from Glue, you can use the `Dataset.write_to` method.GlueCatalog
+
+```python
+from chalk.integrations import GlueCatalog
+
+catalog = GlueCatalog(
+    name="aws_glue_catalog",
+    aws_region="us-west-2",
+    catalog_id="123",
+    aws_role_arn="arn:aws:iam::123456789012:role/YourCatalogueAccessRole",
+)
+
+dataset.write_to(destination="database.table_name", catalog=catalog)
+```
+
+This will write the dataset to the specified location in the Glue catalog, making it available for querying
+using the `scan_iceberg` function.
