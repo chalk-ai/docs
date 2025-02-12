@@ -107,4 +107,14 @@ dataset.write_to(destination="database.table_name", catalog=catalog)
 ```
 
 This will write the dataset to the specified location in the Glue catalog, making it available for querying
-using the `scan_iceberg` function.
+using tools like AWS Athena.
+
+### Required IAM Permissions
+
+To write to a Glue catalog, the IAM role or user used in your AWS credentials must have the following permissions:
+
+```txt
+glue:CreateTable
+```
+
+Note: this 'create table' operation runs from your client, not from the Chalk platform.
