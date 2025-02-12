@@ -1,5 +1,5 @@
 ---
-title: "Querying Iceberg Data from AWS Glue Catalog"
+title: "Integration with AWS Glue Catalog"
 ---
 
 ## Introduction
@@ -10,7 +10,7 @@ The [AWS Glue Catalog](https://docs.aws.amazon.com/glue/latest/dg/catalog-and-cr
 on the other hand, is a fully managed metadata catalog that simplifies data discovery and schema management for data
 lakes. Chalk provides functionality to query Iceberg-formatted data stored in an AWS Glue Catalog using the `scan_iceberg` function.
 
-## Scanning Iceberg Data
+## Scanning Iceberg Data from Glue
 
 The `scan_iceberg` function is designed to query Iceberg-formatted data using metadata from a Hive-like catalog. The function takes the following arguments:
 
@@ -89,9 +89,9 @@ s3:ListBucket
 Properly configuring these permissions is crucial to ensure that your queries can access both the Glue
 catalog metadata and the underlying data without encountering authorization issues.
 
-## Reading Chalk Datasets from Glue
+## Adding Chalk Datasets to Glue
 
-To read Chalk datasets from Glue, you can use the `Dataset.write_to` method.GlueCatalog
+To add Chalk datasets to Glue, you can use the `Dataset.write_to` method.
 
 ```python
 from chalk.integrations import GlueCatalog
@@ -106,7 +106,7 @@ catalog = GlueCatalog(
 dataset.write_to(destination="database.table_name", catalog=catalog)
 ```
 
-This will write the dataset to the specified location in the Glue catalog, making it available for querying
+This will create a table referencing the dataset in specified location in the Glue catalog, making it available for querying
 using tools like AWS Athena.
 
 ### Required IAM Permissions
