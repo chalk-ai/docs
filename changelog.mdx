@@ -5,6 +5,48 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## February 13, 2025
+
+### Expressive filtering: DataFrames & Has-Manys now support Chalk Expressions!
+
+Has-many (`DataFrame`) features can now be filtered using any Chalk Expression, unlocking new design patterns and improving DevX!
+
+```python
+high_cash_flow_merchants: int = _.df[_.id].where(_.total_deposit_amount + F.abs(_.total_withdrawn_amount) > 10**7).count()
+average_revenue_from_amazon_retailers: float = _.df[_.revenue].where(F.starts_with(_.merchant_code, "amazon-")).mean()
+publicly_traded_not_tech: int = _.df.where((_.industry != "tech") & (_.is_public == True)).count()
+holiday_shifts: int = _.df.where(F.is_us_federal_holiday(_.timestamp)).count()
+expenses_past_month_with_three_day_lag: float = _.expenses[_.amount].where(_.timestamp - timedelta(days=3) > _.chalk_now - timedelta(days=31)).sum()
+```
+
+### Has-many joins using composite keys (Chalk Expressions)
+
+A composite key is a combination of two or more attributes that together uniquely identify an entity.
+Link feature classes with composite keys created by a Chalk Expression or through referencing multiple features in a has-one or has-many join.
+Here's a has-one relationship between User and Profile classes using both user_id and email as composite join keys.
+
+```python
+@features
+class User:
+	composite_key: str = _.last_name + "-" + _.zipcode
+	posts: DataFrame[Posts] = has_many(lambda: User.composite_key == Post.user_code)
+	profile: Profile = has_one(lambda: (Profile.user_email == User.email) & (Profile.user_id == User.id))
+```
+
+### Chalk runtime improvements
+
+- Chalk attempts to convert each Python resolver into a chain of static expressions that can be accelerated using the function's AST.  We've expanded the parser with preliminary support for accelerating Python for loops.
+- Improved how we incorporate traffic from Kafka Streams into our (KEDA) autoscaler
+
+### Chalk dashboard improvements
+
+- Reduced the chart load times of large offline queries and queries run through the Data Explorer page of the Chalk dashboard
+- Added support for configuring Chalk query contexts and planner options in the Data Explorer page
+
+![Data Explorer](/img/changelog-25_02_13-data_explorer.png)
+
+---
+
 ## February 06, 2025
 
 ### Chalk dashboard improvements
