@@ -56,27 +56,43 @@ class Transfer:
 class User:
     id: str
     transfers: DataFrame[Transfer] = has_many(lambda: Transfer.user_id == User.id)
+
 ```
 
 ### Composite Join Keys
 
-You can also specify a composite join key for a has-many relationship. For example, say hospitals wants to compute aggregations over visit to each of their departments.
-We could write the following feature classes.
+You can also specify multiple join keys for a has-many relationship. For example, say hospitals wants to 
+compute aggregations over visit to each of their departments. We could write the following feature classes.
 
-```python
+```py
 @features
 class HospitalVisit:
-    id: int
+    id: str = _.user_id + _.hospital + _.department + _.date
     department: str
     hospital: str
+    user_id: str
     date: datetime
-
 @features
 class HospitalDepartment:
     id: int
     name: str
     hospital_name: str
     visits: DataFrame[HospitalVisit] = has_many(lambda: (HospitalDepartment.hospital_name == HospitalVisit.hospital) & (HospitalDepartment.name == HospitalVisit.department))
+```
+
+In addition you can also use composite keys to join Has-Many features.
+
+```py
+@features
+class HospitalEmployee:
+    id: int
+    hospital_department: str
+@features
+class HospitalDepartment:
+    id: str = _.name + _.hospital _name
+    name: str
+    hospital_name: str
+    employees: DataFrame[HospitalEmployee] = has_many(lambda: HospitalDepartment.id == HospitalEmployee.hospital_department)
 ```
 
 ---
