@@ -72,6 +72,7 @@ class HospitalVisit:
     hospital: str
     user_id: str
     date: datetime
+
 @features
 class HospitalDepartment:
     id: int
@@ -80,19 +81,21 @@ class HospitalDepartment:
     visits: DataFrame[HospitalVisit] = has_many(lambda: (HospitalDepartment.hospital_name == HospitalVisit.hospital) & (HospitalDepartment.name == HospitalVisit.department))
 ```
 
-In addition you can also use composite keys to join Has-Many features.
+You can also join in Has-Many relationshisp for features that have primary composite keys. 
 
 ```py
 @features
-class HospitalEmployee:
-    id: int
-    hospital_department: str
+class SoftwareEngineer:
+    id: int = _.first_name + " " + _.last_name
+    first_name: str
+    last_name: str
+    
+    manager_id: str
+
 @features
-class HospitalDepartment:
-    id: str = _.name + _.hospital _name
-    name: str
-    hospital_name: str
-    employees: DataFrame[HospitalEmployee] = has_many(lambda: HospitalDepartment.id == HospitalEmployee.hospital_department)
+class Manager:
+    id: int
+    direct_reports: DataFrame[SoftwareEngineer] = has_many(lambda: Manager.id == SoftwareEngineer.manager_id)
 ```
 
 ---
