@@ -1,0 +1,31 @@
+---
+title: Offline Query Heartbeat Timeout
+description: Learn more about debugging offline query timeouts.
+---
+
+Offline queries can consume significant amounts of system resources. Chalk's management plane checks each
+running offline query every 60 seconds to verify that the query is still running. If the query has not
+updated its heartbeat within the last 60 seconds, the query is considered to have timed out and is killed.
+
+Typically, this is due to the query being too resource-intensive for the system to handle. If you are experiencing
+offline query timeouts, you may want to consider the following:
+
+0. **Check for out-of-memory errors**: Check the 'metrics' tab of your query, and look at the reported memory utilization.
+    If you are running out of memory, you may want to increase the memory requests for your
+   offline query pods. You can do this by navigating to the "Resources" page in the Chalk UI and increasing the memory
+   requests for offline query workers.
+1. **Use `run_asynchronously`**: Add `run_asynchronously=True` to isolate your query to its own kubernetes pod. This
+    lowers the chance that your query will contend with other workloads on a single machine and may help prevent timeouts.
+2. **Adjust node selectors**: If you are using node selectors to run your offline queries on specific nodes, ensure that
+    the nodes you are selecting have enough resources to handle the query. Make sure that your workloads are not co-scheduled
+    with other intense tasks.
+3. **Shard your query**: If you are running a large query, consider breaking it into smaller pieces using `num_shards`.
+    This can help prevent timeouts and improve the overall performance of your query.
+4. **Optimize your query**: Look at the operations the query is processing. Check for Python resolvers that
+    use heavy libraries, or that perform memory-intensive operations like Pandas transformations.
+
+If you are still experiencing timeouts, contact Chalk Support for further assistance. Please provide an example
+failed query and context on how to reproduce the issue.
+
+
+
