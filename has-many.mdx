@@ -61,13 +61,14 @@ class User:
 
 ### Composite Join Keys
 
-You can also specify multiple join keys for a has-many relationship. For example, say hospitals wants to 
+You can also specify multiple join keys for a has-many relationship. For example, say hospitals wants to
 compute aggregations over visit to each of their departments. We could write the following feature classes.
 
 ```py
 @features
 class HospitalVisit:
     id: str = _.user_id + _.hospital + _.department + _.date
+    composite_key: str = _.hospital + "-" + _.department
     department: str
     hospital: str
     user_id: str
@@ -78,10 +79,14 @@ class HospitalDepartment:
     id: int
     name: str
     hospital_name: str
+    composite_key_match: str = _.hospital_name + "-" + _.namej
+    # multi-feature join
     visits: DataFrame[HospitalVisit] = has_many(lambda: (HospitalDepartment.hospital_name == HospitalVisit.hospital) & (HospitalDepartment.name == HospitalVisit.department))
+    # composite key join
+    visits_with_composite_key: DataFrame[HospitalVisit] = has_many(lambda: HospitalDepartment.composite_key_match == HospitalVisit.composite_key)
 ```
 
-You can also join in Has-Many relationshisp for features that have primary composite keys. 
+You can also join in Has-Many relationshisp for features that have primary composite keys.
 
 ```py
 @features
@@ -89,7 +94,7 @@ class SoftwareEngineer:
     id: int = _.first_name + " " + _.last_name
     first_name: str
     last_name: str
-    
+
     manager_id: str
 
 @features
