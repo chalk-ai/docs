@@ -79,7 +79,7 @@ class HospitalDepartment:
     id: int
     name: str
     hospital_name: str
-    composite_key_match: str = _.hospital_name + "-" + _.namej
+    composite_key_match: str = _.hospital_name + "-" + _.name
     # multi-feature join
     visits: DataFrame[HospitalVisit] = has_many(lambda: (HospitalDepartment.hospital_name == HospitalVisit.hospital) & (HospitalDepartment.name == HospitalVisit.department))
     # composite key join
