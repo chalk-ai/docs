@@ -67,7 +67,7 @@ class User:
 ### Composite Join Keys
 
 You can also specify a composite join key for a has-one relationship. For example, if a `User` is linked to a
-`Profile` by both `` and `email`, you can define the join as follows:
+`Profile` by `org` and `email`, you can define the join as follows:
 
 ```python
 from chalk.features import features, has_one
