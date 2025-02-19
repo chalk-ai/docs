@@ -86,7 +86,7 @@ class HospitalDepartment:
     visits_with_composite_key: DataFrame[HospitalVisit] = has_many(lambda: HospitalDepartment.composite_key_match == HospitalVisit.composite_key)
 ```
 
-You can also join in Has-Many relationshisp for features that have primary composite keys.
+You can also join in Has-Many relationships for features that have primary composite keys.
 
 ```py
 @features
