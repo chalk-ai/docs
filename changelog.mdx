@@ -28,9 +28,22 @@ Here's a has-one relationship between User and Profile classes using both user_i
 ```python
 @features
 class User:
-	composite_key: str = _.last_name + "-" + _.zipcode
-	posts: DataFrame[Posts] = has_many(lambda: User.composite_key == Post.user_code)
-	profile: Profile = has_one(lambda: (Profile.user_email == User.email) & (Profile.user_id == User.id))
+    id: str = _.alias + "-" + _.org + _.domain
+    org_domain: str = _.org + _.domain
+    org: str
+    domain: str
+    alias: str
+
+	# join with composite key
+    posts: DataFrame[Posts] = has_many(lambda: User.id == Post.email)
+    # multi-feature join
+    org_profile: Profile = has_one(lambda: (User.alias == Profile.email) & (User.org == Profile.org))
+
+@features
+class Workspace:
+    id: str
+    # join with child-class's composite key
+    users: DataFrame[Users] = has_many(lambda: Workspace.id == User.org_domain)
 ```
 
 ### Chalk runtime improvements

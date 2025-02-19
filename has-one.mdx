@@ -67,25 +67,31 @@ class User:
 ### Composite Join Keys
 
 You can also specify a composite join key for a has-one relationship. For example, if a `User` is linked to a
-`Profile` by both `user_id` and `email`, you can define the join as follows:
+`Profile` by `org` and `email`, you can define the join as follows:
 
 ```python
 from chalk.features import features, has_one
 from datetime import datetime
 
 @features
-class Profile:
+class User:
     id: str
-    user_id: int
-    user_email: str
-    created_at: datetime
+    email: str = _.alias + "-" + _.org + _.domain
+    org_domain: str = _.org + _.domain
+    org: str
+    domain: str
+    alias: str
+
+# join with composite key
+    posts: DataFrame[Posts] = has_many(lambda: User.email == Post.email)
+    # multi-feature join
+    org_profile: Profile = has_one(lambda: (User.alias == Profile.email) & (User.org == Profile.org))
 
 @features
-class User:
-    id: int
-    email: str
-
-    profile: Profile = has_one(lambda: (Profile.user_email == User.email) & (Profile.user_id == User.id))
+class Workspace:
+    id: str
+    # join with child-class's composite key
+    users: DataFrame[Users] = has_many(lambda: Workspace.id == User.org_domain)
 ```
 
 ---
