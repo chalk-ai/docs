@@ -32,6 +32,21 @@ To do this, open the Chalk Dashboard. Go to **Settings > Access Tokens** and cli
 You can now use these access credentials to connect Chalk to any Jupyter notebook environment—we walk through
 this process for a few different notebook environments in our [notebook setup docs](/docs/notebook-setup).
 
+```python notebook.ipynb
+from chalk.client import ChalkClient
+import os
+
+CHALK_CLIENT_ID = os.environ.get("CHALK_CLIENT_ID")
+CHALK_CLIENT_SECRET = os.environ.get("CHALK_CLIENT_ID")
+
+client = ChalkClient()
+client = ChalkClient(
+  client_id=CHALK_CLIENT_ID,
+  client_secret=CHALK_CLIENT_SECRET,
+  branch='notebook',
+)
+```
+
 ## Verifying the Setup
 
 To verify that everything is properly set up, you can run the following code in a cell:
@@ -43,7 +58,8 @@ client = ChalkClient()
 client.whoami()
 ```
 
-If everything is properly configured, you should see your `user_id`, `team_id` and `environment_id` come back.
+If everything is properly configured, you should see your `user_id`, `team_id` and `environment_id` come back:
+> `WhoAmIResponse(user='<user_id>', environment_id=<environment_id>, team_id='<team_id>')`
 
 ## Loading Features
 
