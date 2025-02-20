@@ -6,151 +6,279 @@ description: Use Chalk in your notebook of choice.
 published: true
 ---
 
-## Installation
+Chalk makes it really easy to write and test out new features from a notebook.
 
-### Dependencies
+To get started, you'll want to install and connect Chalk to your notebook environment. Generally
+this involves two steps:
 
-Install Chalk in your notebook environment by running the following command in a cell:
+- Installing the `chalkpy[runtime]` package,
+- Authenticating to Chalk (using the `chalk` cli or by setting environment variables)
 
-```python notebook.ipynb
-!pip install chalkpy[all]
-```
+We provide specific setup instructions for [Deepnote](/docs/notebook-development#deepnote), [Hex](/docs/notebook-development#hex) and [Vertex](/docs/notebook-development#vertex-and-google-collab-enterprise), but the process should be similar for other notebook environments.
 
-### Authentication
+## Installing the Chalk Python Dependency
 
-To use Chalk in a notebook, we will need to generate a client ID and secret key pair.
-
-In the Chalk Dashboard, under **Settings > Access Tokens**,
-generate a client ID and secret key pair by clicking on **New Token** and selecting all necessary permissions.
-
-We will need the client ID and client secret we generated to initialize
-a Chalk client in our notebook.
+To install dependencies, run the `!pip install "chalkpy[runtime]"` bash command directly in a cell. Alternatively,
+you can add and install the `chalkpy[runtime]` dependency in your kernel's virtual environment.
 
 ---
 
-## Environment Setup
+## Connecting Your Notebook to Chalk
 
-You can use the `ChalkClient` from any Jupyter notebook environment.
+To authenticate, we recommend generating a client ID and client secret pair.
 
-### Local
+To do this, open the Chalk Dashboard. Go to **Settings > Access Tokens** and click on **New Token**, selecting all necessary permissions (generally, you'll want: online query, offline query, and preview deployment permissions).
 
-If you are working with a local notebook, Chalk will pick up your credentials
-generated from running `chalkpy login` in your terminal.
+You can now use these access credentials to connect Chalk to any Jupyter notebook environment—we walk through
+this process for a few different notebook environments in our [notebook setup docs](/docs/notebook-setup).
 
-All you need to do is initialize the client:
+```python notebook.ipynb
+from chalk.client import ChalkClient
+import os
+
+CHALK_CLIENT_ID = os.environ.get("CHALK_CLIENT_ID")
+CHALK_CLIENT_SECRET = os.environ.get("CHALK_CLIENT_ID")
+
+client = ChalkClient()
+client = ChalkClient(
+  client_id=CHALK_CLIENT_ID,
+  client_secret=CHALK_CLIENT_SECRET,
+  branch='notebook',
+)
+```
+
+## Verifying the Setup
+
+To verify that everything is properly set up, you can run the following code in a cell:
 
 ```python notebook.ipynb
 from chalk.client import ChalkClient
 
 client = ChalkClient()
+client.whoami()
 ```
 
-### Deepnote
+If everything is properly configured, you should see your `user_id`, `team_id` and `environment_id` come back:
+> `WhoAmIResponse(user='<user_id>', environment_id=<environment_id>, team_id='<team_id>')`
 
-On Deepnote, you can set [environment variables](https://deepnote.com/docs/environment-variables) by going to the
-integrations tab and clicking on the "Environment Variables" button.
+## Loading Features
 
-![Deepnote Environment Variables](/img/DeepnoteEnvVar.png)
+Now we can start building some new features!
 
-Set the `CHALK_CLIENT_ID` and `CHALK_CLIENT_SECRET` variables to the values you generated in the previous step.
-You can then initialize Chalk by running the following code in a cell:
+To load your Chalk features into your notebook, you'll want to run:
 
 ```python notebook.ipynb
-import os
 from chalk import ChalkClient
 
 client = ChalkClient()
+
+client.load_features()
 ```
 
-### Hex
+This will print out your available features and load them into your notebook:
 
-On [Hex](https://hex.tech), you can store the client ID and secret key using [secrets](https://learn.hex.tech/docs/environment-configuration/environment-views#secrets)
+```
+Director
+┏━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Feature            ┃ Type                  ┃
+┡━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
+│ id                 │ str                   │
+│ name               │ str                   │
+│ birth_year         │ int                   │
+│ active             │ bool                  │
+│ favorite_numbers   │ list[int]             │
+│ death_year         │ int | None            │
+│ known_for_titles   │ list[str]             │
+│ known_for_genres   │ list[str]             │
+│ movies             │ DataFrame[Movie]      │
+│ num_movies         │ int                   │
+└────────────────────┴───────────────────────┘
+Movie
+┏━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━┓
+┃ Feature                ┃ Type              ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━┩
+│ id                     │ str               │
+│ director_id            │ str               │
+│ release_number         │ int               │
+│ type_                  │ str               │
+│ title                  │ str               │
+│ original_title         │ str               │
+│ release_date           │ dt.datetime       │
+│ runtime_m              │ float             │
+│ primary_genre          │ str               │
+│ secondary_genre        │ str               │
+└────────────────────────┴───────────────────┘
+```
 
-![Hex Secrets](/img/HexSecrets.png)
+We'll use the data schema above for the rest of this tutorial.
 
-Select `Python 3.10` as the image under **Environment > Compute Profile**.
-
-![Hex Python Image](/img/HexPythonImage.png)
-
-The Chalk client can then be initialized referencing the variables directly.
+Before we get started writing features, you'll want to import `_` from
+Chalk `_` (underscore) allows you to build out features on your feature classes.
 
 ```python notebook.ipynb
-from chalk import ChalkClient
+from chalk.features import _
+```
 
-client = ChalkClient(
-  client_id=CHALK_CLIENT_ID,
-  client_secret=CHALK_CLIENT_SECRET
+Additionally, if you want to create and work from a new branch (which is recommended), run the following command:
+
+```python notebook.ipynb
+client.get_or_create_branch(branch_name="<your-branch-name>")
+```
+
+This command will:
+1. create a new Chalk branch deployment that has the same features defined as your main chalk deployment,
+2. point your client to that new branch.
+
+If the branch already exists, your client will just be updated to point to that branch (no new branch deployment will be created).
+
+## Building New Features
+
+Lets say we want to write a new "exclaimed name" feature, which is a director's name with an exclamation mark tacked on.
+To do this, run the following code in a cell:
+
+```python notebook.ipynb
+Director.exclaimed_name = _.name + "!"
+```
+
+In this example, the underscore acts as a reference to the `Director` feature class`.
+
+We have now created a new feature in our notebook and can query for it in either an online or offline context.
+
+## Querying for features
+
+To query for your new features, pass them as outputs to the `ChalkClient` query methods. For instance, to run an
+online query for your new `Director.exclaimed_name` feature, you can run the following:
+
+```python notebook.ipynb
+new_features = client.query(
+    input={
+        Director.id: 113,
+    },
+    output={
+        Director.name,
+        Director.name_exclaimed,
+    }
 )
+
+new_features
 ```
 
-## Creating a branch
-
-To start using Chalk in a notebook, we will need to create a [branch deployment](/docs/branches).
-Branch deployments are isolated environments that can be used to test features and resolvers before deploying them to production.
-
-Working in a branch makes it seamless to iterate on features and resolvers in notebooks.
-Any time we execute a cell in our notebook with feature or resolver definitions,
-Chalk will automatically update our branch deployment with the latest changes.
-
-Once you've got your client setup, you can create a branch calling [`create_branch`](/api-docs#ChalkClient.create_branch).
-Setting `switch=True` will point your client to the newly created branch.
+Running an offline query is equally straight forward:
 
 ```python notebook.ipynb
-client.create_branch("my-branch", switch=True)
+chalk_dataset = client.offline_query(
+    input={
+        Director.id: list(range(1000)),
+    },
+    output={
+        Director.id,
+        Director.name,
+        Director.name_exclaimed,
+    },
+    recompute_features=True,
+    run_asynchronously=True,
+    dataset_name="<dataset_name>",
+)
+
+df = chalk_dataset.to_pandas()
 ```
 
-## Cell Magics
+Running the offline query above creates a Pandas `DataFrame` with the columns `Director.id`, `Director.name`, and `Director.name_exclaimed` (alongside
+some metadata columns). This `DataFrame` will have one row for every Directors with an id between 0 and 999.
 
-Chalk provides a set of [IPython magics](https://ipython.readthedocs.io/en/stable/interactive/magics.html) to improve the experience of defining resolvers in notebooks.
+By providing a `dataset_name` to the offline_query, we've created a named dataset. Named datasets can easily be shared with other team members.
 
-### %%resolver
-
-You can define a SQL resolver in a notebook cell using the `%%resolver` magic. The magic will parse the cell contents
-and upload your resolver to your current working branch.
-
-`%%resolver` needs to be followed by a resolver name, e.g. `root_authorization_resolver` as shown below.
-
-Refer to the section on [SQL Resolvers](/docs/sql#sql-file-resolvers) to learn more about how to define resolvers.
-
-```sql notebook.ipynb
-%%resolver root_authorization_resolver
--- resolves: Authorization
--- source: snowflake
-SELECT
-    id,
-    amount_in_cents,
-    card_id,
-    merchant_id,
-    created_at as authorized_at
-FROM authorizations
-```
-
-Chalk lines up the names of your target SQL columns with the names of your features.
-In this case, we have an `Authorization` feature class that contains a features called `authorized_at`.
-However, our Snowflake table has a column called `created_at` that we want to use to populate the `authorized_at` feature.
-We therefore use the `as` keyword to rename the column in our resolver.
-
-## Inline Syntax
-
-
-In notebooks, you can define features inline using the syntax shown below.
-
-Consider the following feature class definition for `RocketEngine`
+Any historical dataset can be accessed using the `ChalkClient`. Named datasets can be accessed as follows:
 
 ```python notebook.ipynb
-from chalk.features import features
+client = ChalkClient()
 
-@features
-class RocketEngine:
-    id: int
-    mass: float
-    volume: float
-    thrust: float
+dataset = client.get_dataset(name="<datset_name>")
 ```
 
-If we wanted to define a feature inline in a notebook cell, we could do so using the underscore syntax below:
+## Building Out More Complex Features
 
+You can use expressions to build out more complex features. Generally these more complex features are composed of: has-one relationships, has-many relationships, and chalk functions.
+
+### Using Has-one Relationships
+
+In the schema we've defined above, a Movie is in a has-one relationship with its Director (even if this is not necessarily true in practice).
+
+When building new features on the Movie class, features from joined classes can be directly accessed. For instance, lets say we want to define `Movie.is_latest_release`.
+We can accomplish this by defining a feature that reaches through the has_one join:
 
 ```python notebook.ipynb
-RocketEngine.density: float = _.mass / _.volume
+Movie.is_latest_release= _.director.num_movies == _.release_number
 ```
+
+The expression above defines a boolean feature which tests whether the release number for a movie (`_.release_number`) is equal to the number of movies a director
+has released (`_.director.num_movies`).
+
+### Using Has-Many Relationships
+
+In the schema we've defined above, a Director is in a has-many relationship with their Movies.
+
+When building new features on the Director class, features from joined classes can be directly accessed. For instance, lets say we want to define `Director.average_movie_runtime`. We can accomplish this by defining an aggregation feature:
+
+```python notebook.ipynb
+Director.average_movie_runtime = _.movies[_.runtime].mean()
+```
+
+In the above example, the two different `_`'s refer to two different feature class namespaces:
+- `_.movies` can be thought of as `Director.movies`,
+- `_.runtime` can be thought of as `Movie.runtime`.
+
+The expression above gets a directors movies (`_.movies`), specifies that the aggregation is happening on the
+runtime field of those movies (`_.movies[_.runtime]`) and then calculates the mean (`.mean()`).
+
+Filters can also be passed to these expressions. For instance, say we want to filter out any movie
+that has a primary or secondary genre of `short` from the average runtime. This can be done as follows:
+
+```python notebook.ipynb
+Director.average_movie_runtime_filtered = _.movies[
+    _.runtime,                      # aggregation column
+    _.primary_genre != "short",     # filter
+    _.secondary_genre != "short"    # additional filter
+].mean()
+```
+
+### Using Chalk Functions
+
+Chalk exposes a number of functions that can be called and composed as part of expressions—a full list of these functions
+can be found on our [expressions page](/docs/expression#additional-functions).
+
+Below, we provide a few examples of how these functions can be used to create new features:
+
+_Identify whether a movie belongs to a Director's typical genres:_
+
+```python notebook.ipynb
+Movie.is_directors_usual_genre = F.contains(_.director.genres, _.primary_genre)
+```
+
+_Identify whether a movie was released on a US federal holiday:_
+
+```python notebook.ipynb
+Movie.released_on_holiday = F.is_us_federal_holiday(_.release_daate)
+```
+
+_Get release_date of Director's last movie:_
+
+```python notebook.ipynb
+Director.latest_movie_release = F.max_by(_.movies[_.release_date], _.release_date)
+```
+
+### Composing New Features
+
+The features you've defined in your notebook can also be composed—they can be used to define new features.
+For instance, you can define the `Director.makes_movies_that_are_too_long` feature:
+
+```python notebook.ipynb
+Director.makes_movies_that_are_too_long = _.average_movie_runtime > 150
+```
+
+## Translating this Code into Production Code
+
+Defining features as these expressions provides a couple really significant advantages:
+
+1. You build out really modular and granular features that can be composed.
+2. Your features translate directly into performant code—everything we've written in this tutorial can be directly translated to your Chalk feature store and run efficiently.
