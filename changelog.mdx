@@ -5,6 +5,36 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## February 20, 2025
+
+### Datasets, results returned from Offline Queries, can now be persisted to your AWS Glue catalog
+
+ML teams often use offline queries to build training sets by pulling historical data and loading multiple features at specific points in time.
+These [Chalk Datasets](https://docs.chalk.ai/docs/datasets) can now be exported back into your AWS Glue catalog. This lets other teams discover them and enables downstream analytical workflows.
+
+```python
+from chalk.integrations import GlueCatalog
+
+dataset = client.offline_query(...)
+catalog = GlueCatalog(
+    name="aws_glue_catalog",
+    aws_region="us-west-2",
+    catalog_id="123",
+    aws_role_arn="arn:aws:iam::123456789012:role/YourCatalogueAccessRole",
+)
+dataset.write_to(destination="database.table_name", catalog=catalog)
+```
+
+### Chalk dashboard improvements
+
+- The Resolvers page in the Chalk dashboard now has a Request Count column; quickly sort and see which resolvers are being called the most
+- The pages for [Named Queries](https://docs.chalk.ai/docs/named-query) and Resolvers [now also include errors,](https://docs.chalk.ai/docs/query-errors#chalkerror) use the "Logs and Errors" tab to switch to this filtered view
+    - Click and drag your mouse within the time series graph to zoom in into a time interval and filter down the errors table
+
+![Logs and Errors](/img/changelog-25_02_20-errors.png)
+
+---
+
 ## February 13, 2025
 
 ### Expressive filtering: DataFrames & Has-Manys now support Chalk Expressions!
