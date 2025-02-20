@@ -7,10 +7,11 @@ description: Updates to Chalk!
 
 ## February 20, 2025
 
-### Datasets, results returned from Offline Queries, can now be persisted to your AWS Glue catalog
+### Datasets can now be persisted to your AWS Glue Catalog
 
 ML teams often use offline queries to build training sets by pulling historical data and loading multiple features at specific points in time.
-These [Chalk Datasets](https://docs.chalk.ai/docs/datasets) can now be exported back into your AWS Glue catalog. This lets other teams discover them and enables downstream analytical workflows.
+These [Datasets](https://docs.chalk.ai/docs/datasets), results returned from offline queries, can now be exported back into your AWS Glue catalog.
+This lets other teams discover them and enables downstream analytical workflows.
 
 ```python
 from chalk.integrations import GlueCatalog
