@@ -18,7 +18,7 @@ You can then use your access credentials to connect Chalk to any Jupyter noteboo
 environment. In the following section, we show the process of authenticating
 to a local notebook. We then show the process for [Hex], [Deepnote], and [Vertex].
 
-### Local
+## Local
 
 If you are working with a local notebook, Chalk will pick up your credentials
 generated from running `chalk login` in your terminal.
@@ -31,7 +31,7 @@ from chalk.client import ChalkClient
 client = ChalkClient()
 ```
 
-### Hex
+## Hex
 
 On [Hex](https://hex.tech), you can store the client ID and secret key using [secrets](https://learn.hex.tech/docs/environment-configuration/environment-views#secrets)
 
@@ -52,7 +52,7 @@ client = ChalkClient(
   branch='notebook',
 )
 ```
-### Deepnote
+## Deepnote
 
 On Deepnote, you can set [environment variables](https://deepnote.com/docs/environment-variables) by going to the
 integrations tab and clicking on the "Environment Variables" button.
@@ -69,7 +69,7 @@ from chalk import ChalkClient
 client = ChalkClient()
 ```
 
-### Vertex & Google Colab Enterprise
+## Vertex & Google Colab Enterprise
 
 On Google Colab Enterprise, you can set up secrets with the Google Secret Manager.
 Add two secrets named `chalk-client-id` and `chalk-client-secret` to Google Secret Manager
