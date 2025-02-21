@@ -1,0 +1,77 @@
+---
+title: Chalk Billing
+description: Learn about Chalk's billing model and how to optimize costs.
+---
+
+Chalk charges for machine uptime of nodes labeled as `Chalk Managed`. We calculate this by
+multiplying:
+
+* The instance type
+* Chalk’s credit utilization rate/hour for that instance type
+* The number of hours (i.e., uptime) that the node remains active.
+Rather than rounding to the nearest hour, Chalk meters usage in 10-second increments.
+
+Regardless of the load placed on a Chalk-managed node, credit usage remains the same.
+We charge for the node’s uptime, not based on the level of activity within the node.
+You can run unlimited queries or create multiple branches without incurring extra charges.
+Billing is based solely on the node’s active hours, not on how many features or branches are used.
+
+## Finding Chalk Credit Rates
+
+To see the full list of credit utilization rates per hour for all machine types, log into Chalk
+via your terminal and use the Chalk CLI command to view usage rates.
+
+```bash
+$ chalk login
+$ chalk usage rates
+```
+
+## Cost Optimization Tips
+
+There are two primary ways to optimize your resource configurations for cost optimization.
+
+### Configure Auto-Shutdown Periods
+
+The branch server can be configured to automatically shut down after a window of inactivity. To set this
+window of inactivity, go to `Settings > Resources > Branch Server Configurations` in the dashboard.
+After the specified window of inactivity, the server automatically shuts down, halting costs. If the
+branch server is shut down and activity is detected, including branch deployments and queries, then the
+branch server will automatically spin back up.
+
+### Configure Resource Configurations
+
+For the other nodes in your cluster, you can configure the resource configurations according to your needs
+in the dashboard under `Settings > Resources > Resource Configurations`. You can select the instance type
+for each server that is right for you, and set a scaling policy that ensures that you scale up when traffic
+is high, but notably that your nodes scale down when traffic is low.
+
+## Frequently Asked Questions
+
+### Do I get charged for pods or for nodes?
+
+You are charged per node. Multiple Chalk pods on a single node does not change the amount of the credit
+utilization.
+
+### What if we are running non-Chalk workloads on the same cluster?
+
+Chalk only applies charges to nodes labeled “Chalk Managed.” Other workloads on different nodes do not
+incur Chalk charges. You can also configure your cluster to have isolated nodepools to ensure that
+unrelated workloads are completely isolated from your Chalk Managed nodes.
+
+### Do more branches cost more money?
+
+No. Because one pod runs all branches, there is no extra cost for having multiple branches.
+
+### Do I get charged if nobody is running queries but the node is still up?
+
+Yes, if the node is up, you are accumulating costs. You can mitigate this by setting the auto-shutdown
+period for the branch server for periods of inactivity, as well as by configuring a scaling policy for
+your other workloads.
+
+### Does Chalk charge for storage or staging environments?
+
+Chalk only charges for compute resources (i.e., running nodes). If a staging environment is idle or shut
+down, it won’t incur costs.
+
+
+
