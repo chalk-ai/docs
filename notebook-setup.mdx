@@ -1,0 +1,129 @@
+---
+title: Notebook Setup
+description: Set up Chalk in your notebook of choice.
+published: true
+---
+
+In this section we walk through authentication: how to connect to Chalk from a
+notebook.
+
+To authenticate, we recommend generating a client ID and secret key pair.
+
+This can be done in the Chalk Dashboard. Go to **Settings > Access Tokens**,
+and generate a client ID/secret key pair by clicking on **New Token** and selecting
+all necessary permissions—(typically, online query, offline query, and preview
+deployment permissions should be sufficient).
+
+You can then use your access credentials to connect Chalk to any Jupyter notebook
+environment. In the following section, we show the process of authenticating
+to a local notebook. We then show the process for [Hex], [Deepnote], and [Vertex].
+
+### Local
+
+If you are working with a local notebook, Chalk will pick up your credentials
+generated from running `chalk login` in your terminal.
+
+All you need to do is initialize the client:
+
+```python notebook.ipynb
+from chalk.client import ChalkClient
+
+client = ChalkClient()
+```
+
+### Hex
+
+On [Hex](https://hex.tech), you can store the client ID and secret key using [secrets](https://learn.hex.tech/docs/environment-configuration/environment-views#secrets)
+
+![Hex Secrets](/img/HexSecrets.png)
+
+Select `Python 3.10` as the image under **Environment > Compute Profile**.
+
+![Hex Python Image](/img/HexPythonImage.png)
+
+The Chalk client can then be initialized referencing the variables directly.
+
+```python notebook.ipynb
+from chalk import ChalkClient
+
+client = ChalkClient(
+  client_id=CHALK_CLIENT_ID,
+  client_secret=CHALK_CLIENT_SECRET,
+  branch='notebook',
+)
+```
+### Deepnote
+
+On Deepnote, you can set [environment variables](https://deepnote.com/docs/environment-variables) by going to the
+integrations tab and clicking on the "Environment Variables" button.
+
+![Deepnote Environment Variables](/img/DeepnoteEnvVar.png)
+
+Set the `CHALK_CLIENT_ID` and `CHALK_CLIENT_SECRET` variables to the values you generated in the previous step.
+You can then initialize Chalk by running the following code in a cell:
+
+```python notebook.ipynb
+import os
+from chalk import ChalkClient
+
+client = ChalkClient()
+```
+
+### Vertex & Google Colab Enterprise
+
+On Google Colab Enterprise, you can set up secrets with the Google Secret Manager.
+Add two secrets named `chalk-client-id` and `chalk-client-secret` to Google Secret Manager
+that correspond to your Chalk client id and client secret.
+
+![Google Colab Secret](/img/ColabSecret.png)
+
+Add three dependencies to your notebook environment: `google-cloud-secret-manager`,
+`google-cloud-resource-manager`, and `chalkpy`.
+
+You can now read your credentials securely from the Google Secret Manager and
+initialize your Chalk client!
+
+```python
+# !pip install google-cloud-secret-manager
+# !pip install google-cloud-resource-manager
+# !pip install chalkpy
+import os
+
+from google.cloud import secretmanager as sm
+from google.cloud import resourcemanager_v3 as rm
+
+from chalk.client import ChalkClient
+
+# Create the Secret Manager client.
+PROJECT_NAME = os.environ['GOOGLE_CLOUD_PROJECT']
+
+# These should match the names given to your secrets in Google Secret Manager
+client_id_name = "chalk-client-id"
+client_secret_name  = "chalk-client-secret"
+
+# Get the project ID from google resources
+project_id = rm.ProjectsClient().get_project(
+    request=rm.GetProjectRequest(
+      name=f"projects/{PROJECT_NAME}"
+    )
+).name
+
+# Get CHALK_CLIENT_ID and CHALK_CLIENT_SECRET using the secret manager
+secret_client = sm.SecretManagerServiceClient()
+
+CHALK_CLIENT_ID = secret_client.access_secret_version(
+    name=f"{project_id}/secrets/{client_id_name}/versions/1"
+).payload.data.decode("utf-8")
+
+CHALK_CLIENT_SECRET = secret_client.access_secret_version(
+    name=f"{project_id}/secrets/{client_secret_name}/versions/1"
+).payload.data.decode("utf-8")
+
+
+# Instantiate your Chalk Client
+chalk_client = ChalkClient(
+    client_id=CHALK_CLIENT_ID,
+    client_secret=CHALK_CLIENT_SECRET,
+    branch="new-feature"
+)
+```
