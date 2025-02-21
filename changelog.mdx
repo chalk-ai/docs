@@ -7,11 +7,11 @@ description: Updates to Chalk!
 
 ## February 20, 2025
 
-### Persist Datasets to your [AWS Glue Catalog](https://docs.aws.amazon.com/prescriptive-guidance/latest/serverless-etl-aws-glue/aws-glue-data-catalog.html)
+### Persist Datasets to your AWS Glue Catalog
 
 ML teams often use offline queries to build training sets by pulling historical data and loading multiple features at specific points in time.
 We call the results returned from these offline queries [Datasets](https://docs.chalk.ai/docs/datasets).
-Chalk supports exporting Datasets back into your AWS Glue catalog, letting other teams discover them and enabling downstream analytical workflows.
+Chalk supports exporting Datasets back into your [AWS Glue catalog](https://docs.aws.amazon.com/prescriptive-guidance/latest/serverless-etl-aws-glue/aws-glue-data-catalog.html), letting other teams discover them and enabling downstream analytical workflows.
 
 ```python
 from chalk.integrations import GlueCatalog
