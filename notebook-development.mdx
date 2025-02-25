@@ -14,7 +14,7 @@ this involves two steps:
 - Installing the `chalkpy[runtime]` package,
 - Authenticating to Chalk (using the `chalk` cli or by setting environment variables)
 
-We provide specific setup instructions for [Deepnote](/docs/notebook-development#deepnote), [Hex](/docs/notebook-development#hex) and [Vertex](/docs/notebook-development#vertex-and-google-collab-enterprise), but the process should be similar for other notebook environments.
+We provide specific setup instructions for [Deepnote](/docs/notebook-setup#deepnote), [Hex](/docs/notebook-setup#hex) and [Vertex](/docs/notebook-setup#vertex-and-google-collab-enterprise), but the process should be similar for other notebook environments.
 
 ## Installing the Chalk Python Dependency
 
@@ -59,7 +59,9 @@ client.whoami()
 ```
 
 If everything is properly configured, you should see your `user_id`, `team_id` and `environment_id` come back:
-> `WhoAmIResponse(user='<user_id>', environment_id=<environment_id>, team_id='<team_id>')`
+```python
+WhoAmIResponse(user='<user_id>', environment_id=<environment_id>, team_id='<team_id>')
+```
 
 ## Loading Features
 
