@@ -25,6 +25,9 @@ Setting up features for materialized aggregation with streaming is almost identi
 a max staleness and set `etl_offline_to_online=True` on the feature class, as with all other streaming features.
 
 ```python
+from chalk import features, has_many, DataFrame, FeatureTime, _
+from chalk.streams import Windowed, windowed
+
 @features(etl_offline_to_online=True)
 class Transaction:
     id: str
@@ -55,6 +58,11 @@ Now, set up your streaming resolvers referencing these features.
 
 ```python
 from pydantic import BaseModel
+
+from chalk import features, has_many, DataFrame, Features, FeatureTime, _
+from chalk.streams import Windowed, windowed
+from chalk.streams import stream
+
 
 class UserMsg(BaseModel):
     id: str
