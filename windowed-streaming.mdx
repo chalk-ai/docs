@@ -6,16 +6,13 @@ published: true
 
 ---
 
-[Windowed features](/docs/aggregations) represent aggregated data pertaining to discrete windows.
+[Windowed features](/docs/aggregations) represent aggregated data pertaining to discrete time buckets.
 Using [materialized aggregations](/docs/materialized_aggregations) in concert with streams,
 you can update aggregations on the fly as new streaming data arrives.
-
----
 
 [Materialized aggregations](/docs/materialized_aggregations) are a powerful tool
 to compute aggregations over time windows, combining representations of historical data
 with incoming real-time data to produce accurate and fresh results quickly.
-
 If you have a stream resolver that outputs a feature that is related to a feature that uses
 a materialized aggregation (more on this later), the materialized aggregations will be updated
 as new messages arrive.
