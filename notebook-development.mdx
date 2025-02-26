@@ -37,7 +37,7 @@ from chalk.client import ChalkClient
 import os
 
 CHALK_CLIENT_ID = os.environ.get("CHALK_CLIENT_ID")
-CHALK_CLIENT_SECRET = os.environ.get("CHALK_CLIENT_ID")
+CHALK_CLIENT_SECRET = os.environ.get("CHALK_CLIENT_SECRET")
 
 client = ChalkClient()
 client = ChalkClient(
@@ -139,7 +139,7 @@ Lets say we want to write a new "exclaimed name" feature, which is a director's 
 To do this, run the following code in a cell:
 
 ```python notebook.ipynb
-Director.exclaimed_name = _.name + "!"
+Director.name_exclaimed = _.name + "!"
 ```
 
 In this example, the underscore acts as a reference to the `Director` feature class`.
@@ -149,7 +149,7 @@ We have now created a new feature in our notebook and can query for it in either
 ## Querying for features
 
 To query for your new features, pass them as outputs to the `ChalkClient` query methods. For instance, to run an
-online query for your new `Director.exclaimed_name` feature, you can run the following:
+online query for your new `Director.name_exclaimed` feature, you can run the following:
 
 ```python notebook.ipynb
 new_features = client.query(
