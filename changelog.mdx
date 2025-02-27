@@ -5,6 +5,36 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## February 27, 2025
+
+### Case study with Verisoul--a leading provider of real-time fake account detection
+
+With Chalk, Verisoul [iterates on fraud signals,](https://chalk.ai/customers/verisoul) deploys new updates in hours, and increases detection accuracy.
+
+### Easily import feature classes with Chalk Client when experimenting locally
+
+We have implemented two new functions for Chalk Client [to aid in local experimentation:](https://docs.chalk.ai/docs/notebook-development#loading-features) `client.load_features()` and `client.get_or_create_branch()`.
+- `client.load_features()` imports your environment's feature classes into the global namespace, making it easier to reference features when running queries with Chalk Client in a Jupyter notebook.
+- `client.get_or_create_branch()` enables programmatically creating branches or fetching branches for local experimentation.
+
+We've also updated our guide for [developing with Jupyter Notebooks](https://docs.chalk.ai/docs/notebook-development).
+
+### Breaking changes to Chalk Client's Go SDK
+
+Released [v1.0.0 of the Chalk Go Client](https://github.com/chalk-ai/chalk-go/releases/tag/v1.0.0) which introduces some breaking changes, most notably:
+
+- Removed custom error structs which helps us standardize how Client errors are bubbled up
+- Added `context.Context` to all Client methods enabling us to specify timeouts and custom loggers
+
+### Chalk dashboard improvements
+
+- The deployment metrics chart can now be filtered by [named (custom) tags](https://docs.chalk.ai/docs/changelog#june-28-2024)
+- The Chalk dashboard has a new errors page for viewing exceptions and issues with Chalk queries
+
+![Errors page](/img/changelog-25_02_27.png)
+
+---
+
 ## February 20, 2025
 
 ### Persist Datasets to your AWS Glue Catalog
