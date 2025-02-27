@@ -15,12 +15,13 @@ lakes. Chalk provides functionality to query Iceberg-formatted data stored in an
 The `scan_iceberg` function is designed to query Iceberg-formatted data using metadata from a Hive-like catalog. The function takes the following arguments:
 
 ```python
-def scan_iceberg(target: str, catalog: BaseCatalog, columns: Sequence[str]):
+def scan_iceberg(target: str, catalog: BaseCatalog, columns: Sequence[str], custom_partitions: Mapping[str, tuple["date_trunc(day)", str]] = {}):
 ```
 
 - `target`: The name of the Iceberg table to read from. Formatted like `database_name.table_name`
 - `catalog`: The catalog to use for metadata. Must be an instance of `BaseCatalog`, e.g. a `GlueCatalog`
 - `columns`: A sequence of column names to read from the table
+- `custom_partitions`: Optional. A sequence of partition columns to use for partition pruning.
 
 This function is intended for use in resolvers marked with `static=True`, which indicates to the Chalk query planner
 that the resolver can be executed at query planning time, rather than query execution time.
@@ -46,7 +47,8 @@ def read_data() -> DataFrame[Transaction.id, Transaction.amount, Transaction.tim
     return scan_iceberg(
         target="banking.transactions",
         catalog=glue_catalog,
-        columns=("id", "amount", "timestamp")
+        columns=("id", "amount", "timestamp"),
+        custom_partitions={"transaction_date": ("date_trunc(day)", "transaction_timestamp")},
     )
 ```
 
@@ -60,6 +62,13 @@ Chalk's query planner will automatically push down filters and projections to th
 This means that not all columns need to be read from the table, and filters can be applied to reduce the amount of data read.
 
 Note: date and datetime partition pushdown is supported for `day(...)` transformed columns only, e.g., `day(timestamp_column)`.
+
+`custom_partitions` can be used to alter default Iceberg partition pruning behavior: in the example above, the Glue catalog table
+is partitioned by `transaction_date`, but Chalk's timestamp column is `transaction_timestamp`. The `custom_partitions` argument
+is used to specify that the `transaction_date` partition should be derived from the `transaction_timestamp` column using
+the `date_trunc(day)` transformation. If the underlying Iceberg dataset were partitioned by `transaction_timestamp` instead,
+the `custom_partitions` argument would not be necessary.
+
 
 ## Permissions
 
