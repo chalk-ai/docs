@@ -39,7 +39,6 @@ import os
 CHALK_CLIENT_ID = os.environ.get("CHALK_CLIENT_ID")
 CHALK_CLIENT_SECRET = os.environ.get("CHALK_CLIENT_SECRET")
 
-client = ChalkClient()
 client = ChalkClient(
   client_id=CHALK_CLIENT_ID,
   client_secret=CHALK_CLIENT_SECRET,
@@ -52,9 +51,6 @@ client = ChalkClient(
 To verify that everything is properly set up, you can run the following code in a cell:
 
 ```python notebook.ipynb
-from chalk.client import ChalkClient
-
-client = ChalkClient()
 client.whoami()
 ```
 
