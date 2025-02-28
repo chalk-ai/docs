@@ -15,7 +15,14 @@ lakes. Chalk provides functionality to query Iceberg-formatted data stored in an
 The `scan_iceberg` function is designed to query Iceberg-formatted data using metadata from a Hive-like catalog. The function takes the following arguments:
 
 ```python
-def scan_iceberg(target: str, catalog: BaseCatalog, columns: Sequence[str], custom_partitions: Mapping[str, tuple["date_trunc(day)", str]] = {}):
+def scan_iceberg(
+    target: str,
+    catalog: BaseCatalog,
+    columns: Sequence[str],
+    custom_partitions: Mapping[str, tuple[CustomPartitionOperation, str]] = {}
+):
+
+CustomPartitionOperation = Literal["date_trunc(day)"]
 ```
 
 - `target`: The name of the Iceberg table to read from. Formatted like `database_name.table_name`
@@ -61,14 +68,32 @@ The `scan_iceberg` function supports pushdown filters and projections to optimiz
 Chalk's query planner will automatically push down filters and projections to the underlying Iceberg table when possible.
 This means that not all columns need to be read from the table, and filters can be applied to reduce the amount of data read.
 
-Note: date and datetime partition pushdown is supported for `day(...)` transformed columns only, e.g., `day(timestamp_column)`.
+Iceberg queries with filters applied will use the [Iceberg partitioning functions](https://iceberg.apache.org/docs/1.8.1/partitioning/)
+stored in your Iceberg table's metadata to only scan partitions that contain relevant data for your filter.
 
-`custom_partitions` can be used to alter default Iceberg partition pruning behavior: in the example above, the Glue catalog table
-is partitioned by `transaction_date`, but Chalk's timestamp column is `transaction_timestamp`. The `custom_partitions` argument
-is used to specify that the `transaction_date` partition should be derived from the `transaction_timestamp` column using
-the `date_trunc(day)` transformation. If the underlying Iceberg dataset were partitioned by `transaction_timestamp` instead,
-the `custom_partitions` argument would not be necessary.
+For example, when scanning an Iceberg table with a filter like `event_timestamp > '2024-06-01 10:35:00'`, if the table is partitioned
+by the column transform `event_date = day(event_timestamp)` then Iceberg will only scan the partitions where `event_date >= '2024-06-1'`.
 
+### Custom Partitions
+
+If your Iceberg table is partitioned, but the partition configuration is missing a relevant partition transform, you can use the
+`custom_partitions` parameter to benefit from partition filtering without needing to evolve your source table's schema.
+
+For example, if your table was partitioned on `identity(event_date)` but you know that the `event_date` column is derived from
+the `event_timestamp` column:
+
+```python
+scan_iceberg(
+    ...,
+    custom_partitions = {
+        "event_date": ("date_trunc(day)", "event_timestamp"),
+    },
+)
+```
+
+This has the same effect as adding a `event_date = day(event_timestamp)` partition transform to your Iceberg table's metadata schema.
+
+If the target Iceberg table already has a partition spec by e.g. `day(event_timestamp)` then the `custom_partitions` argument would not be necessary.
 
 ## Permissions
 
