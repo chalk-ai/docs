@@ -69,7 +69,7 @@ Chalk's query planner will automatically push down filters and projections to th
 This means that not all columns need to be read from the table, and filters can be applied to reduce the amount of data read.
 
 Iceberg queries with filters applied will use the [Iceberg partitioning functions](https://iceberg.apache.org/docs/1.8.1/partitioning/)
-stored in your Iceberg table's metadata to only scan partition that contain relevant data for your filter.
+stored in your Iceberg table's metadata to only scan partitions that contain relevant data for your filter.
 
 For example, when scanning an Iceberg table with a filter like `event_timestamp > '2024-06-01 10:35:00'`, if the table is partitioned
 by the column transform `event_date = day(event_timestamp)` then Iceberg will only scan the partitions where `event_date >= '2024-06-1'`.
