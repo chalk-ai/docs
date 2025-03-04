@@ -14,21 +14,145 @@ Chalk resolvers.
 
 ## Running Simple API Requests
 
+
+
+```python
+from chalk import (
+    online,
+    windowed,
+    Windowed
+)
+from chalk.features import (
+    features, _
+)
+import requests
+import datetime as dt
+
+@features
+class User:
+    id: int
+    name: str
+    txns: "DataFrame[Transaction]"
+    txn_amt: Windowed[float] = windowed(
+        "1d", "10d", "30d",
+        expression=_.transactions[
+            _.amt,
+            _.ts > _.chalk_window
+            _.ts < _.chalk_now
+        ].mean()
+
+    )
+
+@features
+class Transaction:
+    id: int
+    name: str
+    ts: dt.datetime
+    merchant_id: int
+    user_id: User.id
+    user: User
+    amt: float
+    is_fraud: bool
+
+@online
+def get_user_is_fraud_internal(
+    id: Transaction.id,
+    amt: Transaction.amt,
+    user_id: Transaction.user_id,
+    user_txn_avg_l30d: Transaction.user.txn_amt["30d"],
+    merchant_id: Transaction.merchant_id,
+) -> Transaction.is_fraud:
+    result = requests.get(
+        "https://api.internal.com/fraud_model",
+        data={
+            "amt": amt,
+            "user_id": user_id,
+            "user_txn_avg_l30d": user_txn_avg_l30d,
+            "merchant_id": merchant_id
+        }
+    ).json()
+
+    return result['is_fraud']
+```
+
+The `get_user_is_fraud_internal` resolver that we defined above takes features from a single feature class instance and computes new features on that single feature class instance.
+For instance, it will take a single Transaction and make an API request to compute whether that Transaction `is_fraud` or not.
+
+Often, to not overwhelm the API endpoint, you'll want to pool requests together. In Chalk this is done by defining what we call a  "DataFrame to DataFrame resolver". This is a resolver that takes many feature instances as input and returns new feature values for each of those input feature instances as output.
+
 ## Pooling API Requests
 
-To pool API Requests
+To pool API Requests, we'll use a DataFrame to DataFrame resolver. This resolver will take a DataFrame of features (many feautres) and calculate an updated value on that group of features.
+
+```python
+from chalk import online
+from chalk.features import DataFrame
+import requests
+
+FRAUD_BATCH_URL = "https://api.internal.com/fraud/batch"
+
+@online
+def get_fraud_predictions(
+    transactions: DataFrame[
+        Transaction.id,
+        Transaction.amt,
+        Transaction.user_id,
+        Transaction.user.txn_amt["30d"],
+        Transaction.merchant_id,
+        Transaction.id,
+    ]
+) -> DataFrame[Transaction.is_fraud]:
+    result  = requests.post(FRAUD_BATCH_URL, json=transactions.to_pandas().to_json())
+
+    # if status_code not in 200's, raise error
+    if (result.status_code % 100) != 2:
+        raise ValueError((
+            f"Error {result.status_code} running request '{FRAUD_BATCH_URL}' with inputs:\n"
+            "Txns:\n{transactions}\n\n"
+            "Error:\n{result.content}"
+        ))
+    is_fraud: list[bool] = result.json()['is_fraud']
+    return DataFrame({Transaction.is_fraud: is_fraud})
+```
+
+Now that we've defined a DataFrame to DataFrame resolver, it can be used to pool API requests together in either
+online or offline queries.
 
 ### In Online Queries (Query Bulk)
+
+To pool API requests in online query, you'll want to use the `query_bulk` method of your client and pass multiple
+input rows simultaneously:
+
+
+With the python client, this would look like the following:
+
+```python
+from chalk.client import ChalkClient
+
+client = ChalkClient()
+
+result = client.query_bulk(
+    input={
+        Transaction.id: [
+            1, 2, 3, 4, 5, 6, 7
+        ],
+    },
+    output=[
+        Transaction.is_fraud
+    ]
+)
 
 ### In Offline Queries
 
 ### Caching Results
 
-The order in which setup hooks run is not guaranteed and may differ across instances of your service. Your setup hooks
-should not rely on being called in a specific order.
-
 ### Retrying Failed Requests
 
+To retry failed requests, you'll want to update the logic in your resolver to handle errors:
+
+
 ### Rate Limiting
+
+Chalk doesn't directly support rate limiting against an API endpoint. That said, you can monitor and alert on the amount that you are calling a resolver
 
 
