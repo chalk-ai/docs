@@ -11,8 +11,6 @@ feature values.
 
 ## Prompt Definition Approaches
 
-Let's compare two approaches to creating prompts: direct usage and named prompts.
-
 Chalk supports two primary methods for defining and managing prompts: direct prompt definitions and named prompts. 
 Each approach offers different benefits depending on your use case and deployment requirements.
 
@@ -20,7 +18,7 @@ Each approach offers different benefits depending on your use case and deploymen
 
 Direct prompt definitions provide immediate, inline configuration of LLM completions. This approach is useful for 
 rapid prototyping, one-off implementations, or when prompt logic is tightly coupled to specific features. To define
-a direect prompt to perform sentiment analysis on a comment, you could define the following Chalk features utilizing
+a direct prompt to perform sentiment analysis on a comment, you could define the following Chalk features utilizing
 the `chalk.prompts` library.
 
 ```py
@@ -113,7 +111,7 @@ sentiment_ds.to_pandas()
 
 ### Evaluation Execution
 
-The evaluation frameowrk allows you to test variations in prompt templates, assess the impact of different models and 
+The evaluation framework allows you to test variations in prompt templates, assess the impact of different models and 
 parameters, and validate changes to output structures. Built-in evaluators like "exact_match" offer immediate insights
 into prompt performance, while custom evaluation expressions enable more nuanced analysis specific to your use case.
 
