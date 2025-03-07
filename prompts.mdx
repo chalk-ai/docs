@@ -1,0 +1,137 @@
+---
+title: Named Prompts
+description: Define templated LLM interactions as microservices
+---
+
+---
+
+You can define named prompts in Chalk to help maintain consistency in your LLM workflows by making prompts more 
+maintainable and reusable across your application. You can parameterize prompts using Jinja templating to inject 
+feature values. 
+
+## Prompt Definition Approaches
+
+Chalk supports two primary methods for defining and managing prompts: direct prompt definitions and named prompts. 
+Each approach offers different benefits depending on your use case and deployment requirements.
+
+### Direct Prompts
+
+Direct prompt definitions provide immediate, inline configuration of LLM completions. This approach is useful for 
+rapid prototyping, one-off implementations, or when prompt logic is tightly coupled to specific features. To define
+a direct prompt to perform sentiment analysis on a comment, you could define the following Chalk features utilizing
+the `chalk.prompts` library.
+
+```py
+import chalk.functions as F
+import chalk.prompts as P
+from chalk.features import features
+from pydantic import BaseModel
+
+system_message = """You are a sentiment analysis expert. Analyze the user's comment and determine if it's positive, negative, or neutral.
+Rules:
+- Be objective and focus on the text's emotional tone
+- Consider context and nuance
+- Provide a confidence score based on clarity of sentiment"""
+
+user_message = "Analyze this comment: {{User.comment}}"
+
+class UserSentiment(BaseModel):
+    sentiment: str = Field(description="positive, negative, or neutral")
+    confidence: float = Field(description="on a 1-100 scale")
+
+@features
+class User:
+    id: str
+    comment: str
+    actual_sentiment: str
+    response: P.PromptResponse = P.completion(
+        model="gpt-4o", 
+        messages=[
+            P.message(role="system", content=system_message),
+            P.message(role="user", content=F.jinja(user_message)),
+        ],
+        output_structure=UserSentiment,
+    )
+    predicted_sentiment: str = F.json_value(_.response.response, "sentiment")
+```
+
+In the example above, we see how direct prompts integrate with Chalk's feature system. The prompt uses Jinja templating 
+to dynamically inject the user's comment into the prompt through `{{User.comment}}`, allowing the LLM to analyze the 
+specific content at runtime. The `UserSentiment` Pydantic model defines a structured output format, ensuring consistent 
+response parsing across all completions. While this approach provides fine-grained control over the prompt 
+configuration, it tightly couples the prompt template, model settings, and output structure to your deployment code. 
+Any changes to the prompt template or model parameters require a new deployment.
+
+### Named Prompts
+
+Named prompts abstract prompt definitions into standalone, reusable components that can be managed independently of 
+your feature code. This separation of concerns enables centralized prompt management across your application and 
+provides robust version control of your prompt templates. Named prompts allow you to conduct A/B testing between 
+different prompt variants and make runtime modifications through the web interface without code changes. You can define
+a named prompt in the Web UI and implement the same Chalk feature with more concise code.
+
+```py
+import chalk.functions as F
+import chalk.prompts as P
+from chalk.features import features
+
+@features
+class User:
+    id: str
+    comment: str
+    actual_sentiment: str
+    response: P.PromptResponse = P.run_prompt("analyze_sentiment")
+    predicted_sentiment: str = F.json_value(_.response.response, "sentiment")
+```
+
+Named prompts function as microservices within your ML pipeline, allowing you to modify prompt behavior without 
+requiring code deployments. This architecture is particularly valuable for teams that need to iterate rapidly on prompt
+engineering or maintain multiple prompt variants.
+
+## Prompt Evaluation
+
+The Chalk evaluation platform provides comprehensive tooling for testing and comparing prompt performance. This
+framework enables data-driven prompt engineering through systematic testing of prompt variants.
+
+### Dataset Preparation
+
+Evaluation begins with creating a labeled dataset that serves as your ground truth. This dataset should contain input
+examples and their expected outputs, enabling automated assessment of prompt performance:
+
+```py
+import pandas as pd
+
+sentiment_df = pd.read_csv("sentiment.csv")
+sentiment_ds = chalk_client.create_dataset(
+    input=sentiment_df,
+    dataset_name="sentiment_gt",
+)
+sentiment_ds.to_pandas()
+```
+
+### Evaluation Execution
+
+The evaluation framework allows you to test variations in prompt templates, assess the impact of different models and 
+parameters, and validate changes to output structures. Built-in evaluators like "exact_match" offer immediate insights
+into prompt performance, while custom evaluation expressions enable more nuanced analysis specific to your use case.
+
+```py
+eval_run = chalk_client.prompt_evaluation(
+    dataset_name="sentiment_gt",
+    evaluators=["exact_match"],
+    reference_output="user.actual_sentiment",
+    prompts=[
+        P.completion(
+            model="gpt-4o", 
+            messages=[
+                P.message(role="system", content=system_message),
+                P.message(role="user", content=user_message),
+            ],
+        ),
+        "analyze_sentiment",
+    ]
+)
+eval_run.to_pandas()
+```
+
+The results of every evaluation are stored and available for viewing in the Web UI.
