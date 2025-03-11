@@ -14,8 +14,6 @@ Chalk resolvers.
 
 ## Running Simple API Requests
 
-
-
 ```python
 from chalk import (
     online,
@@ -78,7 +76,7 @@ def get_user_is_fraud_internal(
 The `get_user_is_fraud_internal` resolver that we defined above takes features from a single feature class instance and computes new features on that single feature class instance.
 For instance, it will take a single Transaction and make an API request to compute whether that Transaction `is_fraud` or not.
 
-Often, to not overwhelm the API endpoint, you'll want to pool requests together. In Chalk this is done by defining what we call a  "DataFrame to DataFrame resolver". This is a resolver that takes many feature instances as input and returns new feature values for each of those input feature instances as output.
+Often, to not overwhelm the API endpoint, you'll want to pool requests together. In Chalk this is done by defining what we call a "DataFrame to DataFrame resolver". This is a resolver that takes many feature instances as input and returns new feature values for each of those input feature instances as output.
 
 ## Pooling API Requests
 
@@ -123,7 +121,6 @@ online or offline queries.
 To pool API requests in online query, you'll want to use the `query_bulk` method of your client and pass multiple
 input rows simultaneously:
 
-
 With the python client, this would look like the following:
 
 ```python
@@ -141,6 +138,7 @@ result = client.query_bulk(
         Transaction.is_fraud
     ]
 )
+```
 
 ### In Offline Queries
 
@@ -150,9 +148,6 @@ result = client.query_bulk(
 
 To retry failed requests, you'll want to update the logic in your resolver to handle errors:
 
-
 ### Rate Limiting
 
-Chalk doesn't directly support rate limiting against an API endpoint. That said, you can monitor and alert on the amount that you are calling a resolver
-
-
+Chalk doesn't directly support rate limiting against an API endpoint. That said, you can monitor and alert on the amount that you are calling a resolver and set a retry policy
