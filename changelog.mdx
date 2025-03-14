@@ -5,6 +5,32 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## March 14, 2015
+
+## Breaking changes to Chalk Client's Go SDK (1.2.0)
+
+Released [v1.2.0 of the Chalk Go Client](https://github.com/chalk-ai/chalk-go/releases/tag/v1.2.0) which introduces some breaking changes, most notably:
+- The [gRPC implementation of Client](https://docs.chalk.ai/docs/query-overview#running-queries-using-g-rpc) is removed and replaced with a consolidated NewGRPCClient constructor--onfiguration remains mostly unchanged.
+- `OnlineQueryBulk removed to prevent inefficient data conversions, migrate to `OnlineQueryBulk`.
+    - Use `GRPCOnlineQueryBulkResult.UnmarshalInto` for structured responses.
+- Most `GRPCClient` methods now return user-friendly wrappers around proto responses, exposing raw responses via RawResponse. Errors are now lifted properly.
+
+### Chalk developer experience improvements
+
+- Singletons can be used to filter `DataFrames` and has-many relationships.
+- New Chalk functions: `max_by_n` and `min_by_n` Chalk functions: retrieve the top n rows with the **maximum** and **minimum** values from a specified column in a DataFrame or has-many relationship, equivalent to `sort_by(sort_col, DESC or ASC).head(n)[result_col]`
+- New Chalk functions: `array_median`, `array_average`, `array_sum`, `array_stddev`
+- Expanded Python resolver acceleration to support strings manipulation e.g. slices, substrings, and reverses
+
+### Chalk dashboard improvements
+
+- Chalk deployments running on AWS now support manually creating and editing node pools via the dashboard, making it easier to organize and manage different groups of worker nodes in a cluster. This helps distribute workloads more efficiently and scale specific groups as needed.
+- The query plan viewer now displays the static expressions generated to accelerate Python resolvers
+
+![Static expressions](/img/changelog-25_03_14.png)
+
+---
+
 ## February 27, 2025
 
 ### Case study with Verisoul--a leading provider of real-time fake account detection
