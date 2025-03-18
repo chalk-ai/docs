@@ -18,7 +18,7 @@ def fn() -> DataFrame[User.id, User.name]:
 
 The `cron` keyword arguments takes a [duration](/api-docs#Duration)
 to determine the schedule on which to run.  For more fine-grained control,
-you can alternatively specify a [crontab](https://man7.org/linux/man-pages/man5/crontab.5.html).
+you can alternatively specify a [crontab](https://man7.org/linux/man-pages/man5/crontab.5.html) in the UTC timezone.
 
 ```py
 @online(cron="***/5 * * * ***")

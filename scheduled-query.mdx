@@ -19,9 +19,9 @@ and persist the results in the online and/or offline feature stores.
 
 ## Create a Scheduled Query
 
-To create a scheduled query, make a
-[ScheduledQuery](/api-docs#ScheduledQuery)
-object somewhere in your code.
+To create a scheduled query, make a [ScheduledQuery](/api-docs#ScheduledQuery)
+object somewhere in your code. Crontabs can be used to specify the
+schedule in the UTC timezone.
 
 ```python
 from chalk import ScheduledQuery
