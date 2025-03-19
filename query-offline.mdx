@@ -116,7 +116,7 @@ output = chalk_client.offline_query(
         FROM transactions AS t
         WHERE t.update_at >= {now - timedelta(days=30)}
     """,
-    outputs=[
+    output=[
         Seller.id,
         Buyer.id,
         Buyer.account_created_date,
