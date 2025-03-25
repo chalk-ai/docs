@@ -144,6 +144,10 @@ To compute `User.total_spend`, we needed to create a projection of the `User.tra
 `Transaction.total` column so that the `sum` aggregation could work. In contrast, no projection was needed for
 `num_large_transaction`'s `count` aggregation because `count` works on DataFrames with any number of columns.
 
+For computing aggregations over high volumes of data, such as transaction data, with low latency, Chalk also offers
+[materialized windowed aggregations](/docs/materialized_aggregations) that uses materialization of buckets of data to
+compute large aggregations efficiently.
+
 ## Run conditions
 
 To specify run conditions such as environment, tags, and versions for a feature that is resolved through an expression,
