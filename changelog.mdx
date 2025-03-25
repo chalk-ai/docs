@@ -7,6 +7,33 @@ description: Updates to Chalk!
 
 ## March 14, 2015
 
+## Case study with Apartment List—a thriving apartment rental marketplace transforming search with real-time personalization
+
+[With Chalk, Apartment List](https://chalk.ai/customers/apartment-list) delivers instant apartment recommendations with real-time price and location flexing, dynamically adapting to user behavior while making low-latency calls to third-party services for the most current pricing information.
+
+## Chalk developer experience improvements
+
+Added store_offline and store_online overrides for features with max staleness, making it easy to exclude features from being persisted, particularly helpful for intermediate features that do not need to be saved e.g. very long text.
+
+```python
+@features(max_staleness="infinity")
+class Document:
+    id: str
+    file_type: str
+    corpus_text: str = feature(store_offline=False, store_online=False)
+    extracted_feature_from_corpus_text: str
+```
+
+### Chalk dashboard improvements
+
+Chalk's Data Explorer now displays the source of each feature e.g. "Live Resolver"
+
+![Sources in Chalk Data Explorer](/img/)
+
+---
+
+## March 14, 2015
+
 ## Breaking changes to Chalk Client's Go SDK (1.2.0)
 
 Released [v1.2.0 of the Chalk Go Client](https://github.com/chalk-ai/chalk-go/releases/tag/v1.2.0) which introduces some breaking changes, most notably:
