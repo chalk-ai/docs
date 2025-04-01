@@ -199,7 +199,10 @@ class Job:
 @features(max_staleness="30d")
 class Record:
     id: int
-    driver_id: str
+
+    # with an override on max_staleness, all other features in the feature class would be cached with a max
+    # staleness of 30 days, but driver_id would be cached with a max staleness of 1 day.
+    driver_id: Driver.id = feature(max_staleness="1d")
     timestamp: datetime
     record_details: str
 ```
