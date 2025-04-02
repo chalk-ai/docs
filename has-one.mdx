@@ -82,7 +82,7 @@ class User:
     domain: str
     alias: str
 
-# join with composite key
+    # join with composite key
     posts: DataFrame[Posts] = has_many(lambda: User.email == Post.email)
     # multi-feature join
     org_profile: Profile = has_one(lambda: (User.alias == Profile.email) & (User.org == Profile.org))

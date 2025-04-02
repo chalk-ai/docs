@@ -144,6 +144,10 @@ To compute `User.total_spend`, we needed to create a projection of the `User.tra
 `Transaction.total` column so that the `sum` aggregation could work. In contrast, no projection was needed for
 `num_large_transaction`'s `count` aggregation because `count` works on DataFrames with any number of columns.
 
+For computing aggregations over high volumes of data, such as transaction data, with low latency, Chalk also offers
+[materialized windowed aggregations](/docs/materialized_aggregations) that uses materialization of buckets of data to
+compute large aggregations efficiently.
+
 ## Run conditions
 
 To specify run conditions such as environment, tags, and versions for a feature that is resolved through an expression,
@@ -249,6 +253,8 @@ combination with expression references to transform features:
 #### Encoding and decoding
 
 * [`bytes_to_string`](/api-docs#bytes_to_string)
+* [`from_big_endian_64`](/api-docs#from_big_endian_64)
+* [`from_big_endian_32`](/api-docs#from_big_endian_32)
 * [`gunzip`](/api-docs#gunzip)
 * [`json_extract_array`](/api-docs#json_extract_array)
 * [`json_value`](/api-docs#json_value)
@@ -265,6 +271,7 @@ combination with expression references to transform features:
 
 * [`abs`](/api-docs#abs)
 * [`asin`](/api-docs#asin)
+* [`bankers_round`](/api-docs#bankers_round)
 * [`ceil`](/api-docs#ceil)
 * [`cos`](/api-docs#cos)
 * [`cosine_similarity`](/api-docs#cosine_similarity)
@@ -309,23 +316,31 @@ combination with expression references to transform features:
 #### Array Manipulation
 
 * [`array_agg`](/api-docs#array_agg)
+* [`array_average`](/api-docs#array_average)
 * [`array_count_value`](/api-docs#array_count_value)
 * [`array_distinct`](/api-docs#array_distinct)
 * [`array_join`](/api-docs#array_join)
 * [`array_max`](/api-docs#array_max)
+* [`array_median`](/api-docs#array_median)
 * [`array_min`](/api-docs#array_min)
+* [`array_sample_stddev`](/api-docs#array_sample_stdev)
 * [`array_sort`](/api-docs#array_sort)
+* [`array_stddev`](/api-docs#array_stdev)
+* [`array_sum`](/api-docs#array_sum)
 * [`cardinality`](/api-docs#cardinality)
 * [`head`](/api-docs#head)
 * [`element_at`](/api-docs#element_at)
 * [`max`](/api-docs#max)
 * [`max_by`](/api-docs#max_by)
+* [`max_by_n`](/api-docs#max_by_n)
 * [`min`](/api-docs#min)
 * [`min_by`](/api-docs#min_by)
+* [`min_by_n`](/api-docs#min_by_n)
 * [`slice`](/api-docs#slice)
 * [`contains`](/api-docs#contains)
 
 #### Other
 
 * [`cast`](/api-docs#cast)
+* [`jinja`](/api-docs#jinja)
 * [`sagemaker_predict`](/api-docs#sagemaker_predict)

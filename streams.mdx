@@ -158,8 +158,6 @@ def resolve_clicks(message: UserClickEvent) -> Features[...]:
 In this example, each of the messages from our Kafka source will be converted to a `StreamFeature` instance.
 Our streaming message, embodied by `KafkaMessage`, contains a string representation of a naive datetime
 we would like to convert to a timezoned datetime.
-Refer to the [aggregations](/docs/windowed-streaming#custom-event-timestamping) page for why timezoned timestamps
-may be useful for streaming use cases.
 
 Upon message arrival, the bytes are first parsed into `KafkaMessage`,
 then run through the parse function `parse_message`.

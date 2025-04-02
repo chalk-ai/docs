@@ -137,3 +137,72 @@ Keeping these principles in mind, here are some common use cases and how to hand
 The `max_staleness` values provided to the `feature` function
 may be overridden at the time of querying for features.
 See [Overriding Default Caching](/docs/query-caching) for a detailed discussion.
+
+---
+
+## Specifying Online and Offline Storage
+
+Chalk enables granular configuration about whether and how to store feature values in the online and offline stores.
+For each feature class, the `@features` decorator can be used to specify whether the scalar features in the feature
+class should be cached in the online store based on the `max_staleness` parameter. However, the `feature` function
+enables per-feature specification of whether values computed for that feature within a feature class should be stored
+in the online and offline stores using the `store_online` and `store_offline` parameters. The following example
+showcases how these parameters can be used in combination to express different storage behavior.
+
+```python
+from chalk.features import features, feature, DataFrame
+from datetime import datetime
+
+# due to the max_staleness parameter, all scalar features in the Driver feature class will be cached in the online
+# store with a max staleness of 30 days. In addition--all of the computed feature values will be stored offline by
+# default.
+@features(max_staleness="30d")
+class Driver:
+    id: int
+
+    # with no overrides, this feature will be stored online with max staleness of 30 days, and stored offline
+    name: str
+
+    # with an override on store_offline, this feature will be stored online with a max staleness of 30 days, but
+    # will not be stored offline
+    age: int = feature(store_offline=False)
+
+    # with overrides for store_online and store_offline, computed feature values for location will not be persisted
+    # in either the online or offline store
+    location: str = feature(store_online=False, store_offline=False)
+
+    # joined features are not scalar features, and hence do not inherit the storage behavior of the feature class.
+    # because neither the Job feature class nor the
+    jobs: "DataFrame[Job]"
+
+    # because the Record feature class has a max staleness of 30 days, and so does the join, this join
+    # would be cached on the Driver feature class
+    records: "DataFrame[Record]" = has_many(lambda: Record.driver_id == Driver.id, max_staleness="30d")
+
+# with no max_staleness set, features in the Job feature class will by default by stored offline, but not online
+@features
+class Job:
+    id: int
+
+    # with no overrides, this feature will be stored offline, but not online
+    driver_id: Driver.id
+
+    # with an override for store_offline, computed feature values for start_time will not be persisted
+    start_time: datetime = feature(store_offline=False)
+
+    # with overrides for store_online and store_offline, computed feature values for end_time will be persisted
+    # in the online store, but not the offline store
+    end_time: datetime = feature(store_online=True, store_offline=False)
+
+# with max_staleness set, all scalar features in the Record feature class will be cached in the online store with a
+# max staleness of 30 days and stored offline by default.
+@features(max_staleness="30d")
+class Record:
+    id: int
+
+    # with an override on max_staleness, all other features in the feature class would be cached with a max
+    # staleness of 30 days, but driver_id would be cached with a max staleness of 1 day.
+    driver_id: Driver.id = feature(max_staleness="1d")
+    timestamp: datetime
+    record_details: str
+```
