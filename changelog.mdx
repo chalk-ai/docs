@@ -5,6 +5,27 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## April 4, 2025
+
+### Chalk developer experience improvements and engineering blog post
+
+We've expanded the coverage for the types of Python resolvers that Chalk can statically compile into C++, speeding up computation.
+Check out our [new engineering blog post](https://chalk.ai/blog/symbolic-python-interpreter) for a deep dive into how our Symbolic Python Interpreter works.
+
+### Chalk dashboard improvements
+
+- Improved how we render stack bar charts within the Chalk dashboard
+- Can now filter out and explicitly view Scheduled Queries from the Offline Queries page
+- New "Resolved by" column in the features page clearly displays the source resolver for each feature improving traceability
+- The Offline Queries page now includes a "Request" button in the details section that displays the parameters used when the query was processed
+- Added a "Performance" tab when viewing an Online Query that enables inspecting each resolver referenced e.g. SQL query, code, input and output params, and why it may have not been statically accelerated
+
+![Resolved by column](/img/changelog-25_04_04-resolved_by.png)
+
+![Online Query Performance](/img/changelog-25_04_04-online_query_performance.png)
+
+---
+
 ## March 26, 2025
 
 ## Case study with Apartment List—a thriving apartment rental marketplace transforming search with real-time personalization
