@@ -58,7 +58,7 @@ class User:
     id: int
     name: str
     email: str
-    name_match: float = F.levenstein_distance(_.name, _.email)
+    name_match: float = F.levenshtein_distance(_.name, _.email)
     txns: DataFrame[Transaction]
     count_txns: Windowed[int] = windowed(
         "1m", "1d", "30d",
