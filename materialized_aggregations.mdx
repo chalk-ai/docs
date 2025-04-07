@@ -115,10 +115,19 @@ You can control how your aggregations are backfilled by:
 ### Cron Schedule Expression
 
 ```python
+from chalk.features import features
+from chalk import DataFrame, Windowed, windowed
+
+@features
+class Transaction:
+    id: int
+    amount: float
+    user_id: "User.id"
+
 @features
 class User:
     id: int
-    transactions: DataFrame[Transactions]
+    transactions: DataFrame[Transaction]
     total_transaction_amount: Windowed[int] = windowed(
         "10d",
         "90d",
