@@ -13,17 +13,23 @@ With Chalk, teams don’t need to spin up separate pipelines. Developers can mat
 performance, without compromising on flexibility, with just a single line of code:
 
 ```py
-from chalk.streams import Windowed, windowed
+from chalk.features import features
+from chalk import DataFrame, Windowed, windowed
+
+@features
+class Transaction:
+    id: int
+    amount: float
+    user_id: "User.id"
 
 @features
 class User:
     id: int
-    transactions: DataFrame[Transactions]
+    transactions: DataFrame[Transaction]
     total_transaction_amount: Windowed[int] = windowed(
-        "1d",
-        "7d",
-        "30d",
-        materialization={"bucket_duration": "1d"}, # materialize your features in a single line
+        "1d", "7d", "30d",
+        # materialize your features in a single line
+        materialization={"bucket_duration": "1d"},
         expression=_.transactions[_.amount].sum(),
     )
 ```
@@ -129,8 +135,7 @@ class User:
     id: int
     transactions: DataFrame[Transaction]
     total_transaction_amount: Windowed[int] = windowed(
-        "10d",
-        "90d",
+        "10d", "90d",
         materialization={
             "bucket_duration": "1d",
             "backfill_schedule": "0 0 * * *",
