@@ -19,9 +19,9 @@ See more information on [KafkaSource](/api-docs#KafkaSource),
 ```py
 from chalk.streams import KafkaSource, KinesisSource, PubSubSource
 
-kafka_source = KafkaSource(name="...")
-kinesis_source = KinesisSource(name="...")
-pubsub_source = PubSubSource(name="...")
+kafka_topic = KafkaSource(name="transactions")
+kinesis_topic = KinesisSource(name="transactions")
+pubsub_topic = PubSubSource(name="transactions")
 ```
 
 Now, let's set up the Chalk features you'd like to materialize upon stream message ingestion.
@@ -30,9 +30,9 @@ Now, let's set up the Chalk features you'd like to materialize upon stream messa
 from chalk.features import features, Features
 
 @features(max_staleness="1d")
-class StreamFeature:
+class Transaction:
     id: str
-    value: str
+    amount: float
 ```
 
 Streaming resolvers produce feature values that are persisted to the offline store. Similar
@@ -43,15 +43,15 @@ Chalk supports three kinds of streaming resolvers: mapping, windowed, and contin
 On this page, we will focus on mapping resolvers, which create one Chalk feature instance per message.
 Both windowed and continuous streaming will be covered in the [aggregations](/docs/aggregations) page.
 
-This is an example of a mapping resolver that maps from a `bytes` message to an instance of `StreamFeature`.
+This is an example of a mapping resolver that maps from a `bytes` message to an instance of `Transaction`.
 
 ```py
 from chalk.streams import stream
 
 @stream(source=source)
-def stream_resolver(message: bytes) -> Features[StreamFeature.id, StreamFeature.value]:
+def stream_resolver(message: bytes) -> Features[Transaction.id, Transaction.value]:
     id, value = some_bytes_processing_step(message)
-    return StreamFeature(id=id, value=value)
+    return Transaction(id=id, value=value)
 ```
 
 In this resolver, we pass in the raw bytes from the stream.
@@ -62,16 +62,25 @@ as a wrapper for messages on the topic.
 Chalk will validate the encoding against the model.
 
 ```py
+from chalk.streams import KafkaSource
 from pydantic import BaseModel
 
-class Message(BaseModel):
+@features(max_staleness="1d")
+class Transaction:
     id: str
-    value: str
-    ...
+    amount: float
 
-@stream(source=source)
-def stream_resolver(message: Message) -> Features[StreamFeature.id, StreamFeature.value]:
-    return StreamFeature(id=message.id, value=message.value)
+kafka_topic = KafkaSource(name="transactions")
+
+class TransactionTopicMessage(BaseModel):
+    id: str
+    amount: float
+
+@stream(source=kafka_topic)
+def stream_resolver(
+    message: TransactionTopicMessage,
+) -> Features[Transaction.id, Transaction.value]:
+    return Transaction(id=message.id, value=message.value)
 ```
 
 ---
@@ -113,24 +122,25 @@ A simple parse function can ingest bytes into a `BaseModel`, which will be used 
 ```py
 from pydantic import BaseModel
 
-class Message(BaseModel):
+class TransactionMessage(BaseModel):
     id: str
     value: str
 
-def parse_bytes(data: bytes) -> Message:
-    id, value = some_bytes_processing_step(data)
-    return Message(id=id, value=value)
-
+def parse_bytes(data: bytes) -> TransactionMessage:
+    id, amount = some_bytes_processing_step(data)
+    return TransactionMessage(id=id, amount=amount)
 
 @stream(source=source, parse=parse_bytes)
-def stream_resolver(message: Message) -> Features[StreamFeature.id, StreamFeature.value]:
-    return StreamFeature(id=message.id, value=message.value)
+def stream_resolver(message: TransactionMessage) -> Features[Transaction.id, Transaction.amount]:
+    return Transaction(id=message.id, amount=message.amount)
 ```
 
 In the below example, only `UserEventMessage`s which have a `click_event` property will be processed by `resolve_clicks`.
 Those where it is equal to `None` will not be processed, and skipped entirely.
 
 ```py
+from pydantic import BaseModel
+
 # Child messages
 class UserLoginEvent(BaseModel):
     ...
@@ -140,8 +150,8 @@ class UserClickEvent(BaseModel):
 
 # Parent message contains one of the child message types
 class UserEventMessage(BaseModel):
-    login_event: Optional[UserLoginEvent] = None
-    click_event: Optional[UserClickEvent] = None
+    login_event: UserLoginEvent | None = None
+    click_event: UserClickEvent | None = None
 
 def get_click_event(event: UserEventMessage) -> UserClickEvent | None:
     return event.click_event # can be None
