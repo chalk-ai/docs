@@ -251,7 +251,9 @@ However, if you have a parse function,
 custom timestamps, or other advanced functionality you want to test,
 you may have to send messages to the streaming server.
 Read more on how to use the `ChalkClient` to test streaming resolvers
-[here](/api-docs#ChalkClient.test_streaming_resolver))
+[here](/api-docs#ChalkClient.test_streaming_resolver)). This will pass messages
+through your resolvers without persistence, and will return you a Polars DataFrame
+with your output data for inspection.
 
 ```py
 from pydantic import BaseModel
@@ -270,6 +272,7 @@ class KinesisPaymentFeatures:
     id: str
     amount: int
 
+# Note the use of a parse function here.
 def parse_bytes(b: bytes) -> KinesisMessage:
     return KinesisMessage.parse_raw(b)
 
