@@ -277,7 +277,7 @@ def parse_bytes(b: bytes) -> KinesisMessage:
     return KinesisMessage.parse_raw(b)
 
 @stream(source=kinesis_source, parse=parse_bytes)
-def kinesis_stream_resolver(
+def kinesis_stream_resolver_with_parse(
     message: KinesisMessage,
 ) -> Features[KinesisPaymentFeatures.id, KinesisPaymentFeatures.amount]:
     return KinesisPaymentFeatures(id=message.payment_id, amount=message.amount)
@@ -285,7 +285,7 @@ def kinesis_stream_resolver(
 client = ChalkClient()
 messages = [KinesisMessage(payment_id=str(i), amount=i * 10).json().encode('utf-8') for i in range(10)]
 resp = client.test_streaming_resolver(
-    resolver="kinesis_stream_resolver",
+    resolver="kinesis_stream_resolver_with_parse",
     message_bodies=messages,
 )
 print(resp.features)
