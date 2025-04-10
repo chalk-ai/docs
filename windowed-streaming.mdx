@@ -58,10 +58,8 @@ Now, set up your streaming resolvers referencing these features.
 
 ```python
 from pydantic import BaseModel
-
 from chalk import features, has_many, DataFrame, Features, FeatureTime, _
-from chalk.streams import stream
-
+from chalk.streams import stream, KafkaSource
 
 class UserMsg(BaseModel):
     id: str
@@ -72,14 +70,17 @@ class TransactionMsg(BaseModel):
     user_id: str
     amount: float
 
-@stream(source=user_source)
-def user_stream_source(
+user_topic = KafkaSource(name='...')
+transaction_topic = KafkaSource(name='...')
+
+@stream(source=user_topic)
+def process_user_topic(
     value: UserMsg,
 ) -> Features[User.id, User.name]:
     return User(id=value.id, name=value.name)
 
-@stream(source=transaction_source)
-def transaction_stream_source(
+@stream(source=transaction_topic)
+def process_transaction_topic(
     value: TransactionMsg,
 ) -> Features[Transaction.id, Transaction.user_id, Transaction.amount]:
     return Transaction(id=value.id, user_id=value.user_id, amount=value.amount)
@@ -92,10 +93,10 @@ in the existing materialized aggregations.
 There are two separate streams here (one for users and one for transactions), but only one of the stream resolvers
 will update materialized aggregations.
 
-- The resolver `user_stream_source` returns `User.id` and `User.name`, and neither of these features are related to the
+- The resolver `process_user_topic` returns `User.id` and `User.name`, and neither of these features are related to the
 materialized aggregation features `User.sum_transaction_amount` and `User.mean_transaction_amount`. This means that
 this resolver will simply update the online store with the new values for `User.name` and `User.id`, and continue.
-- The resolver `transaction_stream_source` returns `Transaction.id`, `Transaction.user_id`, and `Transaction.amount`.
+- The resolver `process_transaction_topic` returns `Transaction.id`, `Transaction.user_id`, and `Transaction.amount`.
 These features are related to the materialized aggregation features: both `User.sum_transaction_amount` and
 `User.mean_transaction_amount` reference `_.amount` in their expressions, which corresponds to `Transaction.amount`.
 In addition, the feature `Transaction.user_id` is necessary to compute the join between `User` and `Transaction`.
@@ -103,4 +104,3 @@ Thus, this resolver will update the materialized aggregations with the new value
 `User.mean_transaction_amount` as these transaction messages are received.
 
 To opt out of updating materialized aggregations, set `updates_materialized_aggregations=False` on the stream resolver.
-
