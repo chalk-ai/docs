@@ -23,14 +23,14 @@ failed logins in the last 10 minutes, 30 minutes, and 1 day:
 ```py
 from chalk import Windowed, windowed
 from chalk.features import DataFrame, _
-import datetime as dt
+from datetime import datetime
 
 @features
 class LoginAttempt:
     id: int
     user: "User.id"
     status: str
-    ts: dt.datetime
+    at: datetime
 
 @features
 class User:
@@ -39,7 +39,10 @@ class User:
     num_failed_logins: Windowed[int] = windowed(
         "10m", "30m", "1d",
         max_staleness="10m",
-        expression=_.login_attempts[_.status=="failed", _.ts > _.chalk_window].count(),
+        expression=_.login_attempts[
+            _.status=="failed",
+            _.at > _.chalk_window
+        ].count(),
         default=0,
     )
 ```
@@ -59,11 +62,16 @@ Windowed features resolved via [expressions](/docs/expression) can reference the
 using the `_.chalk_window` operator:
 
 ```python
+from chalk import Windowed, windowed
+from chalk.features import DataFrame, _
+from datetime import datetime
+
 @features
 class Transaction:
     id: int
     user_id: "User.id"
     amount: float
+    at: datetime
 
 @features
 class User:
@@ -72,7 +80,10 @@ class User:
     total_spend: Windowed[float] = windowed(
         "30d", "60d", "90d",
         default=0,
-        expression=_.transactions[_.amount, _.ts > _.chalk_window].sum(),
+        expression=_.transactions[
+            _.amount,
+            _.at > _.chalk_window
+        ].sum(),
         materialization={"bucket_duration": "1d"},
     )
 ```
@@ -93,6 +104,7 @@ class Transaction:
     id: int
     user_id: "User.id"
     amount: float
+    at: datetime
 
 @features
 class User:
@@ -100,15 +112,23 @@ class User:
     transactions: DataFrame[Transaction]
     sum_transactions: Windowed[float] = windowed(
         "30d", "60d", "90d",
-        expression=_.transactions[_.amount, _.ts > _.chalk_window].sum(),
+        expression=_.transactions[
+            _.amount,
+            _.at > _.chalk_window
+        ].sum(),
     )
     count_transactions: Windowed[float] = windowed(
         "30d", "60d", "90d",
-        expression=_.transactions[_.ts > _.chalk_window].count(),
+        expression=_.transactions[
+            _.ts > _.chalk_window
+        ].count(),
     )
     avg_transaction_amount: Windowed[float] = windowed(
         "30d", "60d", "90d",
-        expression=_.sum_transactions[_.chalk_window] / _.count_transactions[_.chalk_window],
+        expression=(
+            _.sum_transactions[_.chalk_window] /
+            _.count_transactions[_.chalk_window]
+        )
     )
 ```
 
@@ -172,7 +192,9 @@ class User:
     spend_by_merchant: DataFrame = group_by_windowed(
         "30d",
         "90d",
-        expression=_.transactions.group_by(_.merchant_id).agg(_.amount.sum()),
+        expression=_.transactions.group_by(
+            _.merchant_id
+        ).agg(_.amount.sum()),
     )
 ```
 
