@@ -211,8 +211,8 @@ def parse_message(kafka_message: KafkaMessage) -> ParsedMessage:
         event_timestamp=timezoned_timestamp
     )
 
-@stream(source=source)
-def stream_resolver(message: ParsedMessage) -> Features[StreamFeature.id, StreamFeature.value]:
+@stream(source=source, parse=parse_message)
+def kafka_stream_resolver(message: ParsedMessage) -> Features[StreamFeature.id, StreamFeature.value]:
     return StreamFeature(id=message.id, value=message.value, event_timestamp=message.event_timestamp)
 ```
 
@@ -225,78 +225,78 @@ If your streaming resolvers error in production,
 the errors will be logged and displayed on the dashboard for the resolver.
 But if you're looking to unit test your stream resolvers, you have a few options.
 
-One is to fetch data off your streaming source and feed it into the resolver directly.
-If your streaming resolver intakes `bytes`, you can do this without manipulation,
-since stream data is in bytes natively.
-but if it takes a `BaseModel`, you will have to perform a `model.parse_raw()` call on the raw bytes.
-
-
-```py
-@stream(source=some_kinesis_source)
-def kinesis_stream(
-    message_raw: bytes,
-) -> Features[KinesisPaymentFeatures.id, KinesisPaymentFeatures.amount]:
-    ...
-```
-
-Assuming you have the above resolver, you can pull messages from Kinesis and just insert them into your resolver.
+One option is to feed dummy data into the resolver locally.
 Like regular resolvers, stream resolvers should be unit-testable as regular Python functions.
 
+
 ```py
-import boto3
+from pydantic import BaseModel
+from chalk.features import features, Features
+from chalk.streams import stream, KinesisSource
 
-@stream(source=some_kinesis_source)
+kinesis_source = KinesisSource(name="...")
+
+class KinesisMessage(BaseModel):
+    payment_id: str
+    amount: int
+
+@features(max_staleness="1d", etl_offline_to_online=True)
+class KinesisPaymentFeatures:
+    id: str
+    amount: int
+
+@stream(source=kinesis_source)
 def kinesis_stream_resolver(
-    message_raw: bytes,
+    message: KinesisMessage,
 ) -> Features[KinesisPaymentFeatures.id, KinesisPaymentFeatures.amount]:
-    ...
+    return KinesisPaymentFeatures(id=message.payment_id, amount=message.amount)
 
-def fetch_messages():
-    session = boto3.session.Session()
-    stream_name=...
-    client = session.client(
-        "kinesis",
-        region_name=...,
-        aws_access_key_id=...,
-        aws_secret_access_key=...
-    )
-    response = client.describe_stream(StreamName=stream_name)
-    details = response['StreamDescription']
-    response = client.get_shard_iterator(
-        StreamName=stream_name, ShardId=details['Shards'][0]['ShardId'],
-        ShardIteratorType='LATEST')
-    shard_iter = response['ShardIterator']
-    records = []
-    while len(records) < 10:
-        # polling Kinesis for records...
-        response = client.get_records(ShardIterator=shard_iter, Limit=10)
-        records.extend(response['Records'])
-        shard_iter = response['NextShardIterator']
-    messages = [record["Data"] for record in records]
-    return messages
 
-stream_messages = fetch_messages()
-for message in stream_messages:
-    result = kinesis_stream_resolver(message)
-    print(result)
+model_example = KinesisMessage(id="1", amount=5)
+result = kinesis_stream_resolver(model_example)
+assert result.id == "1"
 ```
 
-However, if you have a parse function, states, rekeying,
+However, if you have a parse function,
 custom timestamps, or other advanced functionality you want to test,
 you may have to send messages to the streaming server.
 Read more on how to use the `ChalkClient` to test streaming resolvers
-[here](/api-docs#ChalkClient.test_streaming_resolver))
+[here](/api-docs#ChalkClient.test_streaming_resolver)). This will pass messages
+through your resolvers without persistence, and will return you a Polars DataFrame
+with your output data for inspection.
 
 ```py
+from pydantic import BaseModel
+from chalk.features import features, Features
+from chalk.streams import stream, KinesisSource
 from chalk.client import ChalkClient
 
-stream_messages = fetch_messages()
-keys = ["my_key"] * len(stream_messages)
+kinesis_source = KinesisSource(name="...")
+
+class KinesisMessage(BaseModel):
+    payment_id: str
+    amount: int
+
+@features(max_staleness="1d", etl_offline_to_online=True)
+class KinesisPaymentFeatures:
+    id: str
+    amount: int
+
+# Note the use of a parse function here.
+def parse_bytes(b: bytes) -> KinesisMessage:
+    return KinesisMessage.parse_raw(b)
+
+@stream(source=kinesis_source, parse=parse_bytes)
+def kinesis_stream_resolver_with_parse(
+    message: KinesisMessage,
+) -> Features[KinesisPaymentFeatures.id, KinesisPaymentFeatures.amount]:
+    return KinesisPaymentFeatures(id=message.payment_id, amount=message.amount)
+
 client = ChalkClient()
+messages = [KinesisMessage(payment_id=str(i), amount=i * 10).json().encode('utf-8') for i in range(10)]
 resp = client.test_streaming_resolver(
-        resolver="kinesis_stream_resolver",
-        message_keys=keys,
-        message_bodies=stream_messages,
-    )
+    resolver="kinesis_stream_resolver_with_parse",
+    message_bodies=messages,
+)
 print(resp.features)
 ```
