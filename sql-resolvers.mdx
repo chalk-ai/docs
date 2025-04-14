@@ -23,7 +23,7 @@ the SQL query.
 -- source: pg_users
 -- resolves: User
 
-select id, name, age, hobbies from users;
+select id, name, age, hobbies from users
 
 ```
 
@@ -46,7 +46,7 @@ make_sql_file_resolver(
     name="get_user",
     source="pg_users",
     resolves="User",
-    query="select id, name, age, hobbies from users;"
+    query="select id, name, age, hobbies from users"
 )
 ```
 
