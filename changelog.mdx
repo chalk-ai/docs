@@ -5,6 +5,55 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 ---
 
+## April 21, 2025
+
+### Presented at VeloxCon 25 (April 15-16 at Meta HQ)
+
+Nathan Fenner presented how Chalk leverages Velox as a common compute engine for both online and offline queries:
+
+- Improvements to Velox's expression analysis for low-latency applications
+- Custom enhancements for avoiding redundant computations and a specialized online hash join
+- Our symbolic Python interpreter that automatically converts Python feature transformations into efficient Velox expressions
+
+[**Check out the talk (18 mins) on our YouTube page!**](https://www.youtube.com/watch?v=VsAuT1QjBDI)
+
+### Faster HTTP requests using Chalk Expressions
+
+Chalk functions now support direct HTTP requests via the `chalk.functions.http` module, enabling you to call external APIs with high performance and without the overhead of Python.
+The `HttpResponse` type provides access to response data including status codes, bodies, headers, and the final URL after redirects.
+
+```python
+import chalk.functions as F
+from chalk import Primary, _
+from chalk.features import features
+from chalk.functions.http import HttpResponse
+
+@features
+class ExternalAPI:
+    id: Primary[int]
+    api_endpoint: str
+
+    # GET request returning string response
+    api_response: HttpResponse[str] = F.http_get(_.api_endpoint)
+    status_code: int = _.api_response.status_code
+    response_body: str = _.api_response.body
+    headers: dict[str, str] = _.api_response.headers
+    final_url: str = _.api_response.final_url
+```
+
+### Chalk accelerated Python resolvers are colored as yellow
+
+Symbolic Python resolvers accelerated by Chalk are now highlighted in yellow in the query plan viewer (standard Python resolvers remain purple), making it easier to differentiate resolvers that are accelerated or candidates for symbolic execution.
+
+### New offline query explorer added to the Chalk dashboard
+
+The offline query explorer includes a new grid/table view for entering multiple input features in a single query, with support for adding, editing, and deleting rows and the option to recompute outputs as needed.
+The updated interface enhances visibility into these query results through interactive preview panels, comprehensive statistics displays, and detailed metadata exploration.
+
+![Offline query explorer](/img/changelog-25_04_21-offline_query_explorer.png)
+
+---
+
 ## April 4, 2025
 
 ### Chalk developer experience improvements and engineering blog post
