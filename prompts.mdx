@@ -121,14 +121,15 @@ eval_run = chalk_client.prompt_evaluation(
     evaluators=["exact_match"],
     reference_output="user.actual_sentiment",
     prompts=[
+        "analyze_sentiment-v1",
+        "analyze_sentiment-v2",
         P.completion(
-            model="gpt-4o", 
+            model="gpt-4o",
             messages=[
                 P.message(role="system", content=system_message),
                 P.message(role="user", content=user_message),
             ],
         ),
-        "analyze_sentiment",
     ]
 )
 eval_run.to_pandas()
