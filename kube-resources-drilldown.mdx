@@ -1,6 +1,7 @@
 ---
 title: Kubernetes Resources Overview
 description: A description of each kind of Kubernetes resource used by Chalk
+published: true
 ---
 
 import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
@@ -135,7 +136,7 @@ or by random sampling for experiment workflows.
 deployed as a separate component from the metadata and data planes, and is responsible for routing traffic
 to the correct component based on the request path.
 
-Typically you will not need to scale this component. Monitoring it can be useful to ensure that there are no
+Typically, you will not need to scale this component. Monitoring it can be useful to ensure that there are no
 HTTP or gRPC layer errors.
 
 `metrics database`: The metrics database is a component that stores metrics data for Chalk. Typically,
