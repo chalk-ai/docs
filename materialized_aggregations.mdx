@@ -26,7 +26,7 @@ class Transaction:
 class User:
     id: int
     transactions: DataFrame[Transaction]
-    total_transaction_amount: Windowed[int] = windowed(
+    total_transaction_amount: Windowed[float] = windowed(
         "1d", "7d", "30d",
         # materialize your features in a single line
         materialization={"bucket_duration": "1d"},
