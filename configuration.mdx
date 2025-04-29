@@ -156,6 +156,19 @@ validation:
 Your `.chalkignore` file should include your scripts, notebooks, and tests. Anything that you are not actively using in
 your deployment should be added so that non-deployment code does not clutter or interfere with your deployment.
 
-## requirements.txt
-By default, Chalk will use `pip` to install Python requirements from `./requirements.txt` in your project's root
-directory. You may override this file's location within the `environments` dictionary of your `chalk.yaml` file.
+## Specifying Python Requirements
+
+Chalk will use install the Python requirements for your project as specified in the `requirements` parameter of your `chalk.yaml`
+file. This can either be a `requirements.txt` file or a `pyproject.toml`. You can specify this file's location 
+and type in your `chalk.yaml` file like below: 
+
+```yaml 
+project: my-project-id
+
+environments:
+  dev:
+    runtime: python311
+    requirements: requirements-dev.txt
+  prod:
+    requirements: pyproject.yaml
+```
