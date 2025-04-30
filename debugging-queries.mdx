@@ -63,7 +63,7 @@ Next, we'll write a simple (buggy) aggregation resolver to compute the sum of a 
 from chalk import online
 
 @online
-def sum_transaction_amount(txns: User.transaction[Transaction.amount]) -> User.sum_transaction_amount:
+def sum_transaction_amount(txns: User.transactions[Transaction.amount]) -> User.sum_transaction_amount:
     return txns[Transaction.amount].count() # this 'count' is a bug! we'll debug it shortly.
 ```
 
