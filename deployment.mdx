@@ -4,45 +4,49 @@ description: Enterprise Deployment Model
 published: true
 ---
 
-import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
+import { ServiceDiagramSwitcher, CloudProviderAuth } from '@/components/ArchitectureDiagram'
 
 ---
 
-Chalk integrates with your _data sources_, transform this data with _feature pipelines_,
-store this data in _online_ and _offline storage_, and provide _monitoring_ on feature computation and distributions.
 
-## Enterprise Service Architecture
+## Overview
 
-Chalk offers a hosted model ("Chalk Cloud"), or a customer-hosted model ("Customer Cloud").
+Chalk consists of two main components:
+- A **Data Plane**, which hosts customer compute, and
+- A **Metadata Plane**, which manages deployments to the Data Plane and other orchestration responsibilities.
 
-There are a few main components of a Chalk deployment:
+Typically, the Chalk team deploys the Data Plane into new cloud accounts that are owned and controlled by the customer. The Metadata Plane is owned and centrally managed by Chalk: it retains no customer application data, and is responsible for orchestration and configuration management.
 
-- **Management** - serves non-customer data (like alert configuration and RBAC configuration).
-- **Builder** - builds containers that run your feature pipelines.
-- **Compute** - machines that run your feature pipelines. In both AWS and GCP, the compute runs on
-  Kubernetes with [Knative](https://knative.dev/).
-- **Customer Data** - the online and offline stores for your features.
-- **Secrets** - environment variables and configuration for your data sources.
+## Data Plane Deployment
 
-These components are organized as follows:
+<CloudProviderAuth />
 
-<ServiceDiagramSwitcher />
+## Data Plane Structure
 
-## Data Isolation
+The Chalk Data Plane consists of a few primary components:
+- **A Kubernetes Cluster**: hosts workloads, handles autoscaling and manages deployments.
+- **A Metrics Database**: stores and aggregates feature and metadata metrics.
+- **A Persistence Pipeline**: handles queuing for high frequency results and metrics.
+- **An Online Store**: caches features with explicit staleness to accelerate feature retrieval. We provide a [number of different configuration options for the online store](#).
+- **An Offline Store**: handles large datasets (both created and ingested by Chalk engines), and query logging. We provide a [number of different configuration options for the offline store](#).
+- **Secrets**: data plane secrets are hosted in the same cloud account as other resources, ensuring sensitive data stays confined to the Data Plane.
+- **A Load Balancer**: routes traffic to various deployments.
+- **Engines**: serve online and offline queries.
 
-In the enterprise deployment, your API clients talk directly to the compute engine deployed into your cloud.
-Feature values, historical and online, do not escape your cloud project.
+After deploying the Data Plane, we continue to monitor and update the system to ensure that engines are healthy, secure, and are serving traffic effectively.
 
-### Storage
+## Post Deployment
 
-Chalk uses different storage technologies to support online and offline use-cases.
+Once a Chalk Data Plane has been deployed, VPC peering is commonly added to allow private traffic between data sources in other accounts and the Data Plane. Additionally, some offline stores require additional integration steps and permissioning; we cover this in more data in [our offline store documentation](#). Adding additional data sources [is fully self-serve](#).
 
-The online store is optimized for serving the latest version of any given feature for any given entity with the minimum possible latency.
-Behind the scenes, Chalk uses a key-value store for this purpose.
-Chalk can be configured to use Redis or Cloud Memory Store for smaller resident data sets with high latency requirements,
-or DynamoDB when horizontal scalability is required.
+## Security Considerations
 
-The offline store is optimized for storing all historical feature values, serving point-in-time correct queries,
-and tracking provenance of features.
-Chalk supports a variety of storage backends depending on data scale and latency requirements.
-Typically, Chalk uses TimescaleDB, Redshift, or BigQuery.
+The Chalk Metadata Plane can be restricted to have write-only access to secrets in the Data Plane. Conversely, the Data Plane can be given read-only access to secrets to enforce secure injection of secrets by users.
+
+## Ongoing Permissions
+
+Chalk’s support team will work with you to scope permissions down to the subset required for ongoing maintenance. The precise details of this process depends on the level of ongoing support that your team needs and your compliance requirements. In principle, Chalk does not require ongoing access to data or the ability to edit IAM permissions: Chalk requires ongoing access to update the software deployed in your environment.
+
+## Metadata Plane
+
+In the event that you wish to also host the Chalk Metadata Plane, please contact us directly: the process will be similar to what we’ve outlined above, but more involved.
