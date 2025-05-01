@@ -137,6 +137,41 @@ or [BigQuery](https://cloud.google.com/bigquery).
 
 ---
 
+## Background Persistence
+
+When Chalk computes new feature values during online query serving, those feature values
+are asynchronously persisted to online storage (for features with a max-staleness set),
+offline storage, and the query log.
+
+After the response for a query is sent back to the client,
+computed feature values are published to a topic, where a
+persistence worker picks up the values and writes them to the appropriate
+storage systems.
+
+This ensures that serving latency remains low and that user-facing performance is never compromised.
+
+Chalk supports intelligent batching and routing of this data:
+
+- **Online Store:** Persistence workers synchronously write messages from the topic into
+  low-latency key/value stores like Redis and DynamoDB to enable future online queries
+  to use the cached values. These workers aim to keep the latency from the time a feature
+  value is computed to the time it appears in the online store as low as possible.
+- **Offline Store (Training and Backfill):** Feature logs are streamed in batches into columnar
+  data warehouses such as BigQuery, Delta Lake, or Snowflake, where they are versioned and used
+  for training, backtesting, and historical analysis. The design goal of this part of the system
+  is to be as efficient as possible with loading the data into these systems and keeping costs
+  low. Chalk uses a variety of techniques to ensure that the data is loaded in a way that
+  minimizes the cost of storage and query execution. Some storage systems, like BigQuery,
+  support streaming inserts, which allows for low-latency writes to the data warehouse.
+  Other systems, like Delta Lake and Snowflake, support bulk loading of data, which can be
+  used to load large amounts of data into the system quickly. Chalk uses these techniques
+  to ensure that the data is loaded in a way that minimizes the cost of storage and query execution.
+
+By separating query serving from persistence, Chalk ensures that feature computation remains
+fast while enabling robust auditability, traceability, and reusability of all computed feature data.
+
+---
+
 ## Monitoring
 
 Chalk supports not only robust monitoring of pipeline execution, but of the feature values
