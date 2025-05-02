@@ -155,6 +155,52 @@ class Preferences:
 
 ---
 
+## Organizing Feature Definitions Across Files
+
+In larger projects, it's common to split feature definitions across multiple Python modules.
+For unidirectional dependencies, this is straightforward. For example, if `user.py` imports
+`profile.py`, you can define the `User` and `Profile` features in separate files without
+issues. However, if you have circular dependencies, you may run into problems.
+
+Chalk supports this, but circular imports can arise when features reference each other across files.
+To avoid these issues, use the `if TYPE_CHECKING` block from the `typing` module and quote your forward references.
+
+Here's an example of how to do this cleanly:
+
+```python src/profile.py
+# Imports User directly, because user.py
+# wont import profile.py
+from src.user import User
+
+@features
+class Profile:
+    id: Primary[User.id]
+    username: str
+```
+
+```python src/user.py
+from chalk.features import features
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # Imports Profile only when type checking
+    # to avoid circular imports
+    from src.profile import Profile
+
+@features
+class User:
+    id: str
+    # Profile must be quoted because it is imported
+    # only when type checking
+    profile: "Profile"
+```
+
+By quoting imports inside `if TYPE_CHECKING`,
+you avoid circular dependency errors while still
+maintaining type safety and feature linkage.
+
+---
+
 ## Querying for Has-One Relationships
 
 You can also query for a feature that is joined through a has-one relationship by
