@@ -27,7 +27,7 @@ The Chalk Data Plane consists of a few primary components:
 - **A Kubernetes Cluster**: hosts workloads, handles autoscaling and manages deployments.
 - **A Metrics Database**: stores and aggregates feature and metadata metrics.
 - **A Persistence Pipeline**: handles queuing for high frequency results and metrics.
-- **An Online Store**: caches features with explicit staleness to accelerate feature retrieval. We provide a [number of different configuration options for the online store](#).
+- **An Online Store**: caches features with explicit staleness to accelerate feature retrieval. We provide a [number of different configuration options for the online store](/docs/choosing-online-offline-stores#online-store-options).
 - **An Offline Store**: handles large datasets (both created and ingested by Chalk engines), and query logging. We provide a [number of different configuration options for the offline store](/docs/choosing-online-offline-stores#offline-store-options).
 - **Secrets**: data plane secrets are hosted in the same cloud account as other resources, ensuring sensitive data stays confined to the Data Plane.
 - **A Load Balancer**: routes traffic to various deployments.
