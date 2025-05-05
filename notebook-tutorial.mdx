@@ -1,12 +1,12 @@
 ---
-title: Jupyter Notebook Tutorial
-metaTitle: "Tutorial: Jupyter Notebook"
+title: 'Tutorial: Jupyter Notebook'
+metaTitle: 'Tutorial: Jupyter Notebook'
 metaDescription: Learn how to use Chalk with Jupyter notebooks for feature exploration and data science.
 description: Work through an example using Chalk in a Jupyter notebook
 published: true
 ---
 
-import {TipBad, TipGood} from '@/components/Tip'
+import { TipBad, TipGood } from '@/components/Tip'
 
 ---
 
@@ -74,6 +74,7 @@ features we will ingest from our data source. In further sections, we will defin
 that we will use to train a fraud classification model.
 
 Our dataset consists of the following tables:
+
 - `cards`
 - `merchants`
 - `authorizations`
@@ -141,6 +142,7 @@ features that are directly fetched from the datasource as well as derived featur
 In the next section, we will look at how to resolve these features.
 
 ### Primary Keys
+
 Feature classes in Chalk need to have a unique `id` field. By default,
 Chalk will use the `id` field as the primary key for the feature class.
 However, if you want to use a different field as the primary key, you can
@@ -166,16 +168,15 @@ name of the variable.
 For example, as defined above `Authorization` would be the containing
 `FeatureSet` and its corresponding features would be named as follows:
 
-| Feature Name                    | Type                                                                                                          |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| authorization.id                | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Integer </code>     |
-| authorization.amount_in_cents   | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Integer </code>     |
-| authorization.card_id           | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Integer </code>     |
-| authorization.merchant_id       | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Integer </code>     |
-| authorization.country_code      | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> String </code>      |
-| authorization.status            | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> String </code>      |
-| authorization.authorized_at     | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> FeatureTime </code> |
-
+| Feature Name                  | Type                                                                                                          |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| authorization.id              | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Integer </code>     |
+| authorization.amount_in_cents | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Integer </code>     |
+| authorization.card_id         | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Integer </code>     |
+| authorization.merchant_id     | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> Integer </code>     |
+| authorization.country_code    | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> String </code>      |
+| authorization.status          | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> String </code>      |
+| authorization.authorized_at   | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> FeatureTime </code> |
 
 ### Relationships
 
@@ -222,7 +223,6 @@ Chalk supports a number of different feature types including scalars,
 collections, dataclasses, Pydantic models and custom types.
 For a complete list of features, refer to [Feature Types](/docs/feature-types).
 
-
 ### Using feature time
 
 By default, our features are timestamped with the execution time of their resolvers.
@@ -257,7 +257,6 @@ Next we will define the resolvers for the features we have defined above.
 A [resolver](/docs/resolver-overview) is a function that defines how features
 are fetched or derived.
 
-
 To ingest data from Snowflake for the features we defined above, we will define
 resolvers using SQL strings.
 Specifically we will use the [`query_string`](/api-docs#BaseSQLSourceProtocol.query_string)
@@ -267,7 +266,6 @@ It is important to make sure the names of the features we are resolving match th
 names of the features we defined above.
 For example, in the resolver definition below,
 we alias `created_at` to `authorized_at` for `Authorization`
-
 
 ### SQL Resolvers
 
@@ -353,42 +351,42 @@ def fn(
     return ...
 ```
 
-[//]: # (NOTE: incremental is really useful for incremental ingests, but not as much datascience in a notebook)
-[//]: # (**Using `incremental&#40;&#41;` vs `all&#40;&#41;`**)
-[//]: # ()
-[//]: # (Incremental queries are useful for ingesting immutable tables or queries, like)
-[//]: # (event tables or logs. This type of data is frequently found in the offline context,)
-[//]: # (as it represents logs of real-time events.)
-[//]: # ()
-[//]: # (Let's refactor the `get_root_authorization_features` resolver to use an incremental)
-[//]: # (query. When using incremental queries with SQL strings, we must specify the)
-[//]: # (`incremental_column` parameter.)
-[//]: # ()
-[//]: # (```diff-py notebook.ipynb)
-[//]: # (@offline)
-[//]: # (def get_root_authorization_features&#40;&#41; -> DataFrame[)
-[//]: # (    Authorization.id,)
-[//]: # (    Authorization.amount_in_cents,)
-[//]: # (    Authorization.card_id,)
-[//]: # (    Authorization.merchant_id,)
-[//]: # (    Authorization.country_code,)
-[//]: # (    Authorization.authorized_at,)
-[//]: # (]:)
-[//]: # (    return snowflake.query_string&#40;""")
-[//]: # (        SELECT id,)
-[//]: # (               amount_in_cents,)
-[//]: # (               card_id,)
-[//]: # (               merchant_id,)
-[//]: # (               country_code)
-[//]: # (               created_at as authorized_at,)
-[//]: # (        FROM authorizations;)
-[//]: # (    """)
-[//]: # (-   &#41;.all&#40;&#41;)
-[//]: # (+   &#41;.incremental&#40;incremental_column="authorized_at"&#41;)
-[//]: # (```)
-[//]: # ()
-[//]: # (---)
-[//]: # ()
+[//]: # 'NOTE: incremental is really useful for incremental ingests, but not as much datascience in a notebook'
+[//]: # '**Using `incremental()` vs `all()`**'
+[//]: #
+[//]: # 'Incremental queries are useful for ingesting immutable tables or queries, like'
+[//]: # 'event tables or logs. This type of data is frequently found in the offline context,'
+[//]: # 'as it represents logs of real-time events.'
+[//]: #
+[//]: # "Let's refactor the `get_root_authorization_features` resolver to use an incremental"
+[//]: # 'query. When using incremental queries with SQL strings, we must specify the'
+[//]: # '`incremental_column` parameter.'
+[//]: #
+[//]: # '```diff-py notebook.ipynb'
+[//]: # '@offline'
+[//]: # 'def get_root_authorization_features() -> DataFrame['
+[//]: # '    Authorization.id,'
+[//]: # '    Authorization.amount_in_cents,'
+[//]: # '    Authorization.card_id,'
+[//]: # '    Authorization.merchant_id,'
+[//]: # '    Authorization.country_code,'
+[//]: # '    Authorization.authorized_at,'
+[//]: # ']:'
+[//]: # '    return snowflake.query_string("""'
+[//]: # '        SELECT id,'
+[//]: # '               amount_in_cents,'
+[//]: # '               card_id,'
+[//]: # '               merchant_id,'
+[//]: # '               country_code'
+[//]: # '               created_at as authorized_at,'
+[//]: # '        FROM authorizations;'
+[//]: # '    """'
+[//]: # '-   ).all()'
+[//]: # '+   ).incremental(incremental_column="authorized_at")'
+[//]: # '```'
+[//]: #
+[//]: # '---'
+[//]: #
 
 ---
 
@@ -437,7 +435,6 @@ We get back the following `DataFrame`, validating that our resolvers are working
 Note that we specified the [`recompute_features`](/api-docs#ChalkClient.offline_query.recompute_features)
 parameter to `True` to ensure that the features are recomputed by the resolvers.
 When set to `False`, output features are sampled from the offline store.
-
 
 ### Feature Definitions
 
@@ -489,7 +486,6 @@ class Card:
 
 Next, we will define resolvers for these features.
 
-
 ```sql notebook.ipynb
 %%resolver get_prev_auth_amounts
 -- resolves: Authorization
@@ -512,7 +508,6 @@ FROM
 WHERE
 	previous_auth_amount_in_cents IS NOT NULL
 ```
-
 
 ```python notebook.ipynb
 from chalk.features import after
@@ -548,7 +543,6 @@ In the resolvers above, we have combined filtering with a projection on the auth
 Refer to the section on
 [composing projections and filters](/docs/dataframe#composing-projections-and-filters)
 for more details.
-
 
 ```python notebook.ipynb
 from datetime import datetime
@@ -595,7 +589,6 @@ we can use the [`input_times`](/api-docs#ChalkClient.offline_query.input_times) 
 to specify the times `Now` should resolve to allowing us to run backfills for many different
 historical points in time.
 
-
 ```python notebook.ipynb
 # Example of running an offline query for multiple historical points in time
 client.offline_query(
@@ -620,7 +613,6 @@ client.offline_query(
 # └─────────┴──────────────────────────────┘
 ```
 
-
 ## Troubleshooting
 
 Some queries that involve multiple operations might need additional tracking.
@@ -639,6 +631,7 @@ were passed from one stage to the next.
 ![Chalk Query Plan](/img/QueryPlanExample.png)
 
 ### Intermediate Results
+
 You can examine the intermediate results at each stage of the query plan by clicking on
 a specific stage and download the results as a parquet file.
 

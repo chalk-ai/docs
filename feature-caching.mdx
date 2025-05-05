@@ -1,5 +1,5 @@
 ---
-title: Caching
+title: Feature Caching
 metaTitle: Feature Caching
 description: Set max staleness to introduce caching.
 ---
@@ -64,24 +64,24 @@ Once you have set the max staleness for a feature, there are several ways to pop
 store, depending on whether you want to just cache recently computed feature values or if you want
 to ensure that your queries utilize the low-latency path of online store lookup.
 
-* **Online Queries**: When you run an [online query](/api-docs#ChalkClient.query),
-the Chalk engine will check the online store for feature values that fall within the max staleness duration
-for a feature. If a feature value is found then the engine will return that value. Else, the engine will
-run the associated resolver to compute a fresh feature value and store the newly computed feature value in
-the online store.
-* **Offline Queries**: When you run an [offline query](/api-docs#ChalkClient.offline_query) with the parameter
-`store_online=True`, the feature values computed in the offline query output will be loaded into the online
-store.
-* **Triggered Resolver Run**: You can trigger a [resolver run](/docs/runs) with the parameter `store_online=True`
-to populate the online store with the feature values computed in the resolver run.
-* **Scheduled Queries**: You can create a [ScheduledQuery](/docs/scheduled-query) with the parameter
-`store_online=True` to populate the online store with the feature values computed in the scheduled query.
-* **Dataset Ingest**: You can ingest a [Dataset](/docs/datasets) to the online store using the method
-`dataset.ingest(store_online=True)`.
-* **ETL Offline to Online**: You can set the `etl_offline_to_online` parameter to `True` in an `@online` or
-`@offline` scheduled resolver to populate the online store with the feature values computed in the resolver for
-features with `max_staleness != 0`.
-* **Stream**: You can stream feature values to the online store for features with `max_staleness != 0`.
+- **Online Queries**: When you run an [online query](/api-docs#ChalkClient.query),
+  the Chalk engine will check the online store for feature values that fall within the max staleness duration
+  for a feature. If a feature value is found then the engine will return that value. Else, the engine will
+  run the associated resolver to compute a fresh feature value and store the newly computed feature value in
+  the online store.
+- **Offline Queries**: When you run an [offline query](/api-docs#ChalkClient.offline_query) with the parameter
+  `store_online=True`, the feature values computed in the offline query output will be loaded into the online
+  store.
+- **Triggered Resolver Run**: You can trigger a [resolver run](/docs/runs) with the parameter `store_online=True`
+  to populate the online store with the feature values computed in the resolver run.
+- **Scheduled Queries**: You can create a [ScheduledQuery](/docs/scheduled-query) with the parameter
+  `store_online=True` to populate the online store with the feature values computed in the scheduled query.
+- **Dataset Ingest**: You can ingest a [Dataset](/docs/datasets) to the online store using the method
+  `dataset.ingest(store_online=True)`.
+- **ETL Offline to Online**: You can set the `etl_offline_to_online` parameter to `True` in an `@online` or
+  `@offline` scheduled resolver to populate the online store with the feature values computed in the resolver for
+  features with `max_staleness != 0`.
+- **Stream**: You can stream feature values to the online store for features with `max_staleness != 0`.
 
 ### Handling null and default values
 
@@ -101,37 +101,38 @@ Given all of these options, which recipe should you follow for what data to cach
 and how to load that data into the online store?
 
 First, there are a few general principles to keep in mind:
-* The online store is optimized for low-latency reads, so you should cache data that you want to query
-     quickly, usually for real-time use cases.
-* The online store is not optimized for huge amounts of data, so you should cache only the data that
-    you need to query quickly.
-* When you run an online query, if the output feature values are not found in the online store, the online
-    resolver will run. When you run an offline query, if the output feature values are not found in the
-    offline store, an offline resolver will run, or if there is no offline resolver then the online
-    resolver will run.
+
+- The online store is optimized for low-latency reads, so you should cache data that you want to query
+  quickly, usually for real-time use cases.
+- The online store is not optimized for huge amounts of data, so you should cache only the data that
+  you need to query quickly.
+- When you run an online query, if the output feature values are not found in the online store, the online
+  resolver will run. When you run an offline query, if the output feature values are not found in the
+  offline store, an offline resolver will run, or if there is no offline resolver then the online
+  resolver will run.
 
 Keeping these principles in mind, here are some common use cases and how to handle them:
 
-* If you know the specific primary keys for the data that you would like to query quickly, you can
-    - **Run offline queries or dataset ingest to load data ad-hoc**: Given the set of feature values that
-        you would like to load into the online store, you can run offline queries with `store_online=True`
-        or ingest a dataset to the online store using `dataset.ingest(store_online=True)`.
-    - **Schedule or orchestrate queries and ingests**: If you would like to regularly update the
-        feature values in the online store, you can also orchestrate the offline queries
-        and dataset ingests to run at specific intervals, or use a ScheduledQuery.
-* If you would like to cache all possible values for a feature in the online store, you can
-    - **Trigger a resolver run**: A resolver run with `store_online=True` will populate the online store
-        with all possible feature values for the resolver's output features.
-* If you would like to cache recently computed data, but do not have a specific concept in mind of what
-    data you would like to cache, you can
-    - **Run online queries**: Running online queries will populate the online store with the feature values
-        that fall within the max staleness duration for the feature.
-    - **Set `etl_offline_to_online` in your resolvers**: If you have resolvers that
-        compute features with `max_staleness != 0`, you can set `etl_offline_to_online=True` to populate the
-        online store with the feature values computed in the resolver run.
-* If you have a streaming data source
-    - **Stream feature values to the online store**: You can stream feature values to the online store for
-        features with `max_staleness != 0`.
+- If you know the specific primary keys for the data that you would like to query quickly, you can
+  - **Run offline queries or dataset ingest to load data ad-hoc**: Given the set of feature values that
+    you would like to load into the online store, you can run offline queries with `store_online=True`
+    or ingest a dataset to the online store using `dataset.ingest(store_online=True)`.
+  - **Schedule or orchestrate queries and ingests**: If you would like to regularly update the
+    feature values in the online store, you can also orchestrate the offline queries
+    and dataset ingests to run at specific intervals, or use a ScheduledQuery.
+- If you would like to cache all possible values for a feature in the online store, you can
+  - **Trigger a resolver run**: A resolver run with `store_online=True` will populate the online store
+    with all possible feature values for the resolver's output features.
+- If you would like to cache recently computed data, but do not have a specific concept in mind of what
+  data you would like to cache, you can
+  - **Run online queries**: Running online queries will populate the online store with the feature values
+    that fall within the max staleness duration for the feature.
+  - **Set `etl_offline_to_online` in your resolvers**: If you have resolvers that
+    compute features with `max_staleness != 0`, you can set `etl_offline_to_online=True` to populate the
+    online store with the feature values computed in the resolver run.
+- If you have a streaming data source
+  - **Stream feature values to the online store**: You can stream feature values to the online store for
+    features with `max_staleness != 0`.
 
 ### Overriding default caching
 

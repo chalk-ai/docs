@@ -1,12 +1,12 @@
 ---
-title: Data Modeling
-metaTitle: "Tutorial: Data Modeling"
+title: 'Tutorial: Data Modeling'
+metaTitle: 'Tutorial: Data Modeling'
 description: Defining the features that we want to compute.
 published: true
 ---
 
-*If you want to skip ahead, you can find the full source code for this tutorial on
-[GitHub](https://github.com/chalk-ai/fraud-example).*
+_If you want to skip ahead, you can find the full source code for this tutorial on
+[GitHub](https://github.com/chalk-ai/fraud-example)._
 
 In this example, we'll consider a fintech use-case
 where we want to detect fraudulent credit card purchases.
@@ -211,8 +211,8 @@ Like pandas, Chalk's `DataFrame` is a two-dimensional data structure with
 rows and columns. You can perform operations like filtering, grouping,
 and aggregating on a `DataFrame`. However, there are two main differences.
 
-- *Lazy implementation* - Chalk's `DataFrame` is lazy and can be backed by multiple data sources, where a `pandas.DataFrame` executes eagerly in memory.
-- *Use as a type* - Chalk's `DataFrame[...]` can be used to represent a type of data with pre-defined filters.
+- _Lazy implementation_ - Chalk's `DataFrame` is lazy and can be backed by multiple data sources, where a `pandas.DataFrame` executes eagerly in memory.
+- _Use as a type_ - Chalk's `DataFrame[...]` can be used to represent a type of data with pre-defined filters.
 
 You can read more about the Chalk `DataFrame`
 in the [docs](/docs/dataframe) and
@@ -224,12 +224,9 @@ Chalk supports many feature types, including
 [lists and sets](/docs/feature-types#lists-and-sets),
 and [`@dataclasses`](/docs/feature-types#dataclass).
 
-
-[//]: # (We could choose to write a resolver for each of the tables)
-[//]: # (in our database, but we'll take a shortcut and use)
-
-[//]: # (mapping in some of existing data from a)
-[//]: # ([PostgreSQL database]&#40;/docs/postgresql&#41;. SQL-file resolvers]&#40;/docs/&#41; instead.)
-
-[//]: # (Each of the attributes of the class will be mapped to a)
-[//]: # (field in our database.)
+[//]: # 'We could choose to write a resolver for each of the tables'
+[//]: # "in our database, but we'll take a shortcut and use"
+[//]: # 'mapping in some of existing data from a'
+[//]: # '[PostgreSQL database](/docs/postgresql). SQL-file resolvers](/docs/) instead.'
+[//]: # 'Each of the attributes of the class will be mapped to a'
+[//]: # 'field in our database.'
