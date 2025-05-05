@@ -994,6 +994,20 @@ The following bash script can be used to grant all the roles to the chalk provid
 # Usage: ./grant-permissions.sh <SERVICE_ACCOUNT_EMAIL> <PROJECT_ID> [--include-bq]
 # Example: ./grant-permissions.sh management-sa@my-project.iam.gserviceaccount.com my-project --include-bq
 
+# Display help message
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+  echo "Usage: $0 <SERVICE_ACCOUNT_EMAIL> <PROJECT_ID> [--include-bq]"
+  echo
+  echo "Arguments:"
+  echo "  <SERVICE_ACCOUNT_EMAIL>  The email of the service account to grant permissions to."
+  echo "  <PROJECT_ID>             The ID of the GCP project."
+  echo
+  echo "Options:"
+  echo "  --include-bq             Include BigQuery admin permissions (for a bigquery offline store)."
+  echo "  -h, --help               Display this help message."
+  exit 0
+fi
+
 SERVICE_ACCOUNT_EMAIL=$1
 PROJECT_ID=$2
 INCLUDE_BQ_PERMISSIONS=false
