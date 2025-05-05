@@ -1,12 +1,12 @@
 ---
-title: SQL Resolvers
-metaTitle: "Tutorial: SQL Resolvers"
+title: 'Tutorial: SQL Resolvers'
+metaTitle: 'Tutorial: SQL Resolvers'
 description: Mapping data from SQL sources to feature classes.
 published: true
 ---
 
-*If you want to skip ahead, you can find the full source code for this tutorial on
-[GitHub](https://github.com/chalk-ai/fraud-example).*
+_If you want to skip ahead, you can find the full source code for this tutorial on
+[GitHub](https://github.com/chalk-ai/fraud-example)._
 
 A primary source of data for many companies is a SQL database. Chalk can
 automatically ingest data from SQL databases and map it to feature classes.
@@ -274,23 +274,17 @@ By default, data only enters the online store when it's queried in
 realtime. However, by setting this keyword argument, we're telling
 Chalk to reverse-ETL our offline data into our online store.
 
-
-[//]: # (For some data, you may want reach out directly to the database.)
-[//]: # (That pattern works well with transactional databases like)
-[//]: # ([PostgreSQL]&#40;/docs/postgresql&#41; and [MySQL]&#40;/docs/mysql&#41;.)
-[//]: # (However, data warehouses like [Snowflake]&#40;/docs/snowflake&#41;)
-[//]: # (and [BigQuery]&#40;/docs/bigquery&#41; are optimized for analytics)
-[//]: # (and are not well-suited for transactional queries.)
-
-[//]: # (For these data warehouses, it's often better to ingest data)
-[//]: # (incrementally into Chalk. )
-
-
-[//]: # (We could choose to write a resolver for each of the tables)
-[//]: # (in our database, but we'll take a shortcut and use)
-
-[//]: # (mapping in some of existing data from a)
-[//]: # ([PostgreSQL database]&#40;/docs/postgresql&#41;. SQL-file resolvers]&#40;/docs/&#41; instead.)
-
-[//]: # (Each of the attributes of the class will be mapped to a)
-[//]: # (field in our database.)
+[//]: # 'For some data, you may want reach out directly to the database.'
+[//]: # 'That pattern works well with transactional databases like'
+[//]: # '[PostgreSQL](/docs/postgresql) and [MySQL](/docs/mysql).'
+[//]: # 'However, data warehouses like [Snowflake](/docs/snowflake)'
+[//]: # 'and [BigQuery](/docs/bigquery) are optimized for analytics'
+[//]: # 'and are not well-suited for transactional queries.'
+[//]: # "For these data warehouses, it's often better to ingest data"
+[//]: # 'incrementally into Chalk. '
+[//]: # 'We could choose to write a resolver for each of the tables'
+[//]: # "in our database, but we'll take a shortcut and use"
+[//]: # 'mapping in some of existing data from a'
+[//]: # '[PostgreSQL database](/docs/postgresql). SQL-file resolvers](/docs/) instead.'
+[//]: # 'Each of the attributes of the class will be mapped to a'
+[//]: # 'field in our database.'
