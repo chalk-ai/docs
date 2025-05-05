@@ -1,0 +1,10 @@
+repos:
+  - repo: https://github.com/errata-ai/vale
+    rev: fdaa335
+    hooks:
+      - id: vale
+        name: vale sync
+        pass_filenames: false
+        args: [sync]
+      - id: vale
+        args: [--minAlertLevel=error]
