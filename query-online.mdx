@@ -9,9 +9,8 @@ import { TipInfo } from '@/components/Tip'
 ---
 
 Online queries access or compute feature values for a single feature
-set in real time. The term "real time" is a little vague—what it
-means is that responses (even though they might need to compute
-features on new data) should seem practically instantaneous.
+set in real time. The term "real time" means that responses should seem
+practically instantaneous, even if they need to compute features on new data.
 
 However, online queries don't only perform data retrieval, they also store
 the results of the features that they compute. This provides visibility and
@@ -95,8 +94,44 @@ be executed one after another: a lot of work can often be performed in
 parallel.
 
 After getting a query plan, Chalk distributes subtasks to workers, applies
-a number optimizations on your resolvers/datasource connections, and
+a number of optimizations on your resolvers/datasource connections, and
 computes the target outputs of your query. These outputs are then returned.
+
+There are multiple ways to run an online query. You can use the
+[Chalk API Client](/api-docs#ChalkClient.query),
+the [Chalk CLI](/docs/query), or the [REST API](/docs/query-basics#rest-api). For
+example the following calls all trigger the same online query:
+
+With the Chalk Python API Client:
+```python
+from chalk.client import ChalkClient
+from src.models import User
+
+
+client = ChalkClient()
+results = client.query(
+    inputs={
+        User.id: 1,
+    },
+    outputs=[User.organization, User.name],
+)
+```
+
+With the Chalk CLI:
+```bash
+chalk query --in user.id=1 --out user.organization --out user.name
+```
+
+With the REST API:
+```bash
+curl -X POST {YOUR_ENGINE_URL}/v1/query/online \
+  -H "Authorization: Bearer $access_token" \
+  -H 'x-chalk-env-id: {YOUR_ENV_ID}' \
+  -H 'x-chalk-deployment-type: engine' \
+  -H 'content-type:application/json' \
+  -d '{"inputs": {"user.id": 1}, "outputs":["user.organization", "user.name""]}'
+```
+
 
 ## Caching and Writing
 
@@ -110,4 +145,4 @@ can make your online queries significantly more efficient.
 
 If you haven't specified a caching policy, Chalk recomputes the
 values for a feature each time it is requested. We go into more depth
-on [query caching](/docs/query-caching) in a later section.
+on [query caching here](/docs/query-caching).
