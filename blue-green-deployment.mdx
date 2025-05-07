@@ -1,0 +1,69 @@
+---
+title: Blue-Green Deployments
+description: Set up blue-green deployments for reliability.
+published: true
+---
+
+---
+
+Chalk offers a variety of tools and strategies for testing your features, resolvers, and
+queries in the process of deploying them to production. Testing through writing [unit tests](/docs/unit-tests)
+and [integration tests](/docs/integration-tests) can ensure that your code is working as expected.
+Chalk also offers blue-green deployments for a release strategy that can further minimize downtime
+and risk when deploying changes. If your team is interested in using blue-green deployments in your
+production environment, please reach out to the Chalk team.
+
+## Blue-Green Deployments with Chalk
+
+Chalk offers blue-green deployments as a way to minimize downtime when deploying new code by
+running two deployments, one "blue" and one "green", in parallel. The blue deployment is the current
+production deployment, while the green deployment is the new version of the code that is being
+released. Using deployment tags, Chalk can route a specified percentage of traffic to the blue
+or green deployment, allowing for a gradual rollout of the new code, as well as an easy path to
+rollback if any issues arise.
+
+### Releasing using Blue-Green Deployments
+
+Once you have confirmed with the Chalk team that blue-green deployments are enabled in your Chalk environment,
+then you can use the `--deployment-tag` flag to specify a new deployment towards which to direct traffic.
+To get started with blue-green deployments, you can tag the current deployment with `blue`. To do so you can
+run the following Chalk CLI commands:
+
+```bash
+$ chalk apply --deployment-tag blue
+$ chalk traffic set --tags blue=100
+```
+
+This will tag the current deployment with `blue` and direct 100% of traffic to the `blue` deployment. Then, when you
+are ready to begin rolling out the next deployment, you can deploy the new version of code with the tag `green`.
+
+```bash
+$ chalk apply --deployment-tag green
+$ chalk traffic set --tags blue=90,green=10
+```
+
+This will direct 90% of traffic to the `blue` deployment and 10% of traffic to the `green` deployment. You can
+verify the traffic distribution by running `chalk traffic get`.
+
+```bash
+$ chalk traffic get
+
+tags:
+     - deployment_id: cm9n46thy000bwe6y784y4j0l
+       tag: blue
+       weight: 90
+     - deployment_id: cm9n3vx7c0004we6yefnsw8kg
+       tag: green
+       weight: 10
+```
+
+Then, you can gradually increase traffic to the `green` deployment until it is at 100%, and for the next time
+you release, you can tag the latest deployment with `blue` and migrate traffic from the `green` deployment to the
+even newer `blue` deployment.
+
+## Should I use Blue-Green Deployments?
+
+Blue-green deployments are a powerful tool for minimizing downtime through a gradual rollout deployment. However,
+running two deployments in parallel also has resource implications and may not be necessary for all teams. We
+would recommend blue-green deployments for teams that have a high volume of traffic in their production environments
+where the benefit of minimizing downtime risk is worth the cost of additional resources required.
