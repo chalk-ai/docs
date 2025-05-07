@@ -25,7 +25,40 @@ rollback if any issues arise.
 ### Releasing using Blue-Green Deployments
 
 Once you have confirmed with the Chalk team that blue-green deployments are enabled in your Chalk environment,
-then you can use the `--deployment-tag` flag to specify a new deployment towards which to direct traffic.
+there are a few ways that you can start to use blue-green deployments.
+
+#### Full rollouts using Blue-Green Deployments
+
+The simplest way to start to use blue-green deployments is to use the `--bluegreen` tag when deploying your code.
+When you run a `chalk apply --bluegreen`, that will automatically tag your latest deployment with either `blue`
+if the latest deployment was tagged `green`, or `green` if the latest deployment was tagged `blue`. Then, when you're
+ready to migrate traffic to your new deployment, you can run `chalk traffic promote`, which will migrate traffic from
+the deployment currently in use to the other tagged deployment. The following example demonstrates how to use
+these blue-green deployments.
+
+Suppose you have made changes that you now want to release. You can then run
+
+```bash
+$ chalk apply --bluegreen
+```
+
+Based on whether the current deployment handling traffic is tagged `blue` or `green`, the latest deployment
+will be tagged with the other tag. Then, you can run the following to migrate traffic.
+
+```bash
+$ chalk traffic promote
+```
+
+Say your previous deployment was tagged `blue` and the latest deployment was tagged `green`. Then this migrates 100%
+of the traffic from the `blue` deployment to the `green` deployment. You can then monitor the `green` deployment
+traffic. If you encounter any errors with your new deployment, then you can once again run `chalk traffic promote` and
+it will migrate traffic from the `green` deployment back to the `blue` deployment. This allows you to easily rollback
+during releases.
+
+#### Gradual rollouts using Blue-Green Deployments
+
+If you would like to gradually roll out your new deployment with staged increments of traffic, you can
+use the `--deployment-tag` flag to specify a new deployment towards which to direct traffic.
 To get started with blue-green deployments, you can tag the current deployment with `blue`. To do so you can
 run the following Chalk CLI commands:
 
@@ -59,7 +92,10 @@ tags:
 
 Then, you can gradually increase traffic to the `green` deployment until it is at 100%, and for the next time
 you release, you can tag the latest deployment with `blue` and migrate traffic from the `green` deployment to the
-even newer `blue` deployment.
+even newer `blue` deployment. This workflow enables you to have fine-tuned control over the traffic distribution
+between your deployments. Furthermore, Chalk will automatically scale down unused deployments to minimize unnecessary
+resource usage. If you run the command `chalk traffic set` and do not specify some amount of traffic for a
+tagged deployment, then Chalk will recognize that the deployment is no longer in use and will scale it down.
 
 ## Should I use Blue-Green Deployments?
 
