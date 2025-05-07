@@ -208,3 +208,27 @@ class Record:
     timestamp: datetime
     record_details: str
 ```
+
+---
+
+## Removing Cached Feature Values
+
+There are two ways to remove cached feature values from the online store. If you would like to remove all cached
+values for a specific feature or set of features, then you can use [`chalk drop`](/cli/drop) to remove all cached
+values such that none of those values would be eligible to be served from the online store. If you would like to remove
+a specific cached value for a specific primary key, then you can use `[chalk delete`](cli/delete).
+
+For example, if you have the feature class `User.risk_score_1` and you want to remove an incorrectly computed
+cached value for the user with primary key `123`, you can run the following command:
+
+```bash
+chalk delete --keys=123 --features user.risk_score_1
+```
+
+If you have updated how `risk_score_1` is computed and want to remove all cached values for the feature, you can
+then run the following:
+
+```bash
+chalk drop --features user.risk_score_1
+chalk apply
+```
