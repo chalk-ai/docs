@@ -17,6 +17,7 @@ If you have a stream resolver that outputs a feature that is related to a featur
 a materialized aggregation (more on this later), the materialized aggregations will be updated
 as new messages arrive.
 
+---
 
 ## Setting up a materialized aggregation
 
@@ -25,7 +26,8 @@ Setting up features for materialized aggregation with streaming is almost identi
 a max staleness and set `etl_offline_to_online=True` on the feature class, as with all other streaming features.
 
 ```python
-from chalk import features, has_many, DataFrame, FeatureTime, _
+from datetime import datetime
+from chalk import features, has_many, DataFrame, _
 from chalk.streams import Windowed, windowed
 
 @features(etl_offline_to_online=True)
@@ -33,7 +35,7 @@ class Transaction:
     id: str
     user_id: str
     amount: float
-    ts = FeatureTime
+    ts: datetime
 
 @features(max_staleness="infinity", etl_offline_to_online=True)
 class User:
@@ -58,7 +60,7 @@ Now, set up your streaming resolvers referencing these features.
 
 ```python
 from pydantic import BaseModel
-from chalk import features, has_many, DataFrame, Features, FeatureTime, _
+from chalk import features, has_many, DataFrame, Features, _
 from chalk.streams import stream, KafkaSource
 
 class UserMsg(BaseModel):
