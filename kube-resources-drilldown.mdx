@@ -150,3 +150,68 @@ to the metrics database. This component uses KEDA to autoscale queue consumers, 
 Error logs from this component can be useful for diagnosing issues with query persistence. Issues typically
 do immediately impact online query performance, but can impact the ability to generate training sets or certain caching
 workflows.
+
+
+## Concrete Scaling Choices
+
+### Production Environments
+
+In production environments, we recommend the following scaling choices:
+
+- `engine` and `engine-grpc` deployments:
+    - `>= 2` replicas, with CPU and memory requests and limits set to `>= 2` core and `>= 4` GB of memory
+    - Memory needs to be proportional to the number of UDF invoker processes you choose to use
+    - *If you choose to use a single replica, you will experience query downtime (502s, UNAVAILABLE responses) during pod restarts*.
+- `query-job`:
+    - set to >= 8 cpu and >= 16GB of memory
+- `streaming`:
+    - use >= 1 replica, with a low cpu request (i.e. 1-2)
+    - set a cpu target of 80%
+
+
+## Scaling under workload
+
+### CPU Scaling
+
+CPU scaling is typically the most important scaling dimension for online queries, contrary to what you might expect
+you should not choose `target cpu > 50%` for the scaling target if latency is important.
+
+Queueing Theory proves that:
+
+- The average response time of a system is proportional to the utilization of the system
+- The specific formula is:
+  - `T = (1 / (1 - U)) * (1 / mu)`
+    - `T` is the average response time
+    - `U` is the utilization of the system
+    - `mu` is the service rate of the system
+- This means that if you have a system with a service rate of 1 request per second, and you set the target CPU to 50%, the average response time will be 2 seconds.
+
+The theory shows that latency increases superlinearly with CPU utilization, and this is especially true for tail latency.
+This means that if you set the target CPU to > 50%, you will see a significant increase in tail latency.
+
+### Rate limiting
+
+Servers have a finite capacity for concurrent processing. When incoming request volume exceeds the 'clearing' rate
+of the server, the server will queue requests. This can lead to increased latency and errors. In particular,
+if the requests need to be completed by a particular time, the server will (naively) waste resources processing requests
+that will not complete by the deadline.
+
+To mitigate this, Chalk supports rate limiting for the `engine-grpc` component. The `engine-grpc` component supports
+these environment variables to establish concrete rate limits:
+
+- `CHALK_GRPC_RATE_LIMIT_TYPE`
+    - `noop`: default; no rate limiting
+    - `concurrency`: limit the number of concurrent queries
+    - `qps`: limit the number of queries per second using a token bucket rate limiter
+- `CHALK_GRPC_RATE_LIMIT`: The number of concurrent queries or queries per second that should be permitted.
+
+Typically, we recommend that using the `qps` rate limiting option for standard workloads, and `concurrency` for
+latency-sensitive workloads.
+
+## Node pools:
+
+- Configure isolated node pools for online query workloads and offline query workloads
+- Use the `chalk.ai/workload-class` taint to prohibit workloads from scheduling on the wrong node pool
+
+Node pool isolation means that you can run offline queries concurrently with latency sensitive workloads without
+impacting the performance of the online query workload.
