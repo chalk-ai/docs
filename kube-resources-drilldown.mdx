@@ -181,10 +181,18 @@ Queueing Theory proves that:
 - The average response time of a system is proportional to the utilization of the system
 - The specific formula is:
   - `T = (1 / (1 - U)) * (1 / mu)`
-    - `T` is the average response time
-    - `U` is the utilization of the system
-    - `mu` is the service rate of the system
-- This means that if you have a system with a service rate of 1 request per second, and you set the target CPU to 50%, the average response time will be 2 seconds.
+    - `T` is the mean response time
+    - `mu` is the service rate of the system (# of reqs/sec the system can complete at 100% cpu)
+    - `U` is the utilization of the system (arrival rate / service rate)
+
+
+Working this example for a few values of `T`:
+
+- At 40% utilization, the average response time is 1.7x the service rate
+- At 50% utilization, the average response time is 2x the service rate
+- At 80% utilization, the average response time is 5x the service rate
+
+![Latency versus Saturation](/img/queueing_latency.png)
 
 The theory shows that latency increases superlinearly with CPU utilization, and this is especially true for tail latency.
 This means that if you set the target CPU to > 50%, you will see a significant increase in tail latency.
