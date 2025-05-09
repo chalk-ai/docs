@@ -26,6 +26,11 @@ a `DataFrame` in any order:
 DataFrame[User.name, User.email] == DataFrame[User.email, User.name]
 ```
 
+Note: The Chalk `DataFrame` is used as a feature type for defining [has-many](/docs/has-many) relationships
+between feature classes, but the functions, filters, and aggregations described in this document are meant
+to be used in Python resolvers or notebooks--not in Chalk Expressions. For information about the functions
+and aggregations that you can use in Chalk Expressions, see [here](/docs/expression).
+
 ---
 
 ## Constructing a DataFrame
