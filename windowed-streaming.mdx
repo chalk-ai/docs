@@ -37,11 +37,11 @@ class Transaction:
     amount: float
     ts: datetime
 
-@features(max_staleness="infinity", etl_offline_to_online=True)
+@features
 class User:
     id: str
     name: str
-    transactions: DataFrame[Transaction] = has_many(lambda: User.id == Transaction.user_id, max_staleness="30d")
+    transactions: DataFrame[Transaction] = has_many(lambda: User.id == Transaction.user_id)
     sum_transaction_amount: Windowed[float] = windowed(
         "30d",
         expression=_.transactions[
