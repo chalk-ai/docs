@@ -37,14 +37,18 @@ class Transaction:
     amount: float
     ts: datetime
 
-@features(max_staleness="infinity", etl_offline_to_online=True)
+@features
 class User:
     id: str
     name: str
-    transactions: DataFrame[Transaction] = has_many(lambda: User.id == Transaction.user_id, max_staleness="30d")
+    transactions: DataFrame[Transaction] = has_many(lambda: User.id == Transaction.user_id)
     sum_transaction_amount: Windowed[float] = windowed(
         "30d",
-        expression=_.transactions[_.amount].sum(),
+        expression=_.transactions[
+            _.amount,
+            _.ts > _.chalk_window,
+            _.ts < _.chalK_now
+        ].sum(),
         materialization=True,
         default=0.0,
     )
@@ -59,6 +63,7 @@ class User:
 Now, set up your streaming resolvers referencing these features.
 
 ```python
+from datetime import datetime
 from pydantic import BaseModel
 from chalk import features, has_many, DataFrame, Features, _
 from chalk.streams import stream, KafkaSource
@@ -71,6 +76,7 @@ class TransactionMsg(BaseModel):
     id: str
     user_id: str
     amount: float
+    ts: datetime
 
 user_topic = KafkaSource(name='...')
 transaction_topic = KafkaSource(name='...')
@@ -85,7 +91,7 @@ def process_user_topic(
 def process_transaction_topic(
     value: TransactionMsg,
 ) -> Features[Transaction.id, Transaction.user_id, Transaction.amount]:
-    return Transaction(id=value.id, user_id=value.user_id, amount=value.amount)
+    return Transaction(id=value.id, user_id=value.user_id, amount=value.amount, ts=value.ts)
 ```
 
 That's it! Now, when messages are received on the streams, Chalk will infer whether the output features

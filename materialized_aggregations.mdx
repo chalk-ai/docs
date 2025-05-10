@@ -13,14 +13,17 @@ With Chalk, teams don’t need to spin up separate pipelines. Developers can mat
 performance, without compromising on flexibility, with just a single line of code:
 
 ```py
-from chalk.features import features
+from chalk.features import features, _
 from chalk import DataFrame, Windowed, windowed
+
+from datetime import datetime
 
 @features
 class Transaction:
     id: int
     amount: float
     user_id: "User.id"
+    ts: datetime
 
 @features
 class User:
@@ -30,7 +33,12 @@ class User:
         "1d", "7d", "30d",
         # materialize your features in a single line
         materialization={"bucket_duration": "1d"},
-        expression=_.transactions[_.amount].sum(),
+        expression=_.transactions[
+            _.amount,
+            _.ts > _.chalk_window,
+            _.ts < _.chalk_now
+
+        ].sum(),
     )
 ```
 
@@ -121,6 +129,8 @@ You can control how your aggregations are backfilled by:
 ### Cron Schedule Expression
 
 ```python
+from datetime import datetime
+
 from chalk.features import features
 from chalk import DataFrame, Windowed, windowed
 
@@ -129,6 +139,7 @@ class Transaction:
     id: int
     amount: float
     user_id: "User.id"
+    ts: datetime
 
 @features
 class User:
@@ -141,7 +152,11 @@ class User:
             "backfill_schedule": "0 0 * * *",
             "continuous_buffer_duration": "36h",
         },
-        expression=_.transactions[_.amount].sum(),
+        expression=_.transactions[
+            _.amount,
+            _.ts > _.chalk_window,
+            _.ts < _.chalk_now
+        ].sum(),
     )
 ```
 
