@@ -119,3 +119,21 @@ explicitly passed. For example:
 ```sh
 chalk query --in book.id=1 --query-name book_id --query-name-version 1
 ```
+
+## Caching ad-hoc query plans
+
+Sometimes defining NamedQuery objects is not ergonomic or possible. For example, if you are
+a platform team serving multiple teams, you may not want to define a NamedQuery object for every
+query that your users run.
+
+In this case, you can use these environment variables:
+
+
+```
+CHALK_STORE_ADHOC_QUERIES=true
+CHALK_PLAN_ADHOC_QUERIES=n
+```
+
+The first environment variable will cache the ad-hoc query requests in the database. The second
+environment variable will plan up to `n` of the most recent ad-hoc queries. These Ad-hoc Queries are re-planned at
+boot so that code or platform changes can be reflected in the query plan.
