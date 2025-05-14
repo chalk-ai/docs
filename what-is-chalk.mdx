@@ -337,7 +337,7 @@ class Transaction:
 
 @features
 class ProductRec:
-    user_id: Primary[str]
+    user_id: Primary[User.id]
     user: User
 
     user_vector: Vector = embed(
