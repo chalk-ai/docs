@@ -375,7 +375,7 @@ Test new features, run experiments, and ship production models—all from a Jupy
 ```python
 from chalk.client import ChalkClient
 
-client = ChalkClient(branch="elvis")
+client = ChalkClient(branch=True)
 client.load_features() # load prod features with one line
 
 User.name_exclaimed = _.name + "!" # add new features
