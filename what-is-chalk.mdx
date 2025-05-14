@@ -56,11 +56,11 @@ class Transaction:
     # create new features inline with Chalk Expressions
     is_expensive_purchase: bool = _.amount > 100
 
-    # instead of user_id being a str type -> user_id: str
-    # we can point to a feature from another class
+    # instead of declaring user_id as a string type (user_id: str),
+    # reference a feature from another class
     user_id: "User.id"
 
-    # Chalk infers the join key enabling us to reference
+    # Chalk infers the "User.id" join key, enabling you to reference
     # the User associated with this transaction!
     user: "User"
 
@@ -78,7 +78,7 @@ class User:
     # Chalk SDK provides common ML primitives
     name_match: float = F.levenshtein_distance(_.name, _.email)
 
-    # Leverage "User.id" type annotation from Transaction class
+    # leverages "User.id" type annotation from Transaction class
     # as a join key to create intermediary dataframes
     txns: DataFrame[Transaction]
 
@@ -228,19 +228,42 @@ Add a caching policy with one line of code in our feature definition:
 ### How do I deploy and query features with Chalk?
 
 Once we've defined our pipelines, we can deploy features to a branch in < 1s with:
+Chalk automatically detects and uses your current git branch name without requiring you to explicitly specify it:
 
 ```shell
-chalk apply --branch=elvis
+chalk apply --branch
 ```
 
 We can then query for features against this branch and perform QA workflows on our branch deployment to make sure that our pipelines perform as expected:
 
 ```shell
-chalk query --branch=elvis --in user.id=47
+chalk query --branch --in user.id=47
 ```
 
-Once validated, promote the deployment to production,
-which is served at a unique preview URL.
+This command returns the user's features from your branch deployment, showing all computed fields for the specified `user.id`.
+
+```
+Using '--out=user'
+Results
+https://chalk.ai/environments/{environment}/query-runs/{query_id}
+Branch: elvis
+Environment: {environment}
+
+ Name                                             Hit?  Value
+─────────────────────────────────────────────────────────────────────────────────────────────────────
+ user.average_rating_given                  4.3125
+ user.birthday                              "1987-12-28"
+ user.created_at                            "2024-08-07T20:54:42.942294+00:00"
+ user.email                                 "98178ad58fe8481db74996996d6e8de7@google.ru"
+ user.first_name                            "Marseda"
+ user.id                                    47
+ user.last_name                             "Karkaletsis"
+ user.review_count                          32
+ user.total_orders_placed                   48
+ user.unique_products_inquired_about        203
+```
+
+Once validated, promote the deployment to production, which is served at a unique preview URL.
 
 ```shell
 chalk apply
