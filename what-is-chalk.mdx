@@ -85,7 +85,10 @@ class User:
     transaction_count: int = _.txns.count()
 
     # easily filter dataframes before running an aggregation
-    average_discount_percentage: float = _.txns[_.discount_percentage > 0].mean()
+    average_discount_percentage: float = _.txns[
+        _.amount,
+        _.discount_percentage > 0,
+    ].mean()
 
     # run aggregations across time intervals
     total_transaction_amount: Windowed[float] = windowed(
@@ -130,8 +133,8 @@ user.txns
 When running this query, Chalk only fetches exactly the base features needed to return `name_match` and `txns`.
 
 Chalk analyzes type annotations to build a directed acyclic graph (DAG) of feature dependencies.
-At inference time, query plans tailored to your input/output schema are generated dynamically by slicing this DAG into sub-graphs--ensuring that only the features needed are fetched--optimizing for speed, precision, and cost.
-
+At inference time, query plans tailored to your input/output schema are generated dynamically by slicing this DAG into sub-graphs.
+This ensures that only the features needed are fetched--optimizing for speed, precision, and cost.
 
 Each node in the DAG is a Chalk expression or resolver (SQL / Python):
 
@@ -158,7 +161,7 @@ Decoupling feature logic and model execution from underlying ETL results in
 
 ### How does Chalk orchestrate and manage features?
 
-Chalk has built-in support for feature engineering workflows -- there's no need to manage Airflow or orchestrate complicated streaming flows.
+Chalk has built-in support for feature engineering workflows — there's no need to manage Airflow or orchestrate complicated streaming flows.
 Once we've defined our features and resolvers, Chalk orchestrates them into flexible pipelines (slicing the DAG) that make both training and model execution easy.
 
 In the `get_username` function below we explicitly define input dependencies through `User.email` and specify the output feature type as `User.username`:
@@ -166,8 +169,10 @@ In the `get_username` function below we explicitly define input dependencies thr
 ```py
 @online
 def get_username(
-    email: User.email, # use type annotation to tell Chalk what feature to transform
-) -> User.username: # the resulting feature is saved as username
+    # use type annotation to tell Chalk what feature to transform
+    email: User.email,
+    # the resulting feature is saved as username
+) -> User.username:
     username = email.split("@")[0]
     if "gmail.com" in email:
         username = username.split("+")[0].replace(".", "")
