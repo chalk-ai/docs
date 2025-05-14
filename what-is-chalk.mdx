@@ -136,7 +136,7 @@ At inference time, query plans tailored to your input/output schema are generate
 Each node in the DAG is a Chalk expression or resolver (SQL / Python):
 
 - An expression e.g. `is_expensive_purchase: bool = _.amount > 100`
-- SQL resolver that connects to an underlying data store like Athena
+- A SQL file that connects to an underlying data store like Athena
 - Python resolver i.e. ordinary Python functions (Pandas, httpx, or LLM calls)
 
 Here's an example of a generated query plan:
