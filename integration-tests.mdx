@@ -196,7 +196,7 @@ def client():
     # return ChalkClient(branch=True) # Uses your current git branch
 
 
-def test_user_null(client):
+def test_user_null_error(client):
     result = client.check(
         input={
             User.id: 1,
