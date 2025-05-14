@@ -103,7 +103,7 @@ class User:
     )
 ```
 
-When writing a Chalk query, we can explicitly express the features we want back:
+Chalk queries allow you to explicitly express the features you want returned:
 
 ```shell
 chalk query --in user.id=241 --out name_match --out transactions
@@ -166,16 +166,16 @@ Decoupling feature logic from ETL pipelines unlocks
 ### How does Chalk orchestrate and manage features?
 
 Chalk has built-in support for feature engineering workflows — there's no need to manage Airflow or orchestrate complicated streaming flows.
-Once we've defined our features and resolvers, Chalk orchestrates them into flexible pipelines (slicing the DAG) that make both training and model execution easy.
+Once you've defined features and resolvers, Chalk orchestrates them into flexible pipelines (slicing the DAG) that make both training and model execution easy.
 
-In the `get_username` function below we explicitly define input dependencies through `User.email` and specify the output feature type as `User.username`:
+The `get_username` function below explicitly defines input dependencies through `User.email` and specifies the output feature type as `User.username`:
 
 ```py
 @online
 def get_username(
-    # use type annotation to tell Chalk what feature to transform
+    # the input type annotation specifies the required feature
     email: User.email,
-    # the resulting feature is saved as username
+    # the resulting feature is saved as username unto User class
 ) -> User.username:
     username = email.split("@")[0]
     if "gmail.com" in email:
@@ -227,14 +227,14 @@ Add a caching policy with one line of code in our feature definition:
 
 ### How do I deploy and query features with Chalk?
 
-Once we've defined our pipelines, we can deploy features to a branch in < 1s with:
+After defining pipelines, deploy features to a branch in < 1s with:
 Chalk automatically detects and uses your current git branch name without requiring you to explicitly specify it:
 
 ```shell
 chalk apply --branch
 ```
 
-We can then query for features against this branch and perform QA workflows on our branch deployment to make sure that our pipelines perform as expected:
+Query for features against this branch and perform QA workflows on branch deployments to ensure pipelines perform as expected:
 
 ```shell
 chalk query --branch --in user.id=47
