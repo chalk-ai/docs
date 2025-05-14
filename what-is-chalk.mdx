@@ -390,7 +390,7 @@ chalk_dataset = client.offline_query(
         User.name_exclaimed,
     },
     recompute_features=True, # A/B test against historical model runs
-    dataset_name="<dataset_name>",
+    dataset_name="fraud_model",
 )
 
 df = chalk_dataset.to_pandas() # convert to pandas dataframe
