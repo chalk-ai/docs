@@ -34,7 +34,7 @@ Chalk solves core pain points teams face when building enterprise AI and ML syst
 
 ## How does Chalk make feature engineering easier?
 
-Chalk lets you define features using Pythonic classes — no DSLs.
+Define features using Pythonic classes in Chalk — no DSLs required.
 Every feature is:
 - typed and validated
 - versioned and testable
@@ -131,7 +131,6 @@ user.txns
  68    "2024-11-11T11:35:40.673632+00:00"  "cleared"           27       16359       1           138.38                    20178                               "2024-11-11T01:19:53.140456+00:00"
 
 (5 rows)
-
 ```
 
 When running this query, Chalk only fetches exactly the base features needed to return `name_match` and `txns`.
@@ -184,7 +183,7 @@ def get_username(
     return username.lower()
 ```
 
-The `get_username` function above, although written in Python, compiles into a static Velox expression through Chalk's Symbolic Python Interpreter and is executed natively in C++.
+Although written in Python, this function compiles into a static Velox expression through Chalk's Symbolic Python Interpreter and executes natively in C++.
 This provides Python-first development without sacrificing sub-5ms inference latency.
 
 ```py
@@ -214,7 +213,8 @@ We wrote an [engineering blog post on our Symbolic Python interpreter](https://c
 
 ### How can I cache features in Chalk?
 
-Some data sources, like LLMs or 3rd party APIs, are expensive or slow to call at inference time. Chalk supports caching features to optimize for latency and cost:
+Some data sources, like LLMs or 3rd party APIs, are expensive or slow to call at inference time.
+Chalk supports caching features to optimize for latency and cost:
 
 - define cache windows inline with your features
 - override staleness at query-time when fresh data is critical
@@ -276,51 +276,46 @@ The ability to re-use the same features in both contexts dramatically shortens d
 
 ## Why Chalk?
 
-Chalk is the first platform to unify feature engineering, LLM orchestration, and real-time inference under a single abstraction: programmable features.
+Chalk is the first platform to unify feature and prompt engineering, LLM evals, and real-time inference into a unified platform.
+Bridge the gap between experimentation and production with a single system that unifies offline and online inference.
+Chalk retrieves and computes dynamically at inference time with an execution engine called [Velox](https://github.com/facebookincubator/velox)--we maintain a fork that’s been heavily optimized for low-latency (< 3 ms).
 
-Chalk retrieves and computes features dynamically at inference time with an execution engine called [Velox.](https://github.com/facebookincubator/velox)
-We maintain a fork that’s been heavily optimized for low-latency (< 3 ms).
-
-Unifying online and offline execution enables teams to:
+Unifying online and offline execution enables teams to
 
 - consolidate training and serving into a single version controlled environment
 - reduce time-to-production for new models from months to days
-- build advanced AI systems (RAG, RecSys, fraud, etc.) without building custom infrastructure
+- build advanced AI systems (RAG, RecSys, Fraud detection, etc.) without building custom infrastructure
 
-You write Python.
- Chalk handles orchestrating, caching, and serving features at scale, resulting in faster iterations, fewer bugs, and the freedom to focus on building models—not plumbing.
+**No DSLs, no rewrites, just ordinary Python**
 
----
-
-## Chalk for MLOps
-
-Bridge the gap between experimentation and production with a single system that unifies feature engineering, deployment, and observability.
-
-**No DSLs, building with Chalk is building with Python**
-
-Chalk gives MLOps teams the tools to deploy enterprise-grade infrastructure with a superb developer experience.
 Define features in Python that are run natively in Rust, C++, or as UDFs — no need to manually port notebooks and code into other languages e.g. Scala.
 
-Chalk takes it a step further by democratizing modern software engineering practices for data teams:
-
-- features are discoverable and auditable across all environments
-- experimental changes are isolated to branches and safely promoted via CLI with gradual rollouts
-- models are versioned and can be easily rolled-back the same way you would an API
-
-With SDKs available in multiple languages, you can easily serve features across your entire tech stack, empowering everyone from data scientists using Python to frontend developers in JavaScript and backend engineers working with Java.
-
-<RequestingFeaturesOnline style={{ height: 328 }} />
-
-**Observability**
+**See everything, debug anything**
 
 Traditional ML systems often operate as opaque black boxes, especially when transformation logic gets embedded across disparate data pipelines, obscuring the connection between inputs and predictions.
-Chalk shatters this paradigm by bringing comprehensive observability to every aspect of your ML systems; easily
+Chalk disrupts this paradigm by bringing comprehensive observability to every aspect of your ML systems; easily
 
 - trace every model feature back to its original data sources with detailed lineage tracking — showing exactly where data came from
 - troubleshoot and optimize your ML pipelines with end-to-end tracing that tracks the inputs and outputs of every step in any run
 - monitor feature drift, access patterns, and performance metrics in real-time across all your model deployments
 
-With this level of visibility, you can iterate on models faster and deploy with greater confidence, knowing exactly how your systems behave at each step of the machine learning lifecycle.
+Iterate faster and deploy with confidence, knowing exactly how your systems behave at each step of the machine learning lifecycle.
+
+---
+
+## Chalk for MLOps
+
+Let Chalk handle orchestrating, caching, and serving features at scale freeing up you and your team to focus on building models—not plumbing.
+
+Democratize modern software engineering practices, with Chalk
+
+- features are discoverable and auditable across all environments
+- experimental changes are isolated to branches and safely promoted via CLI with gradual rollouts
+- models are versioned and can be easily rolled-back the same way you would an API
+
+Easily serve features across your entire tech stack with SDKs in Python, JavaScript, Java and more - making inference accessible to any team whether for internal tools or customer-facing applications.
+
+<RequestingFeaturesOnline style={{ height: 328 }} />
 
 ---
 
