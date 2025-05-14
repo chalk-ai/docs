@@ -39,6 +39,8 @@ You'll use this token to configure Okta's SCIM authentication.
 3. Edit your Chalk SAML app.
 4. Configure SCIM using:
     - SCIM Connector base URL: `https://api.chalk.ai/scim/v2`
+      - **Important**: This URL will change if your [metadata plane](/docs/helm-installation#configuring-your-values-file)
+          is self-hosted. Confirm your team's SCIM connector base URL in the Settings > Single Sign-On.
     - Unique identifier field for users: `email`
     - Supported provisioning actions:
         - Push New Users
