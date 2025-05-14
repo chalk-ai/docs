@@ -51,6 +51,7 @@ class Transaction:
     id: int
     amount: float
     discount_percentage: float
+    at: datetime
 
     # create new features inline with Chalk Expressions
     is_expensive_purchase: bool = _.amount > 100
@@ -95,7 +96,10 @@ class User:
         "1d",
         "7d",
         "30d",
-        expression=_.txns[_.amount].sum(),
+        expression=_.txns[
+            _.amount,
+            _.at > _.chalk_window,
+        ].sum(),
     )
 ```
 
