@@ -270,9 +270,10 @@ Features are computed at inference time with an execution engine called [Velox](
 Chalk's low-latency execution enables us to bridge the gap between experimentation and production by unifying offline and online inference.
 With this unified approach, teams can easily:
 
-- Establish a single source of truth for feature definitions and transformations that's shareable across the organization
+- Establish a single source of truth for feature definitions and transformations
 - Consolidate training and serving into a single version controlled environment
 - Reduce time-to-production for new models from months to days
+- Standardize and share features across the entire organization
 
 Chalk offers the developer-friendly experience of Python while achieving high performance by transpiling functions like `get_username` into optimized Velox expressions using a Symbolic Python Interpreter.
 
