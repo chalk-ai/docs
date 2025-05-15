@@ -237,6 +237,15 @@ Chalk automatically detects and uses your current Git branch name without requir
 chalk apply --branch
 ```
 
+A successful execution of the `chalk apply --branch` command creates a new isolated branch (in this case, 'fraud-model-v2').
+Chalk scans through resolvers, lints features, and deploys them to this separate branch.
+This isolation enables testing changes independently before merging them into the production environment.
+
+```
+✓ Found resolvers
+✓ Deployed to branch 'fraud-model-v2'
+```
+
 Query for features against this branch and perform QA workflows on branch deployments to ensure pipelines perform as expected:
 
 ```shell
@@ -287,11 +296,11 @@ Unifying online and offline execution enables teams to
 
 - consolidate training and serving into a single version controlled environment
 - reduce time-to-production for new models from months to days
-- build advanced AI systems without building custom infrastructure
+- deploy ML systems without building custom infrastructure
 
 **No DSLs, no rewrites, just ordinary Python**
 
-Define features in Python that are run natively in Rust or C++ — no need to rewrite notebook code into other faster languages manually.
+Define features in Python that are run natively in Rust, C++, or as UDFs — no need to manually port notebooks and code into other languages e.g. Scala.
 
 **See everything, debug anything**
 
