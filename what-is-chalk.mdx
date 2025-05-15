@@ -140,7 +140,7 @@ When running this query, Chalk only fetches exactly the base features needed to 
 
 Chalk analyzes type annotations to build a directed acyclic graph (DAG) of feature dependencies.
 At inference time, query plans tailored to your input/output schema are generated dynamically by slicing this DAG into sub-graphs.
-This ensures that only the features needed are fetched--optimizing for speed, precision, and cost.
+This ensures that only the features needed are fetched — optimizing for speed, precision, and cost.
 
 Each node in the DAG is a Chalk expression or resolver (SQL / Python):
 
