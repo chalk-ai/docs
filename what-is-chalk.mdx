@@ -59,30 +59,34 @@ class Transaction:
     # create new features inline with Chalk Expressions
     is_expensive_purchase: bool = _.amount > 100
 
-    # instead of declaring user_id as a string type (user_id: str),
-    # reference a feature from another class
+    # instead of declaring user_id as a string type (user_id: str)
+    # reference a feature from another class to create a join key
     user_id: "User.id"
 
-    # Chalk infers the "User.id" join key, enabling you to reference
-    # the User associated with this transaction!
+    # Chalk infers that "User.id" is join key
+    # enabling you to reference the User class
+    # associated with this transaction!
     user: "User"
 
 @features
 class User:
     # id, name, email are pulled from underlying data sources like
     # SQL (Postgres, Athena, Glue, Iceberg), Snowflake, Databricks, Kafka streams, etc.
+    # with a SQL resolver
     id: int
     name: str
     email: str
 
-    # computed via a Python resolver, more on this later
+    # username is computed with a Python resolver
     username: str
 
     # Chalk's SDK provides common functions that run in C++
     name_match: float = F.levenshtein_distance(_.name, _.email)
 
-    # leverages "User.id" type annotation from Transaction class
-    # as a join key to create an intermediate DataFrame
+    # create an intermediate DataFrame of another feature class
+    # Chalk infers how to resolve the DataFrame
+    # by leveraging the "User.id" type annotation
+    # from the Transaction class as a join key
     txns: DataFrame[Transaction]
 
     # reference DataFrames to run aggregations
