@@ -63,9 +63,8 @@ class Transaction:
     # reference a feature from another class to create a join key
     user_id: "User.id"
 
-    # Chalk infers that "User.id" is a join key
-    # enabling you to reference the User class
-    # associated with this transaction!
+    # "User.id" now enables you to reference the
+    # User class associated with this transaction!
     user: "User"
 
 @features
