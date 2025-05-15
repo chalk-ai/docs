@@ -186,34 +186,6 @@ def get_username(
     return username.lower()
 ```
 
-Although written in Python, this function compiles into a static Velox expression through Chalk's Symbolic Python Interpreter and executes natively in C++.
-This provides Python-first development without sacrificing performance.
-
-```py
-lower(
-    if_then_else(
-        !=(
-            strpos(str(email), str(gmail.com)),
-            int(0)
-        ),
-        replace(
-            element_at(
-                split(
-                    element_at(split(str(email), str(@)), int(1)),
-                    str(+)
-                ),
-                int(1)
-            ),
-            str(.),
-            str()
-        ),
-        element_at(split(str(email), str(@)), int(1))
-    )
-)
-```
-
-We wrote an [engineering blog post on our Symbolic Python interpreter](https://chalk.ai/blog/symbolic-python-interpreter) if you want to learn more!
-
 ### How do you cache features with Chalk?
 
 Some data sources, like LLMs or 3rd party APIs, are expensive or slow to call at inference time.
@@ -298,7 +270,34 @@ Unifying online and offline execution enables teams to:
 - Reduce time-to-production for new models from months to days
 - Deploy ML systems without building custom infrastructure
 
-**See everything, debug anything**
+Chalk reconciles performance despite being Python by transpiling functions like `get_username` into a Velox expressions with a Symbolic Python Interpreter.
+
+```py
+lower(
+    if_then_else(
+        !=(
+            strpos(str(email), str(gmail.com)),
+            int(0)
+        ),
+        replace(
+            element_at(
+                split(
+                    element_at(split(str(email), str(@)), int(1)),
+                    str(+)
+                ),
+                int(1)
+            ),
+            str(.),
+            str()
+        ),
+        element_at(split(str(email), str(@)), int(1))
+    )
+)
+```
+
+We wrote an [engineering blog post on our Symbolic Python interpreter](https://chalk.ai/blog/symbolic-python-interpreter) if you want to learn more!
+
+**Observability:** See everything, debug anything
 
 Traditional ML systems often operate as opaque black boxes, especially when transformation logic gets embedded across disparate data pipelines, obscuring the connection between inputs and predictions.
 Chalk brings comprehensive observability to every aspect of your ML systems, making it easy to:
