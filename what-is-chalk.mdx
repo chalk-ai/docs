@@ -21,14 +21,14 @@ import { PyDiffEditor } from '@/components/Editor'
 Build, deploy, and iterate faster with Chalk — a programmable feature engine that powers low-latency inference, rapid model iteration, and observability across your model lifecycle.
 Chalk solves core pain points teams face when building enterprise AI and ML systems:
 
-- deploying and scaling production-grade infrastructure
-- authoring feature pipelines in pure Python — No DSLs! No rewrites!
-- building training datasets with high throughput batch offline queries and point-in-time correctness
-- evaluating LLMs at scale by integrating unstructured inputs into pipelines
-- serving fresh features on-the-fly with versioning, branching, and full observability
-    - gradually rollout, easily rollback, and feature flag models with version control
-    - collaborate across teams with branch-based QA
-    - A/B test with real historical production traffic by leveraging Chalk’s feature store
+- Deploying and scaling production-grade infrastructure
+- Authoring feature pipelines in pure Python — No DSLs! No rewrites!
+- Building training datasets with high throughput batch offline queries and point-in-time correctness
+- Evaluating LLMs at scale by integrating unstructured inputs into pipelines
+- Serving fresh features on-the-fly with versioning, branching, and full observability
+    - Gradually rollout, easily rollback, and feature flag models with version control
+    - Collaborate across teams with branch-based QA
+    - A/B test with real historical production traffic by leveraging Chalk's feature store
 
 ---
 
@@ -36,9 +36,9 @@ Chalk solves core pain points teams face when building enterprise AI and ML syst
 
 Define features using Pythonic classes — no DSLs required.
 Every feature is:
-- typed and validated
-- versioned and testable
-- composable and reusable in both training and online inference
+- Typed and validated
+- Versioned and testable
+- Composable and reusable in both training and online inference
 
 Describe relationships between entities (e.g., users and transactions) with simple type annotations, and Chalk takes care of joins, lineage, and query planning automatically.
 
@@ -157,11 +157,11 @@ Here's an example of a generated query plan:
 Chalk connects directly to your existing infrastructure and underlying data stores (Athena, BigQuery, Postgres, Iceberg catalog, etc.) with [SQL resolvers](https://docs.chalk.ai/docs/sql-resolvers) and to APIs (microservices, 3rd-party clients, LLMs) with [Python resolvers](https://docs.chalk.ai/docs/python-resolvers).
 Resolvers make it easy to integrate a wide variety of data sources, join them together, and use them in inference.
 
-Decoupling feature logic from ETL pipelines unlocks
+Decoupling feature logic from ETL pipelines unlocks:
 
-- faster iteration cycles
-- on-demand just-in-time inference
-- reproducible and testable features (with point-in-time accuracy)
+- Faster iteration cycles
+- On-demand just-in-time inference
+- Reproducible and testable features (with point-in-time accuracy)
 
 <IntegrationTypes />
 
@@ -219,9 +219,9 @@ We wrote an [engineering blog post on our Symbolic Python interpreter](https://c
 Some data sources, like LLMs or 3rd party APIs, are expensive or slow to call at inference time.
 Chalk supports caching features to optimize for latency and cost:
 
-- define cache windows inline with your features
-- override staleness at query-time when fresh data is critical
-- pre-warm caches and backfill pipelines for performance
+- Define cache windows inline with your features
+- Override staleness at query-time when fresh data is critical
+- Pre-warm caches and backfill pipelines for performance
 
 Add a caching policy with one line of code in our feature definition:
 
@@ -292,11 +292,11 @@ Chalk is the first platform to unify feature and prompt engineering, LLM evals, 
 Bridge the gap between experimentation and production with a single system that unifies offline and online inference.
 Chalk retrieves and computes dynamically at inference time with an execution engine called [Velox](https://github.com/facebookincubator/velox) — we maintain a fork that's been heavily optimized for low-latency (< 3 ms).
 
-Unifying online and offline execution enables teams to
+Unifying online and offline execution enables teams to:
 
-- consolidate training and serving into a single version controlled environment
-- reduce time-to-production for new models from months to days
-- deploy ML systems without building custom infrastructure
+- Consolidate training and serving into a single version controlled environment
+- Reduce time-to-production for new models from months to days
+- Deploy ML systems without building custom infrastructure
 
 **No DSLs, no rewrites, just ordinary Python**
 
@@ -305,13 +305,13 @@ Define features in Python that are run natively in Rust, C++, or as UDFs — no 
 **See everything, debug anything**
 
 Traditional ML systems often operate as opaque black boxes, especially when transformation logic gets embedded across disparate data pipelines, obscuring the connection between inputs and predictions.
-Chalk disrupts this paradigm by bringing comprehensive observability to every aspect of your ML systems; easily
+Chalk brings comprehensive observability to every aspect of your ML systems, making it easy to:
 
-- trace every model feature back to its original data sources with detailed lineage tracking — showing exactly where data came from
-- troubleshoot and optimize your ML pipelines with end-to-end tracing that tracks the inputs and outputs of every step in any run
-- monitor feature drift, access patterns, and performance metrics in real-time across all your model deployments
+- Trace every model feature back to its original data sources with detailed lineage tracking — showing exactly where data came from
+- Troubleshoot and optimize your ML pipelines with end-to-end tracing that tracks the inputs and outputs of every step in any run
+- Monitor feature drift, access patterns, and performance metrics in real-time across all your model deployments
 
-Iterate faster and deploy with confidence — knowing exactly how your systems behave at each step of the machine learning lifecycle.
+Deploy faster and with confidence — knowing exactly how your systems behave at each step of the machine learning lifecycle.
 
 ---
 
@@ -319,11 +319,11 @@ Iterate faster and deploy with confidence — knowing exactly how your systems b
 
 Let Chalk handle orchestrating, caching, and serving features at scale freeing up you and your team to focus on building models—not plumbing.
 
-Democratize modern software engineering practices, with Chalk
+Democratize modern software engineering practices, with Chalk:
 
-- features are discoverable and auditable across all environments
-- experimental changes are isolated to branches and safely promoted via CLI with gradual rollouts
-- models are versioned and can be easily rolled-back the same way you would an API
+- Features are discoverable and auditable across all environments
+- Experimental changes are isolated to branches and safely promoted via CLI with gradual rollouts
+- Models are versioned and can be easily rolled-back the same way you would an API
 
 Easily serve features across your entire tech stack with SDKs in Python, JavaScript, Java and more - making inference accessible to any team whether for internal tools or customer-facing applications.
 
@@ -337,11 +337,11 @@ With Chalk, MLOps teams confidently deploy and serve low-latency ML systems, ben
 
 Build enterprise-grade AI applications without stitching together LLMs, prompts, vector DBs, and retrieval logic.
 
-- retrieve real-time context into LLMs
-- call chat completion APIs out-of-the-box
-- generate embeddings and vectors within pipelines
-- run large-scale evaluations using historical traffic
-- reuse and manage prompts with [named prompts](/docs/prompts)
+- Retrieve real-time context into LLMs
+- Call chat completion APIs out-of-the-box
+- Generate embeddings and vectors within pipelines
+- Run large-scale evaluations using historical traffic
+- Reuse and manage prompts with [named prompts](/docs/prompts)
 
 ```py
 # Use structured output to easily incorporate unstructured data in our ML pipelines
@@ -400,10 +400,10 @@ With Chalk, AI engineers easily integrate unstructured data, build context-aware
 
 Test new features, run experiments, and ship production models—all from a Jupyter notebook.
 
-- catch regressions and A/B test features on development branches
-- import features from production into Jupyter notebooks with a single line of code
-- export features to catalogs like Iceberg for downstream analytics and usage
-- trace data lineage all the way down to source tables
+- Catch regressions and A/B test features on development branches
+- Import features from production into Jupyter notebooks with a single line of code
+- Export features to catalogs like Iceberg for downstream analytics and usage
+- Trace data lineage all the way down to source tables
 
 ```python
 from chalk.client import ChalkClient
@@ -449,11 +449,12 @@ With Chalk, data scientists easily integrate new data sources, test new features
 ## Chalk for Data Engineers
 
 Manage features declaratively without the complexity of orchestrating ETL jobs, feature stores, and offline/online datastores.
+Chalk makes it easy to
 
-- cache expensive computations with configurable staleness
-- manage versioning and A/B testing of feature computation
-- create complex joins and relationships between data entities
-- configure time-window aggregations with flexible materialization options
+- Cache expensive computations with configurable staleness
+- Manage model versions and A/B test features
+- Create complex joins and relationships between data entities
+- Configure time-window aggregations with flexible materialization options
 
 ```python
 @features
@@ -481,9 +482,9 @@ class User:
 
 Chalk also integrates natively into your existing data infrastructure by [deploying directly into your virtual private cloud](/docs/architecture) (VPC) providing seamless resource access while maintaining strict security and compliance controls with full data isolation:
 
-    - customizable compute layer enabling the use of different memory stores (Redis, etc.) tailored to access patterns and performance requirements
-    - inherit existing security groups, policies, and ACLs
-    - co-located resources and full-control over data residency to meet compliance requirements
+- Customizable compute layer enabling the use of different memory stores (Redis, etc.) tailored to access patterns and performance requirements
+- Inherit existing security groups, policies, and ACLs
+- Co-located resources and full-control over data residency to meet compliance requirements
 
 With Chalk, Data Engineers easily manage features programmatically and maintain production systems without the overhead of configuring YAML, custom scripts, or infrastructure.
 
