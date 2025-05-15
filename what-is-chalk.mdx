@@ -34,7 +34,7 @@ Chalk solves core pain points teams face when building enterprise AI and ML syst
 
 ## How does Chalk make feature engineering easier?
 
-Define features using Pythonic classes in Chalk — no DSLs required.
+Define features using Pythonic classes — no DSLs required.
 Every feature is:
 - typed and validated
 - versioned and testable
@@ -214,7 +214,7 @@ lower(
 
 We wrote an [engineering blog post on our Symbolic Python interpreter](https://chalk.ai/blog/symbolic-python-interpreter) if you want to learn more!
 
-### How can I cache features in Chalk?
+### How do you cache features with Chalk?
 
 Some data sources, like LLMs or 3rd party APIs, are expensive or slow to call at inference time.
 Chalk supports caching features to optimize for latency and cost:
@@ -228,7 +228,7 @@ Add a caching policy with one line of code in our feature definition:
 <PyDiffEditor html={addCachingCode} />
 
 
-### How do I deploy and query features with Chalk?
+### How do you deploy and query features with Chalk?
 
 After defining pipelines, deploy features to a branch in <100ms with:
 Chalk automatically detects and uses your current Git branch name without requiring you to explicitly specify it:
