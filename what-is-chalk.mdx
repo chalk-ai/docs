@@ -151,8 +151,9 @@ This ensures that only the features needed are fetched — optimizing for speed,
 Each node in the DAG is a Chalk expression or resolver (SQL / Python):
 
 - An expression e.g. `is_expensive_purchase: bool = _.amount > 100`
-- A SQL file that connects to an underlying data store like Athena
-- Python resolver i.e. ordinary Python functions (Pandas, httpx, or LLM calls)
+- A SQL file ending in `.chalk.sql` that connects to an underlying data store like Athena
+- A Python function that explicitly inputs and outputs features
+    - Use the Python packages you're familiar with and easily call 3rd-party clients e.g. Polars, httpx, or OpenAI
 
 Here's an example of a generated query plan:
 
@@ -176,12 +177,12 @@ Decoupling feature logic from ETL pipelines unlocks:
 Chalk has built-in support for feature engineering workflows — there's no need to manage Airflow or orchestrate complicated streaming flows.
 Once you've defined features and resolvers, Chalk orchestrates them into flexible pipelines (slicing the DAG) that make both training and model execution easy.
 
-The `get_username` function below explicitly defines input dependencies through `User.email` and specifies the output feature type as `User.username`:
+The `get_username` Python resolver below explicitly defines input dependencies through `User.email` and specifies the output feature type as `User.username`:
 
 ```py
 @online
 def get_username(
-    # the input type annotation specifies the required feature
+    # the input type annotation specifies the input feature
     email: User.email,
     # the resulting feature is saved as username unto User class
 ) -> User.username:
