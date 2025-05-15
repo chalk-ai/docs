@@ -495,7 +495,6 @@ class User:
     count_txns: Windowed[int] = windowed(
         "1d", "365d",
         expression=_.txns[_.created_at > _.chalk_window].count(),
-        # see our docs on materialized windowed aggregations
         # https://docs.chalk.ai/docs/materialized_aggregations
         materialization=True,
     )
