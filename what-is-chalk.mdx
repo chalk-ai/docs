@@ -209,22 +209,22 @@ Add a caching policy with one line of code in our feature definition:
 ### How do you deploy and query features with Chalk?
 
 After defining pipelines, deploy features to a branch in < 100ms with:
-Chalk automatically detects and uses your current Git branch name without requiring you to explicitly specify it:
 
 ```shell
 chalk apply --branch
 ```
 
+Chalk automatically detects and uses your current Git branch name without requiring you to explicitly specify it.
 A successful execution of the `chalk apply --branch` command creates a new isolated branch (in this case, 'fraud-model-v2').
 Chalk scans through resolvers, lints features, and deploys them to this separate branch.
-This isolation enables testing changes independently before merging them into the production environment.
 
 ```
 ✓ Found resolvers
 ✓ Deployed to branch 'fraud-model-v2'
 ```
 
-Query for features against this branch and perform QA workflows on branch deployments to ensure pipelines perform as expected:
+Chalk branches enable testing changes independently before merging them into the production environment.
+Query for features against this branch and perform QA workflows to ensure new features perform as expected:
 
 ```shell
 chalk query --branch --in user.id=47
