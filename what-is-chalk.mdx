@@ -82,7 +82,7 @@ class User:
     # Chalk's SDK provides common functions that run in C++
     name_match: float = F.levenshtein_distance(_.name, _.email)
 
-    # create an intermediate DataFrame of another feature class
+    # create an intermediate DataFrame of another feature class.
     # Chalk infers how to resolve the DataFrame
     # by leveraging the "User.id" type annotation
     # from the Transaction class as a join key
