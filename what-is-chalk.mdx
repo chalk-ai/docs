@@ -76,17 +76,17 @@ class User:
     # computed via a Python resolver, more on this later
     username: str
 
-    # Chalk SDK provides common ML primitives
+    # Chalk SDK provides common functions that run in C++
     name_match: float = F.levenshtein_distance(_.name, _.email)
 
     # leverages "User.id" type annotation from Transaction class
     # as a join key to create an intermediate DataFrame
     txns: DataFrame[Transaction]
 
-    # reference dataframes to run aggregations
+    # reference DataFrames to run aggregations
     transaction_count: int = _.txns.count()
 
-    # easily filter dataframes before running an aggregation
+    # easily filter DataFrames before running an aggregation
     average_discount_percentage: float = _.txns[
         _.amount,
         _.discount_percentage > 0,
