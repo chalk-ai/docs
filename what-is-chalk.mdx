@@ -79,7 +79,7 @@ class User:
     name_match: float = F.levenshtein_distance(_.name, _.email)
 
     # leverages "User.id" type annotation from Transaction class
-    # as a join key to create intermediary dataframes
+    # as a join key to create an intermediate DataFrame
     txns: DataFrame[Transaction]
 
     # reference dataframes to run aggregations
