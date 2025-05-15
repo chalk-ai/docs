@@ -76,7 +76,7 @@ class User:
     # computed via a Python resolver, more on this later
     username: str
 
-    # Chalk SDK provides common functions that run in C++
+    # Chalk's SDK provides common functions that run in C++
     name_match: float = F.levenshtein_distance(_.name, _.email)
 
     # leverages "User.id" type annotation from Transaction class
