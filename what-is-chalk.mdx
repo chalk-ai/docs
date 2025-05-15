@@ -214,8 +214,6 @@ After defining pipelines, deploy features to a branch in < 100ms with:
 chalk apply --branch
 ```
 
-Chalk automatically detects and uses your current Git branch name without requiring you to explicitly specify it.
-A successful execution of the `chalk apply --branch` command creates a new isolated branch (in this case, 'fraud-model-v2').
 Chalk scans through resolvers, lints features, and deploys them to this separate branch.
 
 ```
@@ -223,8 +221,8 @@ Chalk scans through resolvers, lints features, and deploys them to this separate
 ✓ Deployed to branch 'fraud-model-v2'
 ```
 
-Chalk branches enable testing changes independently before merging them into the production environment.
-Query for features against this branch and perform QA workflows to ensure new features perform as expected:
+Chalk automatically detects and uses your current Git branch name without requiring you to explicitly specify it.
+Query for features against this branch to test changes independently before merging them into the production environment.
 
 ```shell
 chalk query --branch --in user.id=47
