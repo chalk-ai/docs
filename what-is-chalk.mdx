@@ -30,6 +30,8 @@ Chalk solves core pain points teams face when building enterprise AI and ML syst
     - Collaborate across teams with branch-based QA
     - A/B test with real historical production traffic by leveraging Chalk's feature store
 
+Chalk is the first platform to unify feature and prompt engineering, LLM evals, and real-time low-latency inference into a unified platform.
+
 ---
 
 ## How does Chalk make feature engineering easier?
@@ -260,17 +262,16 @@ The ability to re-use the same features in both contexts dramatically shortens d
 
 ## Why Chalk?
 
-Chalk is the first platform to unify feature and prompt engineering, LLM evals, and real-time inference into a unified platform.
-Bridge the gap between experimentation and production with a single system that unifies offline and online inference.
-Chalk retrieves and computes dynamically at inference time with an execution engine called [Velox](https://github.com/facebookincubator/velox) — we maintain a fork that's been heavily optimized for low-latency (< 3 ms).
+Chalk computes features at inference time with an execution engine called [Velox](https://github.com/facebookincubator/velox) — we maintain a fork that's been heavily optimized for low-latency (< 3 ms).
+This low-latency execution enables Chalk unify offline and online inference into a single system:
 
-Unifying online and offline execution enables teams to:
+Bridging the gap between experimentation and production enables teams to:
 
+- Establish a single source of truth for feature definitions and transformations that's shareable across the organization
 - Consolidate training and serving into a single version controlled environment
 - Reduce time-to-production for new models from months to days
-- Deploy ML systems without building custom infrastructure
 
-Chalk reconciles performance despite being Python by transpiling functions like `get_username` into a Velox expressions with a Symbolic Python Interpreter.
+Chalk offers the developer-friendly experience of Python while achieving high performance by transpiling functions like `get_username` into optimized Velox expressions using a Symbolic Python Interpreter.
 
 ```py
 lower(
