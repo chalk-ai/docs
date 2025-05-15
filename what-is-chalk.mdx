@@ -177,7 +177,7 @@ Decoupling feature logic from ETL pipelines unlocks:
 Chalk has built-in support for feature engineering workflows — there's no need to manage Airflow or orchestrate complicated streaming flows.
 Once you've defined features and resolvers, Chalk orchestrates them into flexible pipelines (slicing the DAG) that make both training and model execution easy.
 
-The `get_username` Python resolver below explicitly defines input dependencies through `User.email` and specifies the output feature type as `User.username`:
+The `get_username` Python resolver below explicitly defines input dependencies as `User.email` and specifies the output feature type as `User.username`:
 
 ```py
 @online
