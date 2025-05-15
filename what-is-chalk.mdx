@@ -197,9 +197,9 @@ def get_username(
 Some data sources, like LLMs or 3rd party APIs, are expensive or slow to call at inference time.
 Chalk supports caching features to optimize for latency and cost:
 
-- Define cache TTLs inline with your features
+- Define [cache TTLs inline](/docs/query-caching) with your features
 - Override staleness at query-time when fresh data is critical
-- Pre-warm caches and backfill pipelines for performance
+- Pre-warm caches and [backfill pipelines](/docs/reverse-etl) for performance
 
 Add a caching policy with one line of code in our feature definition:
 
