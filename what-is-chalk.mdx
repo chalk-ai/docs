@@ -435,7 +435,8 @@ catalog = GlueCatalog(
 chalk_dataset.write_to(destination="database.table_name", catalog=catalog)
 ```
 
-Chalk evaluates features with point-in-time lookups, guaranteeing evaluation only with data that would have been seen in the past. You can provide labels with different past timestamps to easily get historical features that represent what your application would have retrieved online at those past times.
+Chalk evaluates features with point-in-time lookups, guaranteeing evaluation only with data that would have been seen in the past.
+You can provide labels with different past timestamps to easily get historical features that represent what your application would have retrieved online at those past times.
 
 <TemporalCorrectness />
 
