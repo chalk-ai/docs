@@ -372,6 +372,9 @@ class Transaction:
         output_structure=AnalyzedReceiptStruct,
     )
 
+    # or configure the chat completion from your Chalk dashboard
+    llm_call_with_named_prompt: P.run_prompt("analyze_receipt-v1")
+
 @features
 class ProductRec:
     user_id: Primary[User.id]
