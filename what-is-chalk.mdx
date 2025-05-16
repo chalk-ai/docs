@@ -1,7 +1,7 @@
 ---
 title: What is Chalk?
 metaTitle: What is Chalk?
-metaDescription: 'Chalk is a feature store that enables innovative machine learning teams to focus on building the unique products and models that make their business stand out.'
+metaDescription: 'Chalk is the data platform for inference that enables innovative machine learning teams to focus on building the unique products and models that make their business stand out.'
 titleHidden: true
 hideToc: true
 published: true
@@ -18,215 +18,501 @@ import { PyDiffEditor } from '@/components/Editor'
 
 <DocsHero />
 
-Chalk is a feature store that enables innovative machine learning teams
-to focus on building the unique products and models that make their
-business stand out. Behind the scenes, Chalk seamlessly handles
-data infrastructure with a best-in-class developer experience.
-Here’s how it works.
+Build, deploy, and iterate faster with Chalk — a programmable feature engine that powers low-latency inference, rapid model iteration, and observability across your model lifecycle.
+Chalk eliminates the core pain points that slow down teams building enterprise AI and ML systems, providing an end-to-end platform for:
+
+- Deploying and scaling production-grade infrastructure
+- Authoring feature pipelines in pure Python — No DSLs! No rewrites!
+- Building training datasets with high throughput batch offline queries and point-in-time correctness
+- Integrating unstructured data into production ML pipelines with LLMs
+- Serving fresh features on-the-fly with versioning, branching, and full observability
+    - Gradually rollout, easily rollback, and feature flag models with version control
+    - Collaborate across teams with branch-based QA
+    - A/B testing models and LLM prompts with real historical traffic
+
+Chalk is the first platform to unify feature and prompt engineering, LLM evals, and real-time low-latency inference into a unified platform.
 
 ---
 
-## Develop
+## How does Chalk make feature engineering easier?
 
-Chalk makes it simple to develop feature pipelines for machine
-learning. Define Python functions using the libraries and tools you're
-familiar with instead of specialized DSLs. Chalk then orchestrates
-your functions into pipelines that execute in parallel on a Rust-based
-engine and coordinates the infrastructure required to compute
-features.
+Define features using Pythonic classes — no DSLs required.
+Every feature is:
+- Typed and validated
+- Versioned and testable
+- Composable and reusable in both training and online inference
 
-### Features
-
-To get started, [define your features](/docs/features) with
-[Pydantic](https://pydantic-docs.helpmanual.io/)-inspired Python classes.
-You can define schemas, specify relationships, and add metadata
-to help your team share and re-use work.
+Describe relationships between entities (e.g., users and transactions) with simple type annotations, and Chalk takes care of joins, lineage, and query planning automatically.
 
 ```py
-from chalk import _, DataFrame
 import chalk.functions as F
 from chalk.features import features
+from chalk import DataFrame, Windowed, windowed, _
 
 @features
 class Transaction:
     id: int
     amount: float
+    discount_percentage: float
+    at: datetime
+
+    # create new features inline with Chalk Expressions
+    is_expensive_purchase: bool = _.amount > 100
+
+    # instead of declaring user_id as a string type (user_id: str)
+    # reference a feature from another class to create a join key
+    user_id: "User.id"
+
+    # "User.id" now enables you to reference the
+    # User class associated with this transaction!
+    user: "User"
+
+@features
+class User:
+    # id, name, email are pulled from underlying data sources like
+    # Postgres, Kafka, Iceberg, Athena, Snowflake, Databricks, etc.
+    # with a SQL resolver
+    id: int
+    name: str
+    email: str
+
+    # computed with the Python resolver (function) `get_username`
+    username: str
+
+    # Chalk's SDK provides common functions that run in C++
+    name_match: float = F.levenshtein_distance(_.name, _.email)
+
+    # create an intermediate DataFrame of another feature class.
+    # Chalk infers how to resolve the DataFrame
+    # by leveraging the "User.id" type annotation
+    # from the Transaction class as a join key
+    txns: DataFrame[Transaction]
+
+    # reference DataFrames to run aggregations
+    transaction_count: int = _.txns.count()
+
+    # easily filter DataFrames before running an aggregation
+    average_discount_percentage: float = _.txns[
+        _.amount,
+        _.discount_percentage > 0,
+    ].mean()
+
+    # run aggregations across time intervals
+    total_transaction_amount: Windowed[float] = windowed(
+        "1d",
+        "7d",
+        "30d",
+        expression=_.txns[
+            _.amount,
+            _.at > _.chalk_window,
+        ].sum(),
+    )
+```
+
+Chalk queries allow you to explicitly express the features you want returned:
+
+```shell
+chalk query --in user.id=241 --out name_match --out transactions
+```
+
+```
+Results
+https://chalk.ai/environments/devx/query-runs/4712089747
+Branch: elvis
+Environment: devx
+
+ Name                       Hit?  Value
+────────────────────────────────────────
+ user.name_match        41.0
+
+
+user.txns
+
+ id    transaction_status  user_id  session_id  item_count  cheapest_line_item_price  most_expensively_valued_product_id  created_at                          updated_at
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ 17    "failed"            27       16281       2           34                        20364                               "2024-12-06T00:36:07.348750+00:00"  "2024-12-06T19:53:21.575073+00:00"
+ 18    "failed"            27       16282       1           71.41                     20362                               "2024-11-26T11:29:03.684327+00:00"  "2024-11-27T01:50:03.002378+00:00"
+ 5440  "pending"           27       16357       1           62.64                     20180                               "2024-11-16T17:29:43.540722+00:00"  null
+ 67    "cleared"           27       16358       1           86.31                     20179                               "2024-11-28T04:11:31.857431+00:00"  "2024-11-29T04:08:29.746079+00:00"
+ 68    "cleared"           27       16359       1           138.38                    20178                               "2024-11-11T01:19:53.140456+00:00"  "2024-11-11T11:35:40.673632+00:00"
+
+
+
+(5 rows)
+```
+
+When running this query, Chalk only fetches exactly the base features needed to return `name_match` and `txns`.
+
+Chalk analyzes type annotations to build a directed acyclic graph (DAG) of feature dependencies.
+At inference time, query plans tailored to your input/output schema are generated dynamically by slicing this DAG into sub-graphs.
+This ensures that only the features needed are fetched — optimizing for speed, precision, and cost.
+
+Each node in the DAG is a Chalk expression or resolver (SQL / Python):
+
+- An expression e.g. `is_expensive_purchase: bool = _.amount > 100`
+- A SQL file ending in `.chalk.sql` that connects to an underlying data store like Athena
+- A Python function that explicitly inputs and outputs features
+    - Use the Python packages you're familiar with e.g. Polars, httpx, OpenAI, etc.
+
+Here's an example of a generated query plan:
+
+![Chalk query plan](/img/docs-what_is_chalk-query_plan.png)
+
+### How does Chalk resolve features? What are Chalk resolvers?
+
+Chalk connects directly to your existing infrastructure and underlying data stores (Athena, BigQuery, Postgres, Iceberg catalog, etc.) with [SQL resolvers](https://docs.chalk.ai/docs/sql-resolvers) and to APIs (microservices, 3rd-party clients, LLMs) with [Python resolvers](https://docs.chalk.ai/docs/python-resolvers).
+Resolvers make it easy to integrate a wide variety of data sources, join them together, and use them in inference.
+
+Decoupling feature logic from ETL pipelines unlocks:
+
+- Faster iteration cycles
+- On-demand just-in-time inference
+- Reproducible and testable features (with point-in-time accuracy)
+
+<IntegrationTypes />
+
+### How does Chalk orchestrate and manage features?
+
+Chalk has built-in support for feature engineering workflows — there's no need to manage Airflow or orchestrate complicated streaming flows.
+Once you've defined features and resolvers, Chalk orchestrates them into flexible pipelines (slicing the DAG) that make both training and model execution easy.
+
+The `get_username` Python resolver below explicitly defines input dependencies as `User.email` and specifies the output feature type as `User.username`:
+
+```py
+@online
+def get_username(
+    # the input type annotation specifies the input feature
+    email: User.email,
+    # the resulting feature is saved as username unto User class
+) -> User.username:
+    username = email.split("@")[0]
+    if "gmail.com" in email:
+        username = username.split("+")[0].replace(".", "")
+
+    return username.lower()
+```
+
+### How do you cache features with Chalk?
+
+Some data sources, like LLMs or 3rd party APIs, are expensive or slow to call at inference time.
+Chalk supports caching features to optimize for latency and cost:
+
+- Define [cache TTLs inline](/docs/query-caching) with your features
+- Override staleness at query-time when fresh data is critical
+- Pre-warm caches and [backfill pipelines](/docs/reverse-etl) for performance
+
+Add a caching policy with one line of code in our feature definition:
+
+<PyDiffEditor html={addCachingCode} />
+
+
+### How do you deploy and query features with Chalk?
+
+After defining pipelines, deploy features to a branch in < 100ms with:
+
+```shell
+chalk apply --branch
+```
+
+Chalk scans through resolvers, lints features, and deploys them to this separate branch.
+
+```
+✓ Found resolvers
+✓ Deployed to branch 'fraud-model-v2'
+```
+
+Chalk automatically detects and uses your current Git branch name without requiring you to explicitly specify it.
+Query for features against this branch to test changes independently before merging them into the production environment.
+
+```shell
+chalk query --branch --in user.id=47
+```
+
+This command returns the user's features from your branch deployment, showing all computed fields for the specified `user.id`.
+
+```
+Using '--out=user'
+Results
+https://chalk.ai/environments/devx/query-runs/4701020347
+Branch: elvis
+Environment: devx
+
+ Name                                             Hit?  Value
+─────────────────────────────────────────────────────────────────────────────────────────────────────
+ user.average_rating_given                  4.3125
+ user.birthday                              "1987-12-28"
+ user.created_at                            "2024-08-07T20:54:42.942294+00:00"
+ user.email                                 "98178ad58fe8481db74996996d6e8de7@google.ru"
+ user.first_name                            "Marseda"
+ user.id                                    47
+ user.last_name                             "Karkaletsis"
+ user.review_count                          32
+ user.total_orders_placed                   48
+ user.unique_products_inquired_about        203
+```
+
+Once you validate the deployment, promote it to production with a single CLI command and no downtime (blue-green deployments).
+
+```shell
+chalk apply
+```
+
+These features are now available for low-latency [online inference](/docs/query-basics) and [offline training](/docs/training-client).
+
+---
+
+## Why Chalk?
+
+Features are computed at inference time with an execution engine called [Velox](https://github.com/facebookincubator/velox) — we maintain a fork that's been heavily optimized for low-latency (< 3 ms).
+Chalk's low-latency execution enables us to bridge the gap between experimentation and production by unifying offline and online inference.
+With this unified approach, teams can easily:
+
+- Establish a single source of truth for feature definitions and transformations
+- Consolidate training and serving into a single version controlled environment
+- Reduce time-to-production for new models from months to days
+- Standardize and share features across the entire organization
+
+Chalk offers the developer-friendly experience of Python while achieving high performance by transpiling functions like `get_username` into optimized Velox expressions by parsing the Abstract Syntax Tree (AST) of the Python code.
+
+```py
+lower(
+    if_then_else(
+        !=(
+            strpos(str(email), str(gmail.com)),
+            int(0)
+        ),
+        replace(
+            element_at(
+                split(
+                    element_at(split(str(email), str(@)), int(1)),
+                    str(+)
+                ),
+                int(1)
+            ),
+            str(.),
+            str()
+        ),
+        element_at(split(str(email), str(@)), int(1))
+    )
+)
+```
+
+We wrote an [engineering blog post on our Symbolic Python interpreter](https://chalk.ai/blog/symbolic-python-interpreter) if you want to learn more!
+
+### Observability
+
+Traditional ML systems often operate as opaque black boxes, especially when transformation logic gets embedded across disparate data pipelines, obscuring the connection between inputs and predictions.
+Chalk brings comprehensive observability to every aspect of your ML systems, making it easy to:
+
+- Trace every model feature back to its original data sources with detailed lineage tracking, showing exactly where the data originated
+- Troubleshoot and optimize your ML pipelines with end-to-end tracing that tracks the inputs and outputs of every step in any run
+- Monitor feature drift, access patterns, and performance metrics in real-time across all your model deployments
+
+Deploy faster and confidently, knowing exactly how your systems behave at each step of the machine learning lifecycle.
+
+---
+
+## Chalk for MLOps
+
+Let Chalk handle orchestrating, caching, and serving features at scale, freeing you and your team to focus on building models, not plumbing.
+
+Chalk brings modern software engineering to data workflows:
+
+- Features are discoverable and auditable across all environments
+- Experimental changes are isolated to branches and safely promoted via CLI with gradual rollouts
+- Models are versioned and can be easily rolled-back the same way you would an API
+
+Easily serve features across your entire tech stack with [SDKs](/docs/query-basics) in Python, JavaScript, Java and more - making inference accessible to any team whether for internal tools or customer-facing applications.
+
+<RequestingFeaturesOnline style={{ height: 328 }} />
+
+With Chalk, MLOps teams confidently deploy and serve low-latency ML systems, benefiting from comprehensive observability while supporting gradual rollouts and seamless rollbacks.
+
+---
+
+## Chalk for AI Engineers
+
+Build enterprise-grade AI applications without stitching together LLMs, prompts, vector DBs, and retrieval logic.
+
+- Retrieve real-time context into LLMs
+- Call chat completion APIs out-of-the-box
+- Generate embeddings and vectors within pipelines
+- Run large-scale evaluations using historical traffic
+- Reuse and manage prompts with [named prompts](/docs/prompts)
+
+```py
+import chalk.functions as F
+import chalk.prompts as P
+from chalk.features import DataFrame, Primary, Vector, embed, features, has_many, _
+from pydantic import BaseModel
+
+# Use structured output to easily incorporate unstructured data in our ML pipelines
+class AnalyzedReceiptStruct(BaseModel):
+    expense_category: ExpenseCategoryEnum
+    business_expense: bool
+    loyalty_program: str
+    return_policy: int
+
+@features
+class Transaction:
+    id: int
+    merchant_id: Merchant.id
+    merchant: Merchant
+    receipt: Receipt
+
+    llm: P.PromptResponse = P.completion(
+        model="gpt-4o-mini-2024-07-18",
+        messages=[P.message(
+                role="user",
+                content=F.jinja(
+            """Analyze the following receipt:
+            Line items: {{Transaction.receipt.line_items}}
+            Merchant: {{Transaction.merchant.name}} {{Transaction.merchant.description}}""")
+        )],
+        output_structure=AnalyzedReceiptStruct,
+    )
+
+@features
+class ProductRec:
+    user_id: Primary[User.id]
+    user: User
+
+    user_vector: Vector = embed(
+        input=F.array_join(F.array_agg(
+            _.user.products[
+                _.name,
+                _.type == "liked"
+            ]),
+            delimiter=" || ",
+        ),
+        provider="vertexai",
+        model="text-embedding-005",
+    )
+
+    similar_users: DataFrame[User] = has_many(
+      lambda: ProductRec.user_vector.is_near(
+            User.liked_products_vector
+        )
+    )
+```
+
+With Chalk, AI engineers easily integrate unstructured data, build context-aware prompts, and run LLM evaluations at scale — all without managing vector databases, embedding providers, and complex retrieval systems.
+
+---
+
+## Chalk for Data Scientists
+
+Test new features, run experiments, and ship production models — all from a Jupyter notebook.
+
+- Catch regressions and A/B test features on development branches
+- Import features from production into Jupyter notebooks with a single line of code
+- Export features to catalogs like Iceberg for downstream analytics and usage
+- Trace data lineage all the way down to source tables
+
+```python
+from chalk.client import ChalkClient
+
+client = ChalkClient(branch=True)
+client.load_features() # load prod features with one line
+
+User.name_exclaimed = _.name + "!" # add new features
+
+chalk_dataset = client.offline_query(
+    input={
+        User.id: list(range(1000)),
+    },
+    output={
+        User.id,
+        User.name,
+        User.name_exclaimed,
+    },
+    recompute_features=True, # A/B test against historical model runs
+    dataset_name="fraud_model",
+)
+
+df = chalk_dataset.to_pandas() # convert to pandas dataframe
+
+# write to Glue or Iceberg
+catalog = GlueCatalog(
+    name="aws_glue_catalog",
+    aws_region="us-west-2",
+    catalog_id="123",
+    aws_role_arn="arn:aws:iam::123456789012:role/OurCatalogueAccessRole",
+)
+chalk_dataset.write_to(destination="database.table_name", catalog=catalog)
+```
+
+Chalk evaluates features with point-in-time lookups, guaranteeing evaluation only with data that would have been seen in the past.
+You can provide labels with different past timestamps to easily get historical features that represent what your application would have retrieved online at those past times.
+
+<TemporalCorrectness />
+
+With Chalk, data scientists easily integrate new data sources, test new features with [point-in-time correctness](docs/temporal-consistency), and collaborate with Git-like branches and flexible data exports (to data catalogs like Iceberg and Parquet).
+
+---
+
+## Chalk for Data Engineers
+
+Manage features declaratively without the complexity of orchestrating ETL jobs, feature stores, and offline/online datastores.
+Chalk makes it easy to:
+
+- Cache expensive computations with [configurable staleness](/docs/feature-caching)
+- Manage model versions and [A/B test features](/docs/feature-versions)
+- Create [complex joins and relationships](docs/has-many#composite-join-keys) between data entities
+- Configure [time-window aggregations](/docs/aggregations) with flexible [materialization options](/docs/materialized_aggregations)
+
+```python
+from chalk.features import DataFrame,
+  feature,
+  features,
+  _
+from chalk.streams import Windowed, windowed
+
+@features
+class Transaction:
+    id: int
+    created_at: datetime
+    amount: float
+
     user_id: "User.id"
     user: "User"
 
 @features
 class User:
     id: int
-    name: str
-    email: str
-    name_match: float = F.levenshtein_distance(_.name, _.email)
+    domain: str
+
+    # composite keys that can be used as join keys
+    workspace_id: str = _.domain + "-" + _.id
+    expensive_api_call: str = feature(max_staleness="30d") # cache values
+
+    # maintain different resolvers to A/B test function calls e.g. gemini vs openai
+    llm_response: str = feature(version=3)
+
+    # multi-attribute joins
     txns: DataFrame[Transaction]
+
     count_txns: Windowed[int] = windowed(
-        "1m", "1d", "30d",
-        _.txns.count()
+        "1d", "365d",
+        expression=_.txns[_.created_at > _.chalk_window].count(),
+        # https://docs.chalk.ai/docs/materialized_aggregations
+        materialization=True,
     )
 ```
 
-### Resolvers
+Chalk also integrates natively into your existing data infrastructure by [deploying directly into your virtual private cloud](/docs/architecture) (VPC) providing seamless resource access while maintaining strict security and compliance controls with full data isolation:
 
-Next, tell Chalk how to compute your features.
-Chalk ingests data from your existing data stores,
-and lets you use Python to compute features with
-[feature resolvers](/docs/resolver-overview).
-Feature resolvers are declared with the decorators `@online` and
-`@offline`, and can depend on the outputs of other feature resolvers.
+- Customizable compute layer enabling the use of different memory stores (Redis, etc.) tailored to access patterns and performance requirements
+- Inherit existing security groups, policies, and ACLs
+- Co-located resources and full-control over data residency to meet compliance requirements
 
-Resolvers make it easy to rapidly integrate a wide variety of data
-sources, join them together, and use them in your model.
-
-<IntegrationTypes />
+With Chalk, Data Engineers easily manage features programmatically and maintain production systems without the overhead of configuring YAML, custom scripts, or infrastructure.
 
 ---
 
-## Execute
+## A full-stack solution for building and deploying enterprise AI
 
-Once you've defined your features and resolvers, Chalk orchestrates
-them into flexible pipelines that make training and executing models easy.
+Chalk gives teams the building blocks to prototype and deploy production AI and ML systems quickly and reliably.
+Whether you're delivering hyperpersonalized product recommendations, dynamically reranking search results, or detecting sophisticated fraud patterns, Chalk is the go-to platform for inference.
 
-Chalk has built-in support for feature engineering workflows --
-there's no need to manage Airflow or orchestrate complicated streaming flows.
-You can execute resolver pipelines with declarative caching,
-ingest batch data on a schedule, and easily make slow sources
-available online for low-latency serving.
-
-### Caching
-
-Many data sources (like vendor APIs) are too slow for online use cases
-or charge a high dollar cost-per-call. Chalk lets you optimize latency
-and cost by defining declarative caching policies that are well-integrated
-throughout the system. You no longer have to manage data sources such as
-Redis, Memcached, or DynamoDB, or spend time tuning cache-warming pipelines.
-
-Add a caching policy with one line of code in your feature definition:
-
-<PyDiffEditor html={addCachingCode} />
-
-Optionally warm feature caches by executing resolvers on a schedule:
-
-```sql
--- resolves: User
--- source: snowflake
--- cron: 1h
-select
-    user_id as id,
-    credit_report,
-    ts
-from credit_scores
-```
-
-Or override staleness tolerances at query time when you need fresher
-data for your models:
-
-```py
-from chalk.client import ChalkClient
-
-ChalkClient().query(
-    input={
-        User.id: 123,
-    },
-    output=[User.credit_report],
-    max_staleness={User.credit_report: "1m"}
-)
-```
-
-### Batch ETL ingestion
-
-Chalk also makes it simple to generate training sets from data warehouse
-sources -- join data from services like S3, Redshift, BQ, Snowflake
-or other custom sources with historical features computed online.
-Specify a cron schedule on an `@offline` resolver, and Chalk will automatically ingest
-data with support for incremental reads:
-
-```sql
--- resolves: User
--- source: snowflake
--- cron: 1h
--- incremental:
---   lookback_period: 10m
---   incremental_column: ts
-select
-    id,
-    credit_score as start_of_day_balance,
-    ts
-from credit_scores
-```
-
-Chalk makes this data available for point-in-time-correct dataset
-generation for data science use cases. Every pipeline has built-in
-monitoring and alerting to ensure data quality and timeliness.
-
-### Reverse ETL
-
-When your model needs to use features that are canonically stored in
-a high-latency data source (like a data warehouse), Chalk's Reverse
-ETL support makes it simple to bring those features online and serve
-them quickly.
-
-Add a single line of code to an `offline` resolver, and Chalk constructs
-a managed reverse ETL pipeline for that data source:
-
-```py
-@offline(offline_to_online_etl="5m")
-```
-
-Now data from slow offline data sources is automatically available for
-low-latency online serving.
-
----
-
-## Deploying and querying
-
-Once you've defined your pipelines, you can rapidly deploy them to
-production with [Chalk's CLI](/cli/introduction):
-
-```bash
-chalk apply
-```
-
-This creates a deployment of your project, which is served at a unique
-preview URL. You can promote this deployment to production, or
-perform QA workflows on your preview environment to make sure that
-your Chalk deployment performs as expected.
-
-Once you promote your deployment to production, Chalk makes features
-available for low-latency [online inference](/docs/query-basics) and
-[offline training](/docs/query-offline). Chalk uses
-the **exact same source code** to serve [temporally-consistent](/docs/temporal-consistency) training
-sets to data scientists and live feature values to models. This re-use
-dramatically shortens development time and ensures that feature values
-from online and offline contexts match.
-
-### Online inference
-
-Chalk's online store & feature computation engine make it easy to query
-features with ultra low-latency for your online inference use cases.
-
-Integrating Chalk with your production application takes minutes via
-Chalk's simple REST API:
-
-<RequestingFeaturesOnline style={{ height: 328 }} />
-
-Features computed to serve online requests are also replicated to Chalk's
-offline store for historical performance tracking and training set generation.
-
-### Offline training
-
-Data scientists can use Chalk's Jupyter integration to create datasets
-and train models. Datasets are stored and tracked so that they can be
-re-used by other modelers. Chalk implements model provenance to track
-inputs, outputs, and other data for audit and reproducibility.
-
-<JupyterNotebook />
-
-Chalk datasets are always [temporally consistent](/docs/temporal-consistency).
-This means that you can provide labels with different past timestamps to easily
-get historical features that represent what your application would have
-retrieved online at those past times. Temporal consistency ensures that
-your model training doesn't mix "future" and "past" data.
-
-<TemporalCorrectness />
+[Schedule a demo](https://chalk.ai/book-demo?utm_source=docs&utm_campaign=what-is-chalk) to see how Chalk fits with your team.
