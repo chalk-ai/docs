@@ -6,6 +6,35 @@ description: Updates to Chalk!
 published: true
 ---
 
+## May 16, 2025
+
+### We now support ClickHouse as a Chalk data source
+
+You can query ClickHouse and other data sources using [standard SQL syntax](/docs/sql).
+Connect to a `ClickhouseSource` and query user names with a Python resolver, as shown in the example below:
+
+```py
+from chalk.features import online
+from chalk.sql import ClickhouseSource
+
+source = ClickhouseSource()
+
+@online
+def resolver_fn() -> User.name:
+    return source.query_string("select name from users where id = 4").one()
+```
+
+### Refreshed our "What is Chalk?" overview and documentation page
+
+We've refreshed our [introductory documentation](/docs/what-is-chalk) with more comprehensive examples and new sections that showcase how Chalk serves different roles (AI Engineers, Data Scientists, and Data Engineers).
+
+### Case study with MoneyLion—a leading fintech for banking, investing, and credit building
+
+With Chalk, [MoneyLion replaced fragmented Java microservices](https://chalk.ai/customers/moneylion) and manual rewrites with a unified Python-first feature platform.
+MoneyLion now iterates in hours instead of weeks, replacing their "slow and disjointed" prototype-to-production cycle with a central feature catalog that makes starting "every use case from scratch" a thing of the past.
+
+---
+
 ## May 2, 2025
 
 ### Retrieve historical feature values with SQL
