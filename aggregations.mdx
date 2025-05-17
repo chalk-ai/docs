@@ -82,7 +82,8 @@ class User:
         default=0,
         expression=_.transactions[
             _.amount,
-            _.at > _.chalk_window
+            _.at > _.chalk_window,
+            _.at < _.chalk_now
         ].sum(),
         materialization={"bucket_duration": "1d"},
     )
@@ -114,13 +115,15 @@ class User:
         "30d", "60d", "90d",
         expression=_.transactions[
             _.amount,
-            _.at > _.chalk_window
+            _.at > _.chalk_window,
+            _.at < _.chalk_now
         ].sum(),
     )
     count_transactions: Windowed[float] = windowed(
         "30d", "60d", "90d",
         expression=_.transactions[
-            _.ts > _.chalk_window
+            _.at > _.chalk_window,
+            _.at < _.chalk_now
         ].count(),
     )
     avg_transaction_amount: Windowed[float] = windowed(
@@ -158,79 +161,3 @@ def account_under_attack(
 ```
 
 ---
-
-## Grouped window aggregations
-
-Similar to SQL `GROUP BY` clauses, you can group your windowed feature by one or more other features with
-[`group_by_windowed`](/api-docs#group_by_windowed).
-
-### Example
-
-In this example, our goal is to create a feature representing a given user's historical spend at a specific merchant.
-This feature can be used as input into our model to determine whether a given transaction is fraudulent.
-
-First, we define a `Transaction` FeatureSet with a has-one relationship to the `User` FeatureSet. Within the `User`
-FeatureSet, we track a grouped windowed feature representing the user's total spend at each merchant over the past
-30 days and 90 days.
-
-```python
-from chalk.features import DataFrame, features, _
-from chalk.streams import group_by_windowed
-
-@features
-class Transaction:
-    id: int
-    merchant_id: str
-    user_id: "User.id"
-    user: "User"
-    amount: float
-
-@features
-class User:
-    id: int
-    transactions: DataFrame[Transaction]
-    spend_by_merchant: DataFrame = group_by_windowed(
-        "30d",
-        "90d",
-        expression=_.transactions.group_by(
-            _.merchant_id
-        ).agg(_.amount.sum()),
-    )
-```
-
-In this example, `expression` groups all the given user's `transactions` by each transaction's `merchant_id` value,
-then aggregates each group by the sum of the transactions' `amount` values.
-
-The `User` class uses materialization to aggregate
-associated transaction data as a performance optimization.
-
-Finally, to query for spend at a specific merchant, we can access one of the groups:
-
-```diff-py
-from chalk.features import features, _, DataFrame
-from chalk.streams import group_by_windowed, Windowed, windowed
-
-@features
-class User:
-    id: int
-    transactions: DataFrame[Transaction]
-    most_common_merchant_id: str
-    spend_by_merchant: DataFrame = group_by_windowed(
-        "30d",
-        "90d",
-        expression=_.transactions.group_by(_.merchant_id).agg(_.amount.sum()),
-    )
-+   spend_at_most_common_merchant: Windowed[float] = windowed(
-+       "30d",
-+       "90d",
-+       expression=_.spend_by_merchant.group(merchant_id=_.most_common_merchant_id)
-+   )
-```
-
-[//]: # "#### Limitations"
-[//]: # "At this time, Chalk does not support direct referencing of the grouped windowed feature, as they are intended as an"
-[//]: # "intermediary computation for producing scalar features. As a result, they also cannot be used as input into other"
-[//]: # "resolvers. The grouped windowed feature must be resolved by passing an [expression](/docs/expression) to"
-[//]: # "the `expression` parameter."
-
-
