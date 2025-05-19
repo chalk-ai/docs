@@ -11,17 +11,24 @@ published: true
 ### We now support ClickHouse as a Chalk data source
 
 You can query ClickHouse and other data sources using [standard SQL syntax](/docs/sql).
-Connect to a `ClickhouseSource` and query user names with a Python resolver, as shown in the example below:
+Here's an example querying transaction data:
 
-```py
-from chalk.features import online
-from chalk.sql import ClickhouseSource
-
-source = ClickhouseSource()
-
-@online
-def resolver_fn() -> User.name:
-    return source.query_string("select name from users where id = 4").one()
+```sql
+-- type: online
+-- resolves: Transaction
+-- source: clickhouse
+select
+  transaction_id,
+  transaction_timestamp,
+  transaction_amount,
+  user_id,
+  product_category,
+  transaction_channel,
+  payment_method_type,
+  transaction_status,
+  store_location_region
+from
+  transactions
 ```
 
 ### Refreshed our "What is Chalk?" overview and documentation page
