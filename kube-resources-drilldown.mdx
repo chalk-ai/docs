@@ -31,7 +31,7 @@ You may deploy these components yourself using a [helm chart](/docs/helm-install
 may manage the deployment as part of our standard Customer Cloud deployment model.
 
 Typically these components do not scale with you query volume and represent a roughly fixed cost. Most online query
-traffic will *not* flow through these components -- it will flow directly to the data plane.
+traffic will _not_ flow through these components -- it will flow directly to the data plane.
 
 ### Data Plane
 
@@ -45,7 +45,6 @@ The data plane currently consists of the following primary Kubernetes components
 - `job` kubernetes jobs: These are batch jobs that run your Python code in Chalk's execution environment for [scheduled tasks](/docs/runs).
 - `query job` kubernetes jobs: These are batch jobs that run your Python code in Chalk's execution environment for [async offline query](/docs/query-offline) tasks.
 - `streaming` statefulset: A stateful set that runs your [streaming](/docs/streams) deployments. These are long-running processes that consume from a message queue and write to the online and offline store.
-
 
 ### Configuring Data Plane Resources
 
@@ -129,7 +128,6 @@ for online query `ChalkClient` instances.
 More advanced configurations are also possible. Chalk Support can assist in routing traffic by `query_name`,
 or by random sampling for experiment workflows.
 
-
 ### Other Components
 
 `cluster ingress`: The cluster ingress is a component that routes traffic to the metadata and data planes. It is typically
@@ -151,7 +149,6 @@ Error logs from this component can be useful for diagnosing issues with query pe
 do immediately impact online query performance, but can impact the ability to generate training sets or certain caching
 workflows.
 
-
 ## Concrete Scaling Choices
 
 ### Production Environments
@@ -159,15 +156,14 @@ workflows.
 In production environments, we recommend the following scaling choices:
 
 - `engine` and `engine-grpc` deployments:
-    - `>= 2` replicas, with CPU and memory requests and limits set to `>= 2` core and `>= 4` GB of memory
-    - Memory needs to be proportional to the number of UDF invoker processes you choose to use
-    - *If you choose to use a single replica, you will experience query downtime (502s, UNAVAILABLE responses) during pod restarts*.
+  - `>= 2` replicas, with CPU and memory requests and limits set to `>= 2` core and `>= 4` GB of memory
+  - Memory needs to be proportional to the number of UDF invoker processes you choose to use
+  - _If you choose to use a single replica, you will experience query downtime (502s, UNAVAILABLE responses) during pod restarts_.
 - `query-job`:
-    - set to >= 8 cpu and >= 16GB of memory
+  - set to >= 8 cpu and >= 16GB of memory
 - `streaming`:
-    - use >= 1 replica, with a low cpu request (i.e. 1-2)
-    - set a cpu target of 80%
-
+  - use >= 1 replica, with a low cpu request (i.e. 1-2)
+  - set a cpu target of 80%
 
 ## Scaling under workload
 
@@ -184,7 +180,6 @@ Queueing Theory proves that:
     - `T` is the mean response time
     - `mu` is the service rate of the system (# of reqs/sec the system can complete at 100% cpu)
     - `U` is the utilization of the system (arrival rate / service rate)
-
 
 Working this example for a few values of `T`:
 
@@ -208,9 +203,9 @@ To mitigate this, Chalk supports rate limiting for the `engine-grpc` component. 
 these environment variables to establish concrete rate limits:
 
 - `CHALK_GRPC_RATE_LIMIT_TYPE`
-    - `noop`: default; no rate limiting
-    - `concurrency`: limit the number of concurrent queries
-    - `qps`: limit the number of queries per second using a token bucket rate limiter
+  - `noop`: default; no rate limiting
+  - `concurrency`: limit the number of concurrent queries
+  - `qps`: limit the number of queries per second using a token bucket rate limiter
 - `CHALK_GRPC_RATE_LIMIT`: The number of concurrent queries or queries per second that should be permitted.
 
 Typically, we recommend that using the `qps` rate limiting option for standard workloads, and `concurrency` for
@@ -223,3 +218,31 @@ latency-sensitive workloads.
 
 Node pool isolation means that you can run offline queries concurrently with latency sensitive workloads without
 impacting the performance of the online query workload.
+
+## Select a machine type:
+
+It is often useful to select a specific machine type for certain Chalk workloads in order to guarantee that those workloads
+run on a high-performance cpu architecture, have a particular ratio of memory to cpu available, or run isolated on individual
+machines.
+
+### AWS
+
+Chalk deployments in AWS EKS clusters use [Karpenter](https://karpenter.sh/) to provision nodes (cloud machine instances) for workloads.
+In order to specify an instance type, add a node selector to a Chalk service kind in Settings > Resources > [Service Kind] > Advanced >
+"Kubernetes Node Selectors" with the key `node.kubernetes.io/instance-type`. The value should be the name of the desired
+[EC2 instance type](https://aws.amazon.com/ec2/instance-types/).
+
+For example, if you would like your query servers to run on `c7i.4xlarge` instances, set the node selector `node.kubernetes.io/instance-type: c7i.4xlarge`.
+
+### GCP
+
+Chalk deployments in GCP GKE clusters use either GCP node auto-provisioning (NAP) or manually-configured GKE nodepools to provision nodes for workloads.
+
+When using NAP, the "machine family" can be specified via a node selector in Settings > Resources > [Service Kind] > Advanced > "Kubernetes Node Selectors"
+with the key `cloud.google.com/machine-family`. The value should be the name of the desired [machine family](https://cloud.google.com/compute/docs/machine-resource#vm_terminology).
+For example, if you would like your query servers to run on `c3d` instances, set the node selector `cloud.google.com/machine-family: c3d`.
+
+When using manually-configured GKE nodepools, the nodepool for a workload can be specified by name with the node selector `cloud.google.com/gke-nodepool`. For example, to run
+workloads on a nodepool called `chalk-c3d-standard-4-nodepool`, use the node selector `cloud.google.com/gke-nodepool: chalk-c3d-standard-4-nodepool`.
+
+GKE nodepools cannot currently be configured in the Chalk dashboard, so they must be configured via the GCP console.
