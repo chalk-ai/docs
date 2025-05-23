@@ -6,6 +6,65 @@ description: Updates to Chalk!
 published: true
 ---
 
+## May 23, 2025
+
+# Embed Chalk expressions in versioned features
+
+[Feature versions](/docs/feature-versions) support [Chalk expressions](/docs/expression), allowing you to define different computation logic for each version of a feature.
+This makes it easy to experiment with new feature definitions—you can create multiple versions with different expressions and test them side-by-side to compare their accuracy, performance, and business impact.
+
+```py
+@features
+class Merchant:
+    id: str
+    fulfilled_orders: int
+    total_orders: int
+    customer_rating: float
+    max_rating: float
+
+    trust_score: float = feature(
+        default_version=2,
+        versions={
+            1: feature(
+                description="Trust score based on orders",
+                expression=_.fulfilled_orders / _.total_orders,
+            ),
+            2: feature(
+                description="Trust score based on CSAT",
+                expression=(_.customer_rating / _.max_rating),
+            ),
+        }
+    )
+```
+
+### gRPC support for TypeScript SDK
+
+Our gRPC clients are faster than their HTTP counterparts, offering reduced latency and improved query response times.
+We've published a [migration guide](https://github.com/chalk-ai/chalk-ts#migrating-to-the-grpc-client) for transitioning from the HTTP client to the new gRPC implementation in TypeScript.
+The function signatures are identical, making for a seamless transition with minimal code changes.
+Currently, the gRPC client supports `query()`, `queryBulk()`, and `multiQuery()` operations, covering the most common query use cases.
+
+```js
+import { ChalkGRPCCLient } from "@chalk-ai/client"
+import { FeaturesType } from "local/generated_types";
+
+interface FeaturesType {
+  "user.id": string;
+  "user.fraud_score": number;
+}
+
+const client = new ChalkGRPCCLient<FeaturesType>();
+const result = await client.query({
+  inputs: {
+    "user.id": "1",
+  },
+  outputs: ["user.fraud_score"],
+});
+console.log(result.data["user.fraud_score"].value);
+```
+
+---
+
 ## May 16, 2025
 
 ### We now support ClickHouse as a Chalk data source
