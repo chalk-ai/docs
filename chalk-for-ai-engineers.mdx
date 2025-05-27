@@ -89,6 +89,8 @@ class ProductRec:
     )
 ```
 
+---
+
 ## Call chat completion APIs out-of-the-box with Chalk's Completion function
 
 Use Chalk’s `P.completion` function to call LLMs from within your feature classes.
@@ -156,6 +158,8 @@ Chalk's LLM toolchain streamlines the entire experience of working with language
 - Easy extraction of fields from LLM responses for direct use as features
 - Seamless integration with Chalk's feature system for dynamic data incorporation through `F.jinja`
 
+---
+
 ## Cache expensive computations to avoid redundant processing and reduce latency with Chalk's max_staleness setting
 
 Chalk makes it easy to [cache features](docs/feature-caching).
@@ -197,6 +201,7 @@ class Transaction:
     )
 ```
 
+---
 
 ## Retrieve real-time context to give LLMs with Chalk's Jinja function
 
@@ -215,6 +220,8 @@ Benefits of using Jinja for LLM prompting:
 - Improve performance by dynamically incorporating real-time data from Chalk features
 - Reduce token usage by only including relevant context in your prompts
 - Iterate on prompts faster with a structured template system that allows quick experimentation while maintaining consistency across team workflows
+
+---
 
 ## Generate embeddings and vectors within pipelines with Chalk's embed function
 
@@ -238,6 +245,8 @@ class ProductRec:
 
 When using Chalk's built-in embedding functions, the vector dimensions don't need to be specified, as Chalk will automatically infer it from the embedding model.
 
+---
+
 ## Reuse and manage prompts with [named prompts](/docs/prompts)
 
 You can define named prompts directly from your Chalk dashboard to help maintain consistency in your LLM workflows.
@@ -258,6 +267,8 @@ class Transaction:
 The `P.run_prompt()` function provides a clean syntax for connecting your feature classes to a named prompt.
 
 You can edit prompt templates directly from your Chalk dashboard and test features with different prompts without changing any code, making iteration and refinement much faster.
+
+---
 
 ## Run large-scale evaluations using historical traffic with Chalk's feature store for realistic offline testing
 
