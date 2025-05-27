@@ -52,6 +52,14 @@ class Transaction:
         output_structure=AnalyzedReceiptStruct,
     )
 
+    # cache forever since transaction is finalized
+    expense_category: str = features(
+        max_staleness="infinity",
+        expression=F.json_value(
+            _.llm.response, # from LLM
+            "$.expense_category",
+        ),
+    )
     # or configure the chat completion from your Chalk dashboard
     llm_call_with_named_prompt: P.run_prompt("analyze_receipt-v1")
 
