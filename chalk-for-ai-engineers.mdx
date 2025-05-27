@@ -68,6 +68,7 @@ class ProductRec:
     user_id: Primary[User.id]
     user: User
 
+    # generate embeddings
     user_vector: Vector = embed(
         input=F.array_join(F.array_agg(
             _.user.products[
@@ -80,6 +81,7 @@ class ProductRec:
         model="text-embedding-005",
     )
 
+    # do a vector search with the generated embedding
     similar_users: DataFrame[User] = has_many(
       lambda: ProductRec.user_vector.is_near(
             User.liked_products_vector
