@@ -1,0 +1,272 @@
+---
+title: LLM Toolchain
+metaTitle: Chalk's LLM toolchain
+description: Easily integrate unstructured data, build context-aware prompts, and run LLM evaluations at scale with Chalk.
+published: true
+---
+
+Chalk's LLM toolchain enables you to build enterprise-grade AI applications without stitching together LLMs, prompts, vector DBs, and retrieval logic:
+
+- Call chat completion APIs out-of-the-box
+- Cache expensive computations to avoid redundant processing and reduce latency
+- Retrieve real-time context into LLMs
+- Generate embeddings and vectors within pipelines
+- Reuse and manage prompts with [named prompts](/docs/prompts)
+- Run large-scale evaluations using historical traffic to compare prompt variants
+
+Chalk provides a full-stack solution but can also integrate seamlessly with your current infrastructure i.e. already have a vector DB?
+Delegate storage and generating embeddings to your existing system and integrate just the pieces you need; Chalk is highly modular and composable.
+Easily mix and match the components:
+
+| Column 1 | Column 2 | Column 3 |
+|----------|----------|----------|
+| Data 1   | Data 2   | Data 3   |
+
+
+Insert diagram here ([ Features ] → [ F.jinja + P.completion ] → [ Structured Responses ] → [ Embeddings & Vectors ] → [ Retrieval ] → [ Prompt Evaluation ])
+
+```py
+import chalk.functions as F
+import chalk.prompts as P
+from chalk.features import DataFrame, Primary, Vector, embed, features, has_many, _
+from pydantic import BaseModel
+
+# Use structured output to easily incorporate unstructured data in our ML pipelines
+class AnalyzedReceiptStruct(BaseModel):
+    expense_category: ExpenseCategoryEnum
+    business_expense: bool
+    loyalty_program: str
+    return_policy: int
+
+@features
+class Transaction:
+    id: int
+    merchant_id: Merchant.id
+    merchant: Merchant
+    receipt: Receipt
+
+    llm: P.PromptResponse = P.completion(
+        model="gpt-4o-mini-2024-07-18",
+        messages=[P.message(
+                role="user",
+                content=F.jinja(
+            """Analyze the following receipt:
+            Line items: {{Transaction.receipt.line_items}}
+            Merchant: {{Transaction.merchant.name}} {{Transaction.merchant.description}}""")
+        )],
+        output_structure=AnalyzedReceiptStruct,
+    )
+
+    # or configure the chat completion from your Chalk dashboard
+    llm_call_with_named_prompt: P.run_prompt("analyze_receipt-v1")
+
+@features
+class ProductRec:
+    user_id: Primary[User.id]
+    user: User
+
+    user_vector: Vector = embed(
+        input=F.array_join(F.array_agg(
+            _.user.products[
+                _.name,
+                _.type == "liked"
+            ]),
+            delimiter=" || ",
+        ),
+        provider="vertexai",
+        model="text-embedding-005",
+    )
+
+    similar_users: DataFrame[User] = has_many(
+      lambda: ProductRec.user_vector.is_near(
+            User.liked_products_vector
+        )
+    )
+```
+
+With Chalk, AI engineers easily integrate unstructured data, build context-aware prompts, and run LLM evaluations at scale — all without managing vector databases, embedding providers, and complex retrieval systems.
+
+### Call chat completion APIs out-of-the-box with Chalk's Completion function
+
+Use Chalk’s `P.completion` function to call LLMs from within your feature classes.
+Easily create structured LLM responses with full control over model selection, prompt construction, and output formatting.
+Combined with `F.jinja` templates, you can dynamically inject relevant feature values into your prompts for context-aware responses.
+
+```py
+@features
+class Transaction:
+    llm: P.PromptResponse = P.completion(
+        model="gpt-4o-mini-2024-07-18",
+        messages=[...],
+    )
+```
+
+`P.completion` accepts a range of parameters to fine-tune your LLM interactions, including model selection, temperature control for output randomness, token limits, structured output formatting via Pydantic models, and various provider-specific settings.
+You can also set timeout values, retry logic, and custom stop sequences to craft precisely the experience your application requires.
+Visit our [API documentation](https://docs.chalk.ai/api-docs#completion) for a complete reference of all available parameters.
+
+After executing a completion, Chalk returns a `P.PromptResponse` object that encapsulates the complete interaction.
+This includes the model's generated text in the `response` field, the original `prompt` for context, token usage and cost metrics in the `usage` field, and execution timing data in `runtime_stats` to help you monitor and optimize your model interactions.
+
+```py
+class PromptResponse(BaseModel):
+    response: Optional[str] = Field(
+        description="Response from the model. Raw string if no output structure specified, json encoded string otherwise. `None` if the response was not received or incorrectly formatted."
+    )
+    prompt: Prompt
+    usage: Usage
+    runtime_stats: RuntimeStats
+```
+
+After receiving a response from an LLM via Chalk's completion function, you can easily extract specific fields from the structured response using `F.json_value`.
+The extracted LLM-generated values become referenceable like ordinary features:
+
+```py
+@features
+class Transaction:
+    llm: P.PromptResponse
+    expense_category: str = F.json_value(
+        _.llm.response, # from LLM
+        "$.expense_category",
+    )
+```
+
+Chalk's LLM toolchain streamlines the entire experience of working with language models by providing:
+
+- Direct access to LLM providers without managing API keys, request formatting, or response parsing
+- Consistent API interface regardless of which LLM provider you're using
+- Automatic tracking of token usage, costs, and performance metrics
+- Built-in error handling with automatic retries without additional code
+- Easy extraction of fields from LLM responses for direct use as features
+- Seamless integration with Chalk's feature system for dynamic data incorporation through `F.jinja`
+
+### Cache expensive computations to avoid redundant processing and reduce latency
+
+Chalk provides [sophisticated feature caching](docs/feature-caching) through its "max staleness" mechanism, allowing you to optimize performance for expensive or slow-to-compute features.
+Fetching previously comptued features from the online store enables rapid retrieval by eliminating redundant calculations or bypassing API calls entirely.
+Max staleness controls how long Chalk caches computed feature values before they expire and need recomputation.
+You can specify cache duration in natural language (`max_staleness="30d"`), Python timedelta objects (`max_staleness=timedelta(hours=1)`), or use `"infinity"` for permanent caching of immutable data, with the flexibility to override these settings at query time.
+
+```py
+@features
+class User:
+    # from API or 3rd-party client
+    credit_score: int = features(
+        max_staleness="30d",
+    )
+
+@features
+class Transaction:
+    llm: P.PromptResponse
+
+    # cache forever since transaction is finalized
+    expense_category: str = features(
+        max_staleness="infinity",
+        expression=F.json_value(
+            _.llm.response, # from LLM
+            "$.expense_category",
+        ),
+    )
+```
+
+
+### Retrieve real-time context to give LLMs with Chalk's Jinja function
+
+Chalk's `F.jinja` function F.jinja lets you build prompts with live data.
+Access feature values with double curly braces: `{{ feature_name }}` to create contextually relevant prompts and let Chalk manage the underlying data retrieval and formatting.
+
+```py
+F.jinja(
+    """Analyze the following receipt:
+    Line items: {{Transaction.receipt.line_items}}
+    Merchant: {{Transaction.merchant.name}} {{Transaction.merchant.description}}"""
+)
+```
+
+Benefits of using Jinja for LLM prompting:
+
+- Improve performance through dynamically incorporating real-time data by referencing Chalk features
+- Reduce token usage by only including relevant context in your prompts
+- Iterate on prompts faster with a structured template system that allows quick experimentation while maintaining consistency across team workflows"
+
+### Generate embeddings and vectors within pipelines with Chalk's embed function
+
+Convert structured or unstructured data into embeddings with one line.
+
+Chalk's `embedding` function automatically converts your features into vector embeddings for similarity search, etc. with built-in support for popular embedding models.
+Running in your VPC gives you quick and secure access to models like Bedrock and Gemini with minimal overhead and configuration, as Chalk abstracts away connecting to model providers.
+
+```python
+@features
+class ProductRec:
+    user_id: Primary[User.id]
+    user: User
+
+    bio_embeddings: Vector = embed(
+        input=lambda: ProductRec.user.bio,
+        provider="vertexai",
+        model="text-embedding-005",
+    )
+```
+
+When using Chalk's built-in embedding functions, the vector dimensions don't need to be specified, as Chalk will automatically infer it from the embedding model.
+
+### Reuse and manage prompts with [named prompts](/docs/prompts)
+
+You can define named prompts directly from your Chalk dashboard to help maintain consistency in your LLM workflows.
+This centralized approach makes prompts more maintainable and reusable across your application, while also allowing you to change your prompts and model providers without needing to redeploy Chalk.
+
+```py
+@features
+class Transaction:
+    id: int
+    merchant_id: Merchant.id
+    merchant: Merchant
+    receipt: Receipt
+
+    # or configure the chat completion from your Chalk dashboard
+    llm_call_with_named_prompt: P.run_prompt("analyze_receipt-v1")
+```
+
+The `P.run_prompt()` function provides a clean syntax for connecting your feature classes to a named prompt.
+
+![Named prompts within Chalk dashboard](/img/docs-ai_engineer-named_prompt-01.png)
+
+| Column 1 | Column 2 | Column 3 |
+|----------|----------|----------|
+| Data 1   | Data 2   | Data 3   |
+
+As shown in the image above, you can edit prompt templates directly from your Chalk dashboard and test features with different prompts without changing any code, making iteration and refinement much faster.
+
+### Run large-scale evaluations using historical traffic with Chalk's feature store for realistic offline testing
+
+Chalk evals provides systematic comparison of prompt variants against historical datasets, supporting customizable metrics, reference outputs, and distributed processing for large-scale prompt experimentation.
+Built-in evaluators like "exact_match" measure accuracy against reference outputs, while custom evaluation expressions allow for domain-specific metrics tailored to your application needs.
+
+```py
+eval_run = chalk_client.prompt_evaluation(
+    dataset_name="sentiment_gt",
+    evaluators=["exact_match"],
+    reference_output="user.actual_sentiment",
+    prompts=[
+        "analyze_sentiment-v1",
+        "analyze_sentiment-v2",
+        P.completion(
+            model="gpt-4o",
+            messages=[
+                P.message(role="system", content=system_message),
+                P.message(role="user", content=user_message),
+            ],
+        ),
+    ]
+)
+eval_run.to_pandas()
+```
+
+Benefits of leveraging a feature store for evaluation:
+
+- Test against historical traffic and usage patterns from your production environment
+- Identify edge cases and failure modes before they affect real users
+- Run thousands of evaluations in parallel without impacting live systems
+
+View your eval results from the Chalk dashboard to track important metrics such as accuracy, average tokens, P50 latency, and P99 latency.
