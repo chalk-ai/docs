@@ -16,9 +16,9 @@ Chalk's LLM toolchain enables you to build enterprise-grade AI applications with
 - Reuse and manage prompts with [named prompts](/docs/prompts)
 - Run large-scale evaluations using historical traffic to compare prompt variants
 
-Chalk provides a full-stack solution but can also integrate seamlessly with your current infrastructure i.e. already have a vector DB?
-Delegate storage and generating embeddings to your existing system and integrate just the pieces you need; Chalk is highly modular and composable.
-Easily mix and match the components:
+Chalk provides a full-stack solution but can also integrate seamlessly with your current infrastructure.
+For instance, you can use an existing vector DB to store and retrieve your embeddings, while leveraging Chalk to evaluate new models and prompts.
+Chalk lets you integrate only the pieces you need:
 
 ```py
 import chalk.functions as F
@@ -87,12 +87,11 @@ class ProductRec:
     )
 ```
 
-With Chalk, AI engineers easily integrate unstructured data, build context-aware prompts, and run LLM evaluations at scale — all without managing vector databases, embedding providers, and complex retrieval systems.
-
 ## Call chat completion APIs out-of-the-box with Chalk's Completion function
 
 Use Chalk’s `P.completion` function to call LLMs from within your feature classes.
 Easily create structured LLM responses with full control over model selection, prompt construction, and output formatting.
+
 Combined with `F.jinja` templates, you can dynamically inject relevant feature values into your prompts for context-aware responses.
 
 ```py
@@ -104,8 +103,8 @@ class Transaction:
     )
 ```
 
-`P.completion` accepts a range of parameters to fine-tune your LLM interactions, including model selection, temperature control for output randomness, token limits, structured output formatting via Pydantic models, and various provider-specific settings.
-You can also set timeout values, retry logic, and custom stop sequences to craft precisely the experience your application requires.
+`P.completion` accepts a range of parameters for fine-tuning your LLM interactions, including model selection, temperature control for output randomness, token limits, structured output formatting via Pydantic models, and various provider-specific settings.
+You can also set timeout values, retry logic, and custom stop sequences to build the exact experience your application requires.
 Visit our [API documentation](https://docs.chalk.ai/api-docs#completion) for a complete reference of all available parameters.
 
 After executing a completion, Chalk returns a `P.PromptResponse` object that encapsulates the complete interaction.
@@ -138,7 +137,7 @@ class Transaction:
 Chalk's LLM toolchain streamlines the entire experience of working with language models by providing:
 
 - Direct access to LLM providers without managing API keys, request formatting, or response parsing
-- Consistent API interface regardless of which LLM provider you're using
+- A consistent API interface regardless of which LLM provider you're using
 - Automatic tracking of token usage, costs, and performance metrics
 - Built-in error handling with automatic retries without additional code
 - Easy extraction of fields from LLM responses for direct use as features
@@ -146,7 +145,9 @@ Chalk's LLM toolchain streamlines the entire experience of working with language
 
 ## Cache expensive computations to avoid redundant processing and reduce latency with Chalk's max_staleness setting
 
-Chalk makes it easy to [cache features](docs/feature-caching) and avoid redundant computation with `max_staleness` configuration, which lets you specify how old cached feature values can be before requiring recomputation, balancing freshness requirements with performance.
+Chalk makes it easy to [cache features](docs/feature-caching).
+This is done by setting the `max_staleness` of a feature, which lets you specify how old a cached feature value can be before it must be recomputed.
+This gives you full control in balancing freshness and performance requirements.
 You can specify cache duration in multiple ways:
 - Natural language strings: `max_staleness="30d"`, `"1h"`, `"15m"`
 - Python timedelta objects: `max_staleness=timedelta(hours=1)`
@@ -181,8 +182,8 @@ class Transaction:
 
 ## Retrieve real-time context to give LLMs with Chalk's Jinja function
 
-Chalk's `F.jinja` function F.jinja lets you build prompts with live data.
-Access feature values with double curly braces: `{{ feature_name }}` to create contextually relevant prompts and let Chalk manage the underlying data retrieval and formatting.
+Chalk's `F.jinja` function lets you build prompts with live data.
+Feature values are accessed with the jinja double curly brace sytanx: `{{ feature_name }}`.
 
 ```py
 F.jinja(
@@ -193,10 +194,9 @@ F.jinja(
 ```
 
 Benefits of using Jinja for LLM prompting:
-
-- Improve performance through dynamically incorporating real-time data by referencing Chalk features
+- Improve performance by dynamically incorporating real-time data from Chalk features
 - Reduce token usage by only including relevant context in your prompts
-- Iterate on prompts faster with a structured template system that allows quick experimentation while maintaining consistency across team workflows"
+- Iterate on prompts faster with a structured template system that allows quick experimentation while maintaining consistency across team workflows
 
 ## Generate embeddings and vectors within pipelines with Chalk's embed function
 
@@ -243,7 +243,7 @@ You can edit prompt templates directly from your Chalk dashboard and test featur
 
 ## Run large-scale evaluations using historical traffic with Chalk's feature store for realistic offline testing
 
-Chalk evals provides systematic comparison of prompt variants against historical datasets, supporting customizable metrics, reference outputs, and distributed processing for large-scale prompt experimentation.
+Chalk prompt evaluations provide systematic comparison of prompt variants against historical datasets, supporting customizable metrics, reference outputs, and distributed processing for large-scale prompt experimentation.
 Built-in evaluators like "exact_match" measure accuracy against reference outputs, while custom evaluation expressions allow for domain-specific metrics tailored to your application needs.
 
 ```py
