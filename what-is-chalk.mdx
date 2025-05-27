@@ -334,8 +334,9 @@ With Chalk, MLOps teams confidently deploy and serve low-latency ML systems, ben
 
 Build enterprise-grade AI applications without stitching together LLMs, prompts, vector DBs, and retrieval logic.
 
-- Retrieve real-time context into LLMs
 - Call chat completion APIs out-of-the-box
+- Cache expensive computations to avoid redundant processing and reduce latency
+- Retrieve real-time context into LLMs
 - Generate embeddings and vectors within pipelines
 - Run large-scale evaluations using historical traffic
 - Reuse and manage prompts with [named prompts](/docs/prompts)
@@ -372,6 +373,14 @@ class Transaction:
         output_structure=AnalyzedReceiptStruct,
     )
 
+    # cache forever since transaction is finalized
+    expense_category: str = features(
+        max_staleness="infinity",
+        expression=F.json_value(
+            _.llm.response, # from LLM
+            "$.expense_category",
+        ),
+    )
     # or configure the chat completion from your Chalk dashboard
     llm_call_with_named_prompt: P.run_prompt("analyze_receipt-v1")
 
