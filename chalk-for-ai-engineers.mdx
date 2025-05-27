@@ -105,12 +105,23 @@ class Transaction:
     )
 ```
 
-`P.completion` accepts a range of parameters for fine-tuning your LLM interactions, including model selection, temperature control for output randomness, token limits, structured output formatting via Pydantic models, and various provider-specific settings.
+`P.completion` accepts a range of parameters for fine-tuning your LLM interactions, including:
+
+- Model selection
+- Temperature control for output randomness
+- Token limits
+- Structured output formatting via Pydantic models
+- Various provider-specific settings
+
 You can also set timeout values, retry logic, and custom stop sequences to build the exact experience your application requires.
 Visit our [API documentation](https://docs.chalk.ai/api-docs#completion) for a complete reference of all available parameters.
 
-After executing a completion, Chalk returns a `P.PromptResponse` object that encapsulates the complete interaction.
-This includes the model's generated text in the `response` field, the original `prompt` for context, token usage and cost metrics in the `usage` field, and execution timing data in `runtime_stats` to help you monitor and optimize your model interactions.
+After executing a completion, Chalk returns a `P.PromptResponse` object that encapsulates the complete interaction, including:
+
+- `response`: the model's generated text
+- `prompt`: the original prompt for context
+- `usage`: token usage and cost metrics
+- `runtime_stats`: execution timing data to help you monitor and optimize your model interactions
 
 ```py
 class PromptResponse(BaseModel):
@@ -150,10 +161,15 @@ Chalk's LLM toolchain streamlines the entire experience of working with language
 Chalk makes it easy to [cache features](docs/feature-caching).
 This is done by setting the `max_staleness` of a feature, which lets you specify how old a cached feature value can be before it must be recomputed.
 This gives you full control in balancing freshness and performance requirements.
+
 You can specify cache duration in multiple ways:
-- Natural language strings: `max_staleness="30d"`, `"1h"`, `"15m"`
-- Python timedelta objects: `max_staleness=timedelta(hours=1)`
-- Permanent caching for immutable data: `max_staleness="infinity"`
+
+| Value | Description |
+|-------------------|-------------|
+| `"30d"` `"1h"` `"15m"` | Natural language strings |
+| `timedelta(hours=1)` | Python timedelta objects |
+| `"infinity"` | Permanent caching for immutable data |
+
 
 These settings can be overridden at query time for additional flexibility.
 
