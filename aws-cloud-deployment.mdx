@@ -52,7 +52,7 @@ We typically recommend the following steps for enabling Chalk to manage AWS
 infrastructure in your cloud account:
 
 - Create a new account in your AWS organization.
-- Create a new [role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) in your root AWS organization that enables Chalk's server
+- Create a new [role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) in the new account that enables Chalk's server
   to perform actions in this account. Ensure that AssumeRole is granted.
 - Create an IAM policy using the JSON document below and attach this IAM policy
   to the created role.
