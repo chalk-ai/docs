@@ -6,6 +6,20 @@ description: Updates to Chalk!
 published: true
 ---
 
+## May 30, 2025
+
+### Export user permissions as a CSV
+
+You can export information about all users across all environments as a CSV file for easy auditing and compliance reporting.
+This export, available from the User Permissions section in your Chalk Dashboard, generates a CSV containing each user's name, email address, unique Chalk ID, and their assigned roles for every project-environment combination in your workspace.
+
+### Chalk resource configuration and dashboard improvements
+
+Service isolation, which ensures your workloads run on dedicated infrastructure with 1:1 pod-to-node isolation, is now easily toggle-able using a checkbox in the configuration options.
+The instance type selector is now a searchable dropdown that displays machine specifications and validates your resource requests in real-time. If you request more CPUs than the selected instance can provide, you'll see an immediate warning preventing deployment failures and reducing troubleshooting time.
+Added a dropdown for selecting which node pools services should run on.
+When selected, services will be directed to the specified node pools with automatic toleration handling. This prevents services from being assigned to incompatible node types and ensures pods are scheduled correctly on tainted nodes.
+
 ## May 23, 2025
 
 ### Embed Chalk expressions in versioned features
