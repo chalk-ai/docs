@@ -15,10 +15,12 @@ This export, available from the User Permissions section in your Chalk Dashboard
 
 ### Chalk resource configuration and dashboard improvements
 
-Service isolation, which ensures your workloads run on dedicated infrastructure with 1:1 pod-to-node isolation, is now easily toggle-able using a checkbox in the configuration options.
-The instance type selector is now a searchable dropdown that displays machine specifications and validates your resource requests in real-time. If you request more CPUs than the selected instance can provide, you'll see an immediate warning preventing deployment failures and reducing troubleshooting time.
-Added a dropdown for selecting which node pools services should run on.
+- Service isolation, which ensures your workloads run on dedicated infrastructure with 1:1 pod-to-node isolation, is now easily toggle-able using a checkbox in the configuration options.
+- The instance type selector is now a searchable dropdown that displays machine specifications and validates your resource requests in real-time. If you request more CPUs than the selected instance can provide, you'll see an immediate warning preventing deployment failures and reducing troubleshooting time.
+- Added a dropdown for selecting which node pools services should run on.
 When selected, services will be directed to the specified node pools with automatic toleration handling. This prevents services from being assigned to incompatible node types and ensures pods are scheduled correctly on tainted nodes.
+
+![Resource configuration](/img/changelog-25_05_30-resource_configuration.png)
 
 ## May 23, 2025
 
