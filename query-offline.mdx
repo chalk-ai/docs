@@ -245,14 +245,16 @@ It will then launch jobs for each shard, while not exceeding 10 concurrent pods 
 If you lose track of the state of a long-running offline query, you'll always be able to retrieve the outputs later.
 First, check the offline query dashboard: you'll be able to download all shards of the output,
 individually or as a group, there.
-You can also retrieve the outputs via Python with the [`ChalkClient.get_dataset`](/api-docs#ChalkClient.get_dataset) method:
-simply copy and paste the `Query Id` from the offline query dashboard into your function call.
+You can also retrieve the outputs via Python with the [`ChalkClient.get_dataset`](/api-docs#ChalkClient.get_dataset) method.
+If you pass in a `dataset_name` when running the offline query, then you can use the dataset name,
+otherwise the `revision_id` for your dataset will use the `Query Id` from the offline query dashboard
+which you can also use to retrieve the dataset in your function call.
 
 ```python
 from chalk.client import ChalkClient
 
 client = ChalkClient()
-dataset = client.get_dataset("21d9ceb7-c1ef-4c08-a39c-f8381e825a66") # your query id
+dataset = client.get_dataset(revision_id="21d9ceb7-c1ef-4c08-a39c-f8381e825a66") # your query id
 df = dataset.get_data_as_pandas()
 ```
 
