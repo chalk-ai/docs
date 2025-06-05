@@ -10,7 +10,12 @@ Connect your [Alert Thresholds](/docs/metricmonitor#add-alert-trigger) to extern
 
 ## Configure your alerts
 
-Visit Settings > Alert Configuration to connect an "owner" to a "channel". All alerts that belong to that owner (as configured on the alert trigger), will be sent to this channel.
-One owner can have alerts sent to many channels. Edit or remove the alert configuration, or send a test message, using the buttons on the right hand side.
+Chalk enables you to set up alert configurations to route alerts to different channels based on the owner
+of the alert. In the dashboard, visit Settings > Alert Configuration to define an owner (the dropdown will list
+all users in the environment, but the owner can be any string, so you can use a team name or other identifier).
+For each owner, you can select one or more channels to send alerts to. The channels can be Slack channels or
+Pagerduty services, depending on which integrations you have set up in your Chalk environment. All alerts that
+belong to an owner (as configured on the alert trigger) will be sent to the channels associated with that owner.
+Edit or remove the alert configuration, or send a test message, using the buttons on the right hand side.
 
 ![Alert Configuration](/img/AlertConfigPage.png)

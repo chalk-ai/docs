@@ -48,4 +48,10 @@ Aggregate multiple series together into one chart using a formula. Chalk support
 
 ### Add Alert Trigger
 
-Alerts can be triggered on any series or formula. Select the series, the threshold logic, and the severity. Decide who will get this alert with the alert owner dropdown. You can select from the owner configured on the [Alert Configuration](/docs/alertconfig) page, or free type to create a new owner.
+Alerts can be triggered on any series or formula. To set up an alert, you should first configure at least one of
+a [Pagerduty integration](/docs/pagerduty) or a [Slack integration](/docs/slack). Then you can set up
+[Alert Configurations](/docs/alertconfig) to define which channels to use to alert different users or teams.
+Then, in your metrics chart, you can select the series, the threshold logic, and the severity, and route the
+alert appropriately with the alert owner dropdown. You can select from users in the Chalk environment or free type
+an owner name corresponding to one of your alert configurations.
+
