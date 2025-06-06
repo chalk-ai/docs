@@ -47,6 +47,8 @@ Chalk balances accuracy and performance by combining both approaches.
 Chalk aggregates historical data while continuously updating your features as new data arrives.
 Chalk automatically rolls new data into the appropriate buckets and reconstructs the aggregations.
 Buckets that become stale i.e. no longer relevant to any of your active time windows, are automatically cleaned up.
+For each bucket, Chalk stores the minimal required data to compute the aggregation, and at query time, the aggregation
+is computed by merging the partial aggregate states for all buckets within the requested time window.
 
 Chalk aligns buckets on Unix epoch (ignoring leap seconds).
 When serving windowed queries, Chalk uses all buckets containing any overlap with the requested time window.
@@ -106,6 +108,11 @@ The materialization parameter takes in a dictionary that adheres to the schema o
         The minimum period of time for which to sample data directly via online query, rather than from the backfilled aggregations.
     </Attribute>
 </AttributeTable>
+
+If you want to use one bucket size for all of your window intervals, you can just use the `bucket_duration` parameter.
+If your window intervals have a wide discrepancy (say, 1d and 365d), you can use the `bucket_durations` parameter to
+explicitly map bucket durations to each window interval. Selecting the right bucket duration is a tradeoff between
+accuracy and storage. Shorter bucket durations will yield more accurate results, but will also require more storage.
 
 
 ## Backfilling data and managing aggregation
