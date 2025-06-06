@@ -1029,15 +1029,104 @@ Cloud SQL Viewer
 Then, in the dashboard, navigate to `Settings > Resources` and click on the `Edit JSON` button. Add the following
 to the resource configuration JSON:
 
-```txt
+### Single Instance Configuration
+
+For connecting to a single Cloud SQL instance:
+
+```json
+{
   "sidecars": [
     {
-      "instance_connection_name": "{PROJECT_NAME}:{REGION_NAME}:{INSTANCE_NAME}",
       "name": "cloudsql",
-      "port": 5432, # or 3306 for MySQL
-      "private_ip": false
+      "instance_connection_name": "{PROJECT_NAME}:{REGION_NAME}:{INSTANCE_NAME}",
+      "port": 5432,
+      "http_port": 8097,
+      "structured_logs": true,
+      "http_address": "0.0.0.0",
+      "private_ip": false,
+      "psc": false,
+      "auto_iam_authn": true
     }
   ]
+}
+```
+
+### Multiple Instances Configuration
+
+For connecting to multiple Cloud SQL instances, use the `instances` map format:
+
+```json
+{
+  "sidecars": [
+    {
+      "name": "multi-cloudsql",
+      "instances": {
+        "{PROJECT_NAME}:{REGION_NAME}:{INSTANCE_1}": 5432,
+        "{PROJECT_NAME}:{REGION_NAME}:{INSTANCE_2}": 3306
+      },
+      "http_port": 8097,
+      "structured_logs": true,
+      "http_address": "0.0.0.0",
+      "private_ip": false,
+      "psc": false,
+      "auto_iam_authn": true
+    }
+  ]
+}
+```
+
+### Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `name` | string | **Required** | Unique name for the sidecar container |
+| `instance_connection_name` | string | Optional* | Connection string for single instance (format: `project:region:instance`) |
+| `port` | integer | Optional* | Port number for single instance connection |
+| `instances` | object | Optional* | Map of instance connection names to port numbers for multiple instances |
+| `http_port` | integer | `8097` | Port for Cloud SQL Proxy health checks and metrics |
+| `structured_logs` | boolean | `true` | Enable structured logging output |
+| `http_address` | string | `"0.0.0.0"` | Address for health check server |
+| `private_ip` | boolean | `false` | Use private IP addresses for connection |
+| `psc` | boolean | `false` | Enable Private Service Connect (PSC) for connection |
+| `auto_iam_authn` | boolean | `false` | Enable automatic IAM authentication |
+
+*Either `instance_connection_name` + `port` OR `instances` must be specified.
+
+### Advanced Configuration Options
+
+#### Private IP Connection
+Set `"private_ip": true` to connect to Cloud SQL instances using their private IP addresses instead of public IPs. This requires proper VPC connectivity.
+
+#### Private Service Connect (PSC)
+Set `"psc": true` to enable Private Service Connect for enhanced security and network isolation when connecting to Cloud SQL instances.
+
+#### IAM Authentication
+By setting `"auto_iam_authn": true`, the Cloud SQL proxy will automatically use IAM authentication to connect
+to your Cloud SQL instance. This eliminates the need to manage database passwords and leverages Google Cloud's
+IAM service for secure authentication. When enabled, ensure that the service account used by Chalk has the
+appropriate Cloud SQL IAM database user permissions.
+
+### Example: Multiple Instances with All Options
+
+```json
+{
+  "sidecars": [
+    {
+      "name": "enterprise-cloudsql",
+      "instances": {
+        "prod-project:us-central1:postgres-primary": 5432,
+        "prod-project:us-central1:mysql-analytics": 3306,
+        "prod-project:europe-west1:postgres-replica": 5433
+      },
+      "http_port": 8097,
+      "structured_logs": true,
+      "http_address": "127.0.0.1",
+      "private_ip": true,
+      "psc": true,
+      "auto_iam_authn": true
+    }
+  ]
+}
 ```
 
 Once you're done editing the JSON, click on the `Save and Apply Changes` button to deploy your sidecar.
