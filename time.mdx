@@ -290,3 +290,13 @@ datetimes from data stores.
 
 We recommend that you include timezone information on all datetime objects you work with to avoid ambiguity.
 
+---
+
+## When to use `FeatureTime` vs `Now`
+
+Chalk enables different levels of temporal consistency, which also have different impacts on performance.
+When a resolver does not have a FeatureTime or Now as an input or output, there is no temporal pushdown
+filtering, so the resolver will be fully time independent, which will also be more performant. If the
+resolver has a FeatureTime as an input, then Chalk will apply a temporal pushdown filter. Then, if a resolver
+takes `Now` as an input, the resolvers can fully interact with time, which will provide the most accuracy for
+point-in-time feature resolution but also be the least performant. 
