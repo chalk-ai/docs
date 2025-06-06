@@ -35,6 +35,29 @@ to view the background persistence configuration. If no background persistence i
 you will see a message indicating that no background persistence is currently present, and the
 first save and apply will create background persistence writers.
 
+## Writer Types
+
+Chalk supports different types of background persistence writers, each designed for specific data flow and storage purposes:
+
+### Online Store Writers
+- **ONLINE_WRITER**: Listens to the online store subscription and writes query results into the online store (Redis, DynamoDB, etc.). This ensures that computed feature values are persisted for fast retrieval during online inference.
+
+### Metrics and Monitoring Writers
+- **METRICS_WRITER**: Listens to the result metrics subscription and republishes messages as metrics bus messages. This writer transforms query result data into metrics format for downstream processing.
+- **METRICS_BUS_WRITER**: Listens to the metrics bus subscription and writes processed metrics to the metrics store. This enables monitoring and observability of feature computation performance.
+
+### Offline Store Writers
+- **OFFLINE_WRITER**: Listens to the offline store subscription and writes query results into the offline store (BigQuery, Snowflake, etc.). This provides historical data for training and batch inference.
+- **OFFLINE_STORE_BULK_INSERT_WRITER**: Listens to the bulk upload subscription and performs efficient bulk inserts of parquet files from cloud storage (GCS/S3) into the offline store using `COPY INTO` operations.
+- **OFFLINE_STORE_STREAMING_INSERT_WRITER**: Listens to the streaming write subscription and handles real-time data insertion. The message body contains parquet-encoded data with table metadata. While the subscription name references BigQuery, this writer supports all offline store backends. For BigQuery, the more efficient `bigquery-streaming-write-loader` is typically used instead.
+
+### Specialized Writers
+- **USAGE_BUS_WRITER**: Listens to the usage events subscription and writes usage data to the usage events store (typically BigQuery). This tracks feature computation costs and usage patterns.
+- **QUERY_MIRROR_CONSUMER**: Listens to the query log subscription and executes mirrored queries. This is useful for debugging, testing, and validation scenarios.
+- **ONLINE_VECTOR_STORE_WRITER**: Listens to the vector store subscription and sends batches to vector databases for similarity search and retrieval use cases.
+
+Each writer type requires specific subscription IDs and topics to be configured in the common persistence specifications.
+
 ## Pubsub vs Kafka
 When using pubsub, topics and subscriptions are 2 separate entities, but for Kafka, we use the same
 topic for both publishing and subscribing. Additionally, we need to provide Kafka authentication
