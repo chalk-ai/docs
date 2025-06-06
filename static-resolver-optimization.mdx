@@ -8,22 +8,27 @@ import { TipInfo } from '@/components/Tip'
 
 ---
 
-Chalk's static resolver optimization transforms Python resolvers into high-performance columnar operations through symbolic execution, eliminating Python's runtime overhead while maintaining its developer-friendly syntax.
+Chalk's static resolver optimization transforms Python resolvers into high-performance columnar operations through
+symbolic execution, eliminating Python's runtime overhead while maintaining its developer-friendly syntax.
 
 ## The Performance Challenge
 
-Python resolvers provide flexibility and ease of use for feature engineering, but traditional Python execution introduces significant performance bottlenecks in real-time ML workloads:
+Python resolvers provide flexibility and ease of use for feature engineering, but traditional Python execution
+introduces significant performance bottlenecks in real-time ML workloads:
 
 - **Row-by-row processing**: Traditional Python resolvers process data one row at a time
 - **Global Interpreter Lock (GIL)**: Prevents true parallel execution across multiple CPU cores
 - **Dynamic typing overhead**: Runtime type checking adds computational cost
 - **Limited vectorization**: Cannot leverage SIMD operations for numerical computations
 
-These limitations can make Python resolvers unsuitable for latency-sensitive applications requiring sub-millisecond response times.
+These limitations can make Python resolvers unsuitable for latency-sensitive applications requiring sub-millisecond
+response times.
 
 ## Symbolic Execution Approach
 
-Chalk addresses these performance challenges by converting Python resolver functions into optimized Velox-native expressions at query-plan time. This transformation happens automatically without requiring changes to your resolver code.
+Chalk addresses these performance challenges by converting Python resolver functions into optimized
+[Velox](https://github.com/facebookincubator/velox)-native expressions at query-plan time. This transformation
+happens automatically without requiring changes to your resolver code.
 
 ### How It Works
 
@@ -83,8 +88,8 @@ Static resolver optimization delivers significant performance improvements:
 @online
 def compute_risk_score(
     transaction_amount: Transaction.amount,
-    user_avg_transaction: User.avg_transaction_amount,
-    merchant_risk_factor: Merchant.risk_factor
+    user_avg_transaction: Transaction.user.avg_transaction_amount,
+    merchant_risk_factor: Transaction.merchant.risk_factor
 ) -> Transaction.risk_score:
     if transaction_amount > user_avg_transaction * 10:
         return merchant_risk_factor * 2.5
@@ -140,26 +145,31 @@ Ensure all inputs and outputs have proper type annotations:
 @online
 def typed_resolver(
     amount: Transaction.amount,  # Explicit feature type
-    rate: Currency.exchange_rate  # Explicit feature type
+    rate: Transaction.currency.exchange_rate  # Explicit feature type
 ) -> Transaction.converted_amount:  # Explicit return type
     return amount * rate
 ```
 
 ## Monitoring Optimization
 
-You can verify whether your resolvers are being optimized by checking the query execution logs. Optimized resolvers will show significantly lower execution times and higher throughput.
+You can verify whether your resolvers are being optimized by checking the query execution logs or by viewing the
+query plan in the dashboard. Optimized resolvers will be marked as accelerated, and if your Python resolver is not
+optimized the query plan node will also provide information about why it was not optimized. Optimized resolvers will
+show significantly lower execution times and higher throughput.
 
 ## Limitations
 
 While powerful, static optimization has some limitations:
 
-- **External libraries**: Calls to NumPy, Pandas, or other external libraries cannot be optimized
 - **Complex control flow**: Deeply nested loops or recursive functions may not optimize
 - **I/O operations**: File or network operations cannot be symbolically executed
 - **Dynamic code**: `eval()`, `exec()`, or dynamic attribute access patterns
 
-When the optimizer encounters unsupported operations, it automatically falls back to standard Python execution, ensuring your resolvers always work correctly.
+When the optimizer encounters unsupported operations, it automatically falls back to standard Python execution, ensuring
+your resolvers always work correctly.
 
 ## Summary
 
-Static resolver optimization in Chalk bridges the gap between Python's ease of use and the performance requirements of real-time ML systems. By automatically converting Python resolvers into optimized columnar operations, Chalk enables you to write maintainable feature engineering code that runs at production scale without sacrificing performance.
+Static resolver optimization in Chalk bridges the gap between Python's ease of use and the performance requirements of
+real-time ML systems. By automatically converting Python resolvers into optimized columnar operations, Chalk enables you
+to write maintainable feature engineering code that runs at production scale without sacrificing performance.
