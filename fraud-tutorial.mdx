@@ -47,11 +47,13 @@ class User:
 </TipInfo>
 
 Note, you define your features before defining how they will be computed.
-Some of these features might come directly from a database table: for instance, the id, birthday, and name fields that we've defined above.
-Some might be calculated in real time based on the current timestamp (like the age feature) or a different upstream feature (like the `is_adult` feature, which will depend on the age feature).
+Some of these features might come directly from a database table: for instance, the id, birthday, and name fields that
+we've defined above. Some might be calculated in real time based on the current timestamp (like the age feature) or a
+different upstream feature (like the `is_adult` feature, which will depend on the age feature).
 
 You could deploy the code above to Chalk and it would be considered valid.
-However, if you tried to query for a field (for example, if you asked chalk to return the name of a user with id 1) then you'd get an error.
+However, if you tried to query for a field (for example, if you asked chalk to return the name of a user with id 1)
+then you'd get an error.
 
 In particular, you would get the following error:
 
@@ -80,37 +82,40 @@ This should not be surprising.
 Chalk has no connection to your underlying data.
 So it doesn't know how to get the name of the user with an id of 1 (or any id for that matter).
 
-In particular, the error message tells use that a "Resolver" was not found.
+In particular, the error message tells us that a "Resolver" was not found.
 A [resolver](/docs/resolver-overview) is a function that takes in features and outputs features.
 Broadly, there are two types of resolvers: root and non-root.
 Root resolvers don't take any features (or take only a primary key) as their input and are used to
 fetch data from external sources.
 
-In the `User` example we sketched out above, you could think of a root resolver as a SQL query that reads from a `users` table in an external database.
+In the `User` example we sketched out above, you could think of a root resolver as a SQL query that reads from a
+`users` table in an external database.
 
 While there are exceptions, this is what the majority of root resolvers look like.
-For example, to read from the `users` table in your PostgreSQL database, you might write a `get_users.chalk.sql` file, with the following contents:
+For example, to read from the `users` table in your PostgreSQL database, you might write a `get_users.chalk.sql` file,
+with the following contents:
 
 ```sql
--- source: PG
+-- source: postgres
 -- resolves: User
 
 select id, birthday, email, name from users
 ```
 
-By writing this file, you've defined a SQL resolver, named `get_users`, which knows how to resolve `birthday`, `name`, or `email` for any given id in the `users` table.
-At this point, you might have noticed that the SQL query above doesn't explicitly know how to get the birthday or name of a given id, it just returns all users.
+By writing this file, you've defined a SQL resolver, named `get_users`, which knows how to resolve `birthday`, `name`,
+or `email` for any given id in the `users` table.
+At this point, you might have noticed that the SQL query above doesn't explicitly know how to get the birthday or name
+of a given id, it just returns all users.
 Chalk gets around this by pushing filters into your SQL queries.
 
-Lets say you've defined the SQL resolver above and deployed it to Chalk.
+Let's say you've defined the SQL resolver above and deployed it to Chalk.
 You rerun the query that failed above:
 
 ```sh
 $ chalk query --in user.id=1 --out user.name
 ```
 
-Chalk will look at the resolvers you've defined and ask "given a User.id, can I calculate
-a `User.name`".
+Chalk will look at the resolvers you've defined and ask "given a User.id, can I calculate a `User.name`".
 It will see the SQL resolver defined above and realize that it can be used to get `User.name` from a `User.id`.
 It will push the id filter into the SQL query, running.
 
@@ -118,16 +123,18 @@ It will push the id filter into the SQL query, running.
 select name from users
 where id=1
 ```
+
 In addition to the filter a projection will be pushed into your SQL query: only the `name` column
 is requested.
 When running a query, Chalk processes the minimum amount of data required to calculate a desired output features.
 
-Getting this to work fully, will involve setting up a database connector to Chalk and deploying code, both of which we will cover later.
-For now it is important to note that the process of defining resolvers is incredibly modular.
+Getting this to work fully, will involve setting up a database connector to Chalk and deploying code, both of which
+we will cover later.
+For now, it is important to note that the process of defining resolvers is incredibly modular.
 
 Now lets look into defining a non-root resolver, which computes a User's email username.
 
-In Chalk, Non-root resolvers take one of two forms:
+In Chalk, non-root resolvers take one of two forms:
 1. Python functions with feature annotations,
 2. inline expressions.
 
@@ -178,7 +185,8 @@ class User:
 ```
 
 <TipInfo>
-    The advantage of inline expressions is that they are statically compiled into the execution engine, which often provides performance advtantages.
+    The advantage of inline expressions is that they are statically compiled into the execution engine, which often
+    provides performance advantages.
     Chalk also tries to statically compile Python resolvers by parsing the AST of the function!
 </TipInfo>
 
@@ -199,9 +207,10 @@ Traditional orchestration platforms like [Airflow](https://airflow.apache.org/) 
 explicitly compose functions which produce data into a DAG of tasks.
 With Chalk, the DAG of [resolvers](/docs/resolver-overview) is defined implicitly by the [features](/docs/features) they produce.
 This architecture makes it easy to build out feature pipelines that are reusable and composable.
-Chalk handles tracking your features for [temporal consistency](/docs/temporal-consistency), running your resolvers in parallel, and horizontally scaling your feature pipelines.
+Chalk handles tracking your features for [temporal consistency](/docs/temporal-consistency), running your resolvers in parallel, and horizontally
+scaling your feature pipelines.
 
-Alright, enough with the intro. Lets get started building!
+Alright, enough with the intro. Let's get started building!
 
 ## Fraud Detection Pipeline
 
@@ -317,9 +326,11 @@ class Account:
 +   user: User
 ```
 
-This denotes that each account has one user, and that the `Account.user_id` and the `User.id` are equal and of type `int`, as described by `User.id`.
+This denotes that each account has one user, and that the `Account.user_id` and the `User.id` are equal and of type `int`,
+as described by `User.id`.
 
-Once we've defined the relationship on one side of the join, we can define the inverse relationship on the other side without needing to specify the foreign key again.
+Once we've defined the relationship on one side of the join, we can define the inverse relationship on the other side without
+needing to specify the foreign key again.
 
 ```diff-py src/feature_sets.py
 @features
@@ -334,7 +345,8 @@ class User:
 
 <TipInfo>
   Note that the account annotation in the User feature class is in quotes.
-  This is because the Account class is defined later in the file Chalk will recognize this as a valid feature reference and process it correctly.
+  Because the Account class is defined later in the file, Chalk will recognize this as a valid feature reference
+    and process it correctly.
 </TipInfo>
 
 ---
@@ -399,7 +411,8 @@ class Account:
 
 This is the first time we're seeing the [`DataFrame`](/docs/dataframe) type.
 
-A [Chalk DataFrame](/docs/dataframe) models tabular data in much the same way that `Pandas` does. However, there are some key differences that allow the Chalk `DataFrame` to increase type safety and performance.
+A [Chalk DataFrame](/docs/dataframe) models tabular data in much the same way that `Pandas` does. However, there are some key
+differences that allow the Chalk `DataFrame` to increase type safety and performance.
 
 Like pandas, Chalk's `DataFrame` is a two-dimensional data structure with rows and columns.
 You can perform operations like filtering, grouping, and aggregating on a `DataFrame`.
@@ -420,11 +433,13 @@ We'll cover both later in this tutorial.
 
 ## Configuring SQL sources
 
-The primary source of data for most companies are SQL databases (note, by SQL database we don't mean relational databases: we mean any database that can be queried with SQL—in practice this means pretty much any of them).
+The primary source of data for most companies are SQL databases (note, by SQL database we don't mean relational databases:
+we mean any database that can be queried with SQL—in practice this means pretty much any of them).
 Chalk can automatically ingest data from SQL databases and map results into feature classes.
 
 In our example application, we have two databases: PostgreSQL and Snowflake.
-Our PostgreSQL database is the primary database used in our codebase, and our Snowflake database is used for analytics, with tables populated from DBT views and batch jobs.
+Our PostgreSQL database is the primary database used in our codebase, and our Snowflake database is used for analytics,
+with tables populated from DBT views and batch jobs.
 
 To configure your SQL sources in Chalk, we'll:
 1). Add your data sources to the Chalk dashboard
@@ -432,18 +447,22 @@ To configure your SQL sources in Chalk, we'll:
 
 ### Adding Data Sources in the Chalk Dashboard
 
-To add your data sources to the Chalk dashboard, go to the `Data Sources` tab of the dashboard and click on the `Add a data source` button.
+To add your data sources to the Chalk dashboard, go to the `Data Sources` tab of the dashboard and click on the
+`Add a data source` button.
 You can then select the type of data source you want to add.
 
 Select `PostgreSQL` and fill in the required information.
 Repeat the same process with a Snowflake data source.
-Keep track of the names that you've given to each of your data sources: these will be used in the next step. We recommend naming your `PostgreSQL` data source `postgres` and your `Snowflake` data source `snowflake`.
+Keep track of the names that you've given to each of your data sources: these will be used in the next step. We recommend
+naming your `PostgreSQL` data source `postgres` and your `Snowflake` data source `snowflake`.
 
-Note, the data source connection information you add in the dashboard will be stored securely using the secrets manager of your cloud provider.
+Note, the data source connection information you add in the dashboard will be stored securely using the secrets manager
+of your cloud provider.
 
 ### Define Your Data Sources in Your Chalk Code
 
-To define your data sources, you'll need to create a [`datasources.py`](https://github.com/chalk-ai/fraud-example/blob/main/src/datasources.py) file that contains a [`SnowflakeSource`](/docs/snowflake) and a [`PostgreSQLSource`](/docs/postgresql):
+To define your data sources, you'll need to create a [`datasources.py`](https://github.com/chalk-ai/fraud-example/blob/main/src/datasources.py) file that contains a [`SnowflakeSource`](/docs/snowflake)
+and a [`PostgreSQLSource`](/docs/postgresql):
 
 ```python src/datasources.py
 from chalk.sql import SnowflakeSource, PostgreSQLSource
@@ -724,8 +743,10 @@ If you want to learn more, we also provide [additional docs on testing resolvers
 
 ## Reverse ETL
 
-Let's say we have a rather complex feature that we can't serve in realtime because it increases the latency of a query too much for a particular production use case.
-For instance, lets say we want to add a new feature to our users that indicates the average time between their transactions. Maybe we believe that we can use this to detect whether a new transaction is fraudulent.
+Let's say we have a rather complex feature that we can't serve in realtime because it increases the latency of a query
+too much for a particular production use case.
+For instance, lets say we want to add a new feature to our users that indicates the average time between their transactions.
+Maybe we believe that we can use this to detect whether a new transaction is fraudulent.
 
 To add this feature, we'd add it to the `User` feature class:
 
@@ -755,7 +776,7 @@ from chalk.features import after
 def get_average_time_between_transactions(
     transactions: User.account.transactions[
       Transaction.created_at,
-      after(days_ago=30)]
+      after(days_ago=30)
     ]
 ) -> User.average_time_between_transactions:
   """Computes the average time between transactions for a user"""
@@ -816,7 +837,7 @@ chalk query \
   --branch new-fraud-feature
 ```
 
-After some testing, we realize couple of things:
+After some testing, we realize a couple of things:
 1). This feature is too slow to compute in real time (for our use case),
 2). This feature doesn't change very often.
 
@@ -828,18 +849,21 @@ After some testing, we realize couple of things:
   We recommend only doing this if you are unable to achieve your latency targets.
 </TipInfo>
 
-We decide to reverse-ETL this computed feature from our snowflake data store into our Chalk online store. At a high level, this means that periodically (maybe once a day), we'll:
+We decide to reverse-ETL this computed feature from our snowflake data store into our Chalk online store. At a high level,
+this means that periodically (maybe once a day), we'll:
 1. Look for all users with new transactions in our snowflake data source,
 2. Recompute the `average_time_between_transactions_30d` for these users,
 3. Load the new `average_time_between_transactions_30d` values into the Chalk online store.
 
 
-Of note, we don't want to use our PostgreSQL database for this, we want to use Snowflake, which is optimized for bulk data loads unlike Postgres.
+Of note, we don't want to use our PostgreSQL database for this, we want to use Snowflake, which is optimized for bulk data
+loads unlike Postgres.
 As a result, we'll need to define some `offline` resolvers.
 
 So far we've only written `online` resolvers.
 You can think of offline resolvers as overrides for online resolvers that are run in bulk data request scenarios.
-At a high level offline resolvers let you pull your feature data from data stores that are optimized for bulk data loading—this is exactly what we want for our reverse-ETL process.
+At a high level offline resolvers let you pull your feature data from data stores that are optimized for bulk data
+loading—this is exactly what we want for our reverse-ETL process.
 
 To set up a reverse-ETL process, we'll need to do three things:
 - set a staleness policy on your target feature,
@@ -848,7 +872,8 @@ To set up a reverse-ETL process, we'll need to do three things:
 
 ### Setting a Max Staleness on Our Feature
 
-We can have Chalk [reverse-ETL](/docs/reverse-etl) our offline data into our online store by setting the [`max_staleness`](/api-docs#features.max_staleness) on a feature and using scheduled queries.
+We can have Chalk [reverse-ETL](/docs/reverse-etl) our offline data into our online store by setting the [`max_staleness`](/api-docs#features.max_staleness)
+on a feature and using scheduled queries.
 
 ```diff-py src/feature_sets.py
 from chalk.features import feature
@@ -1010,6 +1035,58 @@ Here, we are returning two features of the user, `User.fico_score` and `User.cre
 We use the [`Features`](/api-docs#Features) type to indicate which feature we expect to return.
 Also note that we are initializing the `User` class with only the features that we want to update.
 This partial initialization is the primary difference between Python's [`@dataclass`](https://docs.python.org/3/library/dataclasses.html) and Chalk's [`@features`](/api-docs#features).
+
+## Setting up a Materialized Windowed Aggregation
+
+When defining aggregations, it is often useful to compute a [windowed aggregation](/docs/aggregations) to define the
+same aggregation over different time windows. When defining a windowed aggregation over high-cardinality datasets like
+transactions, it can be more performant to materialize these aggregations in the online store by defining a
+[materialized windowed aggregation](/docs/materialized_aggregations). In a materialized windowed aggregation, you can
+define time buckets, and Chalk will pre-aggregate the minimum data required over all the data in each time bucket
+necessary to compute the aggregation for all time windows in the feature definition. For example, say we want to
+compute the count of transactions associated with an Account over the past 7 days, 30 days, and 90 days. Then we can
+define the materialized windowed aggregation below:
+
+```diff-py src/feature_sets.py
+from chalk.features import feature
+@features
+class Account:
+    id: int
+    user_id: User.id
+    balance: float
+    user: User
+    transactions: DataFrame[Transaction]
++
++   num_transactions: Windowed[int] = windowed(
+        "7d",
+        "30d",
+        "60d",
+        materialization={
+            "bucket_durations": {"1d": ["7d"], "3d": ["30d", "60d"]},
+        },
+        expression=_.transactions[
+            _.created_at > _.chalk_window,
+            _.created_at < _.chalk_now
+        ].count(),
+    )
+```
+
+This defines a materialized windowed aggregation over the `Account.transactions` DataFrame, which counts the number of
+transactions associated over the past 7, 30, and 60 days. The `materialization` argument tells Chalk to pre-aggregate the
+data in buckets in the online store, such that the 7-day aggregation is pre-aggregated in 1-day buckets, and the
+30-day and 60-day aggregations are pre-aggregated in 3-day buckets. Because this aggregation `.count()` only requires the
+count of transactions that fall within each bucket, we would store the count of transactions for each bucket, and at
+query time sum the counts for the buckets that fall within the requested time window. This configuration allows you
+to define more performant aggregations over high-cardinality datasets, such as transactions, where recomputing the
+aggregation could be computationally expensive by materializing the aggregations in buckets.
+
+Because the materialized windowed aggregation relies on the materialized buckets in the online store, and branch
+deployments do not persist data to the online store, we would need to run a full deploy with `chalk apply` to use
+this new feature. After running a `chalk apply`, we can run `chalk aggregate backfill --feature account.num_transactions`
+to populate the buckets, and then we can query the feature as normal.
+
+In production, you could also set up a schedule to periodically backfill the buckets, or stream the data into the
+online store, to keep the buckets up to date. 
 
 ---
 
