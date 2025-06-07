@@ -6,6 +6,56 @@ description: Updates to Chalk!
 published: true
 ---
 
+## June 6, 2025
+
+### New documentation on optimizing and verifying static Python resolvers
+
+We've added a new page to our docs that serves as a primer on how Chalk optimizes static Python resolvers.
+You can verify if your resolvers are optimized by checking query execution logs or the query plan page—optimized resolvers are highlighted in yellow and marked as "accelerated".
+Python resolvers that cannot be optimized will show an error explaining why.
+We've extended support for accelerating Python expressions that
+* cast from strings to integers
+* contain enums that are inherited from other enums
+* use zip and enumerate built-ins
+* returns a list of another feature class
+
+```py
+@online
+def get_search_results_documents(
+    query_text: SearchQuery.text,
+) -> SearchQuery.documents:
+    # requests gets accelerated
+    docs = requests.get(f"{BASE_URL}/vector_search/{query_text}"
+        headers=HEADERS,
+    )
+    # returning a list of another feature class is also accelerated
+    return  [
+            Document(
+                query_id=query_text,
+                content=doc.content,
+                title=doc.title,
+                similarity_score=doc.similarity_score,
+                metadata=doc.metadata,
+                rank=rank,
+            )
+            # enumerate built-in is accelerated
+            for rank, doc in enumerate(docs)
+        ]
+```
+
+![Accelerated Python function](/img/changelog-2025_06_06-accelerated_function.png)
+
+### Easily view all of your charts from the Settings page of Chalk Dashboard
+
+Added a new "All Charts" tab under "Metric Charts" section of your Settings that displays all charts available in Chalk.
+The new tab shows:
+- A complete list of all charts in your environment
+- Chart types and categories
+- What entities or features each chart is attached to e.g. a link to view the chart
+- Any associated alerts
+
+![All charts page](/img/changelog-2025_06_06-all_charts.png)
+
 ## May 30, 2025
 
 ### Export user permissions as a CSV
