@@ -1,67 +1,151 @@
 ---
 title: Resource Configuration
-description: Configure resources for your Chalk project.
+description: Configure your Chalk Kubernetes cluster
 published: true
 ---
 
 ## Overview
 
 The `Settings` page of the dashboard exposes many useful configurations that you can use to
-tune your Chalk environments to scale to handle your specific workload and latency requirements.
+tune your Chalk environments appropriately to handle your specific workload and latency requirements.
 
-### Cloud Resource Configuration
 
-Under `Settings > Resources`, you will find the Cloud Resource Configuration page. In this page, you
-can specify how you would like to scale the different resource groups in your Chalk environment, and
-even create new resource groups.
+## Kubernetes
 
-Under each resource group, for each service, you can specify the targets for resource requests,
-resource limits, scaling, and parallelism. For most use cases, adjusting the `Requests` and `Scaling`
-targets will help you optimize your environment for your workload. The `Requests` will specify
-the resources to be allocated to an instance of your service, and the `Scaling` will define upper
-and lower bounds for the number of instances of your service. In terms of scaling, there are two
-ways to auto-scale your services:
+Under `Settings > Kubernetes`, you can view all the pods in your Kubernetes cluster under the namespace
+for your environment, in addition to their phase and creation timestamp. By clicking on the pod name,
+you can also view the Kubernetes Pod View. This will include data about the pod, such as the resource
+request, IP address, and resource group, as well as data about the node on which the pod is scheduled.
+In the Pod View, you can also see the logs for the pod, which can be useful for debugging errors on
+branch deployments or job pods.
 
-1. **CPU-based Scaling**: If you set `Target CPU %` in the Cloud Resource Configuration, then Chalk will
-   scale the service based on the CPU utilization of the service. If the CPU utilization is above the
-   target, Chalk will scale up the service, and if it is below the target, Chalk will scale down the service.
-2. **Scheduled Scaling**: You can specify scaling resources up or down on a schedule by modifying the
-    spec config in the `JSON` tab of the `Cloud Resource Configuration` page. In order to do scheduled
-    scaling, you must have KEDA configured in your environment. Please reach out to the Chalk team if
-    you are interested in scheduled scaling.
+## Nodepools
 
-In addition to specifying resource targets, you can also navigate to the `Advanced` configurations for
-even more fine-grained control over your resources.
+Under `Settings > Nodepools`, you can view and configure the [Karpeneter NodePool(s)](https://karpenter.sh/docs/concepts/nodepools/)
+used to run your Chalk environment. A NodePool defines constraints on the Kubernetes nodes that can be
+scheduled in your Kubernetes cluster. Notably, you can select the machine families that you would like
+to use in your deployment, as different machine families are optimized for different workloads. You can
+also set a CPU limit on your NodePool. This page will allow you to provision the resources and machine
+families that are best suited for your workload and [usage](/docs/billing) requirements.
 
-The Kubernetes Node Selector enables you to specify the machine family you would like to use for your
+## Resources
+
+Under `Settings > Resources`, you will find the Cloud Resource Configuration page, which enables you
+to set the default resource requests, autoscaling, and limits for each service in each resource group
+in your Chalk environment.
+
+All Chalk environments will have a `Default` resource group. If you have a specific use case which would
+require more resource groups, please reach out to the Chalk Team.
+
+In a resource group, you can specify the default resource requests, instance types, and nodepools for
+each service. The resource requests for the Query Server, gRPC Query Server, and the Branch Server will
+be used whenever your configuration is applied to spin up the appropriate resources in your cluster. The
+resource request for Async Offline Query can be overridden at query time using the `ChalkClient.offline_query(resources=...)`
+parameter, but will default to the values set in the Resource Configuration page. For most use cases,
+setting the `Requests` configurations will be sufficient. However, you can also set `Limits` for
+each service if you would like to cap the maximum resources that can be allocated to a service.
+The Instance Type selector enables you to specify the machine family you would like to use for your
 deployment. For example, this would map to [EC2 Instance Types](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html)
 for AWS deployments or [Compute Engine Machine Families](https://cloud.google.com/compute/docs/machine-resource)
 for GCP deployments.
 
-The `Auto Shutdown Period` dropdown enables you to select the amount of time of inactivity after which you'd like the
-branch server to spin down.
+### Autoscaling
 
-In addition, you can set Environment Variable Overrides for the resource group. If you have any questions about how
-to best configure your environment for your use case, reach out to the Chalk team.
+Chalk supports autoscaling of resources in your environment in order to optimize resource usage.
 
-### Kubernetes
+For the branch server, you can set the `Auto Shutdown Period`, which will determine the duration of
+inactivity (no queries or deploys) after which the branch server pod will be automatically shut down.
 
-Under `Settings > Kubernetes`, you can view all of the pods in your Kubernetes cluster under the namespace
-for your environment, in addition to their phase and creation timestamp. This can be very useful for
-debugging and monitoring the health of your environment.
+For the Query Server and gRPC Query Server which are used to serve your production traffic, you can
+configure [KEDA](https://keda.sh/)-based autoscaling. Autoscaling for either of these resources will
+be constrained depending on the Nodepool configurations for your environment. Auto-scaling can be
+triggered based on CPU utilization or on a schedule.
 
-### Connections
+#### CPU-Based Autoscaling
 
-Under `Settings > Connections`, you can view all of the connections that your environment has to external
-resources, such as your online and offline stores, and the branch server.
+To enable CPU-based autoscaling, you can set the `Target CPU %` in the Cloud Resource Configuration.
+Chalk will then monitor the CPU utilization of the service and scale the number of instances up or down
+based on the target CPU percentage.
 
-### User Permissions
+#### Scheduled Autoscaling
 
-Under `Settings > User Permissions`, you can view the roles associated with each user, as well as whether those
-roles are granted directly or via SCIM.
+To enable scheduled autoscaling, you can modify the spec config in the `JSON` tab of the `Cloud
+Resource Configuration` page. In order to do scheduled scaling, you must have KEDA enabled in your
+environment. If you are usnure whether KEDA is enabled, please reach out to the Chalk team.
 
-### Environment Variables
+In the `JSON` tab, you can view the same configurations from the form fields for each of your services.
+Depending on whether you want to configure scheduled autoscaling for your Query Server or your
+gRPC Query Server, you can edit the spec for `engine` or `engine-grpc` respectively.
+
+Let's say that each day, you want to scale up your Query Server to somewhere between 50 and 100 replicas
+from 8:45 AM to 10:15 AM on weekdays to handle a daily traffic spike at 9 AM ET. The following
+configuration will enable such scaling on the cron schedule, while returning to the default
+configurations outside of that time window.
+
+```
+"engine": {
+    "autoscaler_config": {
+        "default_timezone": "America/New_York",
+        "max_replica_count": 100,
+        "min_replica_count": 50,
+        "triggers": [
+            {
+                "desired_replicas": 100,
+                "end": "15 10 * * 1-5",
+                "start": "45 8 * * 1-5"
+            },
+        ]
+    },
+    "deploy_engine_proxy": false,
+    "enable_engine_proxy": false,
+    "limit": {},
+    "min_instances": 20,
+    "node_selector": {
+        "cloud.google.com/gke-nodepool": "your-default-nodepool"
+    },
+    "request": {
+        "cpu": "5",
+        "memory": "10Gi"
+    },
+    "worker_count": 8
+}
+
+```
+
+## Connections
+
+Under `Settings > Connections`, you can view all the connections that your environment has to external
+resources, such as your online and offline stores, and the branch server. This is a good place to check
+the health of the different services in your environment, as well as to verify the types of connections
+configured.
+
+## Environment Variables
 
 Under `Settings > Environment > Variables`, you can view and edit global environment variables for
 your environment. Please reach out to the Chalk team if you have any questions about which environment variables
 to set for your use case.
+
+## User Permissions and RBAC
+
+Under `Settings > User Permissions`, you can view the roles associated with each user, as well as whether those
+roles are granted directly or via SCIM. When adding new users to your Chalk environment, you can assign
+them roles that will determine their permissions in the environment. The available roles in order of
+increasing permissions are:
+
+- **Viewer**: Read the web portal and create new alerts.
+- **Data Scientist**: Run queries, branch deploy, + everything that a Viewer can do.
+- **Developer**: Run queries, run migrations + everything that a Data Scientist can do.
+- **Admin**: Create deployments, service tokens, and secrets + everything that a Developer can do.
+- **Owner**: Manage team members + everything that an Admin can do.
+
+Customers with Enterprise Features can also configure datasource and feature-level RBAC (Role Based Access Control).
+Under `Settings > Access Tokens`, you can create and manage service tokens that can be used for RBAC.
+On the datasource level, you can restrict a token to only access data sources with matching tags to resolve features.
+On the feature level, you can restrict a token's access to [tagged features](/api-docs#features.tags) either by
+blocking the token from returning tagged features in any queries but allowing the feature values to be
+used in the computation of other features, or by blocking the token from accessing tagged features entirely.
+
+![datasource and feature level rbac](/img/datasource-feature-rbac.png)
+
+
+
