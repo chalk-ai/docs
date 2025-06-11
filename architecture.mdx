@@ -1,7 +1,7 @@
 ---
 title: Platform Architecture
 metaTitle: Chalk Architecture
-metaDescription: Chalk's architecture enables machine learning companies to use Chalk's feature store in their own cloud environment.
+metaDescription: Chalk's architecture enables teams to run a high-performance feature store entirely in their own VPC—without sacrificing latency, security, or observability.
 description: How it all fits together.
 published: true
 ---
@@ -10,187 +10,179 @@ import { ArchitectureDiagram, ServiceDiagramSwitcher } from '@/components/Archit
 
 ---
 
-## Service Architecture
+Chalk’s online query serving platform is architected to
 
-Chalk offers a hosted model ("Chalk Cloud") and
-a customer-hosted model ("Customer Cloud").
-Most companies choose to run Chalk in their own
-cloud using the Customer Cloud model.
-This page discusses the Customer Cloud deployment of Chalk on AWS, GCP, and Azure.
+- retrieve fresh features across heterogeneous sources with the minimum possible latency
+- orchestrate and execute complex transformations on structured and unstructured data
+- uphold enterprise-grade guarantees for security, observability, and reliability
 
-A Chalk deployment consists of a Management Plane and a Data Plane:
+In short, Chalk was built to get the right data from the right place at the right time.
+
+## Onlnine serving architecture
+
+Let's examine how the pieces work together to compute and serve **[features](/docs/features)**.
+
+Suppose that you want to compute a set of features for making a decision about a request from a user:
+
+1. Your application sends an [HTTP request](/docs/query-basics) to Chalk's serving API for features
+2. Chalk's query planner generates an optimized execution plan by analyzing feature dependencies and available data sources.
+3. Chalk's compute engine
+    - retrieves fresh values from underlying sources with [Resolvers](/docs/resolver-overview)
+    - pulls from Chalk’s low-latency online storage e.g. tiled / materialized features or [cached features](/docs/reverse-etl)
+    - executes the generated query plan
+4. Returns computed features in response
+5. Newly computed features values are logged for reuse and auditability
+
+![Chalk architecture diagram](/img/architecture-diagram.png)
+
+This entire pipeline—from SQL queries and API calls to response—runs in less than 10ms, even with heterogeneous data sources and complex logic.
+Chalk uses many techniques to reduce latency, such as:
+
+- Automatic parallelism across pipeline stages
+- Vectorization of pipeline stages that are written using scalar syntax
+- Statistics-informed join planning
+- Low-latency key/value stores (like [Redis](https://redis.com/), [BigTable](https://cloud.google.com/bigtable), or [DynamoDB](https://aws.amazon.com/dynamodb/))
+- Transpilation of Python code into native code with Chalk's [symbolic Python interpreter](https://chalk.ai/blog/symbolic-python-interpreter)
+
+### Data orchestration
+
+Chalk eliminates the complexity of orchestrating data and ETL pipelines by building a dependency graph (DAG) of your features — which are defined using Python.
+At inference time, Chalk dynamically--without manual configuration--builds query plans (sub-graphs of your feature DAG) based on the features you request.
+
+Write feature definitions in Python and Chalk automatically
+
+- Determines optimal computation and query planning strategies
+- Handles caching, incremental updates, and backfills
+- Provides built-in observability and data lineage without additional tooling
+
+As a result, Chalk can serve as a **drop-in replacement for orchestration tools like Dagster, Airflow, and Prefect** while simultaneously providing purpose-built features for production ML workloads.
+
+![Chalk query plan](/img/docs-what_is_chalk-query_plan.png)
+
+Declaratively defining features frees up data teams to focus on designing features instead of writing plumbing code.
+There's no need to write custom glue code because Chalk interfaces directly with underlying data sources, managing all the connections and transformations behind the scenes.
+
+Note: Features can also be computed on a recurring basis with [scheduled queries.](/docs/scheduled-query)
+
+## Data persistence and storage
+
+Chalk uses different storage technologies to support online and offline use cases.
+
+The online store is optimized for serving the latest version of any given feature for any given entity with the minimum possible latency.
+Chalk can be configured to use Redis or Cloud Memory Store for smaller resident data sets with high latency requirements, or DynamoDB when horizontal scalability is required.
+
+The offline store is optimized for storing all historical feature values, serving point-in-time correct queries, and tracking provenance of features.
+Chalk supports a variety of storage backends depending on data scale and latency requirements.
+Typically, Chalk uses Snowflake, Delta Lake, BigQuery or Athena.
+
+---
+
+## Offline computation and serving
+
+Chalk's architecture also supports efficient batch point-in-time queries to construct model training sets or perform batch offline inference.
+
+1. Submit a [training data request](/docs/query-offline) from a notebook client like Jupyter using Chalk's Python SDK
+2. The query planner builds a point-in-time correct plan
+3. The compute engine pulls [point-in-time correct](/docs/temporal-consistency) feature values from offline storage
+4. Chalk returns a DataFrame of features to you.
+
+Chalk integrates with your existing data providers ([Snowflake](https://snowflake.com/), [Delta Lake](https://delta.io/), or [BigQuery](https://cloud.google.com/bigquery)) to ingest massive amounts of data from a variety of data sources and query it efficiently.
+Note that data ingested into the offline store can be trivially made available for use in an online querying context with Chalk's [Reverse ETL](/docs/reverse-etl).
+
+There's an exhaustive list of supported ingestion sources in the [Integrations](/docs/integrations) section.
+
+---
+
+## High-performance execution engine
+
+Under the hood, Chalk uses [(Velox)](https://github.com/facebookincubator/velox), an open source unified execution engine, to deliver high-throughput feature computation.
+We maintain a fork that's been optimized for low-latency online inference.
+
+You can think of Velox as a backend for query engine's like Presto (AWS Athena) and Spark i.e. you can't point Velox at a database and pass in a SQL expression.
+Rather than forcing users to work directly with low-level execution primitives, Chalk provides an ergonomic interface (Chalk Python SDK) for defining features, transformations, and pipelines.
+
+This architecture allows us to expose the power of vectorized computation with clean APIs that feel natural (like writing Pandas and Polars) to data scientists and engineers.
+Users write simple Python decorators and SQL queries, while Velox handles the complex optimizations that make these computations blazingly fast.
+
+- Velox's columnar memory layout and vectorized expression evaluation deliver significant performance improvements, with benchmarks showing 6-7x speedups on real analytical workloads
+- Native support for structs, maps, arrays, and nested data types makes it ideal for feature engineering workflows
+- Features like filter reordering, dynamic filter pushdown, and adaptive column prefetching optimize query execution based on runtime statistics
+
+---
+
+## Service architecture
+
+We offer both a hosted model (“Chalk Cloud”) and a customer-hosted model (“Customer Cloud”).
+
+Most companies choose to run Chalk in their own cloud (VPC) for data residency and compliance.
+Chalk is deployed with Terraform ([sample config](https://github.com/chalk-ai/terraform-samples/tree/main/aws/)) and uses common cloud primitives, making it easy to integrate deployments with your existing infrastructure.
+
+Compute nodes run on Kubernetes (typically EKS on AWS and GKE on GCP).
+If you have custom needs, we are happy to customize the deployment to fit with your service architecture.
 
 <ServiceDiagramSwitcher />
 
 ### Management Plane
 
-The Management Plane is responsible for storing and serving
-non-customer data (like alert and RBAC configurations).
-It orchestrates machines in the Data Plane using the
-Kubernetes API to do things like scaling deployments,
-and running batch jobs.
+The Management Plane is responsible for storing and serving non-customer data (like alert and RBAC configurations).
+Workloads in the Data Plane are managed through the Kubernetes API, enabling tasks such as scaling deployments and running batch jobs.
 
-The Management Plane _does not_ have access to your data.
-Most Chalk partners using the Customer Cloud deployment
-choose to have Chalk host the Metadata Plane, but in some
-especially sensitive applications (like FedRamp deployments),
-Chalk partners will also opt to host the Metadata Plane.
-Hosting the metadata plane requires the Enterprise Features
-and Enterprise Support plans.
+Most customers choose our Customer Cloud deployment; however, we also offer a self-hosted option for highly regulated environments (like FedRAMP) that require additional security control.
+
+In short, the Management Plane handles
+
+- Deployment orchestration
+- Access control
+- Monitoring and alerting
+
+It does not have access to customer data.
 
 ### Data Plane
 
-The Data Plane consists of the machines computing feature
-pipelines, online store, and offline store.
-The compute nodes run on Kubernetes (typically EKS on AWS and GKE on GCP.)
+The Data Plane encompasses the execution environment for feature pipelines along with the storage and serving infrastructure for both online and offline feature stores.
 
 A single Data Plane can run many Chalk Environments.
 Often, companies will have 2-3 environments (like `qa`, `stage`, and `prod`.)
-If running in a single data plane, these environments
-share resources, which helps with cost and ease of setup.
+If running in a single data plane, these environments share resources, which helps with cost and ease of setup.
 
-However, if you prefer to have stronger isolation between
-Chalk Environments, each Chalk Environment can run in a
-separate Data Plane. You would typically run only one
-Metadata Plane to orchestrate all Data Planes, and deploy
-the Metadata Plane to the most sensitive of the environments.
-
----
-
-## Deploying a Chalk instance
-
-Chalk is deployed with Terraform and uses common cloud primitives.
-Given all necessary permissions, Chalk can be deployed in about an
-hour. You can see sample Terraform for AWS
-[here](https://github.com/chalk-ai/terraform-samples/tree/main/aws/).
-
-Our goal is to make deployments fit with your existing infrastructure.
-If you have custom needs, we are happy to customize the deployment to
-fit with your service architecture.
-
----
-
-## Online Computation and Serving
-
-<ArchitectureDiagram />
-
-Let's explore Chalk's architecture by examining how the pieces work
-together to compute & serve **[Features](/docs/features)** online.
-Suppose that you want to compute a set of features for making a
-decision about a request from a user:
-
-1. Your application sends an [HTTP request](/docs/query-basics) to Chalk's serving API, specifying information about which features you would like to compute.
-2. Chalk's Query Planner creates an optimized "plan" to understand which data must be fetched or transformed in order to answer your request.
-3. Chalk's Compute Engine executes this query plan, either by fetching data directly from your data sources and running transformations on that data, or by pulling cached feature values from **Online Storage**.
-4. Chalk responds to your application with the features you requested.
-5. Chalk logs any newly computed features to Online and/or Offline Storage for future use.
-
-Chalk's online query serving platform is designed to fetch data from a
-variety of heterogeneous data sources and execute complex
-transformations on that data with the minimum possible latency. Chalk
-uses many techniques to reduce latency, such as:
-
-- Automatic parallel execution of concurrent pipeline stages
-- Vectorization of pipeline stages that are written using scalar syntax
-- Low-latency key/value stores (like [Redis](https://redis.com/), [BigTable](https://cloud.google.com/bigtable), or [DynamoDB](https://aws.amazon.com/dynamodb/)) to minimize cached feature fetch time
-- Statistics-informed join planning
-- JIT transformation of Python code into native code
-
----
-
-## Offline Computation and Serving
-
-Chalk's architecture also supports efficient batch point-in-time queries to construct model
-training sets or perform batch offline inference.
-
-1. You submit a [training data request](/docs/query-offline) from a notebook client like Jupyter using Chalk's client library.
-2. Chalk's Query Planner creates a plan to determine which data can be served from **Offline Storage**, and which data must be computed fresh (i.e. in the case of lazy backfills).
-3. Chalk's Compute Engine pulls [point-in-time correct](/docs/temporal-consistency) feature values from Offline Storage.
-4. Chalk returns a DataFrame of features to you.
-
-Chalk's **Offline Storage** is optimized for batch querying of temporally consistent data.
-Chalk uses columnar storage backends ([Snowflake](https://snowflake.com/),
-[Delta Lake](https://delta.io/), or [BigQuery](https://cloud.google.com/bigquery))
-to ingest massive amounts of data from a variety of data sources and query it efficiently.
-Note that data ingested into the Offline Store can be trivially made available for use
-in an online querying context using [Reverse ETL](/docs/reverse-etl).
-
-You can see a list of supported ingestion sources in the [Integrations](/docs/integrations) section of these docs.
-
----
-
-## Storage
-
-Chalk uses different storage technologies to support online and offline use cases.
-
-The online store is optimized for serving the latest version of any given feature for any
-given entity with the minimum possible latency. Behind the scenes, Chalk uses key-value
-stores for this purpose. Chalk can be configured to use Redis or Cloud Memory Store for
-smaller resident data sets with high latency requirements, or DynamoDB when horizontal
-scalability is required.
-
-The offline store is optimized for storing all historical feature values, serving
-point-in-time correct queries, and tracking provenance of features. Chalk supports
-a variety of storage backends depending on data scale and latency requirements.
-Typically, Chalk uses [Snowflake](https://snowflake.com/), [Delta Lake](https://delta.io/),
-or [BigQuery](https://cloud.google.com/bigquery).
-
----
-
-## Background Persistence
-
-When Chalk computes new feature values during online query serving, those feature values
-are asynchronously persisted to online storage (for features with a max-staleness set),
-offline storage, and the query log.
-
-After the response for a query is sent back to the client,
-computed feature values are published to a topic, where a
-persistence worker picks up the values and writes them to the appropriate
-storage systems.
-
-This ensures that serving latency remains low and that user-facing performance is never compromised.
-
-Chalk supports intelligent batching and routing of this data:
-
-- **Online Store:** Persistence workers synchronously write messages from the topic into
-  low-latency key/value stores like Redis and DynamoDB to enable future online queries
-  to use the cached values. These workers aim to keep the latency from the time a feature
-  value is computed to the time it appears in the online store as low as possible.
-- **Offline Store (Training and Backfill):** Feature logs are streamed in batches into columnar
-  data warehouses such as BigQuery, Delta Lake, or Snowflake, where they are versioned and used
-  for training, backtesting, and historical analysis. The design goal of this part of the system
-  is to be as efficient as possible with loading the data into these systems and keeping costs
-  low. Chalk uses a variety of techniques to ensure that the data is loaded in a way that
-  minimizes the cost of storage and query execution. Some storage systems, like BigQuery,
-  support streaming inserts, which allows for low-latency writes to the data warehouse.
-  Other systems, like Delta Lake and Snowflake, support bulk loading of data, which can be
-  used to load large amounts of data into the system quickly. Chalk uses these techniques
-  to ensure that the data is loaded in a way that minimizes the cost of storage and query execution.
-
-By separating query serving from persistence, Chalk ensures that feature computation remains
-fast while enabling robust auditability, traceability, and reusability of all computed feature data.
+However, if you prefer to have stronger isolation between Chalk Environments, each Chalk Environment can run in a separate Data Plane.
+You would typically run only one Management Plane to orchestrate all Data Planes, and deploy the Management Plane to the most sensitive of the environments.
 
 ---
 
 ## Monitoring
 
-Chalk supports not only robust monitoring of pipeline execution, but of the feature values
-themselves as well. Monitoring machine learning data infrastructure is just as important as
-monitoring application availability, but is often overlooked.
+Native integrations with PagerDuty and Slack ensure teams are immediately alerted to any issues in their feature pipelines.
 
-Each time a query is served, Chalk assigns a unique "trace id" for the request. Chalk
-tracks all emitted logs on both a per-resolver basis and a per-trace basis.
-This enables you to debug problems and track fine-grained performance metrics
-pertaining to specific features and resolvers. Leveraging this helps answer common
-questions such as how often certain features are computed and how long the computation takes.
+Beyond alerting, every Chalk query is fully instrumented with traces and detailed logs, enabling both broad system-wide monitoring and deep request-level debugging across every stage of computation—down to the root data source.
+With Chalk, data teams get
 
-Like many traditional application monitoring platforms, Chalk supports alerting
-on performance or availability issues via integrations with [PagerDuty](https://www.pagerduty.com/) and [Slack](https://slack.com/).
+- Comprehensive logging & debugging
+    - Resolver execution details
+    - Feature computations
+    - Cache misses
+    - Data source failures
+    - Feature staleness
+    - Feature ownership tracking
+- Metrics and performance monitoring
+    - Features: request volumes, computation times, and error rates
+    - Models: inference latency, prediction accuracy, and resource utilization
+    - System: query throughput, system latency, and pipeline health
+- End-to-end request tracing
+    - Track the inputs and outputs of every step in any run
+    - Lineage tracking from data source to final predictions
 
-In addition to performance and request metrics for computation, Chalk supports
-alerting on feature values themselves. You can specify a variety of threshold
-requirements and drift tolerance tests to help spot issues such as:
 
-- Feature drift
-- Mismatches between offline/online pipelines
-- Format changes with external data sources
+Easily, build your own views and set up custom dashboards to visualize your metrics and configure smart alerts with custom formulas that notify you instantly when thresholds are crossed or anomalies are detected.
+
+![Metrics and chart creation](/img/architecture-monitoring-chart_creation.png)
+
+This flexibility to configure and define your own metrics makes it easy to answer common questions such as how often certain features are computed, how long individual computations take, and what the average value for a feature is.
+
+## Architecting maintainable and scalable systems for enterprise success
+
+By both connecting to your data stores directly and computing features post-fetch, Chalk makes it trivial to integrate new data sources from other teams, dramatically increasing predictive accuracy and the context available to your models.
+
+Your systems can also bidirectionally integrate with Chalk's underlying infrastructure, which is built on widely-adopted technologies like Redis, DynamoDB, or Postgres and leverages open standards like Arrow, Parquet, and Iceberg—ultimately maximizing compatibility and unlocking downstream analytical workflows
+
+Together, these architectural choices enable enterprises to build future-proof ML and AI systems that scale with their needs, maintain interoperability, and seamless integrate with their existing technology stack.
