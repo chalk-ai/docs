@@ -103,9 +103,6 @@ json{
               "Microsoft.EventHub/namespaces/*",
               "Microsoft.EventHub/locations/*",
 
-              "Microsoft.ServiceBus/namespaces/*",
-              "Microsoft.ServiceBus/locations/*",
-
               "Microsoft.Sql/servers/*",
               "Microsoft.Sql/managedInstances/*",
               "Microsoft.Sql/locations/*",
@@ -123,7 +120,7 @@ json{
             "notActions": [],
             "dataActions": [
               "Microsoft.KeyVault/vaults/secrets/*",
-              "Microsoft.KeyVault/vaults/keys/read",
+              "Microsoft.KeyVault/vaults/keys/*",
               "Microsoft.KeyVault/vaults/certificates/read",
 
               "Microsoft.Storage/storageAccounts/blobServices/containers/*",
@@ -140,6 +137,16 @@ json{
     }
 }
 ```
+
+Azure allows you to assign these permissions at various levels of granularity:
+
+- Subscription level (recommended): `/subscriptions/{subscription-id}`
+- Resource Group level: `/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}`
+- Individual Resource level: `/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-name}`
+
+We suggest following the normal practice of full subscription separation from other resources for simplicity and security.
+However, if your organization requires more granular access control, Chalk can work within specific Resource Groups by
+updating the assignableScopes accordingly.
 
 ### What are these permissions for?
 
