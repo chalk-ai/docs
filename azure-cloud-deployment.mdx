@@ -1,0 +1,420 @@
+---
+title: Azure Cloud Deployment
+description: How to deploy Chalk to Azure.
+published: true
+---
+
+
+Chalk's feature platform with best-in-class developer experience enables
+machine learning teams to focus on building the unique products and models
+that make their business stand out. Chalk provides a feature store so that
+you can deploy production machine learning pipelines for real time data
+in minutes.
+
+Chalk is both a framework and a platform — developers can write code
+using familiar Python packages, and deploy their feature and data pipeline definitions
+to Chalk’s platform. In the Customer Cloud deployment, Chalk runs &
+administers its platform on the customer’s cloud account. Chalk's managed
+infrastructure then executes the customer defined pipelines to compute
+[feature](/docs/features)
+data for machine learning applications. Chalk then serves this data
+back to customer applications for online inference and to customer
+data teams for training set generation.
+
+---
+
+## Azure Service Principal Setup
+
+Chalk requires certain permissions to manage infrastructure in your Azure account. Typically, Chalk
+recommends:
+
+- Create a Service Principal for Chalk in your Azure Active Directory
+- Assign the custom role with the permissions listed below
+- Configure AKS RBAC for Kubernetes resource management
+- Set up Key Vault access for secrets management
+
+## Required Azure Permissions
+Chalk recommends creating a custom role in your subscription with the following permissions granted.
+At a high level, Chalk needs the ability to provision the key components of your infrastructure:
+
+### Core Infrastructure Permissions
+```bash
+json{
+"properties": {
+"roleName": "Chalk Platform Manager",
+"description": "Custom role for Chalk platform deployment and management",
+"permissions": [
+    {
+    "actions": [
+    "Microsoft.Resources/subscriptions/resourceGroups/read",
+    "Microsoft.Resources/subscriptions/resourceGroups/write",
+    "Microsoft.Resources/subscriptions/resourceGroups/delete",
+    "Microsoft.Resources/deployments/*",
+    "Microsoft.Resources/tags/*",
+
+              "Microsoft.Compute/virtualMachines/*",
+              "Microsoft.Compute/virtualMachineScaleSets/*",
+              "Microsoft.Compute/disks/*",
+              "Microsoft.Compute/snapshots/*",
+              "Microsoft.Compute/images/*",
+              "Microsoft.Compute/galleries/*",
+              "Microsoft.Compute/proximityPlacementGroups/*",
+
+              "Microsoft.Network/virtualNetworks/*",
+              "Microsoft.Network/publicIPAddresses/*",
+              "Microsoft.Network/loadBalancers/*",
+              "Microsoft.Network/applicationGateways/*",
+              "Microsoft.Network/networkSecurityGroups/*",
+              "Microsoft.Network/routeTables/*",
+              "Microsoft.Network/privateDnsZones/*",
+              "Microsoft.Network/privateEndpoints/*",
+              "Microsoft.Network/networkInterfaces/*",
+
+              "Microsoft.ContainerService/managedClusters/*",
+              "Microsoft.ContainerService/locations/*",
+              "Microsoft.ContainerService/operations/read",
+
+              "Microsoft.ContainerRegistry/registries/*",
+              "Microsoft.ContainerRegistry/locations/*",
+
+              "Microsoft.Storage/storageAccounts/*",
+              "Microsoft.Storage/locations/*",
+
+              "Microsoft.KeyVault/vaults/*",
+              "Microsoft.KeyVault/deletedVaults/*",
+              "Microsoft.KeyVault/locations/*",
+              "Microsoft.KeyVault/operations/read",
+
+              "Microsoft.Insights/components/*",
+              "Microsoft.Insights/workbooks/*",
+              "Microsoft.Insights/actionGroups/*",
+              "Microsoft.Insights/alertRules/*",
+              "Microsoft.Insights/metricAlerts/*",
+              "Microsoft.Insights/scheduledQueryRules/*",
+              "Microsoft.Insights/diagnosticSettings/*",
+
+              "Microsoft.OperationalInsights/workspaces/*",
+              "Microsoft.OperationalInsights/solutions/*",
+              "Microsoft.OperationalInsights/savedSearches/*",
+
+              "Microsoft.Cache/redis/*",
+              "Microsoft.Cache/locations/*",
+
+              "Microsoft.EventHub/namespaces/*",
+              "Microsoft.EventHub/locations/*",
+
+              "Microsoft.Sql/servers/*",
+              "Microsoft.Sql/managedInstances/*",
+              "Microsoft.Sql/locations/*",
+
+              "Microsoft.DocumentDB/databaseAccounts/*",
+              "Microsoft.DocumentDB/locations/*",
+
+              "Microsoft.Authorization/roleAssignments/read",
+              "Microsoft.Authorization/roleAssignments/write",
+              "Microsoft.Authorization/roleAssignments/delete",
+              "Microsoft.Authorization/roleDefinitions/read",
+
+              "Microsoft.ManagedIdentity/userAssignedIdentities/*"
+            ],
+            "notActions": [],
+            "dataActions": [
+              "Microsoft.KeyVault/vaults/secrets/*",
+              "Microsoft.KeyVault/vaults/keys/*",
+              "Microsoft.KeyVault/vaults/certificates/read",
+
+              "Microsoft.Storage/storageAccounts/blobServices/containers/*",
+              "Microsoft.Storage/storageAccounts/fileServices/fileshares/*",
+              "Microsoft.Storage/storageAccounts/queueServices/queues/*",
+              "Microsoft.Storage/storageAccounts/tableServices/tables/*"
+            ],
+            "notDataActions": []
+          }
+        ],
+        "assignableScopes": [
+          "/subscriptions/{subscription-id}"
+        ]
+    }
+}
+```
+
+Azure allows you to assign these permissions at various levels of granularity:
+
+- Subscription level (recommended): `/subscriptions/{subscription-id}`
+- Resource Group level: `/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}`
+- Individual Resource level: `/subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-name}`
+
+We suggest following the normal practice of full subscription separation from other resources for simplicity and security.
+However, if your organization requires more granular access control, Chalk can work within specific Resource Groups by
+updating the assignableScopes accordingly.
+
+### What are these permissions for?
+
+- Azure Kubernetes Service (AKS): Container orchestration for running feature engineering workloads
+- Azure Container Registry (ACR): Container image management for deployments
+- Azure Storage: Object storage for feature data and artifacts
+- Azure SQL Database: Relational database for online and offline storage
+- Azure Cosmos DB: NoSQL database for online storage
+- Azure Cache for Redis: In-memory caching for feature serving
+- Azure Event Hubs: Event streaming for real-time data ingestion
+- Azure Service Bus: Message queuing for asynchronous processing
+- Azure Key Vault: Secrets management for data source credentials
+- Azure Monitor: Logging and metrics collection
+- Azure Application Insights: Application performance monitoring
+
+## Kubernetes RBAC Configuration
+
+Chalk requires the following Kubernetes roles to manage the resources in your AKS cluster:
+
+### Cluster-Level Role
+
+```yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: chalk-cluster-management-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes # required to track usage
+  verbs:
+  - get
+  - list
+  - watch
+# For allowing the web UI to manage cluster scaling
+- apiGroups:
+  - "cluster-autoscaler.kubernetes.io"
+  resources:
+  - nodepools
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - patch
+  - watch
+  - delete
+- apiGroups:
+  - "storage.k8s.io"
+  resources:
+  - storageclasses
+  verbs:
+  - get
+  - list
+```
+
+### Namespace-Level Role
+
+```yaml
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: chalk-management-role
+  namespace: <namespace> # replace <namespace> with your actual namespace
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - pods
+  - services
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - patch
+  - watch
+# For support w/ debugging & rendering logs in the dashboard.
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - "extensions"
+  - "networking.k8s.io"
+  resources:
+  - ingresses
+  - ingresses/status
+  - ingressclasses
+  verbs:
+  - get
+  - list
+  - watch
+  - delete
+  - update
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - patch
+  - update
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - "apps"
+  resources:
+  - replicasets
+  - statefulsets
+  - deployments
+  - daemonsets
+  verbs:
+  - get
+  - list
+  - update
+  - patch
+  - create
+  - delete
+- apiGroups:
+  - "batch"
+  resources:
+  - cronjobs
+  - jobs
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - patch
+  - watch
+  - delete
+# For durable storage management.
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - patch
+  - watch
+  - delete
+# For managing KEDA objects for autoscaling.
+- apiGroups:
+  - keda.sh
+  resources:
+  - scaledobjects
+  - scaledjobs
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - patch
+  - watch
+  - delete
+# For managing PodDisruptionBudgets.
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - patch
+  - watch
+# OPTIONAL: For showing thread dumps & profiling for batch backfills + some support use-cases.
+- apiGroups:
+  - ""
+  resources:
+  - pods/exec
+  verbs:
+  - create
+  - get
+# OPTIONAL: For support with debugging k8s rbac, grant read-only access to this namespaces' rbac configuration.
+- apiGroups: ["", "rbac.authorization.k8s.io"]
+  resources: ["roles", "serviceaccounts", "rolebindings"]
+  verbs: ["get", "list"]
+```
+
+### Workload Service Account Role
+Additionally, Chalk workload service accounts require the following role to be able to manage batch workloads:
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+name: chalk-job-reader
+namespace: <namespace> # replace <namespace> with your actual namespace
+rules:
+- apiGroups: ["batch"]
+resources: ["jobs"]
+verbs: ["get", "list", "watch"]
+```
+
+### Argo Workflows Role (Optional)
+If you use in-cluster docker image building powered by kaniko and Argo, Chalk requires this role on the namespace where
+the docker image building is happening:
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+name: argo-workflows-role
+namespace: <namespace> # replace <namespace> with your actual namespace
+rules:
+- apiGroups: ["argoproj.io"]
+  resources: ["workflows"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+```
+This role must be granted to the management service account that Chalk uses to manage the cluster, and to the workload
+service account that runs the docker image building.
+Azure Monitor and Log Analytics
+In order to display logs in the Chalk web UI, Chalk requires permissions to be able to read Azure Monitor logs.
+If you use a separate logging service, you can set up Azure Monitor Agent or Fluent Bit to send logs to Log Analytics workspace.
+Then, to view these logs we need the following permissions:
+```json
+{
+    "permissions": [
+        {
+            "actions": [
+                "Microsoft.OperationalInsights/workspaces/read",
+                "Microsoft.OperationalInsights/workspaces/query/read",
+                "Microsoft.OperationalInsights/workspaces/search/read",
+                "Microsoft.OperationalInsights/workspaces/sharedKeys/action",
+                "Microsoft.Insights/logs/read"
+            ],
+            "notActions": [],
+            "dataActions": [
+                "Microsoft.OperationalInsights/workspaces/query/*/read",
+                "Microsoft.OperationalInsights/workspaces/search/*/read"
+            ],
+            "notDataActions": []
+        }
+    ]
+}
+```
