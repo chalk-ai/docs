@@ -6,26 +6,8 @@ published: true
 
 import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
 
-
-## Background
-
-Chalk enables innovative machine learning teams to focus on building
-the unique products and models that make their business stand
-out. Behind the scenes Chalk seamlessly handles data infrastructure
-with a best-in-class developer experience.
-
-Chalk is both a framework and a platform — developers can write code
-using familiar Python packages, and deploy that code to Chalk’s
-platform. In the Customer Cloud deployment, Chalk runs & administers its platform
-on the customer’s cloud account. Chalk's managed infrastructure then executes-customer defined pipelines to compute
-“[feature](<https://en.wikipedia.org/wiki/Feature_(machine_learning)>)”
-data for machine learning applications. Chalk then serves this data
-back to customer applications for online inference and to customer
-data teams for training set generation.
-
----
-
-## Architecture Diagram
+This page contains GCP specific information on deploying Chalk. A general
+overview can be found on the [Deploying Chalk](/docs/deployment) page.
 
 <ServiceDiagramSwitcher default_option={"GCP"} hideSwitch />
 
@@ -1002,14 +984,72 @@ bigquery.models.export
 bigquery.models.updateTag
 ```
 
----
+## Granting Permissions
 
-## Ongoing permissions
+The following bash script can be used to grant the permissions we need to deploy Chalk into your GCP project:
 
-Chalk's support team will work with you to scope permissions down to what are needed for ongoing maintenance.
-The precise details depend on the level of ongoing support that your team needs and your compliance requirements.
-In principle, Chalk does not require ongoing access to data, or to the ability to edit IAM permissions,
-but Chalk requires ongoing access to update the software deployed in your environment.
+```sh
+#!/bin/bash
+
+# Usage: ./grant-permissions.sh <SERVICE_ACCOUNT_EMAIL> <PROJECT_ID> [--include-bq]
+# Example: ./grant-permissions.sh management-sa@my-project.iam.gserviceaccount.com my-project --include-bq
+
+# Display help message
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+  echo "Usage: $0 <SERVICE_ACCOUNT_EMAIL> <PROJECT_ID> [--include-bq]"
+  echo
+  echo "Arguments:"
+  echo "  <SERVICE_ACCOUNT_EMAIL>  The email of the service account to grant permissions to."
+  echo "  <PROJECT_ID>             The ID of the GCP project."
+  echo
+  echo "Options:"
+  echo "  --include-bq             Include BigQuery admin permissions (for a bigquery offline store)."
+  echo "  -h, --help               Display this help message."
+  exit 0
+fi
+
+SERVICE_ACCOUNT_EMAIL=$1
+PROJECT_ID=$2
+INCLUDE_BQ_PERMISSIONS=false
+
+# Check for the optional --include-bq flag
+if [[ "$3" == "--include-bq" ]]; then
+  INCLUDE_BQ_PERMISSIONS=true
+fi
+
+if [[ -z "$SERVICE_ACCOUNT_EMAIL" || -z "$PROJECT_ID" ]]; then
+  echo "Usage: $0 <SERVICE_ACCOUNT_EMAIL> <PROJECT_ID> [--include-bq]"
+  exit 1
+fi
+
+# Define the roles to be granted
+ROLES=(
+  "roles/container.admin"
+  "roles/iam.serviceAccountAdmin"
+  "roles/logging.admin"
+  "roles/monitoring.admin"
+  "roles/pubsub.admin"
+  "roles/redis.admin"
+  "roles/secretmanager.admin"
+  "roles/storage.admin"
+)
+
+# Conditionally add BigQuery permissions if INCLUDE_BQ_PERMISSIONS is true
+if [[ "$INCLUDE_BQ_PERMISSIONS" == "true" ]]; then
+  ROLES+=("roles/bigquery.admin")
+fi
+
+# Grant each role to the service account
+for ROLE in "${ROLES[@]}"; do
+  echo "Granting $ROLE to $SERVICE_ACCOUNT_EMAIL on project $PROJECT_ID..."
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:$SERVICE_ACCOUNT_EMAIL" \
+    --role="$ROLE" \
+    --quiet
+done
+
+echo "Permissions granted successfully."
+```
 
 ## Adding a Private Cloud SQL Data Source
 

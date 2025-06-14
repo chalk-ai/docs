@@ -6,31 +6,10 @@ published: true
 
 import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
 
----
-
-Chalk's feature platform with best-in-class developer experience enables
-machine learning teams to focus on building the unique products and models
-that make their business stand out. Chalk provides a feature store so that
-you can deploy production machine learning pipelines for real time data
-in minutes.
-
-Chalk is both a framework and a platform — developers can write code
-using familiar Python packages, and deploy their feature and data pipeline definitions
-to Chalk’s platform. In the Customer Cloud deployment, Chalk runs &
-administers its platform on the customer’s cloud account. Chalk's managed
-infrastructure then executes the customer defined pipelines to compute
-[feature](/docs/features)
-data for machine learning applications. Chalk then serves this data
-back to customer applications for online inference and to customer
-data teams for training set generation.
-
----
-
-## Architecture
+This page contains GCP specific information on deploying Chalk. A general
+overview can be found on the [Deploying Chalk](/docs/deployment) page.
 
 <ServiceDiagramSwitcher default_option={"AWS"} hideSwitch />
-
----
 
 ## IAM Role Permissions
 
@@ -163,7 +142,107 @@ infrastructure in your cloud account:
 - `kms`: Encryption keys for secrets
 - `secretsmanager`: Encrypting data source secrets from the web UI
 
----
+## Granting the Roles
+
+The following bash script can be used to grant the roles we need to deploy Chalk into your AWS project:
+
+```sh
+#!/bin/bash
+
+# Help text
+function show_help() {
+    echo "Usage: $0 -r ROLE_NAME -p POLICY_NAME"
+    echo
+    echo "Options:"
+    echo "  -r ROLE_NAME         Name of the IAM role to create (default: ChalkRole)"
+    echo "  -p POLICY_NAME       Name of the IAM policy to attach (default: ChalkPolicy)"
+    echo "  -h                   Show this help message"
+    exit 1
+}
+
+# Default values
+ROLE_NAME="ChalkRole"
+POLICY_NAME="ChalkPolicy"
+TRUST_ROLE_ARN="arn:aws:iam::754784422779:role/chalk-api-server"
+
+# Parse command-line arguments
+while getopts "r:p:h" opt; do
+    case $opt in
+        r) ROLE_NAME="$OPTARG" ;;
+        p) POLICY_NAME="$OPTARG" ;;
+        h) show_help ;;
+        *) show_help ;;
+    esac
+done
+
+# Create trust policy
+TRUST_POLICY_FILE="trust-policy.json"
+cat > $TRUST_POLICY_FILE <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "$TRUST_ROLE_ARN"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+EOF
+
+# Create permissions policy
+PERMISSIONS_POLICY_FILE="permissions-policy.json"
+cat > $PERMISSIONS_POLICY_FILE <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sqs:*",
+                "sns:*",
+                "acm:*",
+                "secretsmanager:*",
+                "s3:*",
+                "redshift:*",
+                "redshift-data:*",
+                "redshift-serverless:*",
+                "rds:*",
+                "logs:*",
+                "kms:*",
+                "kafkaconnect:*",
+                "kafka:*",
+                "kafka-cluster:*",
+                "iam:*",
+                "elasticloadbalancing:*",
+                "eks:*",
+                "ecr:*",
+                "ec2:*",
+                "cloudwatch:*",
+                "autoscaling:*",
+                "application-autoscaling:*",
+                "dynamodb:*",
+                "dax:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+
+# Create the role
+aws iam create-role --role-name $ROLE_NAME --assume-role-policy-document file://$TRUST_POLICY_FILE
+
+# Attach the permissions policy
+aws iam put-role-policy --role-name $ROLE_NAME --policy-name $POLICY_NAME --policy-document file://$PERMISSIONS_POLICY_FILE
+
+# Cleanup
+rm $TRUST_POLICY_FILE $PERMISSIONS_POLICY_FILE
+
+echo "Role $ROLE_NAME created and policy $POLICY_NAME attached."
+```
 
 ## Ongoing permissions
 
@@ -488,3 +567,4 @@ Then, to view these logs we need the following permissions:
     "Version": "2012-10-17"
 }
 ```
+
