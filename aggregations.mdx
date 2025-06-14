@@ -6,14 +6,73 @@ description: Define features as aggregations of data over sliding time ranges.
 published: true
 ---
 
-Create a data aggregation over a time range using a Windowed Feature.
+Given a has-many relationship between two feature classes, Chalk can compute aggregations over the joined data either
+for all possible values or filtered by specific windows of time. Create an Aggregation Feature using a
+[Chalk Expression](/docs/expression) or a Windowed Aggregation Feature using the [`windowed`](/api-docs#windowed) function.
 For example, use windowed features to count the number of login attempts made by a user over the past 10 minutes, or
 to track the largest purchase amount a cardholder has made in the past 30 days.
 
 ---
 
-For performant aggregations over large volumes of data, such as calculating real-time aggregations over user transactions,
-Chalk has first-class support for [materialized windowed aggregations](/docs/materialized_aggregations).
+## Define an Aggregation
+
+Chalk supports a number of aggregations out of box. Chalk builtins are very performant as they're optimized and also
+run natively in C++ and Rust.
+Aggregations automatically skip null or `None` values.
+The following table lists the supported aggregations along with some notes.
+
+| Function | Notes |
+| ---  | --- |
+| `sum` | |
+| `min` | |
+| `max` | |
+| `mean` | Feature type must be `float` or <code>float &#124; None</code>. `None` values are skipped, meaning they are not included in the mean calculation.  |
+|`count` | |
+|`std` | Standard deviation. Requires at least 2 values. |
+|`var` | Variance. Same requirements as `std`. |
+|`approx_count_distinct` | An approximation of the cardinality of non-null data. |
+
+For example, say you want to compute some aggregations over a document's revisions. You could define the features
+and aggregations below.
+
+```python
+from chalk.features import features, DataFrame, _
+from datetime import datetime
+
+@features
+class Document:
+    id: int
+    revisions: DataFrame[Revision]
+
+    # these are aggregations over the revisions DataFrame
+    num_revisions: int = _.revisions[_.id].count()
+    max_revision_size: float = _.revisions[_.size_bytes].max()
+
+    # you can also filter the rows being aggregated
+    earliest_large_revision_ts: datetime = _.revisions[_.size_bytes > 100,000,000, _.timestamp].min()
+
+
+@features
+class Revision:
+    id: int
+    # this is a foreign key join between Document and Revision
+    document_id: Document.id
+    size_bytes: float
+    timestamp: datetime
+
+```
+
+## Define a Windowed Aggregation
+
+In an aggregation, you can filter and sort by datetime features. Chalk enables you to define Windowed Aggregations,
+such that you can compute the same aggregation over multiple time windows in a single feature definition.
+Windowed features are typically computed using either raw data or pre-aggregated data. For larger datasets, some systems
+may pre-aggregate batch data to optimize performance at the cost of real-time accuracy. Chalk supports both modes of
+operation to achieve low latency and accuracy for real time aggregations over large datasets through
+[materialized windowed aggregations](/docs/materialized_aggregations).
+
+Otherwise, for smaller datasets or lower throughput use cases, Chalk can compute windowed aggregations directly
+on the raw data.
 
 ## Set up a data aggregation using windowed features
 
@@ -134,103 +193,50 @@ class User:
 
 ### Referencing windowed features
 
-A windowed feature can be referenced in a query or a resolver in the following, equivalent ways. Each
-column below shows the possible syntax variants for a given time window.
+A windowed feature can be referenced in a query or a resolver in Python using the window as defined in the feature
+definition, but Chalk will convert every windowed feature to a FQN (fully qualified name) that defines the window
+duration in seconds. So, when referencing the feature for a resolver, you can use the Python syntax. However, when
+referencing a feature in a query, you can use the Python syntax when querying with the Chalk Python SDK, otherwise
+the CLI will require the FQN syntax. **If you do not specify a window when referencing a windowed feature, Chalk will
+return all windows.**
 
-```py
-# Note: The last value for each list is the time converted to seconds
-User.num_failed_logins("**10m**")    User.num_failed_logins("**1d**")       User.num_failed_logins("**1h30m**")
-User.num_failed_logins["**10m**"]    User.num_failed_logins["**1d**"]       User.num_failed_logins["**1h30m**"]
-User.num_failed_logins_10m       User.num_failed_logins_1d          User.num_failed_logins_1h30m
-User.num_failed_logins__10m__    User.num_failed_logins__1d__       User.num_failed_logins__1h30m__
-User.num_failed_logins__600__    User.num_failed_logins__86400__    User.num_failed_logins__5400__
+Given the feature definition below, the following showcase the ways to reference the respective windows in either
+Python syntax or using the FQN.
+
+```python
+from chalk.features import features
+from chalk.streams import windowed, Windowed
+
+@features
+class User:
+    id: int
+    ...
+    num_failed_logins: Windowed[int] = windowed(
+        "10m",
+        "1h30m",
+        "1d",
+        expression=...,
+    )
 ```
+
+|  Feature Definition Window | Python Syntax                   | Fully Qualified Name            |
+| ---------------------------|---------------------------------|---------------------------------|
+| "10m"                      | User.num_failed_logins["10m"]   | User.num_failed_logins__600__   |
+| "1h30m"                    | User.num_failed_logins["1h30m"] | User.num_failed_logins__5400__  |
+| "1d"                       | User.num_failed_logins["1d"]    | User.num_failed_logins__86400__ |
+
 
 Windowed features can be inputs to resolvers:
 
 ```python
 @online
 def account_under_attack(
-    failed_logins_30m: User.num_failed_logins('30m'),
-    failed_logins_1d: User.num_failed_logins('1d')
+    failed_logins_30m: User.num_failed_logins["30m"],
+    failed_logins_1d: User.num_failed_logins["1d"]
 ) -> ...:
     return failed_logins_30m > 10 or failed_logins_1d > 100
 ```
 
----
 
-## Grouped window aggregations
-
-Similar to SQL `GROUP BY` clauses, you can group your windowed feature by one or more other features with
-[`group_by_windowed`](/api-docs#group_by_windowed).
-
-### Example
-
-In this example, our goal is to create a feature representing a given user's historical spend at a specific merchant.
-This feature can be used as input into our model to determine whether a given transaction is fraudulent.
-
-First, we define a `Transaction` FeatureSet with a has-one relationship to the `User` FeatureSet. Within the `User`
-FeatureSet, we track a grouped windowed feature representing the user's total spend at each merchant over the past
-30 days and 90 days.
-
-```python
-from chalk.features import DataFrame, features, _
-from chalk.streams import group_by_windowed
-
-@features
-class Transaction:
-    id: int
-    merchant_id: str
-    user_id: "User.id"
-    user: "User"
-    amount: float
-
-@features
-class User:
-    id: int
-    transactions: DataFrame[Transaction]
-    spend_by_merchant: DataFrame = group_by_windowed(
-        "30d",
-        "90d",
-        expression=_.transactions.group_by(
-            _.merchant_id
-        ).agg(_.amount.sum()),
-    )
-```
-
-In this example, `expression` groups all the given user's `transactions` by each transaction's `merchant_id` value,
-then aggregates each group by the sum of the transactions' `amount` values.
-
-The `User` class uses materialization to aggregate
-associated transaction data as a performance optimization.
-
-Finally, to query for spend at a specific merchant, we can access one of the groups:
-
-```diff-py
-from chalk.features import features, _, DataFrame
-from chalk.streams import group_by_windowed, Windowed, windowed
-
-@features
-class User:
-    id: int
-    transactions: DataFrame[Transaction]
-    most_common_merchant_id: str
-    spend_by_merchant: DataFrame = group_by_windowed(
-        "30d",
-        "90d",
-        expression=_.transactions.group_by(_.merchant_id).agg(_.amount.sum()),
-    )
-+   spend_at_most_common_merchant: Windowed[float] = windowed(
-+       "30d",
-+       "90d",
-+       expression=_.spend_by_merchant.group(merchant_id=_.most_common_merchant_id)
-+   )
-```
-
-[//]: # "#### Limitations"
-[//]: # "At this time, Chalk does not support direct referencing of the grouped windowed feature, as they are intended as an"
-[//]: # "intermediary computation for producing scalar features. As a result, they also cannot be used as input into other"
-[//]: # "resolvers. The grouped windowed feature must be resolved by passing an [expression](/docs/expression) to"
-[//]: # "the `expression` parameter."
 
 
