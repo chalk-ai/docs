@@ -106,3 +106,46 @@ where the benefit of minimizing downtime risk is worth the cost of additional re
 
 If you are interested in using blue-green deployments, please reach out to the Chalk team and we can help you
 determine what configurations are best suited for your release strategy. 
+
+
+## Mirror Traffic
+
+Chalk also offers a mirror traffic feature that allows you to mirror traffic from your production deployment to a
+new deployment. This is useful for testing new features in a production-like environment without affecting the
+production traffic. To use mirror traffic, you can run the following command:
+
+```bash
+# Mirror 5% of traffic to the green deployment
+$ chalk traffic mirror --deployment-tag green --weight 5
+```
+
+Note: mirror traffic does not block responses for existing production traffic. It simply mirrors the traffic to the
+new deployment without waiting to receive a response from the new deployment.
+
+Metrics, logs, and traces from the mirrored traffic will be available in the new deployment. Queries will not
+impact the online store, but will impact the offline store if the new deployment is configured to write to
+the offline store. This permits statistical analysis of the new deployment using tooling like the query log
+or the offline store.
+
+
+### Light-weight Cookbook
+
+You can make use of only mirroring with minimal reference to blue-green by:
+
+1. Deploying your new code with the `--deployment-tag` flag to tag the deployment.
+2. Mirroring traffic to the new deployment using the `--weight` flag to specify the percentage of traffic to mirror.
+3. Monitoring the new deployment for any issues.
+
+Example commands:
+
+```bash
+# Make the new deployment -- it won't receive any traffic yet
+$ chalk apply --deployment-tag green
+
+# Mirror 5% of traffic to the green deployment
+$ chalk traffic mirror --deployment-tag green --weight 5
+
+# Monitor the new deployment for any issues. Once you're satisfied, you can promote it to production with:
+$ chalk traffic promote
+```
+
