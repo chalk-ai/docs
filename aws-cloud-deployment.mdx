@@ -54,6 +54,22 @@ infrastructure in your cloud account:
 - Create a new account in your AWS organization.
 - Create a new [role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) in the new account that enables Chalk's server
   to perform actions in this account. Ensure that AssumeRole is granted.
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::754784422779:role/chalk-api-server"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}
+```
+
 - Create an IAM policy using the JSON document below and attach this IAM policy
   to the created role.
 
@@ -142,6 +158,7 @@ infrastructure in your cloud account:
     "Version": "2012-10-17"
 }
 ```
+
 
 ### What are these permissions for?
 
@@ -487,4 +504,37 @@ Then, to view these logs we need the following permissions:
     ],
     "Version": "2012-10-17"
 }
+```
+
+### VPC CIDR Blocks
+
+Chalk will create the underlying [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-cidr-blocks.html) and
+subnets for the EKS cluster(s) for your Chalk deployment. Typically, Chalk will request a /16 address block and
+work within it. However, the number of addresses will depend on the size of your implementation. The Chalk team will
+work with you to determine the appropriate CIDR sections to use. 
+
+Our default configuration is:
+
+```yaml
+vpc_cidr_block = "10.130.0.0/16"
+  vpc_subnets = [
+    {
+      name              = "primary"
+      cidr_block        = "10.130.0.0/20"
+      az                = "a"
+      public_cidr_block = "10.130.16.0/20"
+    },
+    {
+      name              = "secondary"
+      cidr_block        = "10.130.32.0/20"
+      az                = "b"
+      public_cidr_block = "10.130.48.0/20"
+    },
+    {
+      name              = "tertiary"
+      cidr_block        = "10.130.64.0/20"
+      az                = "c"
+      public_cidr_block = "10.130.80.0/20"
+    }
+  ]
 ```
