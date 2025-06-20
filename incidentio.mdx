@@ -1,0 +1,37 @@
+---
+title: IncidentIo
+description: Integrate Chalk alerts with your IncidentIo workflow
+published: true
+---
+
+---
+
+Chalk supports integration with [IncidentIo](https://incident.io/) for incident handling.
+
+## Creating an integration key
+
+To connect IncidentIo to Chalk, you'll need to generate an integration API key from
+your IncidentIo settings page.
+
+To generate an API key, navigate to `API keys` in the settings page, 
+Click `Add new` in the top right corner. You will need to ensure that
+the permissions include `Create incidents` and `View catalog types and entries`.
+Copy the `Integration Key` into your dashboard in the settings.
+
+For more information, see
+[IncidentIo's guide](https://incident.io/blog/api#1%EF%B8%8F%E2%83%A3generate-an-api-key-in-incidentio)
+to creating an integration key.
+
+---
+
+## Adding to Chalk
+
+Once you have an integration key, you can insert it on your environment settings page.
+
+Integrations are per-environment but you can use more than one integration key per
+Chalk environment and create seperate IncidentIo workflows for each. 
+
+By default, IncidentIo only has Minor, Major, and Critical severities. Chalk errors will
+default to Minor unless Critical is set in the Metric Chart Alert Configuration.
+This behavior is able to be modified using IncidentIo workflows that select on the API key
+and incident severity.
