@@ -6,6 +6,59 @@ description: Updates to Chalk!
 published: true
 ---
 
+## June 23, 2025
+
+### Process images with Chalk's builtin chat completion API
+
+Chalk's chat completion API now supports multimodal inputs, enabling you to process images alongside text in your LLM workflows. This enhancement allows you to:
+
+- Pass images directly to vision-capable models like GPT-4o
+- Combine text and image inputs in a single prompt
+- Extract structured information from visual content
+
+```py
+@features
+class Receipt:
+   image_url: str
+   image_response: P.MultimodalPromptResponse = P.completion(
+       model="gpt-4o",
+       messages=[
+           P.message(
+               "system",
+               [
+                   {"type": "input_text", "text": "describe this image"},
+                   {"type": "input_image", "image_url": _.image_url},
+               ],
+           ),
+       ],
+   )
+```
+
+### Workspace audit logs and monitoring
+
+The audit log page provides comprehensive tracking of workspace changes, helping you maintain security compliance, troubleshoot issues, and understand your team's activity. Navigate to the audit logs page from the Chalk dashboard by going to Settings → Audit Logs.
+
+The audit log captures:
+- Timestamps
+- Users or service accounts that made changes
+- API endpoints accessed
+- Descriptions of the operation
+- Success/failure status
+- IP addresses
+- Trace IDs for debugging
+
+### Enhanced metadata export for online queries
+
+Added a "Full Export" option that includes both query metadata and the actual input/output data (query_values.parquet) to the online queries page. Each export includes query execution details, configurations, query plans, data values, and GraphQL information.
+
+### Added an offline query input explorer
+
+Chalk's offline query explorer makes it easy to inspect, debug, and validate your offline query results through interactive SQL queries and data visualization.
+
+We've introduced an Inputs Explorer that makes it easier to see the inputs of the offline queries that you're running. Having visibility into both inputs and outputs provides a complete picture of your offline query lifecycle, making it easier to troubleshoot issues and optimize query performance.
+
+![Inputs explorer for offline queries](/img/changelog-input_explorer_for_offline_queries.png)
+
 ## June 6, 2025
 
 ### New documentation on optimizing and verifying static Python resolvers
