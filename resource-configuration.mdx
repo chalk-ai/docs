@@ -65,7 +65,8 @@ triggered based on CPU utilization or on a schedule.
 
 To enable CPU-based autoscaling, you can set the `Target CPU %` in the Cloud Resource Configuration.
 Chalk will then monitor the CPU utilization of the service and scale the number of instances up or down
-based on the target CPU percentage.
+based on the target CPU percentage. In order for CPU-based autoscaling to work, you must have the
+Min Instances, Max Instances, and Target CPU% all set for the service.
 
 #### Scheduled Autoscaling
 
@@ -112,12 +113,28 @@ configurations outside of that time window.
 
 ```
 
+## Shared Resources
+
+Under `Settings > Shared Resources`, environment admins can view and manage shared resources across
+different services in your environment, including the Metrics Database configuration, Gateway
+configuration, and Background Persistence configurations. You can adjust these configurations here
+if, for example, you need to scale up your Metrics Database to handle larger volumes of data, or
+if you drastically increase the volume of data being written to the online or offline stores.
+
+For enabling autoscaling of Background Persistence workers to handle variations in data being persisted
+online and offline, you can set the Horizontal Pod Autoscaling (HPA) Settings in the Background
+Persistence Configuration tab. In order to enable autoscaling, it is required to set
+* Max replicas
+* Min replicas
+* Target average value (the approximate target undelivered message count in queue per replica)
+* Pubsub Subscription ID
+
 ## Connections
 
 Under `Settings > Connections`, you can view all the connections that your environment has to external
 resources, such as your online and offline stores, and the branch server. This is a good place to check
 the health of the different services in your environment, as well as to verify the types of connections
-configured.
+configured. Significantly, you can also scale up
 
 ## Environment Variables
 
