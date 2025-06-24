@@ -251,8 +251,7 @@ def batch_get_age_in_years(df: DataFrame[User.id, User.birthday, Now]) -> DataFr
     )
 ```
 
-You can also reference `${now}` in SQL file resolvers. If `Now` is used in a resolver to compute a has-many join, then
-the `Now` feature must be passed as input.
+You can also reference `${now}` in SQL file resolvers.
 
 ```sql
 -- source: sql_file_resolver_temp_db
