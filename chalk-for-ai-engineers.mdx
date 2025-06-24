@@ -20,6 +20,7 @@ Chalk provides a full-stack solution but can also integrate seamlessly with your
 For instance, you can use an existing vector DB to store and retrieve your embeddings, while leveraging Chalk to evaluate new models and prompts.
 Chalk lets you integrate only the pieces you need:
 
+
 ```py
 import chalk.functions as F
 import chalk.prompts as P
@@ -88,6 +89,12 @@ class ProductRec:
         )
     )
 ```
+
+Chalk eliminates the complexity of orchestrating data and ETL pipelines by building a dependency graph (DAG) of your features, which are defined using Python.
+At inference time, Chalk dynamically builds query plans (subgraphs of your feature DAG) without manual configuration, based on the features you request.
+The (structured) outputs of chat completions are treated as just newly computed features and can feed into other feature computations until all of the features requested are computed.
+
+![Chalk for AI engineers](/img/chalk_for_ai_engineers-llm-diagram.png)
 
 ---
 
