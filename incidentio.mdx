@@ -1,37 +1,27 @@
 ---
 title: IncidentIo
-description: Integrate Chalk alerts with your IncidentIo workflow
+description: Integrate Chalk alerts with your IncidentIo alert routes
 published: true
 ---
 
 ---
 
-Chalk supports integration with [IncidentIo](https://incident.io/) for incident handling.
+Chalk supports integration with [IncidentIo](https://incident.io/) for alerting.
 
-## Creating an integration key
+## Creating an Chalk Alert Source
 
-To connect IncidentIo to Chalk, you'll need to generate an integration API key from
-your IncidentIo settings page.
+To connect IncidentIo to Chalk, you'll need to create a new HTTP alert source from your IncidentIo dashboard.
 
-To generate an API key, navigate to `API keys` in the settings page, 
-Click `Add new` in the top right corner. You will need to ensure that
-the permissions include `Create incidents` and `View catalog types and entries`.
-Copy the `Integration Key` into your dashboard in the settings.
+Once you create an HTTP alert source, you will be given the option of `Header authentication` and `Query authentication`.
+You will want to select `Query authentication` and copy the URL. It should be of the form:
+https://api.incident.io/v2/alert_events/http/`<alert_source_id>`?token=`<alert_source_token>`
 
-For more information, see
-[IncidentIo's guide](https://incident.io/blog/api#1%EF%B8%8F%E2%83%A3generate-an-api-key-in-incidentio)
-to creating an integration key.
+For more information, see [IncidentIo's Alert Guide](https://incident.io/changelog/automate-incident-creation-with-alerts)
 
 ---
 
 ## Adding to Chalk
 
-Once you have an integration key, you can insert it on your environment settings page.
+Once you have the URL copied, you can insert it on your environment settings page under IncidentIo. You can either paste the entire URL or input the `<alert_source_id>` and `<alert_source_token>` manually. 
 
-Integrations are per-environment but you can use more than one integration key per
-Chalk environment and create seperate IncidentIo workflows for each. 
-
-By default, IncidentIo only has Minor, Major, and Critical severities. Chalk errors will
-default to Minor unless Critical is set in the Metric Chart Alert Configuration.
-This behavior is able to be modified using IncidentIo workflows that select on the API key
-and incident severity.
+Integrations are per-environment but you can create more than one HTTP source per Chalk environment and create seperate IncidentIo alert routes for each. 
