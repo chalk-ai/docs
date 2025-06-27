@@ -64,7 +64,13 @@ infrastructure in your cloud account:
             "Principal": {
                 "AWS": "arn:aws:iam::754784422779:role/chalk-api-server"
             },
-            "Action": "sts:AssumeRole"
+            "Action": "sts:AssumeRole",
+            "Condition":
+{
+                "StringEquals": {
+                    "sts:ExternalId": "<your-chalk-external-id>"
+                }
+            }
         }
     ]
 }
@@ -93,6 +99,7 @@ infrastructure in your cloud account:
                 "kafkaconnect:*",
                 "kafka:*",
                 "kafka-cluster:*",
+                "iam:CreateServiceLinkedRole",
                 "iam:UploadServerCertificate",
                 "iam:UploadSSHPublicKey",
                 "iam:UpdateServerCertificate",
@@ -148,7 +155,6 @@ infrastructure in your cloud account:
                 "ec2:*",
                 "cloudwatch:*",
                 "autoscaling:*",
-                "application-autoscaling:*",
                 "dynamodb:*",
                 "dax:*",
                 "application-autoscaling:*"
@@ -188,7 +194,12 @@ infrastructure in your cloud account:
 Chalk's support team will work with you to scope permissions down to what are needed for ongoing maintenance.
 The precise details depend on the level of ongoing support that your team needs and your compliance requirements.
 In principle, Chalk does not require ongoing access to data, or to the ability to edit IAM permissions,
-but Chalk requires ongoing access to update the software deployed in your environment.
+but Chalk requires ongoing access to update the software deployed in your environment. For managing resource
+configurations such as autoscaling, the Chalk team can use an execution role that is scoped to the specific
+resources that Chalk manages. It is also possible to restrict the management policy described above using
+[IAM conditions](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html).
+However, in order for the Chalk team to provide the best possible support, we recommend collaborating to
+scope the permissions appropriately. 
 
 
 ### Kubernetes
