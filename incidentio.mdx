@@ -14,7 +14,7 @@ To connect IncidentIo to Chalk, you'll need to create a new HTTP alert source fr
 
 Once you create an HTTP alert source, you will be given the option of `Header authentication` and `Query authentication`.
 You will want to select `Query authentication` and copy the URL. It should be of the form:
-https://api.incident.io/v2/alert_events/http/`<alert_source_id>`?token=`<alert_source_token>`
+https://api.incident.io/v2/alert_events/http/`alert_source_id`?token=`alert_source_token`
 
 For more information, see [IncidentIo's Alert Guide](https://incident.io/changelog/automate-incident-creation-with-alerts)
 
@@ -22,6 +22,6 @@ For more information, see [IncidentIo's Alert Guide](https://incident.io/changel
 
 ## Adding to Chalk
 
-Once you have the URL copied, you can insert it on your environment settings page under IncidentIo. You can either paste the entire URL or input the `<alert_source_id>` and `<alert_source_token>` manually. 
+Once you have the URL copied, you can insert it on your environment settings page under IncidentIo. You can either paste the entire URL or input the `alert_source_id` and `alert_source_token` manually. 
 
 Integrations are per-environment but you can create more than one HTTP source per Chalk environment and create seperate IncidentIo alert routes for each. 
