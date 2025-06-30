@@ -39,17 +39,17 @@ these blue-green deployments.
 Suppose you have made changes that you now want to release. You can then run
 
 ```bash
-$ chalk apply --bluegreen
+$ chalk apply --deployment-tag blue # or `green` depending on the current deployment
 ```
 
-Based on whether the current deployment handling traffic is tagged `blue` or `green`, the latest deployment
-will be tagged with the other tag. Then, you can run the following to migrate traffic.
+This will create a new deployment tagged with `blue` or `green`. Then, you can choose to migrate traffic to the
+new deployment by running:
 
 ```bash
 $ chalk traffic promote
 ```
 
-Say your previous deployment was tagged `blue` and the latest deployment was tagged `green`. Then this migrates 100%
+If previous deployment was tagged `blue` and the latest deployment was tagged `green`, this command migrates 100%
 of the traffic from the `blue` deployment to the `green` deployment. You can then monitor the `green` deployment
 traffic. If you encounter any errors with your new deployment, then you can once again run `chalk traffic promote` and
 it will migrate traffic from the `green` deployment back to the `blue` deployment. This allows you to easily rollback
