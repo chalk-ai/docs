@@ -40,9 +40,9 @@ Streaming resolvers produce feature values that are persisted to the offline sto
 to other resolvers, streaming resolvers can also persist computed feature values to the online
 store by setting `etl_offline_to_online=True` or `max_staleness` in the `@features` decorator.
 
-Chalk supports three kinds of streaming resolvers: mapping, windowed, and continuous.
-On this page, we will focus on mapping resolvers, which create one Chalk feature instance per message.
-Both windowed and continuous streaming will be covered in the [aggregations](/docs/aggregations) page.
+Chalk supports two kinds of streaming resolvers: mapping and windowed.
+This page focuses on mapping resolvers, which create one Chalk feature instance per message.
+Windowed streaming is covered in the [windowed streaming](/docs/windowed-streaming) page.
 
 This is an example of a mapping resolver that maps from a `bytes` message to an instance of `Transaction`.
 
@@ -301,3 +301,22 @@ resp = client.test_streaming_resolver(
 )
 print(resp.features)
 ```
+
+## Online / Offline Storage
+
+With mapping streaming resolvers, as with Python and SQL resolvers, Chalk will persist values to the
+offline store if there is an offline store deployed in the environment. You would be able to access
+these values with an [offline query](/docs/query-offline) or through the [SQL Interface](/docs/sql-interface).
+If you would like to query features as resolved by a stream resolver, then the feature must have
+`etl_offline_to_online=True` and `max_staleness` set in the feature definition. With these two settings, the
+Chalk streaming server will also persist feature values to the online store, such that you can access recent
+feature values through the online query pathway.
+
+*Note: if you would like
+to resolve features in a feature class with a materialized aggregation defined as part of the feature class,
+you should apply the `max_staleness` specifically to the features for which you would like to [online query](/docs/query-online).
+Otherwise, the aggregation will return the last observed value based on the max_staleness, rather than the actual
+computed aggregation value.*
+
+
+

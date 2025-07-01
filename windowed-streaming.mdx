@@ -92,3 +92,14 @@ the materialized aggregations with the new values for `User.sum_transaction_amou
 `User.mean_transaction_amount`.
 
 To opt out of updating materialized aggregations, set `updates_materialized_aggregations=False` on the stream resolver.
+
+## Online Storage
+
+Similar to [materialized aggregations](/docs/materialized_aggregations) that are backfilled from a non-streaming
+data source, when the Chalk streaming server receives a message on a stream, if the streaming resolver is used
+to compute a materialized aggregation, then the relevant data will be used to update the correct bucket for the
+materialized aggregation. When a stream resolver is used to compute a materialized aggregation, the minimum amount of
+data required to compute the aggregation will be stored for each bucket. For example, for a sum aggregation, the
+sum of all values in the bucket will be stored. Then when new messages arrive, the appropriate bucket based on the
+timestamp of the message will be updated with the new value. Because this data is stored online, you can access the
+values through both online and offline queries. 
