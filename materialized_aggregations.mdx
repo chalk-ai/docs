@@ -74,6 +74,58 @@ The following table lists the supported aggregations along with some notes.
 |`var` | Variance. Same requirements as `std`. |
 |`approx_count_distinct` | An approximation of the cardinality of non-null data. |
 
+These aggregations can be applied to DataFrame features that represent a [has-many](/docs/has-many) join relationship
+between two feature classes. Typically, these joins can be defined using a join key, like in our previous example:
+
+```py
+from chalk.features import features
+from chalk import DataFrame, Windowed, windowed
+
+@features
+class Transaction:
+    id: int
+    amount: float
+    user_id: "User.id"
+
+@features
+class User:
+    id: int
+    transactions: DataFrame[Transaction]
+    total_transaction_amount: Windowed[float] = windowed(
+        "1d", "7d", "30d",
+        # materialize your features in a single line
+        materialization={"bucket_duration": "1d"},
+        expression=_.transactions[_.amount].sum(),
+    )
+```
+
+Materialized aggregations can also be applied to DataFrame features that are defined using a composite join key.
+
+```py
+from chalk.features import features, has_many
+from chalk import DataFrame, Windowed, windowed
+
+@features
+class Transaction:
+    id: int
+    bank: str
+    user_id: str
+
+    amount: float
+
+@features
+class User:
+    id: int
+    bank: str
+    transactions: DataFrame[Transaction] = has_many(lambda: (Transaction.user_id == User.id) & (Transaction.bank == User.bank)
+    total_transaction_amount: Windowed[float] = windowed(
+        "1d", "7d", "30d",
+        # materialize your features in a single line
+        materialization={"bucket_duration": "1d"},
+        expression=_.transactions[_.amount].sum(),
+    )
+```
+
 ---
 
 ## How do I use materialized aggregations with Chalk?
