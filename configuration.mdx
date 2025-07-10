@@ -1,5 +1,5 @@
 ---
-title: Configuration Files
+title: File Structure
 description: Configure your Chalk project.
 published: true
 ---
@@ -18,8 +18,8 @@ import {
 Your Chalk project's configuration is shared across the following files:
 
 1. `chalk.yaml` (or `chalk.yml`): Configuration for your project's deployment
-1. `.chalkignore`: Files to exclude from your project's deployment
-1. A requirements file: Default Python requirements for Chalk to install via `pip` (can be overridden in `chalk.yaml`).
+2. `.chalkignore`: Files to exclude from your project's deployment
+3. A requirements file: Default Python requirements for Chalk to install via `pip` (can be overridden in `chalk.yaml`).
 This can either be `requirements.txt` or a [Poetry](https://python-poetry.org/) `pyproject.toml`.
 
 Here's our recommended repository structure:
@@ -28,7 +28,7 @@ Here's our recommended repository structure:
 company_chalk/
 ├── src/
 │  ├── resolvers/
-│  │  ├── .../
+│  │  ├── ...
 │  │  ├── __init__.py
 │  │  └── pipelines.py
 │  ├── __init__.py
@@ -43,6 +43,90 @@ company_chalk/
 ├── README.md
 └── requirements.txt
 ```
+
+When you're first getting started, we recommend putting all your features in a single
+file. Keeping the features in a single file makes circular references easier to reason
+about, as they can just be quoted.
+
+If you do want to split your features across multiple files, you'll need to use the `if TYPE_CHECKING` block from the `typing` module`.
+
+### Organizing Feature Definitions Across Files
+
+In large projects, it's common to split feature definitions across multiple Python modules.
+For unidirectional dependencies, this is straightforward. For example, if `user.py` imports
+`profile.py`, you can define the `User` and `Profile` features in separate files without
+issues. However, if you have circular dependencies, you may run into problems.
+
+Chalk supports this, but circular imports can arise when features reference each other across files.
+To avoid these issues, use the `if TYPE_CHECKING` block from the `typing` module and quote your forward references.
+
+Here's an example of how to do this cleanly:
+
+```python src/profile.py
+# Imports User directly, because user.py
+# wont import profile.py
+from src.user import User
+
+@features
+class Profile:
+    id: Primary[User.id]
+    username: str
+```
+
+```python src/user.py
+from chalk.features import features
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # Imports Profile only when type checking
+    # to avoid circular imports
+    from src.profile import Profile
+
+@features
+class User:
+    id: str
+    # Profile must be quoted because it is imported
+    # only when type checking
+    profile: "Profile"
+```
+
+By quoting imports inside `if TYPE_CHECKING`,
+you avoid circular dependency errors while still
+maintaining type safety and feature linkage.
+
+In a project with features living in different files, we recommend that the schema definition
+all live in a single folder, separate from the resolvers. In this case, your folder structure
+will look something like:
+
+```
+company_chalk/
+├── src/
+│  ├── models/
+│  │  ├── user.py
+│  │  ├── profile.py
+│  │  ├── __init__.py
+│  │  └── ...
+│  ├── resolvers/
+│  │  ├── ...
+│  │  ├── __init__.py
+│  │  └── pipelines.py
+│  ├── __init__.py
+│  ├── datasources.py
+│  └── feature_sets.py
+├── tests/
+│  └── ...
+├── notebooks/
+│  └── ...
+├── .chalkignore
+├── chalk.yaml
+├── README.md
+└── requirements.txt
+```
+
+Keeping the schema definition all in one place (as you might with something like Protobuf or Avro files)
+helps you keep your schema definitions organized and makes importing them in your resolvers straightforward.
+
+---
 
 ## chalk.yaml
 
@@ -153,9 +237,13 @@ validation:
         missing: error
 ```
 
+---
+
 ## .chalkignore
 Your `.chalkignore` file should include your scripts, notebooks, and tests. Anything that you are not actively using in
 your deployment should be added so that non-deployment code does not clutter or interfere with your deployment.
+
+---
 
 ## Specifying Python Requirements
 
