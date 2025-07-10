@@ -13,6 +13,8 @@ import { TipInfo } from '@/components/Tip'
 
 Has-one relationships link a feature to a single instance of another feature.
 
+---
+
 ## Recommended Implementation
 
 The simplest way to specify a join for a has-one relationship is implicitly. In the example below,
@@ -39,6 +41,8 @@ With a has-one relationship established, you can reference features on `Profile`
 ```py
 user_email_age = User.profile.email_age_years
 ```
+
+---
 
 ## Explicit Join
 
@@ -157,9 +161,9 @@ class Preferences:
 
 ## Organizing Feature Definitions Across Files
 
-In larger projects, it's common to split feature definitions across multiple Python modules.
-For unidirectional dependencies, this is straightforward. For example, if `user.py` imports
-`profile.py`, you can define the `User` and `Profile` features in separate files without
+In large projects, it's common to split feature definitions across multiple Python modules.
+For unidirectional dependencies, this is straightforward. For example, if `src/models/user.py` imports
+`src/models/profile.py`, you can define the `User` and `Profile` features in separate files without
 issues. However, if you have circular dependencies, you may run into problems.
 
 Chalk supports this, but circular imports can arise when features reference each other across files.
@@ -167,10 +171,10 @@ To avoid these issues, use the `if TYPE_CHECKING` block from the `typing` module
 
 Here's an example of how to do this cleanly:
 
-```python src/profile.py
-# Imports User directly, because user.py
-# wont import profile.py
-from src.user import User
+```python src/models/profile.py
+# Imports `User` directly, because `src/models/user.py`
+# doesn't import `src/models/profile.py`
+from src.models.user import User
 
 @features
 class Profile:
@@ -178,14 +182,14 @@ class Profile:
     username: str
 ```
 
-```python src/user.py
+```python src/models/user.py
 from chalk.features import features
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    # Imports Profile only when type checking
+    # Imports `Profile` only when type checking
     # to avoid circular imports
-    from src.profile import Profile
+    from src.models.profile import Profile
 
 @features
 class User:
@@ -199,6 +203,23 @@ By quoting imports inside `if TYPE_CHECKING`,
 you avoid circular dependency errors while still
 maintaining type safety and feature linkage.
 
+If the relationship to `Profile` is optional, you can use `typing.Optional` or the `| None` syntax,
+but the _entire_ annotation should be quoted:
+
+```python src/models/user.py
+from chalk.features import features
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.models.profile import Profile
+
+@features
+class User:
+    id: str
+    # All of `"Profile | None"` must be quoted, not just the `Profile` part
+    profile: "Profile | None"
+```
+
 ---
 
 ## Querying for Has-One Relationships
@@ -211,10 +232,9 @@ associated with a `User` continuing from the example above, you can write:
 from chalk.client import ChalkClient
 from src.features import User
 
-client =  ChalkClient()
+client = ChalkClient()
 client.query(
     input={User.id: "1"},
     output=[User.profile.id, User.profile.email_age_years]
 )
 ```
-
