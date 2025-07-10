@@ -63,9 +63,9 @@ To avoid these issues, use the `if TYPE_CHECKING` block from the `typing` module
 Here's an example of how to do this cleanly:
 
 ```python src/models/profile.py
-# Imports User directly, because user.py
-# wont import profile.py
-from src.user import User
+# Imports `User` directly, because `src/models/user.py`
+# doesn't import `src/models/profile.py`
+from src.models.user import User
 
 @features
 class Profile:
@@ -78,9 +78,9 @@ from chalk.features import features
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    # Imports Profile only when type checking
+    # Imports `Profile` only when type checking
     # to avoid circular imports
-    from src.profile import Profile
+    from src.models.profile import Profile
 
 @features
 class User:
