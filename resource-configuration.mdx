@@ -28,6 +28,19 @@ to use in your deployment, as different machine families are optimized for diffe
 also set a CPU limit on your NodePool. This page will allow you to provision the resources and machine
 families that are best suited for your workload and [usage](/docs/billing) requirements.
 
+When configuring a nodepool, you can also select whether to isolate the nodepool and whether to
+restrict the nodepool to Chalk workloads only. Nodepool isolation means that workloads cannot
+be scheduled in the nodepool unless they are specifically configured to do so under
+`Settings > Resources`, which can be useful to minimize interference or reserve certain instance
+types for specific workloads. In addition to isolating the nodepool, you can also restrict the
+nodepool to Chalk workloads only, which can be useful for environments deployed on clusters where
+Chalk is running alongside other unrelated workloads to ensure that you are not billed for nodes
+allocated for non-Chalk workloads.
+
+Once you have configured your Nodepools, under `Settings > Resources`, you can select the Nodepool
+to use for each service in each resource group in your environment, as well as the Pod Disruption
+Budget.
+
 ## Resources
 
 Under `Settings > Resources`, you will find the Cloud Resource Configuration page, which enables you
