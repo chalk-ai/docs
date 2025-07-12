@@ -97,6 +97,55 @@ between your deployments. Furthermore, Chalk will automatically scale down unuse
 resource usage. If you run the command `chalk traffic set` and do not specify some amount of traffic for a
 tagged deployment, then Chalk will recognize that the deployment is no longer in use and will scale it down.
 
+## Managing your Blue-Green Deployments
+
+In order to create a new tagged deployment in Chalk, you can either specify a `--deployment-tag` when
+running `chalk apply`, or you can use the `--blue-green` flag to automatically target the inactive
+tag for the new deployment. In addition to creating new tagged deployments, you can also use the
+Chalk CLI command `chalk traffic` to manage your blue-green deployments. To view all available
+commands, you can run `chalk traffic --help`.
+
+To view the current traffic distribution between your blue and green deployments, you can run:
+
+```bash
+ $ chalk traffic get
+ tags:
+     - deployment_id: cm9n46thy000bwe6y784y4j0l
+       tag: blue
+       weight: 50
+       mirror_weight: 10
+     - deployment_id: cm9n3vx7c0004we6yefnsw8kg
+       tag: green
+       weight: 50
+       mirror_weight: 0
+```
+
+To mirror a percentage of traffic to a tagged deployment, you can use the `chalk mirror` command:
+
+```bash
+$ chalk traffic --mirror blue=15,green=5   
+  tags:                                           
+      - deployment_id: cm9n46thy000bwe6y784y4j0l  
+        tag: blue                                 
+        mirror_weight: 15                         
+      - deployment_id: cm9n3vx7c0004we6yefnsw8kg  
+        tag: green                                
+        mirror_weight: 5    
+```
+
+As shown above, you can you `chalk traffic promote` and `chalk traffic set` to configure the
+distribution of traffic between your blue and green deployments.
+
+Once you roll out your new deployment, by default we would still keep pods up for your inactive
+deployment to enable a fast rollback. However, if you would like to spin down pods for any
+inactive deployment, you can also use the `chalk traffic suspend` to essentially set the
+traffic weight to `nil`, which will scale down the pods for that deployment.
+
+```bash
+$ chalk traffic suspend --deployment-tag blue
+```
+
+
 ## Should I use Blue-Green Deployments?
 
 Blue-green deployments are a powerful tool for minimizing downtime through a gradual rollout deployment. However,
