@@ -33,11 +33,11 @@ SQL file resolvers are Chalk's recommended method for writing SQL resolvers.
 -- type: online
 -- resolves: user
 -- source: PG
-select id, email, full_name from user_table
+select id, email, full_name from users
 ```
 
 Here, we define an online resolver that returns some features for the `User` feature class
-from the `user_table` table in the PostgreSQL source `PG`. The comments are `yaml`-parsed
+from the `users` table in the PostgreSQL source `PG`. The comments are `yaml`-parsed
 to provide other metadata for Chalk to decide how to design the resolver. SQL file resolvers
 can return multiple rows for aggregation operations, offline queries, and more.
 
@@ -47,11 +47,11 @@ It's also possible to use `SELECT *` in a SQL file resolver, but be careful!
 -- type: online
 -- resolves: user
 -- source: PG
-select * from user_table
+select * from users
 ```
 
 Implicitly, this query tries to align every scalar feature from the `User` feature class to a column name in
-`user_table`. If a feature name is misnamed or absent from the table, you'll get a "missing columns" error.
+`users`. If a feature name is misnamed or absent from the table, you'll get a "missing columns" error.
 
 To programmatically generate SQL file resolvers, check out [Generated SQL file
 resolvers](/docs/sql#generated-sql-file-resolvers).
@@ -66,7 +66,7 @@ Like other resolvers, SQL file resolvers can take features as input. In this exa
 -- resolves: user
 -- source: PG
 select id, email, full_name
-from user_table
+from users
 where id = ${user.id}
 ```
 
@@ -343,10 +343,11 @@ will appear as a docstring since it is not in `key:value` format.
 -- resolves: user
 -- source: PG
 -- This comment is not in yaml format, so it will be parsed as a docstring
-select * from user_table
+select * from users
 ```
 
-For field values that can be lists or dictionaries, such as `tags` or `incremental` settings,
+For field values that can be lists or dictionaries,
+such as [`tags`](/docs/resolver-tags) or [`incremental`](#incremental-queries-with-sql-file-resolvers) settings,
 we can either enumerate the values inline or with an extra indentation.
 Remember, if your values include a colon, you must use quotes around your value in order for
 the line to have valid YAML format.
@@ -358,7 +359,7 @@ Both of the following formats are valid and equivalent.
 -- resolves: user
 -- source: PG
 -- tags: ["single:1", "double:2"]
-select * from user_table
+select * from users
 ```
 
 ```sql get_all_columns_users.chalk.sql
@@ -368,7 +369,7 @@ select * from user_table
 -- tags:
 --    - single:1
 --    - double:2
-select * from user_table
+select * from users
 ```
 
 ### Streaming SQL file resolvers
@@ -413,7 +414,7 @@ definitions = [
     {
         resolver_name: "get_user_features",
         entity_name: "User",
-        table: "user_table",
+        table: "users",
         pkey_column: "id",
         features: ["feature1", "feature2"],
     },
