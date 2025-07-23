@@ -84,7 +84,7 @@ and don't need to return the same types.
 SQL resolvers can also specify flags via the `tags` comment.
 For example, if you wanted to use Snowflake for `User` features
 in a fraud context and use Redshift for the same features in a signup
-context, you could write two different SQL file resolvers:
+context, you could write two different SQL file resolvers with different tags:
 
 ```src/resolvers/users.chalk.sql
 -- type: offline
@@ -115,7 +115,7 @@ that can take one of three types:
 
 - **Unassigned (default)** - The resolver will be a candidate to run for _every_ set of tags.
 - **String value** - The resolver will run _only_ if this tag is provided.
-- **List of strings** - The resolver will run _only_ if _all_ of the specified tags match.
+- **List of strings** - The resolver will run _only_ if _all_ the specified tags match.
 
 If your resolver is tagged only by a key (not a key-value pair),
 and the request context contains a key-value pair such that the resolver's
