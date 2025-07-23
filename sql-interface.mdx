@@ -20,8 +20,8 @@ Additionally, you can use the [GRPC client's run_sql() endpoint](/api-docs#Chalk
 
 ## Query Syntax
 
-Chalk's SQL interface is based off of the [DuckDB SQL dialect](https://duckdb.org/docs/stable/sql/dialect/overview), and
-all queries made will go through a parser that expects a very similar syntax.
+Chalk's SQL interface uses a standard SQL dialect, and all queries are processed through a parser that expects 
+familiar SQL syntax.
 
 Currently, Chalk SQL only supports making `SELECT` queries, with the following restrictions:
 - `SELECT` list:
