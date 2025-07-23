@@ -298,3 +298,27 @@ environments:
   prod:
     requirements: pyproject.yaml
 ```
+
+## Pinning Chalk Platform Versions
+
+By default, when you deploy in your Chalk environment, Chalk will pull the latest version of the Chalk platform.
+You can choose to pin a [Chalk platform version](/release-notes)  for each environment such that your deploys 
+will only update your Chalk code, and will use the same platform image until you deploy a new pinned platform 
+version. 
+
+```yaml 
+project: my-project-id 
+environments:
+  dev:
+    runtime: python311
+    requirements: requirements-dev.txt
+    platform_version: v3.24.6
+  staging:
+    runtime: python311
+    requirements: requirements-staging.txt
+    platform_version: v3.24.6
+  prod:
+    runtime: python311
+    requirements: requirements.txt
+    platform_version: v3.24.6
+```
