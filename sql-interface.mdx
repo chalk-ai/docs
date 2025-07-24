@@ -25,77 +25,77 @@ familiar SQL syntax.
 
 Currently, Chalk SQL only supports making `SELECT` queries, with the following restrictions:
 - `SELECT` list:
- - Column references cannot be qualified yet. If a column in a table has a `.` delimiter, you may reference it with
-   double quotes, e.g. `SELECT "column.with.dot" FROM table`.
- - A subset of Chalk's [expressions](/docs/underscore) are automatically exposed as top-level functions in the SQL
-   interface.
+    - Column references cannot be qualified yet. If a column in a table has a `.` delimiter, you may reference it with
+      double quotes, e.g. `SELECT "column.with.dot" FROM table`.
+    - A subset of Chalk's [expressions](/docs/underscore) are automatically exposed as top-level functions in the SQL
+      interface.
 - `FROM` clause:
- - You can query tables that are exposed by the Chalk catalog. See [SQL Interface Sources](#sql-interface-sources) for more details.
- - You can also query against the following table-valued functions
-   - `read_parquet(path: str)`: Reads a Parquet file from the given path and returns a table. Path must be a literal string.
-   - `query_values_from_operation_ids(operation_id: str, ...)`: Returns a table consisting of the values queried in the
-     given operation id(s). The operation id(s) provided must correspond to queries that have the same output schema.
+    - You can query tables that are exposed by the Chalk catalog. See [SQL Interface Sources](#sql-interface-sources) for more details.
+    - You can also query against the following table-valued functions
+        - `read_parquet(path: str)`: Reads a Parquet file from the given path and returns a table. Path must be a literal string.
+        - `query_values_from_operation_ids(operation_id: str, ...)`: Returns a table consisting of the values queried in the
+          given operation id(s). The operation id(s) provided must correspond to queries that have the same output schema.
 - `WHERE` clause:
- - Column references cannot be qualified yet. As such, `JOIN`s are not possible yet.
- - You can use any of the supported expressions available in ChalkSQL as part of your WHERE clause.
- - A best-effort attempt of pushdown is made for the expressions used in the `WHERE` clause, but not all expressions
-   are guaranteed to be pushed down to the underlying data source.
+    - Column references cannot be qualified yet. As such, `JOIN`s are not possible yet.
+    - You can use any of the supported expressions available in ChalkSQL as part of your WHERE clause.
+    - A best-effort attempt of pushdown is made for the expressions used in the `WHERE` clause, but not all expressions
+      are guaranteed to be pushed down to the underlying data source.
 - `GROUP BY` clause:
- - At present, you may only use direct column references in the `GROUP BY` clause.
+    - At present, you may only use direct column references in the `GROUP BY` clause.
 - `LIMIT` clause:
- - You may use the LIMIT clause to limit the number of rows returned by your query. The value must be a literal integer.
+    - You may use the LIMIT clause to limit the number of rows returned by your query. The value must be a literal integer.
 - `ORDER BY` clause:
- - At present, you may only use direct column references in the `ORDER BY` clause.
+    - At present, you may only use direct column references in the `ORDER BY` clause.
 
 ## SQL Interface Sources
 
 In the SQL Interface, there exist various schema providers, which all exist under the `chalk` catalog:
 
 - `chalk.datasources`: directly query against the [data sources](/docs/integrations) configured in your
- environment (e.g. Postgres, Snowflake, BigQuery, etc.). Table names are tables within the data sources themselves.
+  environment (e.g. Postgres, Snowflake, BigQuery, etc.). Table names are tables within the data sources themselves.
 
- **Schema**: Exactly that of the table in the data source.
+  **Schema**: Exactly that of the table in the data source.
 - `chalk.historical_values`: query against historically observed feature values with table names of the form
-`feature_namespace.feature_name` from your offline store, or query for the freshest values for each primary key
-for a specific feature namespace with table names `feature_namespace`
+  `feature_namespace.feature_name` from your offline store, or query for the freshest values for each primary key
+  for a specific feature namespace with table names `feature_namespace`
 
- **Schema for `feature_namespace.feature_name`**:
- - `observation_id`, string, non-nullable: The unique identifier for the observation of the feature value.
- - `pkey`, (type of feature namespace's pkey), non-nullable: The value of the primary feature associated with this
- observation
- - `value`, (type of feature namespace's value): The observed value of the feature.
- - `value_json`, string, DEPRECATED: The observed value of the feature, as JSON, for backwards compatibility.
- - `observed_at`, timestamp, non-nullable: The time at which the feature value was observed.
- - `inserted_at`, timestamp, non-nullable: The time at which the feature value was inserted into the offline store.
- - `resolver_fqn`, string, nullable: The resolver that computed this feature.
- - `deployment_id`, string, nullable: The deployment id where the observation was made
+  **Schema for `feature_namespace.feature_name`**:
+    - `observation_id`, string, non-nullable: The unique identifier for the observation of the feature value.
+    - `pkey`, (type of feature namespace's pkey), non-nullable: The value of the primary feature associated with this
+      observation
+    - `value`, (type of feature namespace's value): The observed value of the feature.
+    - `value_json`, string, DEPRECATED: The observed value of the feature, as JSON, for backwards compatibility.
+    - `observed_at`, timestamp, non-nullable: The time at which the feature value was observed.
+    - `inserted_at`, timestamp, non-nullable: The time at which the feature value was inserted into the offline store.
+    - `resolver_fqn`, string, nullable: The resolver that computed this feature.
+    - `deployment_id`, string, nullable: The deployment id where the observation was made
 
- **Schema for `feature_namespace`**:
- - `__pkey__`: (type of feature namespace's pkey), non-nullable: The value of the primary feature associated with this row
- - `<feature-name>`, (type of feature), for each feature: The freshest observed value of the feature for the primary key.
- - `<feature-name>.__observed_at__`, timestamp, for each feature: The time at which the freshest value was observed.
+  **Schema for `feature_namespace`**:
+    - `__pkey__`: (type of feature namespace's pkey), non-nullable: The value of the primary feature associated with this row
+    - `<feature-name>`, (type of feature), for each feature: The freshest observed value of the feature for the primary key.
+    - `<feature-name>.__observed_at__`, timestamp, for each feature: The time at which the freshest value was observed.
 
 - `chalk.query_log`:  A schema provider consisting of one table, `data`, which is the query log table.
-This table provides a list of query metadata for each operation id, including which tables in the offline store
-correspond to values queried in that operation id.
- **Schema for `data`**:
- - `operation_id`, string, non-nullable: The unique identifier for the operation.
- - `environment_id`, string, non-nullable: The environment id where the operation was run.
- - `deployment_id`, string: The deployment id where the operation was run.
- - `operation_kind`, string, The kind of operation that was run (inference, streaming, etc.).
- - `query_timestamp`, timestamp: The value of `now()` that was used by the query.
- - `execution_started_at`, timestamp: The time at which the operation started executing. Null if there were errors during planning.
- - `execution_finished_at`, timestamp: The time at which the operation finished executing. Null if there were errors during execution.
- - `query_status`, string: The status of the query (success, error, running, etc.).
- - `query_name`, string: The query name for named queries, null otherwise.
- - `query_name_version`, string: The version of the query for named queries, null otherwise.
- - `branch_name`: string: The branch the query was run on, null if the query was not run on a branch.
- - `correlation_id`, string: The correlation id for the query, null if the query was not run with a correlation id.
- - `value_tables`: array of strings: The list of tables in the offline store that correspond to result values from this query.
+  This table provides a list of query metadata for each operation id, including which tables in the offline store
+  correspond to values queried in that operation id.
+  **Schema for `data`**:
+    - `operation_id`, string, non-nullable: The unique identifier for the operation.
+    - `environment_id`, string, non-nullable: The environment id where the operation was run.
+    - `deployment_id`, string: The deployment id where the operation was run.
+    - `operation_kind`, string, The kind of operation that was run (inference, streaming, etc.).
+    - `query_timestamp`, timestamp: The value of `now()` that was used by the query.
+    - `execution_started_at`, timestamp: The time at which the operation started executing. Null if there were errors during planning.
+    - `execution_finished_at`, timestamp: The time at which the operation finished executing. Null if there were errors during execution.
+    - `query_status`, string: The status of the query (success, error, running, etc.).
+    - `query_name`, string: The query name for named queries, null otherwise.
+    - `query_name_version`, string: The version of the query for named queries, null otherwise.
+    - `branch_name`: string: The branch the query was run on, null if the query was not run on a branch.
+    - `correlation_id`, string: The correlation id for the query, null if the query was not run with a correlation id.
+    - `value_tables`: array of strings: The list of tables in the offline store that correspond to result values from this query.
 - `chalk.resolvers`: Trigger a resolver run and return the outputs of a specific resolver, with additional filtering
-based on the SQL query provided. A table exists for every eligible resolver. To run a resolver this way, it must not
-take any inputs and return a dataframe consisting of only scalar outputs.
-   **Schema**: Exactly that of the resolver.
+  based on the SQL query provided. A table exists for every eligible resolver. To run a resolver this way, it must not
+  take any inputs and return a dataframe consisting of only scalar outputs.
+  **Schema**: Exactly that of the resolver.
 
 Chalk also offers a `chalk.information_schema` that you can query (similar to many other database offerings), and queries such as `SHOW TABLES` and `SHOW SCHEMAS` can also be used.
 
