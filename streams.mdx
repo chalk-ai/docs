@@ -261,6 +261,8 @@ assert result.id == "1"
 However, if you have a parse function,
 custom timestamps, or other advanced functionality you want to test,
 you may have to send messages to the streaming server.
+Streaming resolver updates require a full `chalk apply` to update the 
+streaming server for testing. 
 Read more on how to use the `ChalkClient` to test streaming resolvers
 [here](/api-docs#ChalkClient.test_streaming_resolver)). This will pass messages
 through your resolvers without persistence, and will return you a Polars DataFrame
