@@ -4,6 +4,8 @@ description: Using Chalk expressions to define features
 published: true
 ---
 
+import { TipBad } from '@/components/Tip'
+
 ---
 
 ## Overview
@@ -143,6 +145,8 @@ To compute `User.total_spend`, we needed to create a projection of the `User.tra
 `Transaction.total` column so that the `sum` aggregation could work. In contrast, no projection was needed for
 `num_large_transaction`'s `count` aggregation because `count` works on DataFrames with any number of columns.
 
+---
+
 ## All supported operations
 
 ### Arithmetic
@@ -160,9 +164,11 @@ To compute `User.total_spend`, we needed to create a projection of the `User.tra
 * Not equal: `!=`
 * Boolean and: `&`
 * Boolean or: `|`
+* Boolean not: `~`
 
-Do not use Python's `and`, `or`, `not`, or `is` operators in expressions. Python does not allow these
-operators to be overridden, so they will not work with Chalk's expressions.
+<TipBad>Don't use `or`, `and`, `not`, and `is` in expressions</TipBad>
+Do not use Python's `and`, `or`, `not`, or `is` operators in expressions.
+Python does not allow these operators to be overridden, so they will not work with Chalk's expressions.
 
 ### Aggregations
 
