@@ -179,11 +179,11 @@ NamedQuery(
 Running `chalk apply` makes the query name available as an alias for executing your more complex queries.
 
 For instance, running:
-```sh
+```bash
 chalk query --in book.id=1 --query-name book_key_information
 ```
 will be equivalent to running the more complicated:
-```sh
+```bash
 chalk query --in book.id=1 \
   --out book.id \
   --out book.title \
@@ -210,7 +210,7 @@ client.query(
 ```
 
 To see all the named queries you've defined in your current active deployment, you can run:
-```sh
+```bash
 chalk named-query list
 ```
 

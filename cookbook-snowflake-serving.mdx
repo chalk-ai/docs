@@ -13,7 +13,7 @@ First, we'll need to set up a Snowflake schema. If you already have one, you can
 a table for "business facts" -- imagine that these facts are computed via a batch process and loaded into Snowflake
 once a day.
 
-```snowflake
+```sql
 create table business_facts (
     business_id numeric primary key,
     name varchar,

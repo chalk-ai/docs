@@ -1584,7 +1584,7 @@ You can now add tags to your deployments. Tags must be unique to each of your en
 
 Tags can be added with the `--deployment-tag` flag in the Chalk CLI:
 
-```sh
+```bash
 chalk apply --deployment-tag=latest --deployment-tag=v1.0.4
 ```
 
@@ -1777,7 +1777,7 @@ dataset = ChalkClient().offline_query(
 
 You can now use either of Python 3.11 or 3.10 on a per-environment basis.
 
-```chalk.yaml
+```yaml chalk.yaml
 project: my-project-id
 environments:
   default:
@@ -2213,7 +2213,7 @@ will include the primary key value(s) of the query itself.
 The Online Query API can now be used to query DataFrame-typed features. For instance, you can query all of a user's
 transaction level features in a single query:
 
-```sh
+```bash
 chalk query --in user.id --out user.transactions
 
 {
