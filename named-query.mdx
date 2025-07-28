@@ -52,13 +52,13 @@ Named queries can then be leveraged through any of our clients by specifying the
 
 Using the Chalk CLI tool, this looks something like:
 
-```sh
+```bash
 chalk query --in book.id=1 --query-name book_key_information
 ```
 
 Because a named query has been specified, you don't need to explicitly pass in the tags and outputs
 for your query. The above command is equivalent to running the more complicated:
-```sh
+```bash
 chalk query --in book.id=1 \
   --out book.id \
   --out book.title \
@@ -85,7 +85,7 @@ client.query(
 ```
 To see all the named queries you've defined in your current active deployment, you can run:
 
-```sh
+```bash
 $ chalk named-query list
 <example output>
 ```
@@ -110,13 +110,13 @@ third_nq = NamedQuery(name="book_id", input=[Book.id], version=2, output=[Book.a
 fourth_nq = NamedQuery(name="book_id", input=[Book.id], version=3, output=[Book.version])
 ```
 And you run the following query:
-```sh
+```bash
 chalk query --in book.id=1 --query-name book_id
 ```
 We will return `Book.id` since the first named query has no version and no version was passed
 through `query-name-version`. To access a version named query, the version must be
 explicitly passed. For example:
-```sh
+```bash
 chalk query --in book.id=1 --query-name book_id --query-name-version 1
 ```
 

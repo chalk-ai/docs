@@ -19,14 +19,14 @@ To begin, ensure that you've installed GnuPG ([Mac](https://formulae.brew.sh/for
 
 Next, download and import Chalk's public key:
 
-```sh
+```bash
 curl -s https://docs.chalk.ai/chalk-public-key.key > chalk-public-key.key
 gpg --import chalk-public-key.key
 ```
 
 Next, encrypt your plaintext using Chalk's public key:
 
-```sh
+```bash
 cat <plaintext_file> | gpg -e -r Chalk > ciphertext.gpg
 ```
 

@@ -67,7 +67,7 @@ These will grant Chalk the ability to read from the repository, but not to write
 
 Once you have created this policy, you can attach it to your repository with the following example command:
 
-```sh
+```bash
 aws codeartifact put-repository-permissions-policy --domain my_domain --domain-owner 111122223333 \
           --repository my_repo --policy-document file:///PATH/TO/policy.json
 ```

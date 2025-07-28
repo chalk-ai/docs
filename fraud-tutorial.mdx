@@ -111,7 +111,7 @@ Chalk gets around this by pushing filters into your SQL queries.
 Let's say you've defined the SQL resolver above and deployed it to Chalk.
 You rerun the query that failed above:
 
-```sh
+```bash
 $ chalk query --in user.id=1 --out user.name
 ```
 
@@ -119,7 +119,7 @@ Chalk will look at the resolvers you've defined and ask "given a User.id, can I 
 It will see the SQL resolver defined above and realize that it can be used to get `User.name` from a `User.id`.
 It will push the id filter into the SQL query, running.
 
-```sh
+```bash
 select name from users
 where id=1
 ```
@@ -193,7 +193,7 @@ class User:
 By writing the `get_email_username` Python function, we've defined another resolver.
 If we deploy this new code to Chalk, we can now query for the username of a user with a given id.
 
-```sh
+```bash
 $ chalk query --in user.id=1 --out user.username
 ```
 
@@ -691,7 +691,7 @@ Our feature dependencies are declared in the function signature as `User.account
 Chalk will automatically retrieve `User.account_id` and `User.name` with our [`get_user.chalk.sql`](https://github.com/chalk-ai/fraud-example/blob/main/src/user.chalk.sql) resolver.
 Then, using this account_id, Chalk will retrieve `Account.title` from the `get_account.chalk.sql` resolver.  Lets deploy our code.
 
-```sh
+```bash
 $ chalk apply --branch tutorial
 ✓ Found resolvers
 ✓ Deployed branch
@@ -826,11 +826,11 @@ def test_get_average_time_between_transactions():
 ```
 
 Lets deploy this new feature to a branch and run a couple test queries:
-```sh
+```bash
 chalk apply --branch new-fraud-feature
 ```
 
-```sh
+```bash
 chalk query \
   --in user.id=1 \
   --out user.average_time_between_transactions_30d \
