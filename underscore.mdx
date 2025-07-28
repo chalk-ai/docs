@@ -18,6 +18,8 @@ Expressions are useful because Chalk statically analyzes and optimizes them, lea
 when compared to equivalent Python resolvers. They are also useful for succinctly defining common features, such as the
 number of times a user failed a login attempt over the past 30 days or the total amount spent at a given merchant.
 
+---
+
 ## Nested References
 
 Expressions can be used to access nested attributes from other features in a feature class, whether these
@@ -60,6 +62,8 @@ class StructAttributeAccess:
     nested_foo: List[str] | None = _.latlng.nested_latlon.foo
 ```
 
+---
+
 ## Arithmetic
 
 In this example, we have a Transaction feature class with `total` and `sales_tax` features and we want to define
@@ -81,6 +85,8 @@ class Transaction:
 - def get_subtotal(total: Transaction.total, sales_tax: Transaction.sales_tax) -> Transaction.subtotal:
 -     return total - sales_tax
 ```
+
+---
 
 ## Conditions and filters
 
@@ -112,6 +118,8 @@ class Transaction:
 The object referenced by `_` changes depending on its current scope. In this code, the `_` in `_.transactions`
 references the `User` object. Within the DataFrame filter, the `_` in `_.total` references each `Transaction` object as
 each one is evaluated. The `count` aggregation is covered in the next section.
+
+---
 
 ## Projections and aggregations
 
