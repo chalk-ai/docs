@@ -21,7 +21,7 @@ branch deployments or job pods.
 
 ## Nodepools
 
-Under `Settings > Nodepools`, you can view and configure the [Karpeneter NodePool(s)](https://karpenter.sh/docs/concepts/nodepools/)
+Under `Settings > Nodepools`, you can view and configure the nodepools 
 used to run your Chalk environment. A NodePool defines constraints on the Kubernetes nodes that can be
 scheduled in your Kubernetes cluster. Notably, you can select the machine families that you would like
 to use in your deployment, as different machine families are optimized for different workloads. You can
@@ -61,6 +61,44 @@ The Instance Type selector enables you to specify the machine family you would l
 deployment. For example, this would map to [EC2 Instance Types](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html)
 for AWS deployments or [Compute Engine Machine Families](https://cloud.google.com/compute/docs/machine-resource)
 for GCP deployments.
+
+### How are Pods and Nodes Provisioned? 
+
+In the `Settings` page of the dashboard, you can configure the nodepools and resource configurations that are
+used in combination to provision resources in your cluster.
+Whenever there is a new pod that needs to be spun up, triggered either by a manual trigger, cron schedule, or 
+autoscaling, then based on the Resource Configurations set for the service for the pod being spun up, we will 
+create a pod with resource requests, node selectors, affinities, and anti-affinities. The Kubernetes Scheduler 
+will then attempt to place the pod on an existing node. If it cannot find a node that satisfies the pod's 
+configurations, then Karpenter will analyze the pod, as well as the other nodes in the cluster and provision
+or deprovision nodes such that the new pod can be scheduled. 
+
+For AWS-hosted clusters, we use [Karpenter Nodepools](https://karpenter.sh/docs/concepts/nodepools/) and for 
+GCP-hosted clustesr we use [NAP](https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning). 
+Both Karpenter and GKE NAP will attempt to optimize resource provisioning based on the provided nodepool constraints.
+You can manage these nodepool constraints in a few ways: 
+1. **Edit your existing nodepools**: Under `Settings > Nodepools`, you can edit the nodepool constraints to 
+   restrict or widen the nodes that Karpenter can produce.    
+2. **Create new nodepools**: Under `Settings > Nodepools`, you can create new nodepools with more restrictive 
+   node constraints, marking them as "isolated" to prevent services from scheduling on them, and configure one 
+   or more services to run only on those nodepools. 
+3. **Specify Nodes in Service Requests**: Under `Settings > Resources`, you can make services request specific 
+   kinds of machines under the `Service Isolation` pane. 
+
+While customers on GCP and AWS can both create nodepools through the Nodepools tab in the dashboard, the 
+nodepools that you can create differ. Typically, you would define Karpenter nodepools to provision a range 
+of nodes, whereas NAP in GCP would create nodepools in response to pods that need to be scheduled, where 
+each nodepool can create exactly one kind of node that can scale by the number of node instances. Chalk enables 
+customers to create nodepools regardless of cloud provider, however customers on GCP would have to choose 
+between allowing NAP to make its own decisions about the types of nodes to provision or to define your own 
+set of nodepools to force services to run on specific instance types. 
+
+When choosing how to constrain pod resource requests and nodepools, it is possible to request more resources 
+than an instance type has available. The Chalk dashboard provides warnings when the resources requested are
+impossible to schedule on any available nodes, but it can be difficult to be estimate the amount of overhead 
+on each Kubernetes node. Typically, selecting a resource request that aims for 75% of stated node capacity 
+should be reasonable. 
+
 
 ### Autoscaling
 
