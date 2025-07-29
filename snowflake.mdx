@@ -15,6 +15,12 @@ Alternately, you can configure the source through your dashboard.
 
 ## From the dashboard
 
+In the dashboard, you can define the Snowflake Source along with some default 
+configurations, such as the database, schema, and warehouse. If the role that you 
+have provided has permissions to, you would be able to use the same Snowflake 
+source to query other tables, but if not otherwise specified, Chalk will use the 
+defaults set in the data source definition. 
+
 <AddSnowflakeIntegration onSubmit={(e) => e.preventDefault()} />
 
 ---
