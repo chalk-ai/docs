@@ -27,7 +27,7 @@ Currently, Chalk SQL only supports making `SELECT` queries, with the following r
 - `SELECT` list:
     - Column references cannot be qualified yet. If a column in a table has a `.` delimiter, you may reference it with
       double quotes, e.g. `SELECT "column.with.dot" FROM table`.
-    - A subset of Chalk's [expressions](/docs/underscore) are automatically exposed as top-level functions in the SQL
+    - A subset of Chalk's [expressions](/docs/expression) are automatically exposed as top-level functions in the SQL
       interface.
 - `FROM` clause:
     - You can query tables that are exposed by the Chalk catalog. See [SQL Interface Sources](#sql-interface-sources) for more details.
