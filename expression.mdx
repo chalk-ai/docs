@@ -4,67 +4,92 @@ description: Using Chalk expressions to define features
 published: true
 ---
 
+import { TipBad, TipGood } from '@/components/Tip'
+
 ---
 
 ## Overview
 
-Chalk expressions are used to resolve features from operations on other features. In feature definitions, `_`
-represents a reference to the containing feature class and is used to access other features in the same instance. In
-addition to arithmetic operations, expressions can also be used to filter and aggregate data.
+Chalk Expressions let you define features declaratively, using symbolic computation over your data.
+While you write expressions in idiomatic Python, they are compiled and executed as vectorized C++,
+enabling low-latency computation at serve time and high-throughput processing at train time.
 
-Expressions are useful both for optimizing performance and for succinctly defining features from the common to the
-complex. Chalk statically analyzes and optimizes expressions, pulling out shared dependencies and computing only once
-to reduce redundancies, while running low-latency C++ code. Chalk expressions make it easy to define common features,
-such as the number of times a user failed a login attempt over the past 30 days or the total amount spent at a given
-merchant.
+Expressions support a wide range of operations, including arithmetic, filtering, aggregations,
+and built-in functions like .
 
-## Nested References
-
-Expressions can be used to access nested attributes from other features in a feature class, whether these
-other features are struct dataclasses, features, DataFrames of features, or JSON's.
+For example, in a Transaction feature class, we can compute the subtotal of a transaction as the difference between its total and sales tax:
 
 ```python
-from dataclasses import dataclass
-
-@dataclass
-class LatLonLocation:
-    lat: float
-    lon: float
-
-@dataclasses.dataclass
-class NestedLatLon:
-    lat: float | None
-    lon: int | None
-    foo: List[str] | None
-
-
-@dataclasses.dataclass
-class LatLon:
-    bar: str | None
-    lat: float | None
-    lon: int | None
-    foo: List[str] | None
-    nested_latlon: NestedLatLon | None
-
+from chalk.features import features, Primary
+from chalk import _
 
 @features
-class StructAttributeAccess:
+class Transaction:
     id: int
-    latlng: LatLon
-    bar: str | None = _.latlng.bar
-    lat: float | None = _.latlng.lat
-    lon: float | None = _.latlng.lon
-    foo: List[str] | None = _.latlng.foo
-    nested_lat: float | None = _.latlng.nested_latlon.lat
-    nested_lon: int | None = _.latlng.nested_latlon.lon
-    nested_foo: List[str] | None = _.latlng.nested_latlon.foo
+    total: float
+    sales_tax: float
+    subtotal: float = _.total - _.sales_tax
 ```
 
-## Arithmetic
+The `_` symbol refers to the current scope (here, the feature class `Transaction`)
+and is used to reference other fields on the same instance.
+Expressions like `_.total - _.sales_tax` are compiled into native execution
+plans that run efficiently in production.
 
-In this example, we have a Transaction feature class with `total` and `sales_tax` features and we want to define
-`subtotal` as `total` minus `sales_tax`. Instead of writing a Python resolver, we can resolve `subtotal` with an
-expression:
+In addition to referencing fields on the same object, you can traverse relationships.
+If each `Transaction` is associated with a `User`, for example, you can compute a
+string similarity between the user’s name and the transaction memo:
+
+```diff-py
++ import chalk.functions as F
+
+  @features
+  class Transaction:
+      ...
+      memo: str
+      user: "User"
++     name_match_score: float = F.jaccard_similarity(
++       _.user.name, _.memo
++     )
+```
+
+Here, `_.user.name` follows the foreign key relationship from `Transaction` to `User`.
+The function [`F.jaccard_similarity`](/api-docs#jaccard_similarity) is one of many built-in Chalk functions that
+operate on symbolic expressions.
+
+Expressions can also perform aggregations over related records.
+In a `User` feature class, we can compute aggregates like the
+number of large transactions or the total amount spent:
+
+```python
+from chalk import _
+from chalk.features import DataFrame, features
+
+@features
+class User:
+    id: int
+    name: str
+    transactions: DataFrame[Transaction]
+
+    num_large_txns: int = _.transactions[_.total > 1000].count()
+    total_spend: float = _.transactions[_.total].sum()
+```
+
+In this context, `_` refers to the `User` instance when referring to `_.transactions`.
+But when you apply a filter, like `_.transactions[_.total > 1000]`,
+the expression inside the brackets is evaluated in the context of each individual `Transaction`.
+That means `_.total` refers to the total field on each `Transaction`, not on the `User`.
+This scoped evaluation makes it easy to filter, project, and aggregate over related data.
+
+All expressions are statically analyzed, optimized to eliminate redundant computation,
+and executed as high-performance C++ at runtime.
+
+---
+
+## Scalar Functions
+
+Chalk expressions support a wide range of built-in functions for manipulating data, performing calculations,
+and transforming features. These functions can be used in expressions to operate on feature values, DataFrames, and other data types.
 
 ```diff-py
 - from chalk import online
@@ -82,7 +107,126 @@ class Transaction:
 -     return total - sales_tax
 ```
 
-## Conditions and filters
+### Infix Operators
+
+Chalk expressions support a variety of infix operators for arithmetic, conditions, and boolean logic.
+
+| Operator        | Description              | Example                                      |
+|-----------------|--------------------------|----------------------------------------------|
+| `+`             | Addition                 | `_.total + _.sales_tax`                      |
+| `-`             | Subtraction              | `_.total - _.sales_tax`                      |
+| `*`             | Multiplication           | `_.quantity * _.price`                       |
+| `/`             | Division                 | `_.total / _.quantity`                       |
+| `>`             | Greater than             | `_.total > 1000`                             |
+| `>=`            | Greater than or equal    | `_.total >= 1000`                            |
+| `<`             | Less than                | `_.total < 1000`                             |
+| `<=`            | Less than or equal       | `_.total <= 1000`                            |
+| `==`            | Equal                    | `_.status == "completed"`                    |
+| `!=`            | Not equal                | `_.status != "completed"`                    |
+| `&`             | Boolean and              | `_.is_active & _.is_verified`                |
+| <code>\|</code> | Boolean or               | <code>\_.is\_active \| \_.is_verified</code> |
+| `~`             | Boolean not              | `~_.is_active`                               |
+
+<TipBad>Don't use `or`, `and`, `not`, and `is` in expressions</TipBad>
+Do not use Python's `and`, `or`, `not`, or `is` operators in expressions.
+Python does not allow these operators to be overridden, so they will not work with Chalk's expressions.
+
+### Builtin Functions
+
+The `chalk.functions` module exposes several helpful functions that can be used in
+combination with expression references to transform features. These functions are meant
+to be used in expressions and are not available as standalone functions. To view all
+available functions, see our [SDK docs](/api-docs#section-chalk-functions)
+
+### Structs
+
+Expressions can be used to access nested attributes from other features in a feature class, whether these
+other features are struct `dataclasses`, `features`, or `DataFrames`.
+
+```python
+import chalk.functions as F
+from chalk.features import features
+from dataclasses import dataclass
+
+@dataclass
+class LatLon:
+    lat: float | None
+    lon: int | None
+
+@features
+class User:
+    id: int
+    home: LatLon
+    work: LatLon
+    commute_distance: float = F.haversine(
+        lat1=_.home.lat,
+        lon1=_.home.lon,
+        lat2=_.work.lat,
+        lon2=_.work.lon,
+    )
+```
+
+
+### Custom Functions
+
+You can create custom functions to encapsulate complex logic or reusable computations in your expressions.
+For example, if you wanted to apply consistent windows across many features, you could define a custom function
+like this:
+
+<TipGood>Use helper functions to create expressions</TipGood>
+
+```python
+from chalk import _
+from chalk.features import features, DataFrame
+
+def count_where(*filters):
+    return _.transactions[_.created_at > _.chalk_window, *filters].count()
+
+@features
+class User:
+    id: int
+    transactions: DataFrame[Transaction]
+    num_large_transactions: int = count_where(_.total > 1000)
+    num_small_transactions: int = count_where(_.total < 100)
+```
+
+<TipBad>Don't use Python functions in Python resolvers</TipBad>
+
+```python
+@features
+class User:
+    id: int
+    name: str
+    email: str
+    name_email_match_score: float
+
+@online
+def get_score(
+name: User.name,
+email: User.email,
+) -> User.name_email_match_score:
+return F.jaccard_similarity(name, email)
+```
+
+Expressions are not supported in Python resolvers, so you cannot use Chalk functions like `F.jaccard_similarity`
+in a Python resolver. Instead, use expressions to define the feature directly in the feature class.
+
+```python
+@features
+class User:
+    id: int
+    name: str
+    email: str
+    name_email_match_score: float = F.jaccard_similarity(
+        _.name, _.email
+    )
+```
+
+---
+
+## DataFrame Functions
+
+### Conditions and filters
 
 DataFrame features can be [filtered](/docs/dataframe#filters) with expressions.
 
@@ -91,15 +235,15 @@ to `Transaction`. Then, we can define a feature representing the number of large
 `User.transactions` feature:
 
 ```diff-py
-from chalk.features import _, features, DataFrame
+  from chalk.features import _, features, DataFrame
 
-@features
-class Transaction:
-    id: int
-+   user_id: "User.id"
-    total: float
-    sales_tax: float
-    subtotal: float = _.total - _.sales_tax
+  @features
+  class Transaction:
+      id: int
++     user_id: "User.id"
+      total: float
+      sales_tax: float
+      subtotal: float = _.total - _.sales_tax
 
 + @features
 + class User:
@@ -110,10 +254,10 @@ class Transaction:
 ```
 
 The object referenced by `_` changes depending on its current scope. In this code, the `_` in `_.transactions`
-references the `User` object. Within the DataFrame filter, the `_` in `_.total` references each `Transaction` object as
+references the `User` object. Within the `DataFrame` filter, the `_` in `_.total` references each `Transaction` object as
 each one is evaluated. The `count` aggregation is covered in the next section.
 
-## Projections and aggregations
+### Projections and aggregations
 
 DataFrame features support [projection](/docs/dataframe#projections) with expressions, which produce a new
 DataFrame scoped down to the referenced columns. DataFrames can be aggregated after eligible columns are selected.
@@ -128,14 +272,13 @@ from chalk.features import _, features, DataFrame
 class Transaction:
     id: int
     user_id: "User.id"
-    total: float
     sales_tax: float
-    subtotal: float = _.total - _.sales_tax
+    subtotal: float
+    total: float = _.subtotal + _.sales_tax
 
 @features
 class User:
     id: int
-    # implicit has-many relationship with Transaction due to `user_id` above
     transactions: DataFrame[Transaction]
     num_large_transactions: int = _.transactions[_.total > 1000].count()
 +   total_spend: float = _.transactions[_.total].sum()
@@ -143,11 +286,39 @@ class User:
 
 To compute `User.total_spend`, we needed to create a projection of the `User.transactions` DataFrame limited to only the
 `Transaction.total` column so that the `sum` aggregation could work. In contrast, no projection was needed for
-`num_large_transaction`'s `count` aggregation because `count` works on DataFrames with any number of columns.
+the `num_large_transactions` aggregation because `count` works on `DataFrames` with any number of columns.
 
-For computing aggregations over high volumes of data, such as transaction data, with low latency, Chalk also offers
+<TipGood>Use materialized aggregations</TipGood>
+
+For computing low-latency aggregations over high volumes of data, Chalk also offers
 [materialized windowed aggregations](/docs/materialized_aggregations) that uses materialization of buckets of data to
 compute large aggregations efficiently.
+
+---
+
+### Aggregation functions
+
+Aggregation functions have varying behavior when handling None values and empty DataFrames.  If an aggregation function
+says None values are skipped in the table below, it will consider a DataFrame with only None values as empty.
+
+| Function                 | `None` values | Empty DataFrame   | Notes                                                                                                                                                                                                                        |
+|--------------------------|-------------- |-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `sum`                    | Skipped       | Returns `0`       |                                                                                                                                                                                                                              |
+| `min`                    | Skipped       | Returns `None`    |                                                                                                                                                                                                                              |
+| `max`                    | Skipped       | Returns `None`    |                                                                                                                                                                                                                              |
+| `mean`                   | Skipped       | Returns `None`    | Feature type must be `float` or `float \| None`. `None` values are skipped, meaning they are not included in the mean calculation.                                                                                           |
+| `count`                  | Included      | Returns `0`       |                                                                                                                                                                                                                              |
+| `any`                    | Skipped       | Returns `False`   |                                                                                                                                                                                                                              |
+| `all`                    | Skipped       | Returns `True`    |                                                                                                                                                                                                                              |
+| `std`                    | Skipped       | See notes         | Standard deviation. Requires at least 2 values. For DataFrames with less than 2 values, returns `None`. <br/> Aliases: `stddev`, `stddev_sample`, `std_sample`.                                                              |
+| `var`                    | Skipped       | See notes         | Variance. Same requirements as `std`. <br/> Alias: `var_sample`.                                                                                                                                                             |
+| `approx_count_distinct`  | Skipped       | Returns `0`       |                                                                                                                                                                                                                              |
+| `approx_percentile`      | Skipped       | Returns `None`    | Takes one argument, `quantile`, expected to be a float in the range `[0, 1]`. <br/> Example: `approx_percentile(0.75)` returns a value approximately equal to the 75th percentile of the not-`None` values in the DataFrame. |
+
+For aggregations that can return `None`, either mark the feature as optional (for example, by setting the feature type
+to `float | None`) or use [`coalesce`](/api-docs#coalesce) to fall back to a default value.
+
+---
 
 ## Run conditions
 
@@ -172,182 +343,7 @@ class User:
     )
 ```
 
-## All supported operations
-
-### Arithmetic
-* Addition: `+`
-* Subtraction: `-`
-* Multiplication: `*`
-* Division: `/`
-
-### Conditions
-* Greater than: `>`
-* Greater than or equal: `>=`
-* Less than: `<`
-* Less than or equal: `<=`
-* Equal: `==`
-* Not equal: `!=`
-* Boolean and: `&`
-* Boolean or: `|`
-
-Do not use Python's `and`, `or`, `not`, or `is` operators in expressions. Python does not allow these
-operators to be overridden, so they will not work with Chalk's expressions.
-
-### Aggregations
-
-Aggregation functions have varying behavior when handling None values and empty DataFrames.  If an aggregation function
-says None values are skipped in the table below, it will consider a DataFrame with only None values as empty.
-
-| Function | `None` values | Empty DataFrame | Notes |
-| --- | --- | --- | --- |
-| `sum` | Skipped | Returns `0` | |
-| `min` | Skipped | Returns `None` | |
-| `max` | Skipped | Returns `None` | |
-| `mean` | Skipped | Returns `None` | Feature type must be `float` or <code>float &#124; None</code>. `None` values are skipped, meaning they are not included in the mean calculation.  |
-|`count` | Included | Returns `0` |
-|`any` | Skipped | Returns `False` | |
-|`all` | Skipped | Returns `True` | |
-|`std` | Skipped | See notes | Standard deviation. Requires at least 2 values. For DataFrames with less than 2 values, returns `None`.<br/><br/>Aliases: `stddev`, `stddev_sample`, `std_sample`. |
-|`var` | Skipped | See notes | Variance. Same requirements as `std`.<br/><br/>Alias: `var_sample`. |
-|`approx_count_distinct` | Skipped | Returns `0` | |
-|`approx_percentile` | Skipped | Returns `None` | Takes one argument, `quantile`, expected to be a float in the range `[0, 1]`.<br/><br/>Example: `approx_percentile(0.75)` returns a value approximately equal to the 75th percentile of the not-`None` values in the DataFrame. |
-
-For aggregations that can return `None`, either mark the feature as optional (for example, by setting the feature type
-to `float | None`) or use [`coalesce`](/api-docs#coalesce) to fall back to a default value.
-
-### Additional functions
-The `chalk.functions` module exposes several helpful functions that can be used in
-combination with expression references to transform features. These functions are meant
-to be used in expressions and are not available as standalone functions. To view all
-available functions, see our [SDK docs](/api-docs#coalesce)
-
-#### Logic
-
-* [`coalesce`](/api-docs#coalesce)
-* [`is_null`](/api-docs#is_null)
-* [`if_then_else`](/api-docs#if_then_else)
-* [`map_dict`](/api-docs#map_dict)
-* [`otherwise`](/api-docs#otherwise)
-* [`then`](/api-docs#then)
-* [`when`](/api-docs#when)
-
-#### String Manipulation
-
-* [`ends_with`](/api-docs#ends_with)
-* [`jaro_winkler_distance`](/api-docs#jaro_winkler_distance)
-* [`length`](/api-docs#length)
-* [`levenshtein_distance`](/api-docs#levenshtein_distance)
-* [`like`](/api-docs#like)
-* [`lower`](/api-docs#lower)
-* [`partial_ratio`](/api-docs#partial_ratio)
-* [`regexp_extract`](/api-docs#regexp_extract)
-* [`regexp_extract_all`](/api-docs#regexp_extract_all)
-* [`regexp_like`](/api-docs#regexp_like)
-* [`regexp_replace`](/api-docs#regexp_replace)
-* [`replace`](/api-docs#replace)
-* [`reverse`](/api-docs#reverse)
-* [`split_part`](/api-docs#split_part)
-* [`starts_with`](/api-docs#starts_with)
-* [`substr`](/api-docs#substr)
-* [`strpos`](/api-docs#strpos)
-* [`upper`](/api-docs#upper)
-* [`trim`](/api-docs#trim)
-
-#### Encoding and decoding
-
-* [`bytes_to_string`](/api-docs#bytes_to_string)
-* [`from_big_endian_64`](/api-docs#from_big_endian_64)
-* [`from_big_endian_32`](/api-docs#from_big_endian_32)
-* [`gunzip`](/api-docs#gunzip)
-* [`json_extract_array`](/api-docs#json_extract_array)
-* [`json_value`](/api-docs#json_value)
-* [`md5`](/api-docs#md5)
-* [`sha1`](/api-docs#sha1)
-* [`sha256`](/api-docs#sha256)
-* [`sha512`](/api-docs#sha512)
-* [`spooky_hash_v2_32`](/api-docs#spooky_hash_v2_32)
-* [`spooky_hash_v2_64`](/api-docs#spooky_hash_v2_64)
-* [`string_to_bytes`](/api-docs#string_to_bytes)
-* [`struct_pack`](/api-docs#struct_pack)
-
-#### Math
-
-* [`abs`](/api-docs#abs)
-* [`asin`](/api-docs#asin)
-* [`bankers_round`](/api-docs#bankers_round)
-* [`ceil`](/api-docs#ceil)
-* [`cos`](/api-docs#cos)
-* [`cosine_similarity`](/api-docs#cosine_similarity)
-* [`exp`](/api-docs#exp)
-* [`floor`](/api-docs#floor)
-* [`from_base`](/api-docs#from_base)
-* [`haversine`](/api-docs#haversine)
-* [`ln`](/api-docs#ln)
-* [`mod`](/api-docs#mod)
-* [`power`](/api-docs#power)
-* [`round`](/api-docs#round)
-* [`safe_divide`](/api-docs#safe_divide)
-* [`sigmoid`](/api-docs#sigmoid)
-* [`sin`](/api-docs#sin)
-* [`sqrt`](/api-docs#sqrt)
-
-#### Datetime Manipulation
-
-* [`day_of_month`](/api-docs#day_of_month)
-* [`day_of_week`](/api-docs#day_of_week)
-* [`day_of_year`](/api-docs#day_of_year)
-* [`format_datetime`](/api-docs#format_datetime)
-* [`from_unix_milliseconds`](/api-docs#from_unix_milliseconds)
-* [`from_unix_seconds`](/api-docs#from_unix_seconds)
-* [`hour_of_day`](/api-docs#hour_of_day)
-* [`is_us_federal_holiday`](/api-docs#is_us_federal_holiday)
-* [`last_day_of_month`](/api-docs#last_day_of_month)
-* [`month_of_year`](/api-docs#month_of_year)
-* [`to_iso8601`](/api-docs#to_iso8601)
-* [`total_seconds`](/api-docs#total_seconds)
-* [`unix_milliseconds`](/api-docs#unix_milliseconds)
-* [`unix_seconds`](/api-docs#unix_seconds)
-* [`week_of_year`](/api-docs#week_of_year)
-* [`year`](/api-docs#year)
-
-#### URL Manipulation
-
-* [`url_extract_host`](/api-docs#url_extract_host)
-* [`url_extract_path`](/api-docs#url_extract_path)
-* [`url_extract_protocol`](/api-docs#url_extract_protocol)
-
-#### Array Manipulation
-
-* [`array_agg`](/api-docs#array_agg)
-* [`array_average`](/api-docs#array_average)
-* [`array_count_value`](/api-docs#array_count_value)
-* [`array_distinct`](/api-docs#array_distinct)
-* [`array_join`](/api-docs#array_join)
-* [`array_max`](/api-docs#array_max)
-* [`array_median`](/api-docs#array_median)
-* [`array_min`](/api-docs#array_min)
-* [`array_sample_stddev`](/api-docs#array_sample_stdev)
-* [`array_sort`](/api-docs#array_sort)
-* [`array_stddev`](/api-docs#array_stdev)
-* [`array_sum`](/api-docs#array_sum)
-* [`cardinality`](/api-docs#cardinality)
-* [`head`](/api-docs#head)
-* [`element_at`](/api-docs#element_at)
-* [`max`](/api-docs#max)
-* [`max_by`](/api-docs#max_by)
-* [`max_by_n`](/api-docs#max_by_n)
-* [`min`](/api-docs#min)
-* [`min_by`](/api-docs#min_by)
-* [`min_by_n`](/api-docs#min_by_n)
-* [`slice`](/api-docs#slice)
-* [`contains`](/api-docs#contains)
-
-#### Other
-
-* [`cast`](/api-docs#cast)
-* [`jinja`](/api-docs#jinja)
-* [`sagemaker_predict`](/api-docs#sagemaker_predict)
-
+---
 
 ## Testing
 
