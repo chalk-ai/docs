@@ -111,21 +111,21 @@ class Transaction:
 
 Chalk expressions support a variety of infix operators for arithmetic, conditions, and boolean logic.
 
-| Operator | Description              | Example                       |
-|----------|--------------------------|-------------------------------|
-| `+`      | Addition                 | `_.total + _.sales_tax`       |
-| `-`      | Subtraction              | `_.total - _.sales_tax`       |
-| `*`      | Multiplication           | `_.quantity * _.price`        |
-| `/`      | Division                 | `_.total / _.quantity`        |
-| `>`      | Greater than             | `_.total > 1000`              |
-| `>=`     | Greater than or equal    | `_.total >= 1000`             |
-| `<`      | Less than                | `_.total < 1000`              |
-| `<=`     | Less than or equal       | `_.total <= 1000`             |
-| `==`     | Equal                    | `_.status == "completed"`     |
-| `!=`     | Not equal                | `_.status != "completed"`     |
-| `&`      | Boolean and              | `_.is_active & _.is_verified` |
-| `|`      | Boolean or               | `_.is_active | _.is_verified` |
-| `~`      | Boolean not              | `~_.is_active`                |
+| Operator        | Description              | Example                                      |
+|-----------------|--------------------------|----------------------------------------------|
+| `+`             | Addition                 | `_.total + _.sales_tax`                      |
+| `-`             | Subtraction              | `_.total - _.sales_tax`                      |
+| `*`             | Multiplication           | `_.quantity * _.price`                       |
+| `/`             | Division                 | `_.total / _.quantity`                       |
+| `>`             | Greater than             | `_.total > 1000`                             |
+| `>=`            | Greater than or equal    | `_.total >= 1000`                            |
+| `<`             | Less than                | `_.total < 1000`                             |
+| `<=`            | Less than or equal       | `_.total <= 1000`                            |
+| `==`            | Equal                    | `_.status == "completed"`                    |
+| `!=`            | Not equal                | `_.status != "completed"`                    |
+| `&`             | Boolean and              | `_.is_active & _.is_verified`                |
+| <code>\|</code> | Boolean or               | <code>\_.is\_active \| \_.is_verified</code> |
+| `~`             | Boolean not              | `~_.is_active`                               |
 
 <TipBad>Don't use `or`, `and`, `not`, and `is` in expressions</TipBad>
 Do not use Python's `and`, `or`, `not`, or `is` operators in expressions.
@@ -138,9 +138,95 @@ combination with expression references to transform features. These functions ar
 to be used in expressions and are not available as standalone functions. To view all
 available functions, see our [SDK docs](/api-docs#section-chalk-functions)
 
+### Structs
+
+Expressions can be used to access nested attributes from other features in a feature class, whether these
+other features are struct `dataclasses`, `features`, or `DataFrames`.
+
+```python
+import chalk.functions as F
+from chalk.features import features
+from dataclasses import dataclass
+
+@dataclass
+class LatLon:
+    lat: float | None
+    lon: int | None
+
+@features
+class User:
+    id: int
+    home: LatLon
+    work: LatLon
+    commute_distance: float = F.haversine(
+        lat1=_.home.lat,
+        lon1=_.home.lon,
+        lat2=_.work.lat,
+        lon2=_.work.lon,
+    )
+```
+
+
+### Custom Functions
+
+You can create custom functions to encapsulate complex logic or reusable computations in your expressions.
+For example, if you wanted to apply consistent windows across many features, you could define a custom function
+like this:
+
+<TipGood>Use helper functions to create expressions</TipGood>
+
+```python
+from chalk import _
+from chalk.features import features, DataFrame
+
+def count_where(*filters):
+    return _.transactions[_.created_at > _.chalk_window, *filters].count()
+
+@features
+class User:
+    id: int
+    transactions: DataFrame[Transaction]
+    num_large_transactions: int = count_where(_.total > 1000)
+    num_small_transactions: int = count_where(_.total < 100)
+```
+
+<TipBad>Don't use Python functions in Python resolvers</TipBad>
+
+```python
+@features
+class User:
+    id: int
+    name: str
+    email: str
+    name_email_match_score: float
+
+@online
+def get_score(
+name: User.name,
+email: User.email,
+) -> User.name_email_match_score:
+return F.jaccard_similarity(name, email)
+```
+
+Expressions are not supported in Python resolvers, so you cannot use Chalk functions like `F.jaccard_similarity`
+in a Python resolver. Instead, use expressions to define the feature directly in the feature class.
+
+```python
+@features
+class User:
+    id: int
+    name: str
+    email: str
+    name_email_match_score: float = F.jaccard_similarity(
+        _.name, _.email
+    )
+```
+
 ---
 
-## Conditions and filters
+## DataFrame Functions
+
+### Conditions and filters
 
 DataFrame features can be [filtered](/docs/dataframe#filters) with expressions.
 
@@ -171,9 +257,7 @@ The object referenced by `_` changes depending on its current scope. In this cod
 references the `User` object. Within the `DataFrame` filter, the `_` in `_.total` references each `Transaction` object as
 each one is evaluated. The `count` aggregation is covered in the next section.
 
----
-
-## Projections and aggregations
+### Projections and aggregations
 
 DataFrame features support [projection](/docs/dataframe#projections) with expressions, which produce a new
 DataFrame scoped down to the referenced columns. DataFrames can be aggregated after eligible columns are selected.
@@ -188,14 +272,13 @@ from chalk.features import _, features, DataFrame
 class Transaction:
     id: int
     user_id: "User.id"
-    total: float
     sales_tax: float
-    subtotal: float = _.total - _.sales_tax
+    subtotal: float
+    total: float = _.subtotal + _.sales_tax
 
 @features
 class User:
     id: int
-    # implicit has-many relationship with Transaction due to `user_id` above
     transactions: DataFrame[Transaction]
     num_large_transactions: int = _.transactions[_.total > 1000].count()
 +   total_spend: float = _.transactions[_.total].sum()
@@ -203,71 +286,17 @@ class User:
 
 To compute `User.total_spend`, we needed to create a projection of the `User.transactions` DataFrame limited to only the
 `Transaction.total` column so that the `sum` aggregation could work. In contrast, no projection was needed for
-`num_large_transaction`'s `count` aggregation because `count` works on DataFrames with any number of columns.
+the `num_large_transactions` aggregation because `count` works on `DataFrames` with any number of columns.
 
-For computing aggregations over high volumes of data, such as transaction data, with low latency, Chalk also offers
+<TipGood>Use materialized aggregations</TipGood>
+
+For computing low-latency aggregations over high volumes of data, Chalk also offers
 [materialized windowed aggregations](/docs/materialized_aggregations) that uses materialization of buckets of data to
 compute large aggregations efficiently.
 
 ---
 
-## Run conditions
-
-To specify run conditions such as environment, tags, and versions for a feature that is resolved through an expression,
-you can use the [`feature`](/api-docs#feature) function and pass in the expression as an argument.
-
-```python
-from chalk.features import Primary, features, feature
-
-@features
-class User:
-    id: Primary[int]
-
-    purchases: DataFrame[Purchase]
-    # Uses a default value of 0 when one cannot be computed.
-    num_purchases: int = feature(
-        expression=_.purchases.count(),
-        default=0,
-        environment=["staging", "dev"],
-        tags=["fraud", "credit"],
-        version=1,
-    )
-```
-
----
-
-## Structs
-
-Expressions can be used to access nested attributes from other features in a feature class, whether these
-other features are struct `dataclasses`, `features`, or `DataFrames`.
-
-```python
-import chalk.functions as F
-from chalk.features import features
-from dataclasses import dataclass
-
-@dataclass
-class LatLon:
-    lat: float | None
-    lon: int | None
-
-@features
-class User:
-    id: int
-    home: LatLon
-    work: LatLon
-    commute_distance: float = F.haversine(
-        lat1=_.home.lat,
-        lon1=_.home.lon,
-        lat2=_.work.lat,
-        lon2=_.work.lon,
-    )
-```
-
-
----
-
-## Aggregations
+### Aggregation functions
 
 Aggregation functions have varying behavior when handling None values and empty DataFrames.  If an aggregation function
 says None values are skipped in the table below, it will consider a DataFrame with only None values as empty.
@@ -291,57 +320,26 @@ to `float | None`) or use [`coalesce`](/api-docs#coalesce) to fall back to a def
 
 ---
 
-## Custom Functions
+## Run conditions
 
-You can create custom functions to encapsulate complex logic or reusable computations in your expressions.
-For example, if you wanted to apply consistent windows across many features, you could define a custom function
-like this:
-
-<TipGood>Use helper functions to create expressions</TipGood>
+To specify run conditions such as environment, tags, and versions for a feature that is resolved through an expression,
+you can use the [`feature`](/api-docs#feature) function and pass in the expression as an argument.
 
 ```python
-from chalk import _
-from chalk.features import features, DataFrame
-
-def count_where(*filters):
-    return _.transactions[_.created_at > _.chalk_window, *filters].count()
+from chalk.features import Primary, features, feature
 
 @features
 class User:
-    id: int
-    transactions: DataFrame[Transaction]
-    num_large_transactions: int = count_where(_.total > 1000)
-    num_small_transactions: int = count_where(_.total < 100)
-```
+    id: Primary[int]
 
-<TipBad>Don't use Python functions in Python resolvers</TipBad>
-```python
-@features
-class User:
-    id: int
-    name: str
-    email: str
-    name_email_match_score: float
-
-@online
-def get_score(
-    name: User.name,
-    email: User.email,
-) -> User.name_email_match_score:
-    return F.jaccard_similarity(name, email)
-```
-
-Expressions are not supported in Python resolvers, so you cannot use Chalk functions like `F.jaccard_similarity`
-in a Python resolver. Instead, use expressions to define the feature directly in the feature class.
-
-```python
-@features
-class User:
-    id: int
-    name: str
-    email: str
-    name_email_match_score: float = F.jaccard_similarity(
-        _.name, _.email
+    purchases: DataFrame[Purchase]
+    # Uses a default value of 0 when one cannot be computed.
+    num_purchases: int = feature(
+        expression=_.purchases.count(),
+        default=0,
+        environment=["staging", "dev"],
+        tags=["fraud", "credit"],
+        version=1,
     )
 ```
 
