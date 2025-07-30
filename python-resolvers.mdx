@@ -47,8 +47,8 @@ need to originate in the same root namespace:
 
 ```py
 @online
-def fn(a: User.email, b: User.name) -> User.email_name_match:
-    return ...
+def get_name_sim(a: User.email, b: User.name) -> User.email_name_match:
+    return len(set(a) & set(b)) / len(set(a) | set(b))
 ```
 
 Here, we incorrectly request features from the root namespaces
@@ -58,7 +58,10 @@ of `Transfer` and `User`:
 
 ```py
 @online
-def fn(a: User.email, b: Transfer.memo) -> Transfer.email_in_memo:
+def txn_email_sim(
+    email: User.email,
+    memo: Transfer.memo,
+) -> Transfer.email_in_memo:
     return email in memo
 ```
 
@@ -70,7 +73,10 @@ you can use [has-one](/docs/has-one) or
 
 ```py
 @online
-def fn(email: Transfer.user.email, memo: Transfer.memo) -> Transfer.email_in_memo:
+def txn_email_sim(
+    email: Transfer.user.email,
+    memo: Transfer.memo,
+) -> Transfer.email_in_memo:
     return email in memo
 ```
 
@@ -90,25 +96,41 @@ the account's title through the user:
 
 ```py
 @online
-def name_sim(title: User.account.title, name: User.full_name) -> ...
+def name_sim(title: User.account.title, name: User.full_name) -> User.name_sim:
+    return len(set(title) & set(name)) / len(set(title) | set(name))
 ```
 
-You can also require all scalars on the user's profile:
+You can also require all scalars on the user:
 
 ```py
+from chalk import online, Now
+
 @online
-def fn(profile: User.profile) -> ...:
-    profile.signup_date
+def get_txn_name_match(
+    memo: Transaction.memo,
+    user: Transaction.user,
+) -> User.profile.age:
+    return (
+        len(set(memo) & set(user.full_name)) /
+        len(set(memo) | set(user.full_name)
+    )
 ```
 
-Chalk will materialize all scalar features on the profile
+Chalk will materialize all scalar features on the user
 before calling this function.
-If you want to pull only a few features from the profile,
+If you want to pull only a few features of the user,
 require each directly:
 
 ```py
 @online
-def fn(signup_date: User.profile.signup_date, age: User.profile.age) -> ...
+def get_txn_name_match(
+    memo: Transaction.memo,
+    full_name: Transaction.user.full_name,
+) -> User.profile.age:
+    return (
+        len(set(memo) & set(full_name)) /
+        len(set(memo) | set(full_name)
+    )
 ```
 
 #### Optional has-one
@@ -160,7 +182,14 @@ You can require the email age feature as below:
 
 ```py
 @online
-def fn(email_age: User.profile.identity.email_age) -> ...
+def email_score(
+    email_age: User.profile.identity.email_age
+) -> User.email_score:
+    return (
+        1 if email_age < 30 else
+        0.5 if email_age < 60 else
+        0
+    )
 ```
 
 However, you cannot access nested relationships without
@@ -204,7 +233,8 @@ as inputs to your resolver:
 
 ```py
 @online
-def fn(transfers: User.transfers) -> ...:
+def txn_count(transfers: User.transfers) -> User.count_transfers:
+    return len(transfers)
 ```
 
 You receive a [Chalk DataFrame](/docs/dataframe),
@@ -313,28 +343,23 @@ where a user can have many accounts, each with many transactions.
 ```py
 from chalk.features import features, has_many, DataFrame
 
-
 @features
 class Transaction:
     id: str
-    account_id: str
+    account_id: "Account.id"
     amount: float
-
 
 @features
 class Account:
     id: str
-    user_id: str
-    transactions: DataFrame[Transaction] = has_many(
-        lambda: Transaction.account_id == Account.id
-    )
-
+    user_id: "User.id"
+    transactions: DataFrame[Transaction]
 
 @features
 class User:
     id: str
     total_spent: float
-    accounts: DataFrame[Account] = has_many(lambda: Account.user_id == User.id)
+    accounts: DataFrame[Account]
 ```
 
 We can resolve the `total_spent` feature on `User` by computing the sum of transaction
@@ -373,6 +398,8 @@ def get_daily_balance(now: Now) -> DataFrame[Account]:
 ```
 
 Read more about time-based dependencies [here](/docs/time).
+
+---
 
 ## Outputs
 
@@ -417,7 +444,7 @@ In the type signature, specify
 the `Features[...]` class, parameterized
 by the features that you pass to the feature class.
 
-```diff-py
+```python
 @online
 def resolve(u: User.id) -> Features[User.name, User.employer]:
     return User(
@@ -482,9 +509,6 @@ def get_all_users(id: User.id) -> Features[User] - User.name:
 Here, both the `id` feature and the `name` feature are not returned,
 which leaves only the `employer` feature.
 
-
----
-
 ### DataFrame output
 
 You can also output many instances of a feature class from a resolver
@@ -519,7 +543,6 @@ def get_user_employer_information(id: User.id) -> Dataframe[User.id, User.name, 
 For more info on how to load batch data,
 see the [Data Sources](/docs/sql) sections.
 `DataFrame`-returning resolvers don't need inputs.
-
 
 #### All features
 
@@ -567,6 +590,8 @@ def relationship_returning_resolver(
 Just make sure that the return `DataFrame`s do not have duplicate rows.
 That means no two rows should have the same primary key, or primary key & timestamp combinations if the
 feature time is also returned.
+
+---
 
 ## Testing
 
