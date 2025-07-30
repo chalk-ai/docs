@@ -254,8 +254,9 @@ to `Transaction`. Then, we can define a feature representing the number of large
 ```
 
 The object referenced by `_` changes depending on its current scope. In this code, the `_` in `_.transactions`
-references the `User` object. Within the `DataFrame` filter, the `_` in `_.total` references each `Transaction` object as
-each one is evaluated. The `count` aggregation is covered in the next section.
+references the `User` object.
+Within the `DataFrame` filter, the `_` in `_.total` references each `Transaction` object as each one is evaluated.
+The `count` aggregation is covered in the next section.
 
 ### Projections and aggregations
 
@@ -284,22 +285,22 @@ class User:
 +   total_spend: float = _.transactions[_.total].sum()
 ```
 
-To compute `User.total_spend`, we needed to create a projection of the `User.transactions` DataFrame limited to only the
-`Transaction.total` column so that the `sum` aggregation could work. In contrast, no projection was needed for
-the `num_large_transactions` aggregation because `count` works on `DataFrames` with any number of columns.
+To compute `User.total_spend`, we needed to create a projection of the `User.transactions`
+`DataFrame` limited to only the `Transaction.total` column so that the `sum` aggregation could work.
+In contrast, no projection was needed for the `num_large_transactions` aggregation because `count`
+works on `DataFrames` with any number of columns.
 
 <TipGood>Use materialized aggregations</TipGood>
 
 For computing low-latency aggregations over high volumes of data, Chalk also offers
-[materialized windowed aggregations](/docs/materialized_aggregations) that uses materialization of buckets of data to
-compute large aggregations efficiently.
-
----
+[materialized windowed aggregations](/docs/materialized_aggregations)
+that uses materialization of buckets of data to compute large aggregations efficiently.
 
 ### Aggregation functions
 
-Aggregation functions have varying behavior when handling None values and empty DataFrames.  If an aggregation function
-says None values are skipped in the table below, it will consider a DataFrame with only None values as empty.
+Aggregation functions have varying behavior when handling `None` values and empty `DataFrames`.
+If an aggregation function says `None` values are skipped in the table below,
+it will consider a `DataFrame` with only `None` values as empty.
 
 | Function                 | `None` values | Empty DataFrame   | Notes                                                                                                                                                                                                                        |
 |--------------------------|-------------- |-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -315,14 +316,16 @@ says None values are skipped in the table below, it will consider a DataFrame wi
 | `approx_count_distinct`  | Skipped       | Returns `0`       |                                                                                                                                                                                                                              |
 | `approx_percentile`      | Skipped       | Returns `None`    | Takes one argument, `quantile`, expected to be a float in the range `[0, 1]`. <br/> Example: `approx_percentile(0.75)` returns a value approximately equal to the 75th percentile of the not-`None` values in the DataFrame. |
 
-For aggregations that can return `None`, either mark the feature as optional (for example, by setting the feature type
-to `float | None`) or use [`coalesce`](/api-docs#coalesce) to fall back to a default value.
+For aggregations that can return `None`, either mark the feature as optional
+(for example, by setting the feature type to `float | None`) or use [`coalesce`](/api-docs#coalesce)
+to fall back to a default value.
 
 ---
 
 ## Run conditions
 
-To specify run conditions such as environment, tags, and versions for a feature that is resolved through an expression,
+To specify run conditions such as environment, tags, and versions for a feature
+that is resolved through an expression,
 you can use the [`feature`](/api-docs#feature) function and pass in the expression as an argument.
 
 ```python
