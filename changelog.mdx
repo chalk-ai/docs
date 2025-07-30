@@ -6,6 +6,42 @@ description: Updates to Chalk!
 published: true
 ---
 
+## July 30
+
+### Chalk diff viewer
+
+New `chalk diff` command for visualizing code differences across deployments and branches.
+The diff viewer highlights additions, deletions, and modifications in a color-coded format, making it easy to spot changes at a glance.
+
+Compare any two branches
+
+`chalk diff --branch=<branch_name> --other-branch=<other_branch_name>`
+
+Compare a branch with main (default)
+
+`chalk diff --branch=<branch_name>`
+
+Compare two specific deployments
+
+`chalk diff --deployment-id=<deployment_id> --other-deployment-id=<other_deployment_id>`
+
+Compare a deployment with main branch
+
+`chalk diff --deployment-id=<deployment_id>`
+
+### Chalk's Online Query Explorer now supports viewing has-one and has-many relationships
+
+Chalk's Online Query Explorer now supports querying has-one and has-many relationship joins directly in the dashboard.
+When exploring a feature like User, you can now run online queries that include data from related features such as Profile (has-one) and Transfers (has-many) without leaving the dashboard interface.
+
+![Output explorer with has-one and has-many features](/img/changelog-25_07_30-has_one.png)
+
+### Chalk dashboard improvements
+
+- Aggregation backfills, which can be viewed from Chalk's Offline Query page now also include a table of the features that have been persisted with the backfill into your online store
+- Errors encountered while deploying a branch now bubble up to the branch deployment page in the Chalk Dashboard
+- Deactivated users are now visible in UI for more efficient management of inactive accounts
+
 ## June 23, 2025
 
 ### Process images with Chalk's builtin chat completion API
