@@ -12,6 +12,8 @@ Python resolvers are Python functions marked with either an `@online` or `@offli
 with [Python type annotations](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html#functions)
 declaring the dependencies on other features, as well as the output feature(s).
 
+---
+
 ## Inputs
 
 ### Scalar dependencies
@@ -79,8 +81,6 @@ def txn_email_sim(
 ) -> Transfer.email_in_memo:
     return email in memo
 ```
-
----
 
 ### Has-one dependencies
 
@@ -222,8 +222,6 @@ carry over to nested has-one dependencies.
 If you traverse an optional relationship,
 then all downstream attributes will become optional.
 
----
-
 ### Has-many dependencies
 
 #### Scalar has-many
@@ -263,7 +261,6 @@ def fn(transfers: User.transfers[Transfer.amount, Transfer.memo]) -> ...:
 
 The error above is surfaced statically
 by our [editor plugin](/docs/editor-setup).
-
 
 #### Filtering
 
