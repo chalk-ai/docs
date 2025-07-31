@@ -92,7 +92,7 @@ Chalk expressions support a wide range of built-in functions for manipulating da
 and transforming features. These functions can be used in expressions to operate on feature values, DataFrames, and other data types.
 
 ```diff-py
-- from chalk import online
+- from chalk import features, online
 + from chalk.features import _, features
 
 @features
@@ -202,9 +202,10 @@ class User:
 
 @online
 def get_score(
-name: User.name,
-email: User.email,
+    name: User.name,
+    email: User.email,
 ) -> User.name_email_match_score:
+    # DONT DO THIS!!
     return F.jaccard_similarity(name, email)
 ```
 
