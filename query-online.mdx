@@ -40,12 +40,12 @@ class User:
   palindrome_and_short: bool
 
 @online
-def get_is_palindrome(name: User.name, User.backwards_name) -> User.is_palindrome:
+def get_is_palindrome(name: User.name) -> User.is_palindrome:
   return name == name[::-1]
 
 @online
 def get_is_short(name: User.name) -> User.is_short:
-  return name.len() < 3
+  return len(name) < 3
 
 @online
 def get_is_short_palindrome(is_short: User.is_short, is_palindrome: User.is_palindrome) -> User.is_short_palindrome:
