@@ -95,12 +95,12 @@ require versioned features.
 from chalk.features import online
 
 @online
-def fn(code: Trial.code) -> Trial.failed:
+def detect_trial_failure(code: Trial.code) -> Trial.failed:
     # Default version is 1.
     return code in {'failed', 'err'}
 
 @online
-def fn2(code: Trial.code@2) -> Trial.failed:
+def detect_trial_failure_v2(code: Trial.code@2) -> Trial.failed:
     # Version 2 is specifically requested.
     return code in {'FAILED', 'ERR'}
 ```
@@ -109,11 +109,11 @@ def fn2(code: Trial.code@2) -> Trial.failed:
 
 ```python
 @online
-def fn(d: Trial.raw_data) -> Trial.code @ 1:
+def extract_trial_code_v1(d: Trial.raw_data) -> Trial.code @ 1:
     return d['code']
 
 @online
-def fn2(d: Trial.raw_data) -> Trial.code @ 2:
+def extract_trial_code_v2(d: Trial.raw_data) -> Trial.code @ 2:
     return d['data']['code']
 ```
 
