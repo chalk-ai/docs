@@ -48,6 +48,7 @@ This is an example of a mapping resolver that maps from a `bytes` message to an 
 
 ```py
 from chalk.streams import stream
+from chalk.features import Features
 
 @stream(source=source)
 def stream_resolver(message: bytes) -> Features[Transaction.id, Transaction.value]:
@@ -64,6 +65,7 @@ Chalk will validate the encoding against the model.
 
 ```py
 from chalk.streams import KafkaSource
+from chalk.features import features, Features
 from pydantic import BaseModel
 
 @features(max_staleness="1d")

@@ -37,6 +37,8 @@ argument to the `feature` function. This allows you to
 continue adding versions without affecting past versions.
 
 ```python
+from chalk.features import features, feature
+
 @features
 class Trial:
     id: int
@@ -69,6 +71,8 @@ It is best practice to leave the default as `1` until all
 consumers have been updated to use a newer version.
 
 ```python
+from chalk.features import features, feature
+
 @features
 class Trial:
     id: int
@@ -88,13 +92,15 @@ require versioned features.
 ### Requesting versioned features
 
 ```python
+from chalk.features import online
+
 @online
-def fn(code: Trial.code) -> Trial.failed:
+def detect_trial_failure(code: Trial.code) -> Trial.failed:
     # Default version is 1.
     return code in {'failed', 'err'}
 
 @online
-def fn2(code: Trial.code@2) -> Trial.failed:
+def detect_trial_failure_v2(code: Trial.code@2) -> Trial.failed:
     # Version 2 is specifically requested.
     return code in {'FAILED', 'ERR'}
 ```
@@ -103,11 +109,11 @@ def fn2(code: Trial.code@2) -> Trial.failed:
 
 ```python
 @online
-def fn(d: Trial.raw_data) -> Trial.code @ 1:
+def extract_trial_code_v1(d: Trial.raw_data) -> Trial.code @ 1:
     return d['code']
 
 @online
-def fn2(d: Trial.raw_data) -> Trial.code @ 2:
+def extract_trial_code_v2(d: Trial.raw_data) -> Trial.code @ 2:
     return d['data']['code']
 ```
 

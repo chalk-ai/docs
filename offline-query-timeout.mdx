@@ -17,7 +17,7 @@ offline query timeouts, you may want to consider the following:
     If you are running out of memory, you may want to increase the memory requests for your
    offline query pods. You can do this by navigating to the "Resources" page in the Chalk UI and increasing the memory
    requests for offline query workers.
-1. **Use `run_asynchronously`**: Add `run_asynchronously=True` to isolate your query to its own kubernetes pod. This
+1. **Use `run_asynchronously`**: Add `run_asynchronously=True` to isolate your query to its own Kubernetes pod. This
     lowers the chance that your query will contend with other workloads on a single machine and may help prevent timeouts.
 2. **Adjust node selectors**: If you are using node selectors to run your offline queries on specific nodes, ensure that
     the nodes you are selecting have enough resources to handle the query. Make sure that your workloads are not co-scheduled

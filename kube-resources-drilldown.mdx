@@ -20,7 +20,7 @@ The Metadata Plane is responsible for storing and serving non-feature data (like
 It orchestrates machines in the Data Plane using the Kubernetes API to do things like scaling deployments,
 and running batch jobs.
 
-The metadata plane currently consists of the following primary kubernetes components:
+The metadata plane currently consists of the following primary Kubernetes components:
 
 - `go-api-server`: presents a gRPC interface for driving orchestration.
 - `api-server`: presents a REST and GraphQL interface for driving orchestration.
@@ -42,8 +42,8 @@ The data plane currently consists of the following primary Kubernetes components
 - `engine` deployments: These are feature pipeline execution engines. These pods execute your Python code in Chalk's execution environment.
 - `engine-grpc` deployments: Same as `engine` deployments, but with a gRPC interface. Query semantics are the same, but the network runtime is C++ instead of Python.
 - `branch` deployments: A stateful set or deployment object that runs your [branch](/docs/branches) deployments.
-- `job` kubernetes jobs: These are batch jobs that run your Python code in Chalk's execution environment for [scheduled tasks](/docs/runs).
-- `query job` kubernetes jobs: These are batch jobs that run your Python code in Chalk's execution environment for [async offline query](/docs/query-offline) tasks.
+- `job` Kubernetes jobs: These are batch jobs that run your Python code in Chalk's execution environment for [scheduled tasks](/docs/runs).
+- `query job` Kubernetes jobs: These are batch jobs that run your Python code in Chalk's execution environment for [async offline query](/docs/query-offline) tasks.
 - `streaming` statefulset: A stateful set that runs your [streaming](/docs/streams) deployments. These are long-running processes that consume from a message queue and write to the online and offline store.
 
 ### Configuring Data Plane Resources
