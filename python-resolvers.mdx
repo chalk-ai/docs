@@ -142,28 +142,26 @@ but the types for all of those optional features will become
 optional. Consider the below example:
 
 ```py
-from chalk.features import features, online, has_one
+from chalk.features import features, online
 
 @features
 class Account:
     id: int
-    user_id: int
+    user_id: "User.id"
     balance: float  # Non-optional balance
 
 @features
 class User:
     id: int
-    # Optional relationship
-    account: Account | None = has_one(lambda: Account.user_id == User.id)
+    account: Account | None
     has_high_balance: bool
 
 @online
 def has_high_bal(balance: User.account.balance) -> User.has_high_balance:
-    # Balance will be "float | None"
+    # Balance will be "float | None", because User.account is optional
     if balance is None:
         return False
     return balance > 1000
-
 ```
 
 The resolver in this example receives an optional `float`,
