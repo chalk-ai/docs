@@ -22,6 +22,8 @@ To specify a timeout, use the `timeout` keyword argument to either
 ## Example
 
 ```python
+from chalk.features import online, offline
+
 @online(timeout="200ms")
 def resolve_australian_credit_score(
     driver_id: User.driver_id_aus,

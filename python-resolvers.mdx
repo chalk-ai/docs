@@ -142,6 +142,8 @@ but the types for all of those optional features will become
 optional. Consider the below example:
 
 ```py
+from chalk.features import features, online, has_one
+
 @features
 class Account:
     id: int

@@ -26,6 +26,9 @@ To enable offline data to reach the online environment,
 use the keyword argument `etl_offline_to_online` on the feature you wish to ETL.
 
 ```py
+from chalk.features import features, feature, offline
+from chalk import DataFrame
+
 @features
 class User:
     ...
@@ -42,6 +45,8 @@ Chalk copies this feature into the online environment.
 Reverse ETL can also be assigned to all features in a namespace:
 
 ```py
+from chalk.features import features, feature
+
 @features(etl_offline_to_online=True)
 class User:
     fraud_score: float
