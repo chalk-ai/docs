@@ -1,0 +1,80 @@
+---
+title: GPUs and Resource Hints
+description: Schedule workloads on differentiated hardware & execution pools
+published: true
+---
+
+Different workloads have different requirements. Some workloads are compute-intensive, while others are memory-intensive.
+Some workloads require GPUs, some perform blocking IO, and some are purely CPU-bound.and
+
+Chalk allows you to specify the hardware and execution pool requirements for your queries,
+so that they can be scheduled on the most appropriate resources.
+
+## Executing on Hardware with GPUs
+
+Chalk allows you to execute specific resolvers on hardware with GPUs. To do this, you can use the `"gpu"` resource
+hint in your resolver definition. This will ensure that the resolver is scheduled on a machine with a GPU.
+
+```python
+import torch
+from chalk.features import online
+
+@online(resource_hint="gpu")
+def my_gpu_resolver(Transaction.memo) -> Transaction.cleaned_memo:
+    """
+    Run a torch model to process data using a GPU.
+    """
+    ...
+```
+
+Then, specify the [Resource Group](/docs/kube-resources-drilldown) that has the GPU resources available:
+
+```
+CHALK_GPU_RESOURCE_GROUP_NAME=gpu-resolvers
+```
+
+This resource group should:
+
+- have a UDF Invoker Service deployed
+- this service should have a node selector that matches nodes with GPUs, e.g.:
+
+```yaml
+cloud.google.com/machine-family: a2-highgpu
+```
+
+Chalk's query planner will execute the primary query plan on your Query Server service, and will transmit
+row data to the GPU resolver service for processing in compressed Arrow format. Response data will be
+transmitted back to the Query Server service, which will then return the final result to the client.
+
+## CPU vs IO Pools
+
+Chalk allows you to specify whether a resolver is CPU-bound or IO-bound. This is useful for scheduling
+resolvers on the most appropriate resources. To do this, you can use the `"cpu"` or `"io"` resource hints in your resolver definition.
+
+```python
+from chalk.features import online
+
+@online(resource_hint="cpu")
+def my_cpu_bound_resolver(Transaction.memo) -> Transaction.cleaned_memo:
+    """
+    Run a CPU-bound operation.
+    """
+    fibbonaci = [0, 1]
+    for i in range(2, 100):
+        fibbonaci.append(fibbonaci[i - 1] + fibbonaci[i - 2])
+    return fibbonaci
+
+@online(resource_hint="io")
+def my_io_bound_resolver(Transaction.memo) -> Transaction.cleaned_memo:
+    """
+    Run an IO-bound operation.
+    """
+    return requests.get("https://example.com/api/data").json()
+```
+
+Chalk uses CPU-count thread pools for CPU-bound resolvers, because additional threads do not help with CPU-bound workloads.
+Chalk uses variable sized thread pools for IO-bound resolvers, because additional threads can help with IO-bound workloads.
+
+Note: if you use async resolvers, Chalk will execute them on an asyncio event loop that is shared across all resolvers.
+This means that you should not use blocking IO operations in async resolvers, as they will block the event loop and
+prevent other resolvers from executing.
