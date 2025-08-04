@@ -103,6 +103,8 @@ We maintain a fork that's been optimized for low-latency online inference.
 You can think of Velox as a backend for query engine's like Presto (AWS Athena) and Spark i.e. you can't point Velox at a database and pass in a SQL expression.
 Rather than forcing users to work directly with low-level execution primitives, Chalk provides an ergonomic interface (Chalk Python SDK) for defining features, transformations, and pipelines.
 
+![Velox architecture diagram](/img/architecture-velox_architecture.png)
+
 This architecture allows us to expose the power of vectorized computation with clean APIs that feel natural (like writing Pandas and Polars) to data scientists and engineers.
 Users write simple Python decorators and SQL queries, while Velox handles the complex optimizations that make these computations blazingly fast.
 
