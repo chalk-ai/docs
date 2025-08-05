@@ -167,7 +167,7 @@ class Receipt:
        model="gpt-4o",
        messages=[
            P.message(
-               "system",
+               "user",
                [
                    {"type": "input_text", "text": "describe this image"},
                    {"type": "input_image", "image_url": _.image_url},
