@@ -17,10 +17,9 @@ Each approach offers different benefits depending on your use case and deploymen
 
 ### Direct Prompts
 
-Direct prompt definitions provide immediate, inline configuration of LLM completions. This approach is useful for
-rapid prototyping, one-off implementations, or when prompt logic is tightly coupled to specific features. To define
-a direct prompt to perform sentiment analysis on a comment, you could define the following Chalk features utilizing
-the `chalk.prompts` library.
+Direct prompt definitions provide immediate, inline configuration of LLM completions.
+This approach is useful for rapid prototyping, one-off implementations, or when prompt logic is tightly coupled to specific features.
+To define a direct prompt to perform sentiment analysis on a comment, you could define the following Chalk features utilizing the `chalk.prompts` library.
 
 ```py
 import chalk.functions as F
@@ -56,12 +55,38 @@ class User:
     predicted_sentiment: str = F.json_value(_.response.response, "sentiment")
 ```
 
-In the example above, we see how direct prompts integrate with Chalk's feature system. The prompt uses Jinja templating
+In the example above, we see how direct prompts integrate with Chalk's feature system.
+The prompt uses Jinja templating
 to dynamically inject the user's comment into the prompt through `{{User.comment}}`, allowing the LLM to analyze the
-specific content at runtime. The `UserSentiment` Pydantic model defines a structured output format, ensuring consistent
-response parsing across all completions. While this approach provides fine-grained control over the prompt
-configuration, it tightly couples the prompt template, model settings, and output structure to your deployment code.
-Any changes to the prompt template or model parameters require a new deployment.
+specific content at runtime.
+The `UserSentiment` Pydantic model defines a structured output format, ensuring consistent response parsing across all completions.
+While this approach provides fine-grained control over the prompt configuration, it tightly couples the prompt template, model settings, and output structure to your deployment code.  Any changes to the prompt template or model parameters require a new deployment.
+
+### Multimodal Prompts
+
+Chalk's chat completion API extends beyond text-only interactions by supporting multimodal inputs, enabling you to process images alongside text in your LLM workflows.
+This capability opens up new possibilities for visual content analysis, allowing you to pass images directly to vision-capable models like GPT-4o, combine text and image inputs in a single prompt, and extract structured information from visual content. Here's how you can process a receipt image to extract structured data:
+
+```py
+@features
+class Receipt:
+    image_url: str
+    image_response: P.MultimodalPromptResponse = P.completion(
+        model="gpt-4o",
+        messages=[
+            P.message(
+                "user",
+                [
+                    {"type": "input_text", "text": "Extract all items, prices, and total from this receipt"},
+                    {"type": "input_image", "image_url": _.image_url},
+                ],
+            ),
+        ],
+    )
+```
+
+This multimodal approach seamlessly integrates with Chalk's feature system, treating visual inputs as first-class citizens alongside text.
+The same structured output capabilities available for text-only prompts apply here, allowing you to define Pydantic models for consistent parsing of visual information extraction tasks.
 
 ### Named Prompts
 
