@@ -156,6 +156,27 @@ class Transaction:
     )
 ```
 
+You can also compose multimodal prompts — combining image and text in a single call using `P.completion(...)`.
+This unlocks image analysis workflows like receipt or PDF parsing with minimal code.
+
+```py
+@features
+class Receipt:
+   image_url: str
+   image_response: P.MultimodalPromptResponse = P.completion(
+       model="gpt-4o",
+       messages=[
+           P.message(
+               "system",
+               [
+                   {"type": "input_text", "text": "describe this image"},
+                   {"type": "input_image", "image_url": _.image_url},
+               ],
+           ),
+       ],
+   )
+```
+
 Chalk's LLM toolchain streamlines the entire experience of working with language models by providing:
 
 - Direct access to LLM providers without managing API keys, request formatting, or response parsing
