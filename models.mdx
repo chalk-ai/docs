@@ -26,17 +26,17 @@ client = ChalkClient()
 
 client.register_model(
     name="RiskScoreModel",
-    version="1.0.0",
-    tags=["v1.0"],
-    model_path="./risk_score_model.pth",
-    additional_files={
-        "tokenizer.json": "./tokenizer.json"
-    },
+    version=1,
+    aliases=["v1.0"],
+    model_path=["./risk_score_model.pth"],
+    additional_files=[
+        "./tokenizer.json"
+    ],
     description="Model for predicting user risk scores",
     model_type="pytorch",
     model_format="pytorch",
-    input_type="numpy",
-    output_type="numpy",
+    input_type=((10, 10, 3)), # or (10, 10, 3) ,
+    output_type=(1,),
     metadata={
         "framework": "pytorch",
         "training_date": "2025-07-29",
@@ -48,7 +48,7 @@ client.register_model(
 )
 ```
 
-Models can also be registered from Python objects, such as Scikit-learn or PyTorch models. This allows you to register models directly from your 
+Models can also be registered from Python objects, such as Scikit-learn or PyTorch models. This allows you to register models directly from your
 code without needing to save them to disk first.
 ```python
 from chalk.client import ChalkClient
@@ -64,7 +64,7 @@ rfc.fit(X_train, y_train)
 client.register_model(
     name="RiskScoreModel",
     version="1.0.0",
-    tag="v1.0",
+    aliases=["v1.0"],
     model=rfc,  # Directly pass the model object
     description="Model for predicting user risk scores",
     model_type="sklearn",
@@ -133,15 +133,17 @@ from chalk.ml import ModelVersion
 from chalk import functions as F
 
 # Load a model into the deployment
-risk_model = ModelVersion(
+risk_model = ModelVersion.from(
     name="RiskScoreModel",
-    tag="2025-07-29",
+    alias="2025-07-29",
 )
 
 # Reference the loaded model in inference
 @features
 class User:
     id: int
+    age: int
+    income: float
     risk_score: float = F.inference(risk_model, inputs=[
         _.age,
         10,
@@ -160,27 +162,29 @@ from chalk import functions as F
 from datetime import datetime
 
 # Load a model into the deployment
-risk_model_latest = ModelVersion(
+risk_model_latest = ModelVersion.from(
     name="RiskScoreModel",
     alias="latest",
 )
 
 # Load a model into the deployment
-risk_model_v100 = ModelVersion(
+risk_model_v1_0_0 = ModelVersion(
     name="RiskScoreModel",
-    version="1.0.0"
+    version=1,
 )
 
 # Load a model from a specific time
 risk_model_asof = ModelVersion(
     name="RiskScoreModel",
-    as_of=datetime(2025, 7, 29, 12, 0, 0) 
+    as_of=datetime(2025, 7, 29, 12, 0, 0)
 )
 
 # Reference the loaded model(s) in inference
 @features
 class User:
     id: int
+    age: int
+    income: float
     risk_score: float = feature(versions={
         1: feature(description="Latest model version", expression=F.inference(risk_model_latest, _.age, 10, _.income)),
         2: feature(description="Version 1.0.0", expression=F.inference(risk_model_v100, _.age, 10, _.income))
@@ -206,22 +210,22 @@ global model_executable
 global fast_tokenizer
 
 # Load the model version
-risk_model_latest = ModelVersion(
+risk_model_latest = ModelVersion.from(
     name="RiskScoreModel",
     alias="latest"
 )
 
-@before_all
+@before_all(resource_hint="gpu")
 def load_model_artifacts():
     from transformers import PreTrainedTokenizerFast
     global model_executable, fast_tokenizer
-    
+
     fast_tokenizer = PreTrainedTokenizerFast.from_pretrained(
         risk_model_latest.additional_files["tokenizer.json"]
     )
     model_executable = risk_model_latest.load_model()
 
-@online(resource_group="risk-model", resource_hint="gpu", dependencies=["transformers==3.0.1"])
+@online(resource_group="risk-model", resource_hint="gpu")
 def embed_transaction_memo(memo: Transaction.memo) -> Transaction.memo_embedding:
     # Use the model directly in custom code
     tokens = fast_tokenizer.encode(memo, return_tensors="pt")
@@ -247,7 +251,7 @@ Aliases allow you to reference models without hardcoding versions:
 # Set up aliases during registration
 client.register_model(
     name="RiskScoreModel",
-    version="2.1.0", 
+    version="2.1.0",
     aliases=["latest", "production"],
     # ... other parameters
 )
@@ -293,7 +297,7 @@ client.register_model(
 Chalk supports models from various ML frameworks:
 
 - **PyTorch**: `.pth`, `.pt` files and torch objects
-- **TensorFlow**: SavedModel format and `.h5` files  
+- **TensorFlow**: SavedModel format and `.h5` files
 - **Scikit-learn**: Pickled models and sklearn objects
 - **XGBoost**: `.json`, `.model` files and xgboost objects
 - **LightGBM**: `.txt` files and lightgbm objects
@@ -301,8 +305,7 @@ Chalk supports models from various ML frameworks:
 
 ## Best Practices
 
-1. **Version incrementally**: Use semantic versioning (e.g., 1.0.0, 1.1.0, 2.0.0)
-2. **Include metadata**: Always add performance metrics and training information
-3. **Use aliases**: Set up `production`, `staging`, and `latest` aliases for easier deployment management
-4. **Test before promoting**: Validate model performance in staging before updating production aliases
-5. **Document dependencies**: Include all required packages and versions in the metadata
+1. **Include metadata**: Always add performance metrics and training information
+2. **Use aliases**: Set up `production`, `staging`, and `latest` aliases for easier deployment management
+3. **Test before promoting**: Validate model performance in staging before updating production aliases
+4. **Document dependencies**: Include all required packages and versions in the metadata
