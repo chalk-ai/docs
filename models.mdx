@@ -25,7 +25,7 @@ client = ChalkClient()
 client.register_model(
     name="RiskScoreModel",
     version="1.0.0",
-    tag="v1.0",
+    tags=["v1.0"],
     model_path="./risk_score_model.pth",
     additional_files={
         "tokenizer.json": "./tokenizer.json"
