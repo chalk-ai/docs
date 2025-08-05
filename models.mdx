@@ -1,0 +1,302 @@
+---
+title: "Chalk Models"
+metaDescription: Learn how to track, version, and run ML models in Chalk
+description: Learn how to run and train ML models in Chalk
+published: true
+---
+
+import { TipInfo } from '@/components/Tip'
+
+---
+
+
+With Chalk you can easily register and load machine learning models into your deployments. You can then run inference on these models. This guide covers how to integrate models into your Chalk applications, including loading existing models, running inference, and training new models.
+
+## Registering Models in Chalk
+
+Chalk provides a simple way to register and manage machine learning models. You can register models from various frameworks like PyTorch, TensorFlow, and Scikit-learn.
+Registering a model makes it available for inference in your Chalk deployments.
+
+```python
+from chalk.client import ChalkClient
+
+client = ChalkClient()
+
+client.register_model(
+    name="RiskScoreModel",
+    version="1.0.0",
+    tag="v1.0",
+    model_path="./risk_score_model.pth",
+    additional_files={
+        "tokenizer.json": "./tokenizer.json"
+    },
+    description="Model for predicting user risk scores",
+    model_type="pytorch",
+    model_format="pytorch",
+    input_type="numpy",
+    output_type="numpy",
+    metadata={
+        "framework": "pytorch",
+        "training_date": "2025-07-29",
+        "performance_metrics": {
+            "accuracy": 0.95,
+            "f1_score": 0.92
+        }
+    }
+)
+```
+
+Models can also be registered from python objects, such as Scikit-learn or PyTorch models. This allows you to register models directly from your 
+code without needing to save them to disk first.
+```python
+from chalk.client import ChalkClient
+from sklearn.ensemble import RandomForestClassifier
+
+client = ChalkClient()
+
+rfc = RandomForestClassifier()
+
+rfc.fit(X_train, y_train)
+
+
+client.register_model(
+    name="RiskScoreModel",
+    version="1.0.0",
+    tag="v1.0",
+    model=rfc,  # Directly pass the model object
+    description="Model for predicting user risk scores",
+    model_type="sklearn",
+    model_format="pickle",
+    metadata={
+        "framework": "sklearn",
+        "training_date": "2025-07-29",
+        "performance_metrics": {
+            "accuracy": 0.89,
+            "precision": 0.91
+        }
+    }
+)
+```
+
+### Registering from External Platforms
+
+Models can also be registered from existing model artifacts in WandB or MLflow:
+
+**From Weights & Biases:**
+```python
+client.model_from_wandb(
+    name="RiskScoreModel",
+    version="1.0.0",
+    aliases=["v1.0"],
+    wandb_run_id="abc123",
+    wandb_project="risk-scoring",
+    artifact_name="model:latest"
+)
+```
+
+**From MLflow:**
+```python
+client.model_from_mlflow(
+    name="RiskScoreModel",
+    version="1.0.0",
+    aliases=["v1.0"],
+    mlflow_run_id="def456",
+    mlflow_experiment_id="1",
+    model_uri="models:/RiskScoreModel/1"
+)
+```
+
+### Retrieving Model Information
+
+```python
+# Get model metadata
+model = client.get_model(name="RiskScoreModel")
+print(f"Latest version: {model.latest_version}")
+print(f"Available versions: {model.versions}")
+
+# Get specific version details
+model_v1 = client.get_model(name="RiskScoreModel", version="1.0.0")
+print(f"Performance: {model_v1.metadata['training_metrics']}")
+```
+
+
+## Including Models in Chalk Deployments
+
+Use the `ModelVersion` class to include trained models in your Chalk deployment:
+
+```python
+from chalk.ml import ModelVersion
+from chalk import functions as F
+
+# Load a model into the deployment
+risk_model = ModelVersion(
+    name="RiskScoreModel",
+    tag="2025-07-29",
+)
+
+# Reference the loaded model in inference
+@features
+class User:
+    id: int
+    risk_score: float = F.inference(risk_model, inputs=[
+        _.age,
+        10,
+        _.income
+    ])
+```
+
+
+## Running Inference on Models
+
+Once models are registered and loaded into your deployment, you can run inference using several approaches:
+
+```python
+from chalk.ml import ModelVersion
+from chalk import functions as F
+from datetime import datetime
+
+# Load a model into the deployment
+risk_model_latest = ModelVersion(
+    name="RiskScoreModel",
+    alias="latest",
+)
+
+# Load a model into the deployment
+risk_model_v100 = ModelVersion(
+    name="RiskScoreModel",
+    version="1.0.0"
+)
+
+# Load a model from a specific time
+risk_model_asof = ModelVersion(
+    name="RiskScoreModel",
+    as_of=datetime(2025, 7, 29, 12, 0, 0) 
+)
+
+# Reference the loaded model(s) in inference
+@features
+class User:
+    id: int
+    risk_score: float = feature(versions={
+        1: feature(description="Latest model version", expression=F.inference(risk_model_latest, _.age, 10, _.income)),
+        2: feature(description="Version 1.0.0", expression=F.inference(risk_model_v100, _.age, 10, _.income))
+    })
+```
+
+## Custom Model Execution
+
+<TipInfo>
+Model objects are fully accessible through their object's path for custom Python execution. This gives you complete control over how models are used in your resolvers.
+</TipInfo>
+
+For advanced use cases, you can load and use models directly in Python resolvers:
+
+```python
+from chalk import before_all, online
+from chalk.features import features, _
+from chalk.ml import ModelVersion
+
+global model_executable
+global fast_tokenizer
+
+# Load the model version
+risk_model_latest = ModelVersion(
+    name="RiskScoreModel",
+    alias="latest"
+)
+
+@before_all
+def load_model_artifacts():
+    from transformers import PreTrainedTokenizerFast
+    global model_executable, fast_tokenizer
+    
+    fast_tokenizer = PreTrainedTokenizerFast.from_pretrained(
+        risk_model_latest.additional_files["tokenizer.json"]
+    )
+    model_executable = risk_model_latest.load_model()
+
+@online(resource_group="risk-model", resource_hint="gpu", dependencies=["transformers==3.0.1"])
+def embed_transaction_memo(memo: Transaction.memo) -> Transaction.memo_embedding:
+    # Use the model directly in custom code
+    tokens = fast_tokenizer.encode(memo, return_tensors="pt")
+
+    return model_executable(tokens)
+```
+
+## Model Versioning and Management
+
+Chalk provides flexible model versioning to help you manage model deployments:
+
+### Version Selection
+
+- **Specific version**: Use `version="1.0.0"` to load an exact version
+- **Alias**: Use `alias="latest"` or `alias="production"` for dynamic references
+- **Time-based**: Use `as_of=datetime(...)` to load the model version that was current at a specific time
+
+### Model Aliases
+
+Aliases allow you to reference models without hardcoding versions:
+
+```python
+# Set up aliases during registration
+client.register_model(
+    name="RiskScoreModel",
+    version="2.1.0", 
+    aliases=["latest", "production"],
+    # ... other parameters
+)
+
+# Use aliases in deployments
+production_model = ModelVersion(
+    name="RiskScoreModel",
+    alias="production"
+)
+```
+
+## Model Performance and Monitoring
+
+When registering models, include performance metadata for tracking:
+
+```python
+client.register_model(
+    name="RiskScoreModel",
+    version="1.2.0",
+    model=trained_model,
+    metadata={
+        "training_metrics": {
+            "accuracy": 0.94,
+            "precision": 0.91,
+            "recall": 0.88,
+            "f1_score": 0.89
+        },
+        "validation_metrics": {
+            "accuracy": 0.92,
+            "auc": 0.87
+        },
+        "dataset_info": {
+            "training_samples": 50000,
+            "validation_samples": 10000,
+            "feature_count": 25
+        }
+    }
+)
+```
+
+## Supported Model Frameworks
+
+Chalk supports models from various ML frameworks:
+
+- **PyTorch**: `.pth`, `.pt` files and torch objects
+- **TensorFlow**: SavedModel format and `.h5` files  
+- **Scikit-learn**: Pickled models and sklearn objects
+- **XGBoost**: `.json`, `.model` files and xgboost objects
+- **LightGBM**: `.txt` files and lightgbm objects
+- **Custom**: Any Python object that implements prediction methods
+
+## Best Practices
+
+1. **Version incrementally**: Use semantic versioning (e.g., 1.0.0, 1.1.0, 2.0.0)
+2. **Include metadata**: Always add performance metrics and training information
+3. **Use aliases**: Set up `production`, `staging`, and `latest` aliases for easier deployment management
+4. **Test before promoting**: Validate model performance in staging before updating production aliases
+5. **Document dependencies**: Include all required packages and versions in the metadata
