@@ -12,6 +12,8 @@ import { TipInfo } from '@/components/Tip'
 
 With Chalk you can easily register and load machine learning models into your deployments. You can then run inference on these models. This guide covers how to integrate models into your Chalk applications, including loading existing models and running inference.
 
+---
+
 ## Registering Models in Chalk
 
 Chalk provides a simple way to register and manage machine learning models. You can register models from various frameworks like PyTorch, TensorFlow, and Scikit-learn.
@@ -46,7 +48,7 @@ client.register_model(
 )
 ```
 
-Models can also be registered from python objects, such as Scikit-learn or PyTorch models. This allows you to register models directly from your 
+Models can also be registered from Python objects, such as Scikit-learn or PyTorch models. This allows you to register models directly from your 
 code without needing to save them to disk first.
 ```python
 from chalk.client import ChalkClient
@@ -120,6 +122,8 @@ print(f"Performance: {model_v1.metadata['training_metrics']}")
 ```
 
 
+---
+
 ## Including Models in Chalk Deployments
 
 Use the `ModelVersion` class to include trained models in your Chalk deployment:
@@ -182,6 +186,8 @@ class User:
         2: feature(description="Version 1.0.0", expression=F.inference(risk_model_v100, _.age, 10, _.income))
     })
 ```
+
+---
 
 ## Custom Model Execution
 
