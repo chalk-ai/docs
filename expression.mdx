@@ -334,7 +334,7 @@ from chalk.features import Primary, features, feature
 
 @features
 class User:
-    id: Primary[int]
+    id: int
 
     purchases: DataFrame[Purchase]
     # Uses a default value of 0 when one cannot be computed.

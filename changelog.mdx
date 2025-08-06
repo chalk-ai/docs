@@ -311,7 +311,7 @@ from chalk.functions.http import HttpResponse
 
 @features
 class ExternalAPI:
-    id: Primary[int]
+    id: int
     api_endpoint: str
 
     # GET request returning string response
@@ -1019,7 +1019,7 @@ from chalk.features import _, features, Primary
 
 @features
 class Transaction:
-    id: Primary[str]
+    id: str
     amount: float
     date: date
     day: int = F.day_of_year(_.date)
@@ -1145,7 +1145,7 @@ from chalk.features import _, features, Primary
 from datetime import date
 @features
 class User:
-    id: Primary[str]
+    id: str
     created_at: date
     last_activity: date
     days_since_last_activity: float = F.total_seconds(date.today() - _.last_activity) / (60 * 60 * 24)
@@ -1165,7 +1165,7 @@ from chalk.features import features, Primary, Optional
 
 @features
 class RestaurantRating:
-    id: Primary[str]
+    id: str
     cleanliness_score: Optional[float] = feature(cache_nulls=False) # null values will not be persisted
     service_score: Optional[float] = feature(cache_nulls=True) # null values will be persisted. This is the default behavior.
     overall_score: float # null values are not persisted for required features

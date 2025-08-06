@@ -65,7 +65,11 @@ class User:
 You can also specify multiple join keys for a has-many relationship. For example, say hospitals wants to
 compute aggregations over visit to each of their departments. We could write the following feature classes.
 
-```py
+```python
+from chalk import _
+from chalk.features import features, DataFrame, has_many
+from datetime import datetime
+
 @features
 class HospitalVisit:
     id: str = _.user_id + _.hospital + _.department + _.date
@@ -82,14 +86,22 @@ class HospitalDepartment:
     hospital_name: str
     composite_key_match: str = _.hospital_name + "-" + _.name
     # multi-feature join
-    visits: DataFrame[HospitalVisit] = has_many(lambda: (HospitalDepartment.hospital_name == HospitalVisit.hospital) & (HospitalDepartment.name == HospitalVisit.department))
+    visits: DataFrame[HospitalVisit] = has_many(
+      lambda:
+       (HospitalDepartment.hospital_name == HospitalVisit.hospital) &
+       (HospitalDepartment.name == HospitalVisit.department)
+    )
     # composite key join
-    visits_with_composite_key: DataFrame[HospitalVisit] = has_many(lambda: HospitalDepartment.composite_key_match == HospitalVisit.composite_key)
+    visits_with_composite_key: DataFrame[HospitalVisit] = has_many(
+      lambda: HospitalDepartment.composite_key_match == HospitalVisit.composite_key
+    )
 ```
 
 You can also join in Has-Many relationships for features that have primary composite keys.
 
 ```py
+from chalk.features import features, DataFrame, has_many
+
 @features
 class SoftwareEngineer:
     id: int = _.first_name + " " + _.last_name
@@ -101,7 +113,9 @@ class SoftwareEngineer:
 @features
 class Manager:
     id: int
-    direct_reports: DataFrame[SoftwareEngineer] = has_many(lambda: Manager.id == SoftwareEngineer.manager_id)
+    direct_reports: DataFrame[SoftwareEngineer] = has_many(
+      lambda: Manager.id == SoftwareEngineer.manager_id
+    )
 ```
 
 ---
@@ -112,7 +126,7 @@ Having established a has-many relationship, you can now reference the transfers 
 a user through the user namespace. The `has_many` feature returns a [chalk.DataFrame](/docs/dataframe),
 which supports many helpful aggregation operations:
 
-```py
+```python
 # Number of transfers made by a user
 User.transfers.count()
 
@@ -164,24 +178,25 @@ from chalk.features import features, DataFrame
 
 @features
 class Actor:
-  id: int
-  appearances: "DataFrame[MovieRole]"
-  full_name: str
+    id: int
+    appearances: "DataFrame[MovieRole]"
+    full_name: str
 
-  # this will be used to demonstrate one of the ways the joining feature can be populated
-  movie_ids: list[int]
+    # this will be used to demonstrate one of the
+    # ways the joining feature can be populated
+    movie_ids: list[int]
 
 @features
 class Movie:
-  id: int
-  title: str
+    id: int
+    title: str
 
 @features
 class MovieRole:
-  id: str
-  actor_id: Actor.id
-  movie_id: Movie.id
-  movie: Movie
+    id: str
+    actor_id: Actor.id
+    movie_id: Movie.id
+    movie: Movie
 ```
 
 <TipInfo>
