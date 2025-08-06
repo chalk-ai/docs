@@ -275,7 +275,7 @@ When using Chalk's built-in embedding functions, the vector dimensions don't nee
 
 ---
 
-## Reuse and manage prompts with [named prompts](/docs/prompts)
+## Reuse and manage prompts with Chalk's named prompts
 
 You can define named prompts directly from your Chalk dashboard to help maintain consistency in your LLM workflows.
 This centralized approach makes prompts more maintainable and reusable across your application, while also allowing you to change your prompts and model providers without needing to redeploy Chalk.
@@ -289,7 +289,7 @@ class Transaction:
     receipt: Receipt
 
     # or configure the chat completion from your Chalk dashboard
-    llm_call_with_named_prompt: P.run_prompt("analyze_receipt-v1")
+    llm_call_with_named_prompt: P.PromptResponse = P.run_prompt("analyze_receipt-v1")
 ```
 
 The `P.run_prompt()` function provides a clean syntax for connecting your feature classes to a named prompt.
