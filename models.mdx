@@ -24,6 +24,19 @@ from chalk.client import ChalkClient
 
 client = ChalkClient()
 
+input = InputSchema(
+    type="tabular",
+    features={
+        "age": "int",
+        "income": "float",
+    }
+)
+output = OutputSchema(
+    type="regression",
+    shape=(1,),
+    description="Predicted risk score"
+)
+
 client.register_model(
     name="RiskScoreModel",
     version=1,
@@ -35,8 +48,8 @@ client.register_model(
     description="Model for predicting user risk scores",
     model_type="pytorch",
     model_format="pytorch",
-    input_type=((10, 10, 3)), # or (10, 10, 3) ,
-    output_type=(1,),
+    input=input,
+    output=output,
     metadata={
         "framework": "pytorch",
         "training_date": "2025-07-29",
