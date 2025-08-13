@@ -190,7 +190,7 @@ class User:
     num_small_transactions: int = count_where(_.total < 100)
 ```
 
-<TipBad>Don't use Python functions in Python resolvers</TipBad>
+<TipBad>Don't use expressions in Python resolvers</TipBad>
 
 ```python
 @features
