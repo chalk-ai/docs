@@ -1,0 +1,149 @@
+---
+title: GitLab CI/CD
+description: Deploy feature pipelines in GitLab CI/CD
+published: true
+---
+
+---
+
+Chalk provides official support for GitLab CI/CD.
+You can install the Chalk CLI and create deployments
+(preview and production) using GitLab CI/CD jobs.
+
+---
+
+## Installing the Chalk CLI
+
+You will need to create a Chalk token from the settings
+page of your dashboard and store the resulting client
+id and secret as
+[GitLab CI/CD Variables](https://docs.gitlab.com/ci/variables/).
+
+Create a job that supports the following variables:
+
+- `CHALK_CLIENT_ID`: The Chalk Client ID from the tokens page in your settings (stored as CI/CD variable).
+- `CHALK_CLIENT_SECRET`: The Chalk Client Secret from the tokens page in your settings (stored as masked CI/CD variable).
+- `CHALK_VERSION` (optional): The version of `chalk` to install, defaulting to `latest`.
+- `CHALK_API_HOST` (optional): If you're using a self-hosted deployment, the API host where Chalk is hosted.
+- `CHALK_ENVIRONMENT` (optional): The Chalk environment to use. Your token is typically scoped to a single environment, and you won't need to use this parameter.
+
+### Example
+
+```yaml
+install-chalk:
+  stage: setup
+  image: ubuntu:latest
+  before_script:
+    - apt-get update && apt-get install -y curl
+  script:
+    - |
+      # Download and install Chalk CLI
+      CHALK_VERSION=${CHALK_VERSION:-latest}
+      curl -L "https://github.com/chalk-ai/chalk/releases/${CHALK_VERSION}/download/chalk-linux" -o chalk
+      chmod +x chalk
+      mv chalk /usr/local/bin/chalk
+    - |
+      # Configure Chalk with credentials
+      chalk auth --client-id "$CHALK_CLIENT_ID" --client-secret "$CHALK_CLIENT_SECRET"
+      if [ -n "$CHALK_ENVIRONMENT" ]; then
+        chalk config set environment "$CHALK_ENVIRONMENT"
+      fi
+      if [ -n "$CHALK_API_HOST" ]; then
+        chalk config set api-host "$CHALK_API_HOST"
+      fi
+  variables:
+    CHALK_CLIENT_ID: $CHALK_CLIENT_ID
+    CHALK_CLIENT_SECRET: $CHALK_CLIENT_SECRET
+    # Optional: Version of the Chalk CLI to install. Defaults to `latest`
+    CHALK_VERSION: latest
+    # Optional: Environment to use. Optional for environment-scoped tokens.
+    CHALK_ENVIRONMENT: <environment id>
+    # Optional: Used for Hybrid Cloud deployments
+    CHALK_API_HOST: https://custom.deployment.com/
+  artifacts:
+    paths:
+      - /usr/local/bin/chalk
+    expire_in: 1 hour
+```
+
+For more information, see the Chalk CLI documentation or complete examples in your GitLab repository.
+
+---
+
+## Deploying to Chalk
+
+You can deploy to Chalk by first installing the CLI, as in the section above, then creating a deployment job.
+This job supports the following variables:
+
+- `CHALK_CLIENT_ID`: The Chalk Client ID from the tokens page in your settings (stored as CI/CD variable).
+- `CHALK_CLIENT_SECRET`: The Chalk Client Secret from the tokens page in your settings (stored as masked CI/CD variable).
+- `CHALK_BRANCH` (optional): By default, Chalk will deploy to your production environment. With this variable, your pipelines will deploy to a Chalk branch.
+- `CHALK_AWAIT` (optional): Should this job block until deployment completes? Defaults to true.
+- `CHALK_VERSION` (optional): The version of `chalk` to install, defaulting to `latest`.
+- `CHALK_API_HOST` (optional): If you're using a self-hosted deployment, the API host where Chalk is hosted.
+- `CHALK_ENVIRONMENT` (optional): The Chalk environment to use. Your token is typically scoped to a single environment, and you won't need to use this parameter.
+
+### Example
+
+```yaml
+stages:
+  - setup
+  - deploy
+
+install-chalk:
+  stage: setup
+  image: ubuntu:latest
+  before_script:
+    - apt-get update && apt-get install -y curl
+  script:
+    - |
+      CHALK_VERSION=${CHALK_VERSION:-latest}
+      curl -L "https://github.com/chalk-ai/chalk/releases/${CHALK_VERSION}/download/chalk-linux" -o chalk
+      chmod +x chalk
+      mv chalk /usr/local/bin/chalk
+  artifacts:
+    paths:
+      - /usr/local/bin/chalk
+    expire_in: 1 hour
+
+deploy-chalk:
+  stage: deploy
+  image: ubuntu:latest
+  dependencies:
+    - install-chalk
+  before_script:
+    - cp chalk /usr/local/bin/chalk || echo "Using pre-installed chalk"
+  script:
+    - |
+      # Configure Chalk with credentials
+      chalk auth --client-id "$CHALK_CLIENT_ID" --client-secret "$CHALK_CLIENT_SECRET"
+      if [ -n "$CHALK_ENVIRONMENT" ]; then
+        chalk config set environment "$CHALK_ENVIRONMENT"
+      fi
+      if [ -n "$CHALK_API_HOST" ]; then
+        chalk config set api-host "$CHALK_API_HOST"
+      fi
+    - |
+      # Deploy to Chalk
+      DEPLOY_CMD="chalk apply"
+      if [ -n "$CHALK_BRANCH" ]; then
+        DEPLOY_CMD="$DEPLOY_CMD --branch $CHALK_BRANCH"
+      fi
+      if [ "$CHALK_AWAIT" = "false" ]; then
+        DEPLOY_CMD="$DEPLOY_CMD --no-wait"
+      fi
+      $DEPLOY_CMD
+  variables:
+    CHALK_CLIENT_ID: $CHALK_CLIENT_ID
+    CHALK_CLIENT_SECRET: $CHALK_CLIENT_SECRET
+    # Optional: Version of the Chalk CLI to install. Defaults to `latest`
+    CHALK_VERSION: latest
+    # Optional: Environment to use. Optional for environment-scoped tokens.
+    CHALK_ENVIRONMENT: <environment id>
+    # Optional: Used for Hybrid Cloud deployments
+    CHALK_API_HOST: https://custom.deployment.com/
+    # Optional: Deploy to a specific branch instead of production
+    # CHALK_BRANCH: feature-branch
+    # Optional: Wait for deployment to complete (default: true)
+    # CHALK_AWAIT: "false"
+```
