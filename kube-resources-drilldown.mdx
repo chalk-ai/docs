@@ -228,19 +228,14 @@ machines.
 ### AWS
 
 Chalk deployments in AWS EKS clusters use [Karpenter](https://karpenter.sh/) to provision nodes (cloud machine instances) for workloads.
-In order to specify an instance type, add a node selector to a Chalk service kind in Settings > Resources > [Service Kind] > Advanced >
-"Kubernetes Node Selectors" with the key `node.kubernetes.io/instance-type`. The value should be the name of the desired
-[EC2 instance type](https://aws.amazon.com/ec2/instance-types/).
-
-For example, if you would like your query servers to run on `c7i.4xlarge` instances, set the node selector `node.kubernetes.io/instance-type: c7i.4xlarge`.
+In order to specify an instance type, use the `Instance Type` dropdown under `Settings > Resources > [Service Kind] > Service Isolation`.
 
 ### GCP
 
 Chalk deployments in GCP GKE clusters use either GCP node auto-provisioning (NAP) or manually-configured GKE nodepools to provision nodes for workloads.
 
-When using NAP, the "machine family" can be specified via a node selector in Settings > Resources > [Service Kind] > Advanced > "Kubernetes Node Selectors"
-with the key `cloud.google.com/machine-family`. The value should be the name of the desired [machine family](https://cloud.google.com/compute/docs/machine-resource#vm_terminology).
-For example, if you would like your query servers to run on `c3d` instances, set the node selector `cloud.google.com/machine-family: c3d`.
+When using NAP, the "machine family" can be specified via a node selector in the `Instance Type` dropdown under
+`Settings > Resources > [Service Kind] > Service Isolation`.
 
 When using manually-configured GKE nodepools, the nodepool for a workload can be specified by name with the node selector `cloud.google.com/gke-nodepool`. For example, to run
 workloads on a nodepool called `chalk-c3d-standard-4-nodepool`, use the node selector `cloud.google.com/gke-nodepool: chalk-c3d-standard-4-nodepool`.

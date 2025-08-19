@@ -74,7 +74,7 @@ configurations, then Karpenter will analyze the pod, as well as the other nodes 
 or deprovision nodes such that the new pod can be scheduled. 
 
 For AWS-hosted clusters, we use [Karpenter Nodepools](https://karpenter.sh/docs/concepts/nodepools/) and for 
-GCP-hosted clustesr we use [NAP](https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning). 
+GCP-hosted clusters we use [NAP](https://cloud.google.com/kubernetes-engine/docs/how-to/node-auto-provisioning).
 Both Karpenter and GKE NAP will attempt to optimize resource provisioning based on the provided nodepool constraints.
 You can manage these nodepool constraints in a few ways: 
 1. **Edit your existing nodepools**: Under `Settings > Nodepools`, you can edit the nodepool constraints to 
