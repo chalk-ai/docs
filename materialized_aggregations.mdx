@@ -166,6 +166,14 @@ If your window intervals have a wide discrepancy (say, 1d and 365d), you can use
 explicitly map bucket durations to each window interval. Selecting the right bucket duration is a tradeoff between
 accuracy and storage. Shorter bucket durations will yield more accurate results, but will also require more storage.
 
+When you query for a specific window_interval, Chalk will aggregate over all the complete buckets that intersect with
+the window interval. If a bucket is only partially filled, it will not be included in that aggregation. If you have a
+continuous buffer duration configured, then if the continuous buffer duration does not intersect with a filled bucket,
+then online resolvers will bs used to compute the aggregation for the buffer duration time window. If the continuous
+buffer duration intersects with a filled bucket that starts at time `t`, then Chalk will run online resolvers to
+compute the aggregation from `t` to the current time. Chalk will only ever include filled buckets in the aggregation
+computation. 
+
 
 ## Backfilling data and managing aggregation
 
