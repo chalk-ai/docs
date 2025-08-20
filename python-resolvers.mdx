@@ -595,3 +595,39 @@ feature time is also returned.
 To test your Python resolvers, you can set up [unit tests](/docs/unit-tests), construct
 [integration tests](/docs/integration-tests) or iterate on a branch.
 
+## ML Flow
+
+Python resolvers can also be used to load and run ML models. An example using ML Flow is shown below.
+This example loads a model from the ML Flow registry and uses it to make predictions. Using the [@before_all](/docs/best-practices)
+decorator, the model is loaded once before any online requests are made. The model is then used in the
+`get_prediction` function to make predictions based on the input features.
+
+```py
+import mlflow
+from chalk import online
+from chalk.features import before_all
+
+from src.models import FeatureClass
+import ExampleModelClass
+
+model: ExampleModelClass | None = None
+
+
+@before_all
+def load_model():
+  mlflow.set_registry_uri("EXAMPLE_REGISTRY_URI")
+  mlflow.set_tracking_uri("EXAMPLE_TRACKING_URI")
+
+  global model
+  model = mlflow.load_model("models:/mymodel@production")
+
+
+@online
+def get_prediction(
+  model_input: FeatureClass.model_input,
+) -> FeatureClass.model_output:
+
+  x_in = [model_input]
+
+  return model.predict(x_in)
+```
