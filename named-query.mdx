@@ -4,7 +4,7 @@ description: Track and manage named queries in Chalk
 published: true
 ---
 
-With Chalk [NamedQuery](/api-docs#NamedQuery) objects, you can define and version
+With Chalk [`NamedQuery`](/api-docs#NamedQuery) objects, you can define and version
 your common query patterns in code. This provides a few advantages:
 - queries are preplanned on engine boot, reducing first-query latency,
 - query outputs and parameters don't need to be hardcoded, reducing boilerplate code and ensuring consistency between your queries,
@@ -12,37 +12,29 @@ your common query patterns in code. This provides a few advantages:
 
 ---
 
-## Defining a NamedQuery
+## Defining Named Queries
 
-To define a named query, add a `NamedQuery` object to your Chalk deployment:
+To define a named query, add a [`NamedQuery`](/api-docs#NamedQuery) object to your Chalk deployment:
 
 ```python
 from chalk import NamedQuery
-from src.feature_sets import Book, Author
+from src.models import User
 
 NamedQuery(
-    name="book_key_information",
-    input=[Book.id],
+    name="fraud",
+    input=[User.id],
     output=[
-        Book.id,
-        Book.title,
-        Book.author.name,
-        Book.year,
-        Book.short_description
+        User.email_age_days,
+        User.denylisted,
+        User.credit_report.flags,
     ],
-    tags=["team:analytics"],
-    staleness={
-        Book.short_description: "0s"
-    },
-    owner="mary.shelley@aol.com",
-    description=(
-        "Return a condensed view of a book, including its title, author, "
-        "year, and short description."
-    )
+    tags=["team:fraud"],
+    owner="jodie@chalk.ai",
+    description="Primary fraud model for signup"
 )
 ```
 
-Running `chalk apply` makes the named query available in your deployment.
+Running [`chalk apply`](/cli/apply) makes the named query available in your deployment.
 
 ---
 
@@ -53,21 +45,19 @@ Named queries can then be leveraged through any of our clients by specifying the
 Using the Chalk CLI tool, this looks something like:
 
 ```bash
-chalk query --in book.id=1 --query-name book_key_information
+chalk query --in user.id=1 --query-name fraud
 ```
 
 Because a named query has been specified, you don't need to explicitly pass in the tags and outputs
 for your query. The above command is equivalent to running the more complicated:
+
 ```bash
-chalk query --in book.id=1 \
-  --out book.id \
-  --out book.title \
-  --out book.author \
-  --out book.year \
-  --out book.author.name \
-  --out book.short_description \
-  --staleness book.short_description=0s \
-  --tags team:analytics
+chalk query \
+  --in user.id=1 \
+  --out user.email_age_days \
+  --out user.denylisted \
+  --out user.credit_report.flags \
+  --tags team:fraud
 ```
 
 This feature is also accessible in all of our API clients through the `query_name` parameter.
@@ -76,13 +66,12 @@ For instance, in Python, you can run:
 ```python
 from chalk.client import ChalkClient
 
-client = ChalkClient()
-
-client.query(
-    input={"book.id": 1},
-    query_name="book_key_information",
+ChalkClient().query(
+    input={"user.id": 1},
+    query_name="fraud",
 )
 ```
+
 To see all the named queries you've defined in your current active deployment, you can run:
 
 ```bash
@@ -94,46 +83,62 @@ $ chalk named-query list
 
 ## Versioning Named Queries
 
-If you want to create multiple versions of a similar query, you can use the [version](/api-docs#NamedQuery.__init__.version) parameter of the NamedQuery object
+If you want to create multiple versions of a similar query, you can use the [version](/api-docs#NamedQuery.__init__.version)
+parameter of the [`NamedQuery`](/api-docs#NamedQuery) object
 and the [query_name_version](/api-docs#ChalkClient.query.query_name_version) parameter of our various clients.
 
 Note, when executing a named query both the query name and the query version must match.
-This means that if you've defined four named queries in your codebase:
+This means that if you've defined two named queries in your codebase:
 
 ```python
 from chalk import NamedQuery
-from src.feature_sets import Book
+from src.models import User
 
-first_nq = NamedQuery(name="book_id", input=[Book.id], output=[Book.id])
-second_nq = NamedQuery(name="book_id", input=[Book.id], version=1, output=[Book.name])
-third_nq = NamedQuery(name="book_id", input=[Book.id], version=2, output=[Book.author])
-fourth_nq = NamedQuery(name="book_id", input=[Book.id], version=3, output=[Book.version])
+NamedQuery(
+    name="fraud",
+    input=[User.id],
+    output=[User.denylisted],
+)
+
+NamedQuery(
+    name="fraud",
+    version="1.1.0",
+    input=[User.id],
+    output=[
+        User.email_age_days,
+        User.denylisted,
+        User.credit_report.flags,
+    ],
+)
 ```
+
 And you run the following query:
 ```bash
-chalk query --in book.id=1 --query-name book_id
+chalk query --in user.id=1 --query-name fraud
 ```
-We will return `Book.id` since the first named query has no version and no version was passed
+
+We will return `User.denylisted` since the first named query has no version and no version was passed
 through `query-name-version`. To access a version named query, the version must be
 explicitly passed. For example:
 ```bash
-chalk query --in book.id=1 --query-name book_id --query-name-version 1
+chalk query --in user.id=1 --query-name fraud --query-name-version 1.1.0
 ```
+
+---
 
 ## Caching ad-hoc query plans
 
-Sometimes defining NamedQuery objects is not ergonomic or possible. For example, if you are
-a platform team serving multiple teams, you may not want to define a NamedQuery object for every
+Sometimes defining [`NamedQuery`](/api-docs#NamedQuery) objects is not ergonomic or possible. For example, if you are
+a platform team serving multiple teams, you may not want to define a [`NamedQuery`](/api-docs#NamedQuery) object for every
 query that your users run.
 
 In this case, you can use these environment variables:
 
-
-```
+```bash
 CHALK_STORE_ADHOC_QUERIES=true
-CHALK_PLAN_ADHOC_QUERIES=n
+CHALK_PLAN_ADHOC_QUERIES=3
 ```
 
 The first environment variable will cache the ad-hoc query requests in the database. The second
-environment variable will plan up to `n` of the most recent ad-hoc queries. These Ad-hoc Queries are re-planned at
-boot so that code or platform changes can be reflected in the query plan.
+environment variable will plan up to `3` of the most recent ad-hoc queries. These Ad-hoc queries
+are re-planned at boot so that code or platform changes can be reflected in the query plan.
