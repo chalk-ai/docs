@@ -1,7 +1,7 @@
 ---
 title: Feature Caching
 metaTitle: Feature Caching
-description: Set max staleness to introduce caching.
+description: Cache pre-computed features values in the online store
 published: true
 ---
 
@@ -41,6 +41,8 @@ to explicitly update using [Streaming Updates](/docs/streams) or [Reverse ETL](/
 Staleness can also be assigned to all features in a namespace:
 
 ```py
+from chalk.features import features, feature
+
 @features(max_staleness="**1d**")
 class User:
     fraud_score: float
@@ -56,6 +58,22 @@ assumes the max-staleness of `0s`, forcing it to be recomputed on every request.
 
 By default, features are not cached, and instead are recomputed for every online request.
 In effect, you can think of `max_staleness` as being `0` except where otherwise specified.
+
+### Caching indefinitely
+
+If you want to cache a feature indefinitely, you can set the `max_staleness` to `"infinity"`:
+
+```py
+from chalk.features import feature, features
+
+@features
+class User:
+    id: int
+    fraud_score: float = feature(max_staleness="**infinity**")
+```
+
+In this example, the latest computed value for `User.fraud_score` will be cached indefinitely in the online store.
+When a new value is computed, it will replace the old value in the online store.
 
 ---
 
