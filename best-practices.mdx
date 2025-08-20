@@ -145,54 +145,49 @@ canceling the query within the dashboard, which is not possible for synchronous 
 
 ### Create named queries for your commonly executed queries
 
-With Chalk, you can alias your complex queries using a [NamedQuery](/api-docs#NamedQuery). Named queries help simplify and document your
+With Chalk, you can alias your complex queries using a [`NamedQuery`](/api-docs#NamedQuery). Named queries help simplify and document your
 query patterns.
 
-To define a named query, add a `NamedQuery` object to your Chalk deployment:
+To define a named query, add a [`NamedQuery`](/api-docs#NamedQuery) object to your Chalk deployment:
 
 ```python
 from chalk import NamedQuery
-from src.feature_sets import Book, Author
+from src.models import User
 
 NamedQuery(
-    name="book_key_information",
-    input=[Book.id],
+    name="fraud",
+    input=[User.id],
     output=[
-        Book.id,
-        Book.title,
-        Book.author.name,
-        Book.year,
-        Book.short_description
+        User.email_age_days,
+        User.denylisted,
+        User.credit_report.flags,
     ],
-    tags=["team:analytics"],
+    tags=["team:fraud"],
     staleness={
-        Book.short_description: "0s"
+        User.credit_report.flags: "30d"
     },
-    owner="mary.shelley@aol.com",
-    description=(
-        "Return a condensed view of a book, including its title, author, "
-        "year, and short description."
-    )
+    owner="jodie@chalk.ai",
+    description="Primary fraud model for signup",
 )
 ```
 
-Running `chalk apply` makes the query name available as an alias for executing your more complex queries.
+Running [`chalk apply`](/cli/apply) makes the query name available as an alias for executing your more complex queries.
 
 For instance, running:
+
 ```bash
-chalk query --in book.id=1 --query-name book_key_information
+chalk query --in user.id=1 --query-name fraud
 ```
-will be equivalent to running the more complicated:
+
+is equivalent to running the more complicated:
 ```bash
-chalk query --in book.id=1 \
-  --out book.id \
-  --out book.title \
-  --out book.author \
-  --out book.year \
-  --out book.author.name \
-  --out book.short_description \
-  --staleness book.short_description=0s \
-  --tags team:analytics
+chalk query \
+  --in user.id=1 \
+  --out user.email_age_days \
+  --out user.denylisted \
+  --out user.credit_report.flags \
+  --staleness user.credit_report.flags=30d \
+  --tags team:fraud
 ```
 
 This feature is also accessible in all of our API clients through the `query_name` parameter.
@@ -201,11 +196,9 @@ For instance, in python, you can run:
 ```python
 from chalk.client import ChalkClient
 
-client = ChalkClient()
-
-client.query(
-    input={"book.id": 1},
-    query_name="book_key_information",
+ChalkClient().query(
+    input={"user.id": 1},
+    query_name="fraud",
 )
 ```
 
