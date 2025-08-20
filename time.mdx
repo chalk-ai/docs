@@ -58,14 +58,6 @@ class User:
 
 Using your `FeatureTime` feature, you can access and override feature time for the whole feature class.
 
-You can access the `FeatureTime` as a resolver input. In this example, `ts` will be set to the maximum feature time for
-all features passed as resolver parameters:
-
-```py
-@offline
-def fn(name: User.name, ts: User.timestamp) -> ...:
-```
-
 You can directly set the `FeatureTime` value by returning it from a resolver:
 
 ```py
