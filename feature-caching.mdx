@@ -59,7 +59,9 @@ assumes the max-staleness of `0s`, forcing it to be recomputed on every request.
 By default, features are not cached, and instead are recomputed for every online request.
 In effect, you can think of `max_staleness` as being `0` except where otherwise specified.
 
-### Caching indefinitely
+---
+
+## Caching indefinitely
 
 If you want to cache a feature indefinitely, you can set the `max_staleness` to `"infinity"`:
 
@@ -102,7 +104,9 @@ to ensure that your queries utilize the low-latency path of online store lookup.
   features with `max_staleness != 0`.
 - **Stream**: You can stream feature values to the online store for features with `max_staleness != 0`.
 
-### Handling null and default values
+---
+
+## Handling null and default values
 
 For features with `max_staleness != 0`, you can also specify how you want to handle null and default feature
 values. By default, Chalk will cache the computed feature value, even if it is null or the default value,
