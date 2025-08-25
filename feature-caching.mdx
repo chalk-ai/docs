@@ -45,9 +45,17 @@ from chalk.features import features, feature
 
 @features(max_staleness="**1d**")
 class User:
+    id: int
     fraud_score: float
     full_name: str
     email: str = feature(max_staleness="0s")
+    ...
+
+@features(max_stasleness="infinity")
+class UserReport:
+    user_id: Primary[User.id]
+    report_data: str
+    created_at: datetime
     ...
 ```
 
