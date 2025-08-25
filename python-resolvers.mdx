@@ -600,7 +600,7 @@ To test your Python resolvers, you can set up [unit tests](/docs/unit-tests), co
 ### ML Flow
 
 Python resolvers can also be used to load and run ML models. An example using [ML Flow](https://mlflow.org/) is shown below.
-This example loads a model from the ML Flow registry and uses it to make predictions. Using the [@before_all](/docs/best-practices#use-the-decorator-to-configure-global-variables-for-your-resolvers)
+This example loads a model from the ML Flow registry and uses it to make predictions. Using the [@before_all](/docs/generic#initializing)
 decorator, the model is loaded once before any online requests are made. The model is then used in the
 `get_prediction` function to make predictions based on the input features.
 
