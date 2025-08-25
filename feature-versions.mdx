@@ -57,6 +57,17 @@ including the CLI, Python, etc.
 $ chalk query --in trial.id=1 --out trial.code@2
 ```
 
+```python
+from chalk.client import ChalkClient
+from src.models import Trial
+
+client = ChalkClient()
+result = client.query(
+    input={Trial.id: 1},
+    output=[Trial.code@2]
+)
+```
+
 ---
 
 ## Default versions
