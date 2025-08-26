@@ -53,7 +53,7 @@ class Document:
     earliest_large_revision_ts: datetime = _.revisions[_.size_bytes > 100,000,000, _.timestamp].min()
 
     # some aggregations return a list
-    most_revised_documents: list[int] = _.revisions[_.document_id].approx_top_k(k=5)
+    most_common_sizes: list[float] = _.revisions[_.size_bytes].approx_top_k(k=5)
 
 
 @features
