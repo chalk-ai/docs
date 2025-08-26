@@ -32,6 +32,12 @@ class User:
         materialization={"bucket_duration": "1d"},
         expression=_.transactions[_.amount].sum(),
     )
+    most_active_users: Windowed[list[int]] = windowed(
+        "1h",
+        materialization={"bucket_duration": "1h"},
+        # the IDs of approximately the 10 users with the most activity in the past hour; k is required and must be passed in as a keyword argument
+        expression=_.transactions[_.user_id].approx_top_k(k=10)
+    )
 ```
 
 ---
