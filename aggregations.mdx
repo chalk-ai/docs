@@ -31,7 +31,7 @@ The following table lists the supported aggregations along with some notes.
 |`std` | Standard deviation. Requires at least 2 values. |
 |`var` | Variance. Same requirements as `std`. |
 |`approx_count_distinct` | An approximation of the cardinality of non-null data. |
-|`approx_top_k` | An approximation of the most common values in a field. Takes in a required `k` parameter, such as `approx_top_k(k=5)` for approximately the five most common values. |
+|`approx_top_k` | An approximation of the most common values in a field. Takes in a required `k` parameter, such as `approx_top_k(k=5)` for the five approximately-most common values. Up to `k` values will be returned, sometimes fewer. |
 
 For example, say you want to compute some aggregations over a document's revisions. You could define the features
 and aggregations below.
