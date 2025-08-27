@@ -1,0 +1,345 @@
+---
+title: "Model Training"
+metaDescription: Learn how to train ML models in Chalk
+description: Learn how to train ML models in Chalk
+published: true
+---
+
+import { TipInfo } from '@/components/Tip'
+
+---
+
+Chalk provides single node and distributed training capabilities that leverage your existing feature infrastructure
+and generate [Model Artifacts](/docs/model_registry).
+
+## Training Overview
+
+Chalk supports two primary training approaches:
+
+- **Single-Node Training**: For smaller datasets that fit in memory on a single machine
+- **Distributed Training**: For large-scale datasets that require distributed processing across multiple workers
+
+Both approaches integrate seamlessly with your existing Chalk feature infrastructure and automatically register trained models in the [Model Registry](/docs/model_registry).
+
+---
+
+## Single-Node Training
+
+Single-node training is ideal for smaller datasets that can fit comfortably in memory. This approach is simpler to set up and debug, making it perfect for experimentation and smaller production workloads.
+
+### Basic Training Setup
+
+Here's a complete example of single-node training with PyTorch:
+
+```python
+import os
+import tempfile
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import boto3
+from chalk import DataFrame, offline, feature
+
+class MyNeuralNetwork(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(MyNeuralNetwork, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        return self.fc2(F.relu(self.fc1(x)))
+
+def transform(users: DataFrame[User]) -> torch.Tensor:
+    feature_columns = [
+        "user.num_transactions",
+        "user.num_transactions_fraud",
+        "user.avg_transaction_amount",
+        "user.account_age_days",
+        "user.percent_online_transactions",
+    ]
+    features_array = users[feature_columns].values
+    return torch.tensor(features_array, dtype=torch.float32)
+
+@feature
+class Dataset:
+    id: str
+    users: DataFrame[User]
+    labels: DataFrame[str]
+
+@feature
+class NNTrainer:
+    dataset_id: Dataset.id
+    dataset: Dataset
+    model_artifact: str
+
+@offline(resource_hint="gpu")
+def train_model(
+    dataset_id: Dataset.id,
+    users: Dataset.users,
+    labels: Dataset.labels,
+) -> NNTrainer.model_artifact:
+    lr = float(os.environ["lr"])
+    batch_size = int(os.environ["batch_size"])
+    num_epochs = int(os.environ["num_epochs"])
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
+
+    model = MyNeuralNetwork(input_size=5, hidden_size=10, output_size=2)
+    model.to(device)
+
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+
+    features = transform(users).to(device)
+
+    # Handle label conversion
+    if isinstance(labels.iloc[0], str):
+        label_mapping = {"not_fraud": 0, "fraud": 1}
+        labels_tensor = torch.tensor(
+            [label_mapping.get(label, 0) for label in labels],
+            dtype=torch.long,
+        )
+    else:
+        labels_tensor = torch.tensor(
+            [int(label) for label in labels],
+            dtype=torch.long
+        )
+
+    labels_tensor = labels_tensor.to(device)
+
+    dataset = torch.utils.data.TensorDataset(features, labels_tensor)
+    dataloader = torch.utils.data.DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=True,
+    )
+
+    model.train()
+    for epoch in range(num_epochs):
+        total_loss = 0
+        for batch_features, batch_labels in dataloader:
+            outputs = model(batch_features)
+            loss = loss_fn(outputs, batch_labels)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item()
+
+        if epoch % 10 == 0:
+            avg_loss = total_loss / len(dataloader)
+            print(f'Epoch [{epoch}/{num_epochs}], Average Loss: {avg_loss:.4f}')
+
+    # Save model artifact
+    artifact = {
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+        "model_config": {
+            "input_size": 5,
+            "hidden_size": 10,
+            "output_size": 2
+        }
+    }
+
+    temp_dir = tempfile.mkdtemp()
+    artifact_name = f"model_{dataset_id}.pt"
+    artifact_path = os.path.join(temp_dir, artifact_name)
+
+    torch.save(artifact, artifact_path)
+
+    s3_bucket = os.environ["MODELS_BUCKET"]
+    s3_key = f"models/{artifact_name}"
+
+    s3_client = boto3.client('s3')
+    s3_client.upload_file(artifact_path, s3_bucket, s3_key)
+    s3_path = f"s3://{s3_bucket}/{s3_key}"
+
+    os.remove(artifact_path)
+    os.rmdir(temp_dir)
+
+    return s3_path
+```
+
+### Key Components of Single-Node Training
+
+The example above demonstrates several important patterns:
+
+- **Feature Infrastructure Integration**: The `transform()` function shows how to extract features from Chalk DataFrames
+- **Environment Variables**: Training hyperparameters are passed through environment variables for flexibility  
+- **GPU Support**: Automatic device detection and model placement on GPU when available
+- **Model Artifacts**: Trained models are saved and uploaded to cloud storage for later registration
+- **Resource Hints**: The `@offline(resource_hint="gpu")` decorator ensures training runs on appropriate hardware
+
+---
+
+## Distributed Training
+
+For larger training datasets that don't fit in memory or require distributed processing, Chalk provides distributed training capabilities. Data is automatically partitioned into blocks and processed across multiple workers.
+
+### Distributed Training Architecture
+
+Distributed training in Chalk uses the following components:
+
+- **Model Classes**: Define your model structure, features, and data types
+- **Worker Functions**: Handle the actual training logic on each distributed worker  
+- **TorchTrainer**: Orchestrates distributed training across multiple workers
+- **Data Sharding**: Automatic partitioning of datasets across workers
+
+### Setting Up Distributed Training
+
+```python
+import os
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+from chalk import DataFrame as ChalkDataFrame
+import chalk.train as chalk_train
+from chalk.train import DataLoader
+
+class MyNeuralNetwork(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(MyNeuralNetwork, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        return self.fc2(F.relu(self.fc1(x)))
+
+def transform(inputs: ChalkDataFrame) -> ChalkDataFrame[MyModel.inputs]:
+  feature_columns = [
+    "user.num_transactions",
+    "user.num_transactions_fraud",
+    "user.avg_transaction_amount",
+    "user.account_age_days",
+    "user.percent_online_transactions",
+  ]
+  features_array = inputs[feature_columns].values
+  return torch.tensor(features_array, dtype=torch.float32)
+
+
+class MyModel:
+  features = [
+    "user.num_transactions",
+    "user.num_transactions_fraud",
+    "user.avg_transaction_amount",
+    "user.account_age_days",
+    "user.percent_online_transactions",
+  ]
+  input_dtype = torch.float32
+  output_dtype = torch.float32
+
+  def load(self):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    self.model = MyNeuralNetwork(5, 10, 2)
+    self.model.to(device)
+
+  def predict(self, inputs: ChalkDataFrame):
+      return self.model(transform(inputs))
+```
+
+### Defining the Worker Function
+
+The worker function contains the core training logic that runs on each distributed worker:
+
+```python
+def worker_function(worker_config: dict):
+  lr = worker_config["lr"]
+  batch_size = worker_config["batch_size"]
+  num_epochs = worker_config["num_epochs"]
+
+  # prepare model
+  model = chalk_train.get_model()
+  # could also make this automatic
+  device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+  model.to(device)
+
+  loss_fn = nn.MSELoss()
+  optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+
+  # prepare data
+  train_dataset_shard = chalk_train.get_dataset_shard()
+  dataloader = DataLoader(train_dataset_shard, batch_size=batch_size)
+
+  # train on data
+  for epoch in range(num_epochs):
+    for batch in dataloader:
+      output = model(transform(batch)) # revisit
+      loss = loss_fn(output, batch["labels"])
+      optimizer.zero_grad()
+      loss.backward()
+      optimizer.step()
+
+    # log metrics + checkpoint
+    chalk_train.log_metrics({"loss": loss.item()}, step=epoch)
+    if (epoch % 5) == 0:
+      checkpoint = {
+        "epoch": epoch + 1,
+        "model_state_dict": model.state_dict(),
+        "optimize_state_dict": optimizer.state_dict(),
+      }
+      checkpoint_dir = chalk_train.get_checkpoint_dir()
+      checkpoint_path = os.path.join(checkpoint_dir, f"epoch_{epoch+1}.pt")
+      torch.save(checkpoint, checkpoint_path)
+      chalk_train.log_artifact(checkpoint_path)
+```
+
+### Configuring the Training Job
+
+Once your worker function is defined, configure the distributed training job:
+
+```python
+torch_trainer = TorchTrainer(
+  worker_function=worker_function,
+  worker_config={"num_epochs": 20, "lr": 0.01, "batch_size": 32},
+  resource_config={"limit": {"cpu": 4, "memory": "16Gi", "gpu": 1}},
+  # require one of `dataset` or `model`
+  dataset="already_produced_dataset" # fetches dataset
+  # model=MyModel # uses model input bindings to run offline query first
+)
+```
+
+### Running Training and Registering the Model
+
+Finally, execute the training job and register the resulting model:
+
+```python
+import datetime
+from chalk.client import ChalkClient
+
+now_string = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+client = ChalkClient()
+training_run = client.train_model(
+  name=f"my_neural_network_exp_{now_string}",
+  trainer=torch_trainer,
+)
+
+client.register_model_version(
+  name="my_neural_network",
+  aliases=["trial_2025_08_20"],
+  uri=training_run.result.artifact,
+)
+```
+
+### Key Features of Distributed Training
+
+The distributed training approach provides several advantages:
+
+- **Automatic Data Sharding**: Chalk automatically partitions your dataset across workers
+- **Checkpointing**: Built-in support for saving and resuming training state
+- **Metrics Logging**: Track training progress with `chalk_train.log_metrics()`
+- **Resource Management**: Specify GPU, CPU, and memory requirements per worker
+- **Model Registration**: Seamlessly register trained models for deployment
+
+---
+
+## Next Steps
+
+After training your models, you can:
+
+1. **Register Models**: Use the [Model Registry](/docs/model_registry) to version and track your trained models
+2. **Deploy Models**: Load models into Chalk deployments for inference  
+3. **Monitor Performance**: Track model performance and feature distributions over time
+4. **Iterate**: Use the training infrastructure to experiment with new architectures and hyperparameters
