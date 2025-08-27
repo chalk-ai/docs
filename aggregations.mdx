@@ -31,6 +31,7 @@ The following table lists the supported aggregations along with some notes.
 |`std` | Standard deviation. Requires at least 2 values. |
 |`var` | Variance. Same requirements as `std`. |
 |`approx_count_distinct` | An approximation of the cardinality of non-null data. |
+|`approx_top_k` | An approximation of the most common values in a field. Takes in a required `k` parameter, such as `approx_top_k(k=5)` for approximately the five most common values. |
 
 For example, say you want to compute some aggregations over a document's revisions. You could define the features
 and aggregations below.
@@ -50,6 +51,9 @@ class Document:
 
     # you can also filter the rows being aggregated
     earliest_large_revision_ts: datetime = _.revisions[_.size_bytes > 100,000,000, _.timestamp].min()
+
+    # some aggregations return a list
+    most_common_sizes: list[float] = _.revisions[_.size_bytes].approx_top_k(k=5)
 
 
 @features
@@ -103,6 +107,11 @@ class User:
             _.at > _.chalk_window
         ].count(),
         default=0,
+    )
+    most_common_statuses: Windowed[list[str]] = windowed(
+        "1h",
+        max_staleness="15m",
+        expression=_.login_attempts[_.status].approx_top_k(k=5)
     )
 ```
 

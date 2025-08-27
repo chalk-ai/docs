@@ -316,6 +316,7 @@ it will consider a `DataFrame` with only `None` values as empty.
 | `var`                    | Skipped       | See notes         | Variance. Same requirements as `std`. <br/> Alias: `var_sample`.                                                                                                                                                             |
 | `approx_count_distinct`  | Skipped       | Returns `0`       |                                                                                                                                                                                                                              |
 | `approx_percentile`      | Skipped       | Returns `None`    | Takes one argument, `quantile`, expected to be a float in the range `[0, 1]`. <br/> Example: `approx_percentile(0.75)` returns a value approximately equal to the 75th percentile of the not-`None` values in the DataFrame. |
+| `approx_top_k`           | Skipped       | Returns `None`      | Takes one argument, `k`, expected to be a positive integer, as a keyword argument. <br/> Example: `approx_top_k(k=25)` returns approximately the 25 most common values.
 
 For aggregations that can return `None`, either mark the feature as optional
 (for example, by setting the feature type to `float | None`) or use [`coalesce`](/api-docs#coalesce)
