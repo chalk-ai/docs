@@ -181,8 +181,8 @@ class User:
     age: int
     income: float
     risk_score: float = feature(versions={
-        1: feature(description="Latest model version", expression=F.inference(risk_model_latest, inputs=[_.age, 10, _.income])),
-        2: feature(description="Version 1.0.0", expression=F.inference(risk_model_v1_0_0, inputs=[_.age, 10, _.income]))
+        1: feature(description="Version 1.0.0", expression=F.inference(risk_model_v1_0_0, inputs=[_.age, 10, _.income]))
+        2: feature(description="Latest model version", expression=F.inference(risk_model_latest, inputs=[_.age, 10, _.income])),
     })
 ```
 
