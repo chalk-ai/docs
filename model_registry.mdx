@@ -113,7 +113,7 @@ print(f"Latest version: {model.latest_version}")
 print(f"Available versions: {model.versions}")
 
 # Get specific version details
-model_v1 = client.get_model(name="RiskScoreModel", version="1.0.0")
+model_v1 = client.get_model(name="RiskScoreModel", version=1)
 print(f"Performance: {model_v1.metadata['training_metrics']}")
 ```
 
