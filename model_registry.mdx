@@ -45,7 +45,6 @@ client = ChalkClient()
 
 client.register_model(
     name="ChurnModel",
-    version=1,
     aliases=["v1.0"],
     model_path=["./risk_score_model.pth"],
     additional_files=[
@@ -83,8 +82,7 @@ rfc.fit(X_train, y_train)
 
 client.register_model(
     name="RiskScoreModel",
-    version="1.0.0",
-    aliases=["v1.0"],
+    aliases=["v1.0.0"],
     model=rfc,  # Directly pass the model object
     description="Model for predicting user risk scores",
     model_type="sklearn",
@@ -187,49 +185,9 @@ class User:
     age: int
     income: float
     risk_score: float = feature(versions={
-        1: feature(description="Latest model version", expression=F.inference(risk_model_latest, _.age, 10, _.income)),
-        2: feature(description="Version 1.0.0", expression=F.inference(risk_model_v1_0_0, _.age, 10, _.income))
+        1: feature(description="Latest model version", expression=F.inference(risk_model_latest, inputs=[_.age, 10, _.income])),
+        2: feature(description="Version 1.0.0", expression=F.inference(risk_model_v1_0_0, inputs=[_.age, 10, _.income]))
     })
 ```
 
 ---
-
-## Custom Model Execution
-
-<TipInfo>
-    Model objects are fully accessible through their object's path for custom Python execution. This gives you complete control over how models are used in your resolvers.
-</TipInfo>
-
-For advanced use cases, you can load and use models directly in Python resolvers:
-
-```python
-from chalk import before_all, online
-from chalk.features import features, _
-from chalk.ml import ModelReference
-
-global model_executable
-global fast_tokenizer
-
-# Load the model version
-churn_model_latest = ModelReference.from(
-    name="ChurnModel",
-    alias="latest"
-)
-
-@before_all(resource_hint="gpu")
-def load_model_artifacts():
-    from transformers import PreTrainedTokenizerFast
-    global model_executable, fast_tokenizer
-
-    fast_tokenizer = PreTrainedTokenizerFast.from_pretrained(
-        churn_model_latest.additional_files["tokenizer.json"]
-    )
-    churn_model_latest.load_model()
-
-@online(resource_group="risk-model", resource_hint="gpu", model=churn_model_latest)
-def embed_transaction_memo(memo: Transaction.memo) -> Transaction.memo_embedding:
-    # Use the model directly in custom code
-    tokens = fast_tokenizer.encode(memo, return_tensors="pt")
-
-    return churn_model_latest.predict(tokens)
-```
