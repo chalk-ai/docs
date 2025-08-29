@@ -54,7 +54,7 @@ class SpamClassifier(nn.Module):
 
 
 # Define the preprocessing and data loading code
-def preprocess_data(dataset_name: str):
+def preprocess_data(dataset_name: str, config: dict):
     # Use Chalk Train to Load Dataset for Training
     df = chalk_train.load_dataset(dataset_name=dataset_name).to_pandas()
 
@@ -68,13 +68,13 @@ def preprocess_data(dataset_name: str):
 
     dataset = TensorDataset(X, y)
     dataloader = DataLoader(dataset, batch_size=config["batch_size"], shuffle=True)
-    return dataloader
+    return dataloader, X.shape[1]
 
 
 # Define the training code for the model
 def train(dataset_name: str, config: dict):
-    dataloader = preprocess_data(dataset_name=dataset_name)
-    model = SpamClassifier(X.shape[1])
+    dataloader, input_size = preprocess_data(dataset_name=dataset_name, config=config)
+    model = SpamClassifier(input_size)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
@@ -132,26 +132,7 @@ training_run = client.train_model(
 )
 ```
 
-If you've defined a resource group with GPU access, you can also leverage this for training:
-
-```python
-# Create a training run
-training_run = client.train_model(
-    train_fn=train,
-    dataset_name=dataset.dataset_name,
-    model_name="spam_model",
-    config=dict(
-        lr=0.01,
-        num_epochs=50,
-        batch_size=32
-    ),
-    resources=ResourceRequests(
-        cpu=15,
-        memory="15Gi",
-        resource_group="gpu"
-    )
-)
-```
+If you've defined a resource group with GPU access, you can also leverage this for training by specifying the appropriate resource group.
 
 ## Distributed Training
 
@@ -175,6 +156,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from chalk import DataFrame as ChalkDataFrame
+from chalk.typing import InputSchema, OutputSchema
 import chalk.train as chalk_train
 from chalk.train import DataLoader
 
@@ -187,7 +169,7 @@ class MyNeuralNetwork(nn.Module):
     def forward(self, x):
         return self.fc2(F.relu(self.fc1(x)))
 
-def transform(inputs: ChalkDataFrame) -> ChalkDataFrame[MyModel.inputs]:
+def transform(inputs: ChalkDataFrame) -> torch.Tensor:
   feature_columns = [
     "user.num_transactions",
     "user.num_transactions_fraud",
@@ -210,12 +192,12 @@ class MyModel:
   input_dtype = torch.float32
   output_dtype = torch.float32
 
-  def load(self):
+  def load(self) -> None:
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     self.model = MyNeuralNetwork(5, 10, 2)
     self.model.to(device)
 
-  def predict(self, inputs: ChalkDataFrame):
+  def predict(self, inputs: ChalkDataFrame) -> torch.Tensor:
       return self.model(transform(inputs))
 ```
 

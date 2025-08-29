@@ -39,6 +39,7 @@ To register a model from local files, provide the path to the model files and an
 You'll also want to specify the input and output schema for the model, which helps with validation and integration in your Chalk deployment.
 
 ```python
+import pyarrow as pa
 from chalk.client import ChalkClient
 
 client = ChalkClient()
@@ -160,13 +161,13 @@ from chalk.ml import ModelReference
 from chalk import functions as F
 from datetime import datetime
 
-# Load a model into the deployment
+# Load a model into the deployment using alias
 risk_model_latest = ModelReference.from(
     name="RiskScoreModel",
     alias="latest",
 )
 
-# Load a model into the deployment
+# Load a model into the deployment using version
 risk_model_v1_0_0 = ModelReference(
     name="RiskScoreModel",
     version=1,
