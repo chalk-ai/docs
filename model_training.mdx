@@ -1,0 +1,148 @@
+---
+title: "Model Training"
+metaDescription: Learn how to train ML models in Chalk
+description: Learn how to train ML models in Chalk
+published: true
+---
+
+import { TipInfo } from '@/components/Tip'
+
+---
+
+Chalk provides single node and distributed training capabilities that leverage your existing feature infrastructure
+and generate [Model Artifacts](/docs/model_registry). These Model Artifacts can be registered into the [Model Registry](/docs/model_registry)
+
+## Training Overview
+
+Chalk supports two primary training approaches:
+
+- **Single-Node Training**: For smaller datasets that fit in memory on a single machine
+- **Distributed Training**: For large-scale datasets that require distributed processing across multiple workers
+
+Both approaches integrate seamlessly with your existing Chalk feature infrastructure and automatically register trained models in the [Model Registry](/docs/model_registry)
+and can be run from a Jupyter notebook or as part of a CI/CD pipeline. In this tutorial, we cover both training methods run through a jupyter notebook:
+
+---
+
+## Single-Node Training
+
+Single-node training is ideal for smaller datasets that can fit comfortably in memory. This approach is simpler to set up and debug, making it perfect for experimentation and smaller production workloads.
+
+### Basic Training Setup
+
+Here's a complete example of single-node training with PyTorch.
+Define your training code using `chalk_train` and `chalk_logger` for logging,
+checkpointing, and dataset loading.
+
+```python
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, TensorDataset
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+import chalk.ml.train as chalk_train
+from chalk import chalk_logger
+
+
+class SpamClassifier(nn.Module):
+    def __init__(self, input_size):
+        super().__init__()
+        self.fc = nn.Sequential(nn.Linear(input_size, 32), nn.ReLU(), nn.Linear(32, 2))
+
+    def forward(self, x):
+        return self.fc(x)
+
+
+# Define the preprocessing and data loading code
+def preprocess_data(dataset_name: str, config: dict):
+    # Use Chalk Train to Load Dataset for Training
+    df = chalk_train.load_dataset(dataset_name=dataset_name).to_pandas()
+
+    data = df[['sms_spam.content']]
+    labels = df['sms_spam.label'].map({'ham': 1, 'spam': 0}).values
+
+    tfidf = TfidfVectorizer(max_features=50)
+
+    X = torch.tensor(tfidf.fit_transform(data).toarray(), dtype=torch.float32)
+    y = torch.tensor(labels, dtype=torch.long)
+
+    dataset = TensorDataset(X, y)
+    dataloader = DataLoader(dataset, batch_size=config["batch_size"], shuffle=True)
+    return dataloader, X.shape[1]
+
+
+# Define the training code for the model
+def train(dataset_name: str, config: dict):
+    dataloader, input_size = preprocess_data(dataset_name=dataset_name, config=config)
+    model = SpamClassifier(input_size)
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
+
+    for epoch in range(config["num_epochs"]):
+        total_loss = 0
+        correct = 0
+        total = 0
+
+        for batch_X, batch_y in dataloader:
+            outputs = model(batch_X)
+            loss = criterion(outputs, batch_y)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item()
+            _, predicted = torch.max(outputs, 1)
+            correct += (predicted == batch_y).sum().item()
+            total += batch_y.size(0)
+
+        if epoch % 5 == 0:
+            accuracy = correct / total
+
+            chalk_logger.info(f'Epoch {epoch}: Loss={total_loss/len(dataloader):.3f}, Acc={accuracy:.3f}')
+
+            chalk_train.checkpoint(
+                model,
+                metadata=dict(
+                    accuracy=accuracy,
+                    epoch=epoch,
+                )
+            )
+```
+
+Once your train model is defined, you can run a training job using the client.train_model method:
+
+```python
+from chalk import ResourceRequests
+
+# Create a training run
+training_run = client.train_model(
+    train_fn=train,
+    dataset_name=dataset.dataset_name,
+    model_name="spam_model",
+    config=dict(
+        lr=0.01,
+        num_epochs=50,
+        batch_size=32
+    ),
+    resources=ResourceRequests(
+        cpu=15,
+        memory="15Gi",
+        resource_group="gpu"
+    )
+)
+```
+
+If you've defined a resource group with GPU access, you can also leverage this for training by specifying the appropriate resource group.
+
+---
+
+## Next Steps
+
+After training your models, you can:
+
+1. **Register Models**: Use the [Model Registry](/docs/model_registry) to version and track your trained models
+2. **Deploy Models**: Load models into Chalk deployments for inference
+3. **Monitor Performance**: Track model performance and feature distributions over time
+4. **Iterate**: Use the training infrastructure to experiment with new architectures and hyperparameters
