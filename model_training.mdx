@@ -19,7 +19,8 @@ Chalk supports two primary training approaches:
 - **Single-Node Training**: For smaller datasets that fit in memory on a single machine
 - **Distributed Training**: For large-scale datasets that require distributed processing across multiple workers
 
-Both approaches integrate seamlessly with your existing Chalk feature infrastructure and automatically register trained models in the [Model Registry](/docs/model_registry).
+Both approaches integrate seamlessly with your existing Chalk feature infrastructure and automatically register trained models in the [Model Registry](/docs/model_registry)
+and can be run from a Jupyter notebook or as part of a CI/CD pipeline. In this tutorial, we cover both training methods run through a jupyter notebook:
 
 ---
 
@@ -30,6 +31,30 @@ Single-node training is ideal for smaller datasets that can fit comfortably in m
 ### Basic Training Setup
 
 Here's a complete example of single-node training with PyTorch:
+
+@offline(resource_hint="gpu")
+def train_model(
+    dataset_id: Dataset.id,
+    users: Dataset.users,
+    labels: Dataset.labels,
+) -> ModelTrain:
+
+ModelTrain.execute(
+)
+
+client.train_model(
+    input_features=[
+
+    ],
+    target_feature=,
+    input_ids=[]
+    predict_fn=
+    config={
+    }
+)
+
+@features
+
 
 ```python
 import os
@@ -64,7 +89,7 @@ def transform(users: DataFrame[User]) -> torch.Tensor:
 class Dataset:
     id: str
     users: DataFrame[User]
-    labels: DataFrame[str]
+    labels: list[int]
 
 @feature
 class NNTrainer:
@@ -154,12 +179,19 @@ def train_model(
 
     s3_client = boto3.client('s3')
     s3_client.upload_file(artifact_path, s3_bucket, s3_key)
+
     s3_path = f"s3://{s3_bucket}/{s3_key}"
 
     os.remove(artifact_path)
     os.rmdir(temp_dir)
 
-    return s3_path
+    return Model(
+        success=True,
+        model_artifacts=DataFrame[
+            ModelArtifact(),
+            ...
+        ]
+    )
 ```
 
 ### Key Components of Single-Node Training
@@ -167,7 +199,7 @@ def train_model(
 The example above demonstrates several important patterns:
 
 - **Feature Infrastructure Integration**: The `transform()` function shows how to extract features from Chalk DataFrames
-- **Environment Variables**: Training hyperparameters are passed through environment variables for flexibility  
+- **Environment Variables**: Training hyperparameters are passed through environment variables for flexibility
 - **GPU Support**: Automatic device detection and model placement on GPU when available
 - **Model Artifacts**: Trained models are saved and uploaded to cloud storage for later registration
 - **Resource Hints**: The `@offline(resource_hint="gpu")` decorator ensures training runs on appropriate hardware
@@ -183,7 +215,7 @@ For larger training datasets that don't fit in memory or require distributed pro
 Distributed training in Chalk uses the following components:
 
 - **Model Classes**: Define your model structure, features, and data types
-- **Worker Functions**: Handle the actual training logic on each distributed worker  
+- **Worker Functions**: Handle the actual training logic on each distributed worker
 - **TorchTrainer**: Orchestrates distributed training across multiple workers
 - **Data Sharding**: Automatic partitioning of datasets across workers
 
@@ -340,6 +372,6 @@ The distributed training approach provides several advantages:
 After training your models, you can:
 
 1. **Register Models**: Use the [Model Registry](/docs/model_registry) to version and track your trained models
-2. **Deploy Models**: Load models into Chalk deployments for inference  
+2. **Deploy Models**: Load models into Chalk deployments for inference
 3. **Monitor Performance**: Track model performance and feature distributions over time
 4. **Iterate**: Use the training infrastructure to experiment with new architectures and hyperparameters
