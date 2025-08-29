@@ -48,7 +48,7 @@ client = ChalkClient()
 client.register_model(
     name="RiskScoreModel",
     aliases=["v1.0"],
-    model_path=["./risk_score_model.pth"],
+    model_paths=["./risk_score_model.pth"],
     additional_files=[
         "./tokenizer.json"
     ],
@@ -127,9 +127,10 @@ To include models in your Chalk deployment, use `ModelReference` objects. `Model
 ```python
 from chalk.ml import ModelReference
 from chalk import functions as F
+from chalk.features import features
 
 # Load a model into the deployment
-churn_risk = ModelReference.from(
+churn_risk = ModelReference.from_version(
     name="ChurnModel",
     version=2,
 )
@@ -162,13 +163,13 @@ from chalk import functions as F
 from datetime import datetime
 
 # Load a model into the deployment using alias
-risk_model_latest = ModelReference.from(
+risk_model_latest = ModelReference.from_alias(
     name="RiskScoreModel",
     alias="latest",
 )
 
 # Load a model into the deployment using version
-risk_model_v1_0_0 = ModelReference(
+risk_model_v1_0_0 = ModelReference.from_version(
     name="RiskScoreModel",
     version=1,
 )

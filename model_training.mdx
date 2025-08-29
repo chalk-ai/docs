@@ -36,7 +36,7 @@ checkpointing, and dataset loading.
 
 ```python
 import torch
-import torch.nn
+import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.feature_extraction.text import TfidfVectorizer
 
@@ -114,6 +114,8 @@ def train(dataset_name: str, config: dict):
 Once your train model is defined, you can run a training job using the client.train_model method:
 
 ```python
+from chalk import ResourceRequests
+
 # Create a training run
 training_run = client.train_model(
     train_fn=train,
