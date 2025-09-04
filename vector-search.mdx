@@ -32,14 +32,13 @@ Using the `has_many` function and the `is_near` method, we can express a relatio
 documents for each query.
 
 ```py
-from chalk import embedding
-from chalk.features import DataFrame, features, has_many, Vector
+from chalk.features import DataFrame, embed, features, has_many, Vector
 
 @features
 class SearchQuery:
   query: str
   product_version: int
-  embedding: Vector = embedding(...)
+  embedding: Vector = embed(...)
   nearest_documents: DataFrame[FAQDocument] = has_many(
       lambda: SearchQuery.embedding.is_near(
           FAQDocument.embedding
@@ -51,7 +50,7 @@ class SearchQuery:
 class FAQDocument:
   question: str
   product_version: int
-  question_embedding: Vector = embedding(...)
+  question_embedding: Vector = embed(...)
   link: str
 ```
 

@@ -45,7 +45,7 @@ from chalk.features import embed, features, Vector
 @features
 class Document:
     content: str
-    embedding: Vector = embedding(
+    embedding: Vector = embed(
         input=lambda: Document.content,
         provider="sentence-transformers",
         model="all-MiniLM-L6-v",
@@ -66,7 +66,7 @@ from chalk.features import embed, features, Vector
 @features
 class Document:
     content: str
-    embedding: Vector = embedding(
+    embedding: Vector = embed(
         input=lambda: ("Represent the Legal document: ", Document.content),
         provider="instructor",
         model="hkunlp/instructor-base",
@@ -84,7 +84,7 @@ class Document:
     content: str
     document_type: str
     instruction: str
-    embedding: Vector = embedding(
+    embedding: Vector = embed(
         input=lambda: (Document.instruction, Document.content),
         provider="instructor",
         model="hkunlp/instructor-base",
@@ -110,7 +110,7 @@ from chalk.features import embed, features, Vector
 @features
 class Document:
     content: str
-    embedding: Vector = embedding(
+    embedding: Vector = embed(
         input=lambda: Document.content,
         provider="openai",
         model="text-embedding-ada-002",
@@ -131,7 +131,7 @@ from chalk.features import embed, features, Vector
 @features
 class Document:
     content: str
-    embedding: Vector = embedding(
+    embedding: Vector = embed(
         input=lambda: Document.content,
         provider="cohere",
         model="embed-english-v2.0",
