@@ -354,3 +354,99 @@ class User:
 
 To test your expressions, we recommend setting up [integration tests](/docs/integration-tests) or
 iterating on a branch.
+
+
+---
+
+## Dynamic Expressions
+
+In some cases, you may want to build expressions dynamically.
+For example, if you have a rules engine that generates expressions
+and stores them in a database, you can load those expressions at runtime
+and ask Chalk to compute their values.
+
+Consider this `User` and `Transaction` model, which would be checked in to the code:
+
+```python
+from chalk.features import _, features, DataFrame
+
+@features
+class Transaction:
+    id: int
+    user_id: "User.id"
+    user: "User"
+    total: float
+    sales_tax: float
+
+@features
+class User:
+    id: int
+    transactions: DataFrame[Transaction]
+    name: str
+    email: str
+```
+
+Using the [Golang](https://github.com/chalk-ai/chalk-go#querying-for-expressions)
+or [Python](https://docs.chalk.ai/docs/notebook-development#building-new-features)
+SDKs, you can compute both scalar and aggregate features on demand.
+
+For example, in Golang, if we wanted to compare the lowercased name and email,
+we could build the expression dynamically and ask Chalk to compute it:
+
+```go
+package main
+
+import (
+	"testing"
+	"github.com/zeebo/assert"
+	"github.com/chalk-ai/chalk-go/expr"
+	"github.com/chalk-ai/chalk-go"
+)
+
+func TestQueryingExpressions(t *testing.T) {
+	// Picks up the ambient credentials from the `chalk login` run on the CLI.
+	client, err := chalk.NewGRPCClient(t.Context())
+	assert.NoError(t, err)
+	result, err := client.OnlineQueryBulk(
+		t.Context(),
+		chalk.OnlineQueryParams{}.
+			WithInput("user.id", []int{1}).
+			WithOutputs("user.name").
+			WithOutputs("user.email").
+			WithOutputExprs(
+				expr.FunctionCall(
+					"jaccard_similarity",
+					expr.FunctionCall("lower", expr.Col("name")),
+					expr.FunctionCall("lower", expr.Col("email")),
+				).
+					As("user.name_email_sim"),
+			),
+	)
+	assert.NoError(t, err)
+	row, err := result.GetRow(0)
+	assert.NoError(t, err)
+	for feature, value := range row.Features {
+		t.Logf("Feature: %s, Value: %+v", feature, value.Value)
+	}
+}
+```
+
+This program produces output like this:
+
+```
+=== RUN   TestChalkClient
+    chalk_test.go:46: Feature: user.name, Value: Nicole Mann
+    chalk_test.go:46: Feature: user.email, Value: nicoleam@nasa.gov
+    chalk_test.go:46: Feature: user.name_email_sim, Value: 0.5714285714285714
+--- PASS: TestChalkClient (0.43s)
+```
+
+The feature `user.name_email_sim` was computed using the expression
+`jaccard_similarity(lower(name), lower(email))`, which was built dynamically
+using the `expr` package.
+
+For a complete list of functions, see our [SDK docs](/api-docs#section-chalk-functions).
+
+The same can be done in Python using the `chalkpy` package.
+See [this guide](/docs/notebook-development#building-new-features) for more details.
+
