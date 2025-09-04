@@ -390,8 +390,9 @@ Using the [Golang](https://github.com/chalk-ai/chalk-go#querying-for-expressions
 or [Python](https://docs.chalk.ai/docs/notebook-development#building-new-features)
 SDKs, you can compute both scalar and aggregate features on demand.
 
-For example, in Golang, if we wanted to compare the lowercased name and email,
-we could build the expression dynamically and ask Chalk to compute it:
+For example, in Golang, if we wanted to compare the lowercased name and email
+by their Jaccard similarity, we could build the expression dynamically and ask
+Chalk to compute it:
 
 ```go
 package main
@@ -446,7 +447,38 @@ The feature `user.name_email_sim` was computed using the expression
 using the `expr` package.
 
 For a complete list of functions, see our [SDK docs](/api-docs#section-chalk-functions).
+All the functions available in expressions are also available in the `expr` package.
 
-The same can be done in Python using the `chalkpy` package.
+You can also compute aggregations dynamically.
+Using the Golang SDK, we can compute the number of large transactions for a user:
+
+```go
+result, err := client.OnlineQueryBulk(
+    t.Context(),
+    chalk.OnlineQueryParams{}.
+        WithInput("user.id", []int{1}).
+        WithOutputExprs(
+            expr.DataFrame("transactions").
+                Filter(expr.Col("amount").Gt(expr.Float(0.))).
+                Agg("count").
+                As("user.positive_transaction_count"),
+        ),
+)
+```
+
+For this program, the output would look like this:
+
+```
+=== RUN   TestChalkClient
+    chalk_test.go:42: Feature: user.positive_transaction_count, Value: 33
+--- PASS: TestChalkClient (0.45s)
+```
+
+In a Python expression, the above SDK call is equivalent to:
+
+```python
+User.positive_transaction_count = _.transactions[_.amount > 0].count()
+```
+
+Both the scalar functions and aggregations can be computed in Python SDK.
 See [this guide](/docs/notebook-development#building-new-features) for more details.
-
