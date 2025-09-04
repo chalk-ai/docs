@@ -163,14 +163,13 @@ When using the built-in [embedding functions](/docs/embeddings), then the vector
 from the embedding model.
 
 ```python
-from chalk import embedding
-from chalk.features import features, Vector
+from chalk.features import embed, features, Vector
 
 @features
 class Document:
     content: str
     # Chalk knows that text-embedding-ada-002 has 1536 dimensions
-    embedding: Vector = embedding(
+    embedding: Vector = embed(
         input=lambda: Document.content,
         provider="openai",
         model="text-embedding-ada-002"
