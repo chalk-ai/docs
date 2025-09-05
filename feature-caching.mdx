@@ -291,4 +291,4 @@ class User:
 
 In this example, the `User` feature class is configured to use an LRU cache with a maximum size of 10,000 entries. Every worker process will maintain its own LRU cache. If a feature value is found in the LRU cache, it will be returned directly.
 
-If it is not found in the LRU cache, the online store will be queried. If it is not found in the online store, the resolver will be run to compute a fresh value. If the `cache_misses` parameter is set to true, then a cache miss against the online store is stored in the LRU cache: subsequent requests for the same primary key will not hit the online store until the TTL of the LRU cache for the pkey expires.
+If it is not found in the LRU cache, the online store will be queried. If it is not found in the online store, the resolver will be run to compute a fresh value. If the `store_cache_misses` parameter is set to true, then a cache miss against the online store is stored in the LRU cache: subsequent requests for the same primary key will not hit the online store until the TTL of the LRU cache for the pkey expires.
