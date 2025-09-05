@@ -278,7 +278,7 @@ lru_cache_config = OnlineStoreConfig(
     name="lru_cache",
     lru_cache=LRUCache(
         max_size=10000,
-        ttl_seconds=60,
+        ttl="60s",
         cache_misses=True,,
     )
 )
