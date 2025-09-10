@@ -170,78 +170,78 @@ features and resolvers.
 
 ### Schema
 <AttributeTable title={"chalk.yaml"}>
-<Attribute field='project' kind='str'>
-  The name of this Chalk project, which must match your project's name in the dashboard (case-sensitive).
-</Attribute>
-<Attribute field='environments' kind='dictionary'>
-  Per-environment overrides. See our <a href="/docs/docker">Docker documentation</a> for more details.
-  <SubAttributeTable title=''>
-    <SubAttribute field='[environment_name]' kind='dictionary'>
-      The name of this environment, such as <code>prod</code> or <code>qa</code>. Find available environment names in
-      your dashboard. Use <code>default</code> to configure default values to apply to all of this project's
-      environments.
-      <SubAttributeTable title=''>
-        <SubAttribute field='runtime' kind='"python310" | "python311" | "python312"'>
-          The Python version for the Chalk project.
-        </SubAttribute>
-        <SubAttribute field='requirements' kind='str'>
-          Python requirements file to install with <code>pip</code>. This can either be a `requirements.txt` file or
-            a `pyproject.toml` file.
-        </SubAttribute>
-        <SubAttribute field='dockerfile' kind='str'>
-          Path to an alternative Dockerfile that will be used to build a base image for your Chalk deploys.
-        </SubAttribute>
-        <SubAttribute field='platform_version' kind='str'>
-          Reference a version of the Chalk runtime that you want to use for this environment. Can be either a version
-          tag, like `v3.0.0`, or a release stream like `stable`. If not specified, defaults to `stable`.
-          Releases are documented in the <a href="/release-notes">Platform Release Notes</a>.
-        </SubAttribute>
-      </SubAttributeTable>
-    </SubAttribute>
-  </SubAttributeTable>
-</Attribute>
-<Attribute field='validation' kind='dictionary'>
-  Configuration for metadata validation for features and resolvers. See our <a href="/docs/validation#feature-validation-requirements">validation
-  documentation</a> for more details.
-  <SubAttributeTable title=''>
-    <SubAttribute field='feature' kind='dictionary'>
-      Validations for all features.
-      <SubAttributeTable title=''>
-        <SubAttribute field='metadata' kind='list'>
-          A list of dictionaries of metadata attributes and error severity levels when this metadata property is
-          missing.
-            <SubAttributeTable title=''>
-              <SubAttribute field='name' kind='"description" | "owner" | "tags"'>
-                The name of the metadata property.
-              </SubAttribute>
-              <SubAttribute field='missing' kind='"info" | "warning" | "error"'>
-                The level of severity to use when a feature is missing this metadata property. Deploys are permitted for
-                <code>info</code> and <code>warning</code> levels, but disallowed for `error` level.
-              </SubAttribute>
-            </SubAttributeTable>
-        </SubAttribute>
-      </SubAttributeTable>
-    </SubAttribute>
-    <SubAttribute field='resolver' kind='dictionary'>
-      Validations for all resolvers.
-      <SubAttributeTable title=''>
-        <SubAttribute field='metadata' kind='list'>
-          A list of dictionaries of metadata attributes and error severity levels when this metadata property is
-          missing.
-            <SubAttributeTable title=''>
-              <SubAttribute field='name' kind='"description" | "owner" | "tags"'>
-                The name of the metadata property.
-              </SubAttribute>
-              <SubAttribute field='missing' kind='"info" | "warning" | "error"'>
-                The level of severity to use when a feature is missing this metadata property. Deploys are permitted for
-                <code>info</code> and <code>warning</code> levels, but disallowed for `error` level.
-              </SubAttribute>
-            </SubAttributeTable>
-        </SubAttribute>
-      </SubAttributeTable>
-    </SubAttribute>
-  </SubAttributeTable>
-</Attribute>
+    <Attribute field='project' kind='str'>
+        The name of this Chalk project, which must match your project's name in the dashboard (case-sensitive).
+    </Attribute>
+    <Attribute field='environments' kind='dictionary'>
+        Per-environment overrides. See our <a href="/docs/docker">Docker documentation</a> for more details.
+        <SubAttributeTable title=''>
+            <SubAttribute field='[environment_name]' kind='dictionary'>
+                The name of this environment, such as <code>prod</code> or <code>qa</code>. Find available environment names in
+                your dashboard. Use <code>default</code> to configure default values to apply to all of this project's
+                environments.
+                <SubAttributeTable title=''>
+                    <SubAttribute field='runtime' kind='"python310" | "python311" | "python312"'>
+                        The Python version for the Chalk project.
+                    </SubAttribute>
+                    <SubAttribute field='requirements' kind='str'>
+                        Python requirements file to install with <code>pip</code>. This can either be a `requirements.txt` file or
+                        a `pyproject.toml` file.
+                    </SubAttribute>
+                    <SubAttribute field='dockerfile' kind='str'>
+                        Path to an alternative Dockerfile that will be used to build a base image for your Chalk deploys.
+                    </SubAttribute>
+                    <SubAttribute field='platform_version' kind='str'>
+                        Reference a version of the Chalk runtime that you want to use for this environment. Can be either a version
+                        tag, like `v3.0.0`, or a release stream like `stable`. If not specified, defaults to `stable`.
+                        Releases are documented in the <a href="/release-notes">Platform Release Notes</a>.
+                    </SubAttribute>
+                </SubAttributeTable>
+            </SubAttribute>
+        </SubAttributeTable>
+    </Attribute>
+    <Attribute field='validation' kind='dictionary'>
+        Configuration for metadata validation for features and resolvers. See our <a href="/docs/validation#feature-validation-requirements">validation
+        documentation</a> for more details.
+        <SubAttributeTable title=''>
+            <SubAttribute field='feature' kind='dictionary'>
+                Validations for all features.
+                <SubAttributeTable title=''>
+                    <SubAttribute field='metadata' kind='list'>
+                        A list of dictionaries of metadata attributes and error severity levels when this metadata property is
+                        missing.
+                        <SubAttributeTable title=''>
+                            <SubAttribute field='name' kind='"description" | "owner" | "tags"'>
+                                The name of the metadata property.
+                            </SubAttribute>
+                            <SubAttribute field='missing' kind='"info" | "warning" | "error"'>
+                                The level of severity to use when a feature is missing this metadata property. Deploys are permitted for
+                                <code>info</code> and <code>warning</code> levels, but disallowed for `error` level.
+                            </SubAttribute>
+                        </SubAttributeTable>
+                    </SubAttribute>
+                </SubAttributeTable>
+            </SubAttribute>
+            <SubAttribute field='resolver' kind='dictionary'>
+                Validations for all resolvers.
+                <SubAttributeTable title=''>
+                    <SubAttribute field='metadata' kind='list'>
+                        A list of dictionaries of metadata attributes and error severity levels when this metadata property is
+                        missing.
+                        <SubAttributeTable title=''>
+                            <SubAttribute field='name' kind='"description" | "owner" | "tags"'>
+                                The name of the metadata property.
+                            </SubAttribute>
+                            <SubAttribute field='missing' kind='"info" | "warning" | "error"'>
+                                The level of severity to use when a feature is missing this metadata property. Deploys are permitted for
+                                <code>info</code> and <code>warning</code> levels, but disallowed for `error` level.
+                            </SubAttribute>
+                        </SubAttributeTable>
+                    </SubAttribute>
+                </SubAttributeTable>
+            </SubAttribute>
+        </SubAttributeTable>
+    </Attribute>
 </AttributeTable>
 
 ### Sample file
@@ -273,7 +273,6 @@ validation:
         missing: error
 ```
 
-##
 
 ---
 
@@ -290,7 +289,7 @@ parameter of your `chalk.yaml` file. This can either be a `requirements.txt` fil
 Chalk supports both `Poetry` and `uv` for managing your Python dependencies.
 You can specify this file's location and type in your `chalk.yaml` file like below:
 
-```yaml 
+```yaml
 project: my-project-id
 
 environments:
@@ -324,7 +323,7 @@ venvs:
         - scikit-learn==1.7.2
         - tensorflow==2.20.0
         - torch
-        - transformersx
+        - transformers
     model-2:
       requirements: ./requirements-model-2.txt
 ```
@@ -392,7 +391,6 @@ def get_user_risk_score_2(
 ) -> User.risk_score_2:
     weights = msvc_client.get_weights("model-2")
     return model_2.predict(id, email_domain, recent_activity_count, weights)
-
 ```
 
 ---
@@ -401,11 +399,11 @@ def get_user_risk_score_2(
 
 By default, when you deploy in your Chalk environment, Chalk will pull the latest version of the Chalk platform.
 You can choose to pin a [Chalk platform version](/release-notes)  for each environment such that your deploys
-will only update your Chalk code, and will use the same platform image until you deploy a new pinned platform 
-version. 
+will only update your Chalk code, and will use the same platform image until you deploy a new pinned platform
+version.
 
-```yaml 
-project: my-project-id 
+```yaml
+project: my-project-id
 environments:
   dev:
     runtime: python312
