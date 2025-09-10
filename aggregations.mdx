@@ -80,7 +80,14 @@ on the raw data.
 
 ## Set up a data aggregation using windowed features
 
-Here is an example of a [`windowed`](/api-docs/#windowed) feature representing the number of
+A [`windowed`](/api-docs/#windowed) feature takes in a series of window durations, and an aggregation expression
+for how to compute the feature outputs. Within the expression, you can reference the timestamp feature on the
+feature class over which you are aggregating and compare to `_.chalk_window` and `_.chalk_now` to filter against
+the current window's time range. The `_.chalk_now` keyword references the [query time](/docs/time#query-time) which
+will default to `timestamp.now()` but can be overridden when a different input time is specified at query time. This
+allows you to query for an aggregation for any window duration at any point in time.
+
+Here is an example of a windowed feature representing the number of
 failed logins in the last 10 minutes, 30 minutes, and 1 day:
 
 ```py
@@ -104,16 +111,22 @@ class User:
         max_staleness="10m",
         expression=_.login_attempts[
             _.status=="failed",
-            _.at > _.chalk_window
+            _.at > _.chalk_window,
+            _.at < _.chalk_now,
         ].count(),
         default=0,
     )
     most_common_statuses: Windowed[list[str]] = windowed(
         "1h",
         max_staleness="15m",
-        expression=_.login_attempts[_.status].approx_top_k(k=5)
+        expression=_.login_attempts[
+            _.status,
+            _.at > _.chalk_window,
+            _.at < _.chalk_now,
+        ].approx_top_k(k=5)
     )
 ```
+
 
 Windowed features support much of the same functionality as normal features. They are most often used alongside
 [`max_staleness`](/api-docs#windowed.max_staleness) and
@@ -122,7 +135,9 @@ Windowed features support much of the same functionality as normal features. The
 Windowed features are typically resolved, either:
 - inline by [expressions](/docs/expression),
 - by [stream resolvers](/docs/streams), or
-- by materialized aggregates.
+- by [materialized aggregates](/docs/materialized_aggregations).
+
+
 
 ### Querying by windowed time range
 
@@ -150,7 +165,8 @@ class User:
         default=0,
         expression=_.transactions[
             _.amount,
-            _.at > _.chalk_window
+            _.at > _.chalk_window,
+            _.at < _.chalk_now,
         ].sum(),
         materialization={"bucket_duration": "1d"},
     )
@@ -182,13 +198,15 @@ class User:
         "30d", "60d", "90d",
         expression=_.transactions[
             _.amount,
-            _.at > _.chalk_window
+            _.at > _.chalk_window,
+            _.at < _.chalk_now,
         ].sum(),
     )
     count_transactions: Windowed[float] = windowed(
         "30d", "60d", "90d",
         expression=_.transactions[
-            _.ts > _.chalk_window
+            _.at > _.chalk_window,
+            _.at < _.chalk_now,
         ].count(),
     )
     avg_transaction_amount: Windowed[float] = windowed(
