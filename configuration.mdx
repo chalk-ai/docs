@@ -378,9 +378,9 @@ def get_user_risk_score_1(
     id: User.id,
     email_domain: User.email_domain,
     recent_activity_count: User.recent_activity_count["7d"]
-) ->User.risk_score_1:
-    weights = msvc_client.get_weights("model-1")
-    return model_1.predict(id, email_domain, recent_activity_count, weights)
+) ->User.is_fraud_1:
+    threshold = msvc_client.get_model_threshold("model-1")
+    return model_1.predict(id, email_domain, recent_activity_count).sum() > threshold
 
 # runs using model-2 venv
 @online(venv="model-2")
@@ -388,9 +388,9 @@ def get_user_risk_score_2(
     id: User.id,
     email_domain: User.email_domain,
     recent_activity_count: User.recent_activity_count["7d"]
-) -> User.risk_score_2:
-    weights = msvc_client.get_weights("model-2")
-    return model_2.predict(id, email_domain, recent_activity_count, weights)
+) -> User.is_fraud_2:
+    threshold = msvc_client.get_model_threshold("model-2")
+    return model_2.predict(id, email_domain, recent_activity_count).sum() > threshold
 ```
 
 ---
