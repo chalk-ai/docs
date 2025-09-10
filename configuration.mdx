@@ -319,7 +319,11 @@ environments:
 venvs:
     model-1:
       dependencies:
-        - art
+        - numpy==2.3.2
+        - pandas==2.3.2
+        - scikit-learn==1.7.2
+        - tensorflow==2.20.0
+        - torch
     model-2:
       requirements: ./requirements-model-2.txt
 ```
