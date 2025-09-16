@@ -28,16 +28,12 @@ This repository contains carefully crafted prompts that help LLMs understand:
 ## Using LLMs with Chalk Prompts
 
 When working with an LLM to write Chalk code, you can reference the base prompt from the repository to ensure the AI assistant understands Chalk's conventions. The prompts include guidance on:
-
-### Feature Definitions
-LLMs learn to properly structure feature classes with appropriate type annotations and relationships.
-
-### Best Practices
-The prompts ensure LLMs follow Chalk conventions for:
-- Error handling
-- Type safety
-- Performance optimization
-- Testing patterns
+1. Feature Definitions
+2. Feature Relationships
+3. Resolver Implementations
+4. Integrating Data Sources
+5. Best Practices for Chalk code
+6. Common patterns
 
 ## Getting Started
 
@@ -45,5 +41,7 @@ The prompts ensure LLMs follow Chalk conventions for:
 2. Provide specific context about your feature requirements
 3. Review generated code for adherence to your team's conventions
 4. Test the generated features in your development environment
+
+To reference the base prompt, you can copy and paste it into your LLM prompt config (ex. CLAUDE.md or .cursor/rules) or you can use the [chalk init agent-prompt](/cli?command=init_agent-prompt) command to add the prompt to your local repository.
 
 By using these specialized prompts, you can leverage AI assistance to write more consistent, idiomatic Chalk code while reducing development time and improving code quality.
