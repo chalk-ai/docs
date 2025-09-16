@@ -1,0 +1,47 @@
+---
+title: Development with LLMs
+metaTitle: Development with LLMs
+metaDescription: Write Chalk code with LLMs using specialized prompts. Leverage AI assistance to build features, resolvers, and integrations more efficiently.
+description: Use LLMs to write Chalk code with specialized prompts.
+published: true
+---
+
+# Development with LLMs
+
+Chalk provides specialized prompts to help Large Language Models (LLMs) write effective Chalk code. These prompts are designed to guide AI assistants in understanding Chalk's patterns, best practices, and API conventions.
+
+## Agent Prompts Repository
+
+The Chalk team maintains a public repository of prompts specifically designed for LLM-assisted Chalk development:
+
+**Repository:** [chalk-ai/agent-prompts](https://github.com/chalk-ai/agent-prompts)
+
+This repository contains carefully crafted prompts that help LLMs understand:
+
+- Chalk's feature definition patterns
+- Built-in LLM integration capabilities
+- Resolver implementation best practices
+- Data source integration patterns
+- Template interpolation syntax
+- Model selection and configuration
+
+## Using LLMs with Chalk Prompts
+
+When working with an LLM to write Chalk code, you can reference the base prompt from the repository to ensure the AI assistant understands Chalk's conventions. The prompts include guidance on:
+1. Feature Definitions
+2. Feature Relationships
+3. Resolver Implementations
+4. Integrating Data Sources
+5. Best Practices for Chalk code
+6. Common patterns
+
+## Getting Started
+
+1. Reference the [base Chalk prompt](https://github.com/chalk-ai/agent-prompts/blob/main/BASE_CHALK_PROMPT.md) when working with LLMs
+2. Provide specific context about your feature requirements
+3. Review generated code for adherence to your team's conventions
+4. Test the generated features in your development environment
+
+To reference the base prompt, you can copy and paste it into your LLM prompt config (ex. CLAUDE.md or .cursor/rules) or you can use the [chalk init agent-prompt](/cli?command=init_agent-prompt) command to add the prompt to your local repository.
+
+By using these specialized prompts, you can leverage AI assistance to write more consistent, idiomatic Chalk code while reducing development time and improving code quality.
