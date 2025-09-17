@@ -1,0 +1,360 @@
+# Native Streaming
+
+Native streaming resolvers provide a high-performance way to process streaming data using statically defined underscore expressions instead of Python functions. This Rust-based implementation processes **thousands of messages per second per CPU core**, making it ideal for high-throughput streaming applications.
+
+## Overview
+
+Native streaming uses `make_stream_resolver` to define feature extraction as column projections on input messages rather than executing Python code. This approach eliminates Python overhead and enables efficient parallel processing.
+
+## Basic Example
+
+Let's start with a simple example that processes user data from a Kafka stream:
+
+```python
+from chalk import Features, Primary, features, stream
+from chalk.features import _, make_stream_resolver
+from chalk.features.resolver import make_stream_resolver
+from chalk import functions as F
+from pydantic import BaseModel
+import pyarrow as pa
+import datetime as dt
+
+# Define your feature classes
+@features(max_staleness="30d", etl_offline_to_online=True)
+class Users:
+    user_id: Primary[int]
+    has_been_evicted_bool: bool | None
+    monthly_income_min: int | None
+    monthly_income_max: int | None
+    registered_source_app: str | None
+    updated_at: dt.datetime | None
+
+# Define the message schema
+class MonthlyIncome(BaseModel):
+    min: int | None = None
+    max: int | None = None
+
+class Qualification(BaseModel):
+    monthly_income: MonthlyIncome = MonthlyIncome()
+    has_been_evicted: bool | None = None
+
+class UsersMessage(BaseModel):
+    id: int  # maps to user_id
+    updated_at: int  # epoch microseconds
+    qualification: Qualification = Qualification()
+    registered_source_app: str | None = None
+
+# Create a native streaming resolver
+users_streaming_resolver = make_stream_resolver(
+    name="users_stream_processor",
+    message_type=UsersMessage,
+    output_features={
+        Users.user_id: _.id,
+        Users.has_been_evicted_bool: _.qualification.has_been_evicted,
+        Users.monthly_income_min: _.qualification.monthly_income.min,
+        Users.monthly_income_max: _.qualification.monthly_income.max,
+        Users.registered_source_app: _.registered_source_app,
+        Users.updated_at: F.from_unix_seconds(_.updated_at / 1_000_000),
+    },
+    source=kafka_source,  # Your Kafka stream source
+)
+```
+
+### Example Stream Messages
+
+Here's what the incoming messages might look like:
+
+```json
+{
+  "id": 123,
+  "updated_at": 1700000000000000,
+  "qualification": {
+    "has_been_evicted": false,
+    "monthly_income": {
+      "min": 1000,
+      "max": 5000
+    }
+  },
+  "registered_source_app": "MobileApartmentList"
+}
+```
+
+## Advanced Features
+
+### Complex Field Transformations
+
+Native streaming supports complex field transformations using underscore expressions:
+
+```python
+@features(max_staleness="10m")
+class UserActivity:
+    user_id: Primary[int]
+    activity_score: float | None
+    risk_category: str | None
+    registered_app_group: str | None
+
+# Using conditional logic and mappings
+activity_resolver = make_stream_resolver(
+    name="activity_processor",
+    message_type=ActivityMessage,
+    output_features={
+        UserActivity.user_id: _.user_id,
+
+        # Conditional expressions
+        UserActivity.activity_score: F.if_then_else(
+            F.is_null(_.score),
+            0.0,
+            _.score * 100
+        ),
+
+        # Map dictionary for categorization
+        UserActivity.registered_app_group: F.map_dict(
+            {
+                "ApartmentList": "web",
+                "MobileApartmentList": "mweb",
+                "MobileiOSApartmentList": "ios",
+                "MobileAndroidApartmentList": "android",
+                "Kingpin": "partner",
+            },
+            _.registered_source,
+            default="other"
+        ),
+
+        # Complex conditional categorization
+        UserActivity.risk_category: F.if_then_else(
+            _.activity_score > 80,
+            "high",
+            F.if_then_else(_.activity_score > 40, "medium", "low")
+        ),
+    },
+    source=activity_stream,
+)
+```
+
+### Working with Timestamps
+
+Convert epoch timestamps to datetime objects:
+
+```python
+def convert_epoch_expr(epoch_micros: Underscore):
+    """Convert microseconds since epoch to datetime"""
+    return F.if_then_else(
+        F.is_null(epoch_micros),
+        pa.scalar(None, pa.timestamp("us", "UTC")),
+        F.from_unix_seconds(epoch_micros / 1_000_000)
+    )
+
+# Use in resolver
+timestamp_resolver = make_stream_resolver(
+    name="events_processor",
+    message_type=EventMessage,
+    output_features={
+        Events.event_id: _.id,
+        Events.created_at: convert_epoch_expr(_.created_timestamp),
+        Events.processed_hour: F.hour_of_day(convert_epoch_expr(_.created_timestamp)),
+    },
+    source=events_stream,
+)
+```
+
+### Composite Keys and String Operations
+
+Create composite keys from multiple fields:
+
+```python
+@features(max_staleness="30d")
+class Interests:
+    user_id_rental_id: Primary[str]  # Composite key
+    user_id: int
+    rental_id: str
+    interest_state: str | None
+    interest_created_hour: int | None
+
+class InterestsMessage(BaseModel):
+    user_id: int
+    rental_id: str
+    state: str | None = None
+    created_at: int | None = None  # epoch micros
+    updated_at: int
+
+interests_resolver = make_stream_resolver(
+    name="interests_processor",
+    message_type=InterestsMessage,
+    output_features={
+        # Create composite key using string concatenation
+        Interests.user_id_rental_id: F.cast(_.user_id, pa.large_utf8()) + "_" + _.rental_id,
+        Interests.user_id: _.user_id,
+        Interests.rental_id: _.rental_id,
+        Interests.interest_state: _.state if _.state else None,
+
+        # Extract hour from timestamp
+        Interests.interest_created_hour: F.if_then_else(
+            F.is_null(_.created_at),
+            -1,
+            F.hour_of_day(F.from_unix_seconds(_.created_at / 1_000_000))
+        ),
+    },
+    source=interests_stream,
+)
+```
+
+### Example Stream Message for Interests
+
+```json
+{
+  "user_id": 456,
+  "rental_id": "apt_789",
+  "state": "viewed",
+  "created_at": 1700000000000000,
+  "updated_at": 1700000000000000
+}
+```
+
+## Nested Object Handling
+
+Native streaming can navigate nested objects in your messages:
+
+```python
+class Address(BaseModel):
+    street: str | None
+    city: str | None
+    state: str | None
+    zip_code: str | None
+
+class UserProfile(BaseModel):
+    personal_info: dict
+    addresses: list[Address]
+    preferences: dict[str, Any]
+
+@features
+class UserDetails:
+    user_id: Primary[int]
+    primary_city: str | None
+    has_preferences: bool
+    profile_completeness: float
+
+profile_resolver = make_stream_resolver(
+    name="profile_processor",
+    message_type=UserProfile,
+    output_features={
+        UserDetails.user_id: _.user_id,
+
+        # Access nested fields
+        UserDetails.primary_city: _.addresses[0].city if _.addresses else None,
+
+        # Check for existence
+        UserDetails.has_preferences: F.is_not_null(_.preferences),
+
+        # Calculate derived metrics
+        UserDetails.profile_completeness: calculate_completeness(_.personal_info),
+    },
+    source=profile_stream,
+)
+```
+
+## Type Casting
+
+Cast between different data types:
+
+```python
+@features
+class MetricsFeatures:
+    metric_id: Primary[str]
+    count: int
+    percentage: float
+    is_active: bool
+
+metrics_resolver = make_stream_resolver(
+    name="metrics_processor",
+    message_type=MetricsMessage,
+    output_features={
+        # Cast integer to string
+        MetricsFeatures.metric_id: F.cast(_.id, pa.large_utf8()),
+
+        # Ensure integer type
+        MetricsFeatures.count: F.cast(_.raw_count, int),
+
+        # Calculate percentage as float
+        MetricsFeatures.percentage: F.cast(_.ratio * 100, float),
+
+        # Convert to boolean
+        MetricsFeatures.is_active: F.cast(_.status == "active", bool),
+    },
+    source=metrics_stream,
+)
+```
+
+## Performance Considerations
+
+### Benefits of Native Streaming
+
+1. **High Throughput**: Process thousands of messages per second per CPU core
+2. **Low Latency**: Rust-based processing eliminates Python GIL overhead
+3. **Memory Efficient**: Static expressions avoid Python object creation
+4. **Parallel Processing**: Automatic parallelization across CPU cores
+5. **Type Safety**: Compile-time validation of expressions
+
+### When to Use Native Streaming
+
+Native streaming is ideal for:
+- High-volume data ingestion (>1000 messages/second)
+- Low-latency feature computation (<10ms)
+- Simple to moderate transformations
+- Stateless processing
+
+Consider traditional Python resolvers for:
+- Complex business logic requiring external API calls
+- Stateful aggregations requiring memory
+- Machine learning model inference
+- Complex error handling and recovery logic
+
+## Configuration Options
+
+```python
+from chalk import MachineType, Environments
+
+# Configure resolver with specific resources
+high_throughput_resolver = make_stream_resolver(
+    name="high_volume_processor",
+    message_type=VolumeMessage,
+    output_features={...},
+    source=high_volume_stream,
+
+    # Optional configurations
+    environment=Environments.PRODUCTION,
+    machine_type=MachineType.LARGE,  # Use larger instances
+    owner="data-team@company.com",
+    doc="Processes high-volume transaction events for fraud detection",
+)
+```
+
+## Migration from Traditional Streaming
+
+If you have an existing Python streaming resolver, you can create an equivalent native version:
+
+```python
+# Traditional Python resolver
+@stream(source=user_stream)
+def process_users(message: UsersMessage) -> Features[Users]:
+    return Users(
+        user_id=message.id,
+        has_been_evicted_bool=message.qualification.has_been_evicted,
+        monthly_income_min=message.qualification.monthly_income.min,
+        # ... more processing
+    )
+
+# Equivalent native streaming resolver
+process_users_native = make_stream_resolver(
+    name="process_users_native",
+    message_type=UsersMessage,
+    output_features={
+        Users.user_id: _.id,
+        Users.has_been_evicted_bool: _.qualification.has_been_evicted,
+        Users.monthly_income_min: _.qualification.monthly_income.min,
+        # ... same mappings using underscore expressions
+    },
+    source=user_stream,
+)
+```
+
+Both resolvers produce identical results, but the native version offers significantly better performance for high-throughput scenarios.
