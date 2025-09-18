@@ -57,7 +57,7 @@ chalk query \
   --out user.email_age_days \
   --out user.denylisted \
   --out user.credit_report.flags \
-  --tags team:fraud
+  --tag team:fraud
 ```
 
 This feature is also accessible in all of our API clients through the `query_name` parameter.
@@ -70,6 +70,19 @@ ChalkClient().query(
     input={"user.id": 1},
     query_name="fraud",
 )
+```
+
+You can also run a named query offline, provided that all outputs have offline resolvers.
+
+```python
+from chalk.client import ChalkClient
+
+ChalkClient().offline_query(
+    input={"user.id": 1},
+    query_name="fraud",
+    recompute_features=True,
+)
+df = dataset.get_data_as_pandas()
 ```
 
 To see all the named queries you've defined in your current active deployment, you can run:

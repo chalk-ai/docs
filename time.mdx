@@ -180,7 +180,8 @@ class User:
 ## Query time
 
 Query time is the time treated as "now" within a query context. For online queries, `Now` is equal to `datetime.now()`.
-For offline queries, you can pass one or more timestamps that will be used as the query time for each input row.
+For offline queries, you can pass one or more timestamps that will be used as the query time for each input row. In
+[Chalk Expressions](/docs/expression), you can reference the query time with `_.chalk_now`.
 
 ### Setting query time
 
@@ -257,6 +258,28 @@ select id,
 from tv_episodes
 where air_date < ${now}
   and id = ${tv_episode.id}
+```
+
+You can also reference `_.chalk_now` in [Chalk Expressions](/docs/expression), particularly in
+[windowed aggregations](/docs/aggregations):
+
+```py
+from chalk import features, _
+from chalk.streams import windowed, Windowed
+
+@features
+class Store:
+    id: int
+    visits: DataFrame[Visit]
+
+    num_recent_visits: Windowed[int] = windowed(
+        "1d", "7d", "30d",
+        expression=_.visits[
+            _.ts <  _.chalk_now,
+            _.ts > _.chalk_window
+        ].count(),
+        default=0,
+    )
 ```
 
 ### Accessing query time in query results

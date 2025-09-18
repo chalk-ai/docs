@@ -213,7 +213,17 @@ On the feature level, you can restrict a token's access to [tagged features](/ap
 blocking the token from returning tagged features in any queries but allowing the feature values to be
 used in the computation of other features, or by blocking the token from accessing tagged features entirely.
 
-![datasource and feature level rbac](/img/datasource-feature-rbac.png)
+### Denylisting vs Allowlisting Tags
+
+When configuring feature-level RBAC, you can use either denylisting or allowlisting approaches to control access to tagged features:
+
+- **Denylist**: Users with a denylist configuration will be allowed to query all feature tags except those specifically blocked in the denylist. This is a permissive approach where access is granted by default, and only explicitly listed tags are restricted.
+
+- **Allowlist**: Users with an allowlist configuration will be denied access to query all feature tags except those specifically specified in the allowlist. This is a restrictive approach where access is denied by default, and only explicitly listed tags are permitted.
+
+
+
+![datasource and feature level rbac](/img/datasource-feature-rbac-allowlist.png)
 
 
 
