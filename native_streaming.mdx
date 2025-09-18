@@ -1,286 +1,179 @@
+---
+title: Native Streaming Resolvers
+description: Using Chalk expressions to define streaming resolvers
+published: true
+---
+import { TipInfo, TipGood, TipBad } from '@/components/Tip'
+---
+
 # Native Streaming
 
-Native streaming resolvers provide a high-performance way to process streaming data using statically defined underscore expressions instead of Python functions. This Rust-based implementation processes **thousands of messages per second per CPU core**, making it ideal for high-throughput streaming applications.
+Native streaming resolvers provide a way to process streaming data using statically-defined expressions instead of Python functions. Similar to Chalk's expression-based [feature definitions](/docs/expression), these expressions are compiled and executed as vectorized C++, enabling high-throughput processing of stream messages. 
 
 ## Overview
 
-Native streaming uses `make_stream_resolver` to define feature extraction as column projections on input messages rather than executing Python code. This approach eliminates Python overhead and enables efficient parallel processing.
+Native streaming resolvers can be defined using the `make_stream_resolver()` function. The definition takes a message type and a mapping from Chalk features to expressions. In production, raw streaming messages are first converted into the given message type. Then, the output features of the resolver are computed based on the given expressions. 
 
 ## Basic Example
 
 Let's start with a simple example that processes user data from a Kafka stream:
 
 ```python
-from chalk import Features, Primary, features, stream
-from chalk.features import _, make_stream_resolver
+from chalk import Features, Primary, features
+from chalk.features import _
 from chalk.features.resolver import make_stream_resolver
 from chalk import functions as F
 from pydantic import BaseModel
 import pyarrow as pa
 import datetime as dt
 
-# Define your feature classes
+# Define the Kafka stream source
+kafka_source = KafkaSource(
+    bootstrap_server='kafka.website.com:9092',
+    topic='user_updates_topic'
+)
+
+# Define the feature class
 @features(max_staleness="30d", etl_offline_to_online=True)
-class Users:
+class User:
     user_id: Primary[int]
-    has_been_evicted_bool: bool | None
-    monthly_income_min: int | None
-    monthly_income_max: int | None
-    registered_source_app: str | None
+    full_name: str
+    email_address: str | None
     updated_at: dt.datetime | None
 
 # Define the message schema
-class MonthlyIncome(BaseModel):
-    min: int | None = None
-    max: int | None = None
+class ContactInfo(BaseModel):
+    phone_number: str
+    email_address: str | None
 
-class Qualification(BaseModel):
-    monthly_income: MonthlyIncome = MonthlyIncome()
-    has_been_evicted: bool | None = None
-
-class UsersMessage(BaseModel):
+class UserMessage(BaseModel):
     id: int  # maps to user_id
+    name: str
     updated_at: int  # epoch microseconds
-    qualification: Qualification = Qualification()
-    registered_source_app: str | None = None
+    contact_info: ContactInfo
+
 
 # Create a native streaming resolver
 users_streaming_resolver = make_stream_resolver(
-    name="users_stream_processor",
+    name="get_users_stream", # The resolver name
+    source=kafka_source,  # Your Kafka stream source
     message_type=UsersMessage,
     output_features={
-        Users.user_id: _.id,
-        Users.has_been_evicted_bool: _.qualification.has_been_evicted,
-        Users.monthly_income_min: _.qualification.monthly_income.min,
-        Users.monthly_income_max: _.qualification.monthly_income.max,
-        Users.registered_source_app: _.registered_source_app,
-        Users.updated_at: F.from_unix_seconds(_.updated_at / 1_000_000),
+        User.user_id: _.id,
+        User.full_name: _.name,
+        User.email_address: _.contact_info.email_address,
+        User.updated_at: F.from_unix_seconds(_.updated_at / 1_000_000),
     },
-    source=kafka_source,  # Your Kafka stream source
 )
 ```
 
+Here, stream messages will come in as JSON strings whose structure matches the definition of the UserMessage model. The output features are defined as simple field accesses into the JSON struct. Note that nested access, such as `_.contact_info.email_address`, work as expected. Similar to feature definitions, [scalar functions](/docs/expression#scalar-functions) can be used to process the raw message fields. Here, we convert a raw integer timestamp in microseconds into a UTC datetime.
+
+<TipInfo>
+Note that the expressions here are are essentially the same as those used in feature definitions. However, the semantics are slightly different: The "root" here (`_`), refers not to a namespace of features, but rather a table column whose datatype is based on the stream resolver's `message_type`. Thus, `_.amount` does not mean "get me Chalk feature `amount` in the current namespace" but rather "access struct field `amount` on this column." In addition, since these expressions represent projections on single columns, dataframe operations such as `_.transactions[_.amount, _.amount > 100].sum()` don't apply here. 
+</TipInfo>
+
 ### Example Stream Messages
 
-Here's what the incoming messages might look like:
+Here's what an incoming message might look like:
 
 ```json
 {
   "id": 123,
+  "name": "John Smith",
   "updated_at": 1700000000000000,
-  "qualification": {
-    "has_been_evicted": false,
-    "monthly_income": {
-      "min": 1000,
-      "max": 5000
-    }
-  },
-  "registered_source_app": "MobileApartmentList"
+  "contact_info": {
+    "phone_number": "555-555-5555",
+    "email_address": "john.smith@gmail.com",
+  }
 }
 ```
 
-## Advanced Features
-
-### Complex Field Transformations
-
-Native streaming supports complex field transformations using underscore expressions:
+This message will get parsed into the following data: 
 
 ```python
-@features(max_staleness="10m")
-class UserActivity:
-    user_id: Primary[int]
-    activity_score: float | None
-    risk_category: str | None
-    registered_app_group: str | None
-
-# Using conditional logic and mappings
-activity_resolver = make_stream_resolver(
-    name="activity_processor",
-    message_type=ActivityMessage,
-    output_features={
-        UserActivity.user_id: _.user_id,
-
-        # Conditional expressions
-        UserActivity.activity_score: F.if_then_else(
-            F.is_null(_.score),
-            0.0,
-            _.score * 100
-        ),
-
-        # Map dictionary for categorization
-        UserActivity.registered_app_group: F.map_dict(
-            {
-                "ApartmentList": "web",
-                "MobileApartmentList": "mweb",
-                "MobileiOSApartmentList": "ios",
-                "MobileAndroidApartmentList": "android",
-                "Kingpin": "partner",
-            },
-            _.registered_source,
-            default="other"
-        ),
-
-        # Complex conditional categorization
-        UserActivity.risk_category: F.if_then_else(
-            _.activity_score > 80,
-            "high",
-            F.if_then_else(_.activity_score > 40, "medium", "low")
-        ),
-    },
-    source=activity_stream,
+User(
+    id=123, 
+    full_name="John Smith",
+    email_address="john.smith@gmail.com",
+    updated_at=datetime.datetime(2023, 11, 14, 22, 13, 20, tzinfo=datetime.timezone.utc)
 )
 ```
 
-### Working with Timestamps
+## Supported message types
 
-Convert epoch timestamps to datetime objects:
+The following message types are supported: 
 
-```python
-def convert_epoch_expr(epoch_micros: Underscore):
-    """Convert microseconds since epoch to datetime"""
-    return F.if_then_else(
-        F.is_null(epoch_micros),
-        pa.scalar(None, pa.timestamp("us", "UTC")),
-        F.from_unix_seconds(epoch_micros / 1_000_000)
-    )
-
-# Use in resolver
-timestamp_resolver = make_stream_resolver(
-    name="events_processor",
-    message_type=EventMessage,
-    output_features={
-        Events.event_id: _.id,
-        Events.created_at: convert_epoch_expr(_.created_timestamp),
-        Events.processed_hour: F.hour_of_day(convert_epoch_expr(_.created_timestamp)),
-    },
-    source=events_stream,
-)
-```
-
-### Composite Keys and String Operations
-
-Create composite keys from multiple fields:
+* Pydantic `BaseModel`s or python `@dataclass`es: Incoming string messages will be automatically deserialized from JSON into structs. 
+* Protocol buffer messages:  The incoming binary messages will be automatically deserialized into structs with the various fields. 
+* `str` or `bytes`: The incoming messages can also be treated as simple strings or bytes. In this case, your feature expressions can't access struct fields on the message, but they can use scalar [string/binary](/api-docs#section-string-functions) functions: 
 
 ```python
-@features(max_staleness="30d")
-class Interests:
-    user_id_rental_id: Primary[str]  # Composite key
-    user_id: int
-    rental_id: str
-    interest_state: str | None
-    interest_created_hour: int | None
-
-class InterestsMessage(BaseModel):
-    user_id: int
-    rental_id: str
-    state: str | None = None
-    created_at: int | None = None  # epoch micros
-    updated_at: int
-
-interests_resolver = make_stream_resolver(
-    name="interests_processor",
-    message_type=InterestsMessage,
-    output_features={
-        # Create composite key using string concatenation
-        Interests.user_id_rental_id: F.cast(_.user_id, pa.large_utf8()) + "_" + _.rental_id,
-        Interests.user_id: _.user_id,
-        Interests.rental_id: _.rental_id,
-        Interests.interest_state: _.state if _.state else None,
-
-        # Extract hour from timestamp
-        Interests.interest_created_hour: F.if_then_else(
-            F.is_null(_.created_at),
-            -1,
-            F.hour_of_day(F.from_unix_seconds(_.created_at / 1_000_000))
-        ),
-    },
-    source=interests_stream,
-)
-```
-
-### Example Stream Message for Interests
-
-```json
 {
-  "user_id": 456,
-  "rental_id": "apt_789",
-  "state": "viewed",
-  "created_at": 1700000000000000,
-  "updated_at": 1700000000000000
+    Event.timestamp: _.timestamp #  INVALID -- strings don't have an 'age' field
+    Event.raw_data_cleaned:  F.trim(F.lower(_)) # Here, `_` refers to the string message as whole. 
+    Event.timestamp: F.json_value(_, "$.metadata.timestamp") # This parses the input string as JSON and extracts a single field.
 }
 ```
 
-## Nested Object Handling
+<TipBad>
+Note: Not all pydantic or protobuf types are supported. The message type needs to be converted 
+</TipBad>
 
-Native streaming can navigate nested objects in your messages:
+## Custom Parse Functions
 
-```python
-class Address(BaseModel):
-    street: str | None
-    city: str | None
-    state: str | None
-    zip_code: str | None
+By default, the message parsing logic is inferred automatically from the message_type. For Pydantic types or dataclasses, JSON parsing is used. For protobuf message classes, 
+these are parsed from the protobuf's binary representation. However, it is also possible to provide customer parsing logic. In addition to handling custom message formats, this also allows the stream resolver to skip a subset of messages. For instance, one might have multiple message types on the same kafka topic, or perhaps a stream of events where only events of type "CREATE" are relevant. 
 
-class UserProfile(BaseModel):
-    personal_info: dict
-    addresses: list[Address]
-    preferences: dict[str, Any]
+The `make_stream_resolver()` function has an optional `parse` argument that takes an expression. If provided, this expression will be used to convert raw message bytes into the expected message type. If the expression returns None, that message will be skipped.
 
-@features
-class UserDetails:
-    user_id: Primary[int]
-    primary_city: str | None
-    has_preferences: bool
-    profile_completeness: float
+For example, consider the following protobuf definition: 
 
-profile_resolver = make_stream_resolver(
-    name="profile_processor",
-    message_type=UserProfile,
-    output_features={
-        UserDetails.user_id: _.user_id,
+```protobuf
+message User {
+  enum UserType {
+    USER_TYPE_UNSPECIFIED = 0;
+    USER_TYPE_GUEST = 1;
+    USER_TYPE_MEMBER = 2;
+  }
 
-        # Access nested fields
-        UserDetails.primary_city: _.addresses[0].city if _.addresses else None,
+  message ContactInfo {
+    optional string phone_number = 1;
+    optional string email_address = 1;
+  }
 
-        # Check for existence
-        UserDetails.has_preferences: F.is_not_null(_.preferences),
-
-        # Calculate derived metrics
-        UserDetails.profile_completeness: calculate_completeness(_.personal_info),
-    },
-    source=profile_stream,
-)
+  uint32 id = 1; 
+  string name = 2;
+  UserType user_type = 3;
+  optional ContactInfo contact_info = 4;
+  uint64 updated_at = 5;
+}
 ```
 
-## Type Casting
-
-Cast between different data types:
+Let's say our system produces protobuf messages w/ an unusual format (a 6-byte prefix is added). We would like to strip the prefix before parsing and also ignore messages 
+for users of type "GUEST". We can use a custom parse expression to do this:
 
 ```python
-@features
-class MetricsFeatures:
-    metric_id: Primary[str]
-    count: int
-    percentage: float
-    is_active: bool
+from messages.user_pb2 import UserMessage # Import the generated protobuf classes
 
-metrics_resolver = make_stream_resolver(
-    name="metrics_processor",
-    message_type=MetricsMessage,
+# Strip first 6 bytes, then parse the protobuf message
+parsed_message = F.proto_deserialize(F.substr(_, 6, None), UserMessage)
+# Exlude any UserMessages whos user_type == GUEST
+parse_expression = F.if_then_else(
+    parsed_message.user_type == UserMessage.UserType.GUEST, None, parsed_message
+)
+
+users_streaming_resolver = make_stream_resolver(
+    name="get_users_stream",
+    source=kafka_source,
+    message_type=UserMessage,
+    parse=parse_expression, # Custom parse expression provided here
     output_features={
-        # Cast integer to string
-        MetricsFeatures.metric_id: F.cast(_.id, pa.large_utf8()),
-
-        # Ensure integer type
-        MetricsFeatures.count: F.cast(_.raw_count, int),
-
-        # Calculate percentage as float
-        MetricsFeatures.percentage: F.cast(_.ratio * 100, float),
-
-        # Convert to boolean
-        MetricsFeatures.is_active: F.cast(_.status == "active", bool),
+        User.user_id: _.id,
+        User.full_name: _.name,
+        User.email_address: _.contact_info.email_address,
+        User.updated_at: F.from_unix_seconds(_.updated_at / 1_000_000),
     },
-    source=metrics_stream,
 )
 ```
 
@@ -308,25 +201,6 @@ Consider traditional Python resolvers for:
 - Machine learning model inference
 - Complex error handling and recovery logic
 
-## Configuration Options
-
-```python
-from chalk import MachineType, Environments
-
-# Configure resolver with specific resources
-high_throughput_resolver = make_stream_resolver(
-    name="high_volume_processor",
-    message_type=VolumeMessage,
-    output_features={...},
-    source=high_volume_stream,
-
-    # Optional configurations
-    environment=Environments.PRODUCTION,
-    machine_type=MachineType.LARGE,  # Use larger instances
-    owner="data-team@company.com",
-    doc="Processes high-volume transaction events for fraud detection",
-)
-```
 
 ## Migration from Traditional Streaming
 
