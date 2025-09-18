@@ -104,8 +104,8 @@ User(
 
 The following message types are supported: 
 
-* Pydantic `BaseModel`s or python `@dataclass`es: Incoming string messages will be automatically deserialized from JSON into structs. 
-* Protocol buffer messages:  The incoming binary messages will be automatically deserialized into structs with the various fields. 
+* Pydantic `BaseModel`s or python `@dataclass`es: Incoming string messages will be deserialized from JSON into structs. 
+* Protocol buffer messages:  The incoming binary messages will be deserialized into structs with the various fields. 
 * `str` or `bytes`: The incoming messages can also be treated as simple strings or bytes. In this case, your feature expressions can't access struct fields on the message, but they can use scalar [string/binary](/api-docs#section-string-functions) functions: 
 
 ```python
@@ -117,8 +117,31 @@ The following message types are supported:
 ```
 
 <TipBad>
-Note: Not all pydantic or protobuf types are supported. The message type needs to be converted 
+Note: Not all pydantic or protobuf types are supported. The message type needs to be converted into a well-defined PyArrow schema. Types that are recursive and can be arbitrariliy nested will fail to be parsed. Similarly, Pydantic types with type annotations such as `Any` or complex union types are also not supported. To process these types in a native streaming resolver, use a custom parse function to only extract specific fields with well-known datatypes. 
 </TipBad>
+
+```python
+
+class PhoneInfo(BaseModel): 
+    number: str
+    area_code: str
+
+class EmailInfo(BaseModel): 
+    address: str
+
+class Parent(BaseModel):
+    id: int
+    parent: Parent | None
+
+class UsersMessage(BaseModel):
+    id: int
+    account_id: int | str # INVALID -- 'account_id' field's datatype is not well-defined
+    card_id: int | None # Nullable types OK
+    contact: PhoneInfo | EmailInfo # INVALID -- complex union types not supported
+    parent: Parent | None # INVALID -- even if finitely nested in practice, the schema of this can't be determined ahead of time since it contains arbitrarily many sub-columns.
+
+```
+
 
 ## Custom Parse Functions
 
@@ -217,7 +240,6 @@ print(result.features)
 
 1. **High Throughput**: Process thousands of messages per second per CPU core
 2. **Low Latency**: Rust-based processing eliminates Python GIL overhead
-3. **Memory Efficient**: Static expressions avoid Python object creation
 4. **Parallel Processing**: Automatic parallelization across CPU cores
 5. **Type Safety**: Compile-time validation of expressions
 
@@ -231,8 +253,6 @@ Native streaming is ideal for:
 
 Consider traditional Python resolvers for:
 - Complex business logic requiring external API calls
-- Stateful aggregations requiring memory
-- Machine learning model inference
 - Complex error handling and recovery logic
 
 
