@@ -67,7 +67,7 @@ users_streaming_resolver = make_stream_resolver(
 )
 ```
 
-Here, stream messages will come in as JSON strings whose structure matches the definition of the UserMessage model. The output features are defined as simple field accesses into the JSON struct. Note that nested access, such as `_.contact_info.email_address`, work as expected. Similar to feature definitions, [scalar functions](/docs/expression#scalar-functions) can be used to process the raw message fields. Here, we convert a raw integer timestamp in microseconds into a UTC datetime.
+Here, stream messages will come in as JSON strings whose structure matches the definition of the UserMessage model. The output features are defined as simple field accesses into the JSON struct. Note that nested access, such as `_.contact_info.email_address`, works as expected. Similar to feature definitions, [scalar functions](/docs/expression#scalar-functions) can be used to process the raw message fields. Here, we convert a raw integer timestamp in microseconds into a UTC datetime.
 
 <TipInfo>
 Note that the expressions here are are essentially the same as those used in feature definitions. However, the semantics are slightly different: The "root" here (`_`), refers not to a namespace of features, but rather a table column whose datatype is based on the stream resolver's `message_type`. Thus, `_.amount` does not mean "get me Chalk feature `amount` in the current namespace" but rather "access struct field `amount` on this column." In addition, since these expressions represent projections on single columns, dataframe operations such as `_.transactions[_.amount, _.amount > 100].sum()` don't apply here. 
