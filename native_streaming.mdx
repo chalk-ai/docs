@@ -177,6 +177,40 @@ users_streaming_resolver = make_stream_resolver(
 )
 ```
 
+## Testing Native Streaming Resolvers 
+
+Running native streaming resolvers locally is currently not supported. However, native streaming resolvers can be tested with sample messages from a notebook or client against the branch server or a production streaming server. In addition, native streaming resolvers defined in notebooks can be uploaded to Chalk servers for testing, without affecting the production deployment. 
+
+```python
+from chalk.client import ChalkClient 
+
+sample_messages = [
+    '{"id": 123, "name": "John Smith"}',
+    '{"id": 456, "name": "Alice Liddell"}',
+]
+
+client = ChalkClient()
+
+# 1. Test messages against production resolver:
+result = client.test_streaming_resolver(resolver="get_users_streaming", message_bodies=sample_messages)
+# 'test_streaming_resolver' returns a signed URL to a parquet file in cloud storage -- `result.features` downloads this and extracts the table. 
+print(result.features)
+
+# 2. Test messages against a stream resolver on a branch:
+result = client.test_streaming_resolver(resolver="get_users_streaming", message_bodies=sample_messages, branch="new_users_stream_logic")
+print(result.features)
+
+# 3. Create a new resolver and test it:
+new_users_resolver = make_streaming_resolver(
+    source=...,
+    name="get_users_streaming_new", 
+    message_type=...,
+    output_features={...},
+)
+result = client.test_streaming_resolver(resolver=new_users_resolver, message_bodies=sample_messages)
+print(result.features)
+```
+
 ## Performance Considerations
 
 ### Benefits of Native Streaming
