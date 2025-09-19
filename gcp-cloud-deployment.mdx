@@ -1070,6 +1070,9 @@ For connecting to a single Cloud SQL instance:
   ]
 }
 ```
+This example creates a sidecar named `cloudsql` that connects to the specified instance on port `5432`. You would then be able
+to connect to this sidecar by defining a chalk datasource with host `http_address` (0.0.0.0 in this example), and
+port `port` (5432 in this example).
 
 ### Multiple Instances Configuration
 
@@ -1094,6 +1097,9 @@ For connecting to multiple Cloud SQL instances, use the `instances` map format:
   ]
 }
 ```
+This example creates a sidecar named `cloudsql` that connects to multiple specified instances on ports `5432` and `3306`.
+You would then be able to connect to this sidecar by defining a chalk datasource with host `http_address`
+(0.0.0.0 in this example), and either port `port` (5432 or 3306 in this example).
 
 ### Configuration Options
 
