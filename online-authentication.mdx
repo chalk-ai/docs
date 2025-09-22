@@ -129,8 +129,16 @@ output. You can maintain separate permissions for each of these types of feature
 
 If we created a service token blocking the tag `allow1`, then the following features with said tag would not be
 computable. If we ran a query with this service token fetching feature `feature1` with tag `allow1`, we would get an
-error back indicating that the feature was not accessible and would get the following response:
+error back indicating that the feature was not accessible:
 
+Feature Definition:
+```chalk
+@features(tags=["generic"])
+class AllowedEvents:
+  id: int
+  feature1: str = feature(tags=["allow1"])
+```
+Query:
 ```chalk
 $ chalk query --in allowed_events.id=1 --out allowed_events.feature1
 
