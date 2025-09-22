@@ -132,14 +132,14 @@ computable. If we ran a query with this service token fetching feature `feature1
 error back indicating that the feature was not accessible:
 
 Feature Definition:
-```chalk
+```python
 @features(tags=["generic"])
 class AllowedEvents:
   id: int
   feature1: str = feature(tags=["allow1"])
 ```
 Query:
-```chalk
+```bash
 $ chalk query --in allowed_events.id=1 --out allowed_events.feature1
 
 Results:
