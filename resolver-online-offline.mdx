@@ -11,6 +11,8 @@ all the features that you've computed—enabling monitoring and dataset generati
 Chalk enables you to query the online and offline store, and run online and offline resolvers, to fetch
 data for your online and offline queries. These online/offline interactions are detailed below.
 
+---
+
 ## Defining Online and Offline Resolvers
 
 There are three types of resolvers--Python resolvers, SQL resolvers, and expressions.
@@ -20,20 +22,23 @@ and SQL resolvers can be either online or offline.
 To define a Python resolver as online or offline, use the `@online` or `@offline` decorator.
 
 ```python
-from chalk.features import online, offline
-from src.features import User
+from chalk.features import online, offline, DataFrame
+from src.features import User, Transaction
 
 @online
-def my_online_resolver(
-    name: User.name
-):
-    return 1
+def get_email_username(email: User.email) -> User.email_username:
+    username = email.split("@")[0]
+    if "gmail.com" in email:
+        username = username.split("+")[0].replace(".", "")
+    return username.lower()
 
 @offline
-def my_offline_resolver(
-    txns: User.transactions
-):
-    return 1
+def get_transactions(txns: User.transactions) -> DataFrame[
+    Transaction.id,
+    Transaction.amount,
+    Transaction.date,
+]:
+    return DataFrame.read_parquet(...)
 ```
 
 To define a SQL resolver as online or offline, use the `type` field in the resolver comment.
@@ -42,16 +47,17 @@ To define a SQL resolver as online or offline, use the `type` field in the resol
 -- resolves: user
 -- source: pg_users
 -- type: online
-
 select id, name, age, transactions
 from users;
 ```
 
+---
+
 ## Storage
 
 Your online store holds data that you want to cache
-according to the cache policies you set on [your features](/docs/feature-caching) or
-on [your queries](/docs/query-caching). While this is usually a small amount of data,
+according to the cache policies you set on your [features](/docs/feature-caching) or
+on your [queries](/docs/query-caching). While this is usually a small amount of data,
 you want exceptionally fast reads.
 This kind of access pattern aligns
 with the performance characteristics of [Redis](https://redis.com) or [Dynamo DB](https://aws.amazon.com/dynamodb/)
@@ -77,6 +83,7 @@ in cloud storage (S3/GCS), whereas online queries write their results to databas
 | An `@online` or `@offline` scheduled resolver                          | An `@online` or `@offline` scheduled resolver that computes features with `max_staleness!=0` and `etl_offline_to_online=True` |
 | A streaming resolver: `@stream`                                        | A streaming resolver: `@stream`                                                      |
 
+---
 
 ## Querying
 
@@ -104,6 +111,7 @@ for a more in-depth treatment.
 | online resolver  | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolver will run        | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolver will run if there is no <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver with the same definition |
 | offline resolver | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver will never run | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver will run                                                                                                                                                            |
 
+---
 
 ## Online/Offline Interaction
 
@@ -127,6 +135,8 @@ when you tolerate stale data in online inference and
 have a data source in the offline store that doesn't
 have a direct replacement in the online store.
 More details are provided in the section [Reverse ETL](/docs/reverse-etl).
+
+---
 
 ## Summary
 
