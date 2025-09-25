@@ -1,12 +1,98 @@
 ---
-title: Validation
+title: Validity
 description: Validate features and resolvers
 published: true
 ---
 
+import { CheckIcon } from '@/components/icons/CheckIcon'
+import { CancelIcon } from '@/components/icons/CancelIcon'
+
+---
+Chalk internally tracks metadata about how each feature in a query is resolved.
+This metadata is used to determine the validity of a feature. A feature can become
+invalid either because it could not be resolved or because its resolver generated
+an ERROR without a default value.
+
+The validity of features is checked when they are used as inputs to a resolver.
+If any input to a given resolver is invalid, the resolver will generate an `UPSTREAM_FAILED`
+ERROR and will not run. Additionally, in the output of a resolver, if any feature is invalid,
+then all features returned by that resolver will be considered invalid.
+
 ---
 
-## Feature Values
+## Recovery for Invalid Features
+
+Features can recover from being invalid in a few ways:
+
+- **Recover Function**: [`F.recover`](/api-docs#recover) will always output a valid feature, even if the input was invalid.
+
+- **Defaults at the resolver level**: Resolvers can also specify fallback values for their inputs. If an input feature is invalid, the resolver will use the provided fallback instead. This allows the resolver to proceed even when some of its inputs have failed.
+
+```python
+@online
+def resolver_1(middle_name: User.middle_name=None):
+    # Will run even if middle_name is invalid
+    ...
+
+@online
+def resolver_2(middle_name: User.middle_name | None):
+    # Will run even if middle_name is invalid
+    ...
+
+@online
+def resolver_3(middle_name: Optional[User.middle_name]):
+    # Will run even if middle_name is invalid
+    ...
+```
+---
+
+## Optional Features - When None is Valid
+It's important to note that `None` is not always considered invalid. Chalk allows the user to specify optional features
+which can be valid while being `None`. Optional features are only marked as invalid if they are unintentionally `None` such as when a resolver fails with an ERROR.
+If the `None` was produced intentionally—for example, due to optional logic in the resolver or returning `null` from a SQL query—the feature is still valid.
+
+<table className="w-full text-center">
+    <thead>
+    <tr>
+        <th>Resolver Output </th>
+        <th>Optional Feature?</th>
+        <th>Valid?</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td rowspan={2} className="align-middle"><code className="mx-auto">not None</code></td>
+        <td className="align-middle">No</td>
+        <td className="text-teal-700"><CheckIcon className="h-6 text-teal-700 mx-auto" /></td>
+    </tr>
+    <tr>
+        <td className="align-middle">Yes</td>
+        <td><CheckIcon className="h-6 text-teal-700 mx-auto" /></td>
+    </tr>
+    <tr>
+        <td rowspan={2} className="align-middle"><code className="mx-auto">None</code></td>
+        <td className="align-middle border-t-4">No</td>
+        <td className="border-t-4"><CancelIcon className="h-6 text-red-800 mx-auto" /></td>
+    </tr>
+    <tr>
+        <td className="align-middle">Yes</td>
+        <td><CheckIcon className="h-6 text-teal-700 mx-auto" /></td>
+    </tr>
+    <tr>
+        <td rowspan={2} className="align-middle "><code className="mx-auto text-red-800">ERROR</code></td>
+        <td className="align-middle border-t-4">No</td>
+        <td className="border-t-4"><CancelIcon className="h-6 text-red-800 mx-auto" /></td>
+    </tr>
+    <tr>
+        <td className="align-middle">Yes</td>
+        <td><CancelIcon className="h-6 text-red-800 mx-auto" /></td>
+    </tr>
+    </tbody>
+</table>
+
+---
+
+## Feature Validations
 
 Chalk can enforce requirements on your feature values.
 You can validate the values and length of many primitive types
@@ -15,7 +101,7 @@ through the keyword arguments `min`, `max`, `min_length`, and `max_length`.
 [//]: # (A feature which does not meet the given constraints will not be fed to downstream resolvers or returned in queries.)
 To prevent 'invalid' features from being written
 to the offline or online store, set `strict=True`.
-In this case an error will be thrown when an invalid
+In this case an `ERROR` will be thrown when an invalid
 feature is observed.
 The `validations` keyword argument can be used when there are
 multiple validations, only some of which are strict.
@@ -57,7 +143,7 @@ validation:
   feature:
     metadata:
       - name: owner
-        missing: error
+        missing: ERROR
       - name: description
         missing: warning
       - name: tags
