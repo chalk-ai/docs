@@ -224,7 +224,7 @@ result = client.test_streaming_resolver(resolver="get_users_streaming", message_
 print(result.features)
 
 # 3. Create a new resolver and test it:
-new_users_resolver = make_streaming_resolver(
+new_users_resolver = make_stream_resolver(
     source=...,
     name="get_users_streaming_new", 
     message_type=...,
