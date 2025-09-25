@@ -62,7 +62,7 @@ class FAQDocument:
 ### Distance Measure
 
 Nearest neighbor relationships use a distance function to measure closeness. By default, Chalk uses L2 distance, though
-inner product and cosine similarity are also supported. To change the distance function, use the `distance` argument:
+inner product and cosine similarity are also supported. To change the distance function, use the `metric` argument:
 
 ```py
 from chalk.features import DataFrame, features, has_many
@@ -72,7 +72,7 @@ class SearchQuery:
   nearest_documents: DataFrame[Document] = has_many(
     lambda: SearchQuery.embedding.is_near(
       FAQDocument.embedding,
-      distance="cosine",  # or "inner product"
+      metric="cos",  # or "l2", "ip"
     )
   )
 ```
