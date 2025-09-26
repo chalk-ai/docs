@@ -5,10 +5,29 @@ published: true
 ---
 
 With Chalk [`NamedQuery`](/api-docs#NamedQuery) objects, you can define and version
-your common query patterns in code. This provides a few advantages:
+your common query patterns in code.
+
+This provides several advantages:
 - queries are preplanned on engine boot, reducing first-query latency,
 - query outputs and parameters don't need to be hardcoded, reducing boilerplate code and ensuring consistency between your queries,
 - queries are grouped together on the web, making them easier to track, monitor, and debug.
+
+---
+
+## Relationship to models
+
+Named queries typically map to specific models that you're running in production.
+While feature classes model your domain objects (users, transactions, accounts) and may contain hundreds of features
+for reuse across different models, a named query selects only the specific subset of features needed for a particular model.
+
+For example, you might have a `User` feature class with 100+ features capturing everything about a user: their
+profile, behavior metrics, transaction history aggregations, and risk signals. However, your fraud detection model
+might only need 15 specific features, while your recommendation model needs a different set of 30 features.
+Named queries let you define these model-specific feature sets, ensuring each model gets exactly what it needs
+without unnecessary computation.
+
+This separation allows different models to access the same domain objects through feature classes while only
+requesting the features they need, improving performance and making it easier to track which features each model depends on.
 
 ---
 
