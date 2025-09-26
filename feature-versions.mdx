@@ -92,6 +92,61 @@ class Trial:
 
 ---
 
+## Deprecating features
+
+As you migrate to newer feature versions or phase out old features,
+you can mark them as deprecated to signal that they should no longer be used.
+This helps teams understand which features to avoid and provides a clear migration path.
+
+You can deprecate features that aren't versioned to indicate they should be phased out:
+
+```python
+from chalk.features import features, feature
+
+@features
+class User:
+    id: str
+    # Mark the old feature as deprecated
+    legacy_risk_score: float = feature(
+        deprecated=True,
+        description="Use risk_score_v2 instead"
+    )
+
+    # The new feature that should be used instead
+    risk_score_v2: float
+```
+
+### Deprecating specific versions
+
+When using multiple versions of a feature, you can mark specific versions as deprecated:
+
+```python
+from chalk.features import features, feature
+from chalk import _
+
+@features
+class User:
+    id: str
+    score: int
+    banned: bool = feature(versions={
+        1: feature(
+            deprecated=True,
+            description="Prior thresholds we used",
+            expression=_.score > 900,
+        ),
+        2: feature(
+            description="New cutoff released by Monica's team",
+            expression=_.score > 300 | (_.score < 100 & _.id == "admin"),
+        ),
+    })
+```
+
+When a deprecated feature is used in queries or resolvers, Chalk will log warnings to help you track and eliminate usage of deprecated features across your codebase. This is particularly useful during gradual migrations when you need to maintain backward compatibility while encouraging adoption of new features.
+
+To monitor the migration progress and identify which deprecated features can be safely removed, you can use the Chalk web interface to sort features by usage and see when each feature was last queried. This helps you make data-driven decisions about when it's safe to fully retire deprecated features.
+
+---
+
 ## Resolvers
 
 Resolvers also reference versioned features with `@`.
