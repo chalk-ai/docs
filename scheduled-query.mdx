@@ -39,9 +39,13 @@ ScheduledQuery(
 At the time of [`chalk apply`](/cli/apply), the scheduled query will be
 created.
 
-In the web, you can see the list of scheduled queries in `Runs` > `Scheduled Runs` tab.
+In the web, you can see the list of scheduled queries in `Scheduled Runs` tab.
+Each run will show the status of the last execution, and you can click into
+each run to see the logs.
 
 ![Scheduled queries](/img/scheduled-runs.png)
+
+---
 
 ## Incrementalization
 
@@ -64,5 +68,16 @@ ScheduledQuery(
 )
 ```
 
+---
 
+## Monitoring
 
+You can monitor the status of scheduled queries in the `Scheduled Runs` tab.
+From there, you can set up alerts to notify you when a scheduled query fails.
+To set up an alert, click on the `Add Alert` button in the top right corner of the
+page.
+
+![Cron Alerts](/img/cron-alerts.png)
+
+All alerts integrate with your other [Chalk alerting integrations](/docs/alertconfig), including
+email, [PagerDuty](/docs/pagerduty), [Slack](/docs/slack), and [incident.io](/docs/incidentio).

@@ -1,27 +1,29 @@
 ---
-title: IncidentIo
-description: Integrate Chalk alerts with your IncidentIo alert routes
+title: incident.io
+description: Integrate Chalk alerts with your incident.io alert routes
 published: true
 ---
 
 ---
 
-Chalk supports integration with [IncidentIo](https://incident.io/) for alerting.
+Chalk supports integration with [incident.io](https://incident.io/) for alerting.
 
-## Creating an Chalk Alert Source
+## Creating a Chalk Alert Source
 
-To connect IncidentIo to Chalk, you'll need to create a new HTTP alert source from your IncidentIo dashboard.
+To connect incident.io to Chalk, you'll need to create a new HTTP alert source from your incident.io dashboard.
 
 Once you create an HTTP alert source, you will be given the option of `Header authentication` and `Query authentication`.
 You will want to select `Query authentication` and copy the URL. It should be of the form:
 https://api.incident.io/v2/alert_events/http/`alert_source_id`?token=`alert_source_token`
 
-For more information, see [IncidentIo's Alert Guide](https://incident.io/changelog/automate-incident-creation-with-alerts)
+For more information, see [incident.io's Alert Guide](https://incident.io/changelog/automate-incident-creation-with-alerts)
 
 ---
 
 ## Adding to Chalk
 
-Once you have the URL copied, you can insert it on your environment settings page under IncidentIo. You can either paste the entire URL or input the `alert_source_id` and `alert_source_token` manually. 
+Once you have the URL copied, you can insert it on your environment settings page under incident.io.
+You can either paste the entire URL or input the `alert_source_id` and `alert_source_token` manually.
 
-Integrations are per-environment but you can create more than one HTTP source per Chalk environment and create separate IncidentIo alert routes for each. 
+Integrations are per-environment, but you can create more than one HTTP source per Chalk environment
+and create separate incident.io alert routes for each.
