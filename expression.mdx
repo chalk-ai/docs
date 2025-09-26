@@ -4,7 +4,7 @@ description: Using Chalk expressions to define features
 published: true
 ---
 
-import { TipBad, TipGood } from '@/components/Tip'
+import {TipBad, TipGood, TipBadText, TipGoodText} from '@/components/Tip'
 
 ---
 
@@ -17,7 +17,8 @@ enabling low-latency computation at serve time and high-throughput processing at
 Expressions support a wide range of operations, including arithmetic, filtering, aggregations,
 and built-in functions like .
 
-For example, in a Transaction feature class, we can compute the subtotal of a transaction as the difference between its total and sales tax:
+For example, in a `Transaction` feature class, we can compute the subtotal of a transaction as the
+difference between its total and sales tax:
 
 ```python
 from chalk.features import features, Primary
@@ -41,11 +42,13 @@ If each `Transaction` is associated with a `User`, for example, you can compute 
 string similarity between the user’s name and the transaction memo:
 
 ```diff-py
+  from chalk.features import _, features
 + import chalk.functions as F
 
   @features
   class Transaction:
       ...
+      amount: float
       memo: str
       user: "User"
 +     name_match_score: float = F.jaccard_similarity(
@@ -71,8 +74,11 @@ class User:
     name: str
     transactions: DataFrame[Transaction]
 
+    # Total spend is nullable because the sum of an empty DataFrame is null
+    total_spend: float | None = _.transactions[_.total].sum()
+
+    # The count is never null, because an empty DataFrame has count 0
     num_large_txns: int = _.transactions[_.total > 1000].count()
-    total_spend: float = _.transactions[_.total].sum()
 ```
 
 In this context, `_` refers to the `User` instance when referring to `_.transactions`.
@@ -89,7 +95,7 @@ and executed as high-performance C++ at runtime.
 ## Scalar Functions
 
 Chalk expressions support a wide range of built-in functions for manipulating data, performing calculations,
-and transforming features. These functions can be used in expressions to operate on feature values, DataFrames, and other data types.
+and transforming features. These functions can be used in expressions to operate on feature values, `DataFrames`, and other data types.
 
 ```diff-py
 - from chalk import features, online
@@ -127,16 +133,25 @@ Chalk expressions support a variety of infix operators for arithmetic, condition
 | <code>\|</code> | Boolean or               | <code>\_.is\_active \| \_.is_verified</code> |
 | `~`             | Boolean not              | `~_.is_active`                               |
 
-<TipBad>Don't use `or`, `and`, `not`, and `is` in expressions</TipBad>
-Do not use Python's `and`, `or`, `not`, or `is` operators in expressions.
-Python does not allow these operators to be overridden, so they will not work with Chalk's expressions.
+<TipBadText
+    header={
+        <div>
+            Do not use Python's <code>and</code>, <code>or</code>, <code>not</code>, or <code>is</code> operators
+            in expressions.
+        </div>
+    }
+>
+    Python does not allow these operators to be overridden, so they will not work with Chalk's expressions.
+    Instead, use the infix operators <code>&</code>, <code>|</code>, and <code>~</code> for boolean logic,
+    and use <code>==</code> and <code>!=</code> for equality comparisons.
+</TipBadText>
 
 ### Builtin Functions
 
 The `chalk.functions` module exposes several helpful functions that can be used in
 combination with expression references to transform features. These functions are meant
 to be used in expressions and are not available as standalone functions. To view all
-available functions, see our [SDK docs](/api-docs#section-chalk-functions)
+available functions, see our [SDK docs](/api-docs#section-chalk-functions).
 
 ### Structs
 
@@ -190,6 +205,9 @@ class User:
     num_small_transactions: int = count_where(_.total < 100)
 ```
 
+Expressions are not supported in Python resolvers, so you cannot use Chalk functions like `F.jaccard_similarity`
+in a Python resolver.
+
 <TipBad>Don't use expressions in Python resolvers</TipBad>
 
 ```python
@@ -205,12 +223,13 @@ def get_score(
     name: User.name,
     email: User.email,
 ) -> User.name_email_match_score:
-    # DONT DO THIS!!
+    # Don't do this!! Expressions don't run in Python resolvers
     return F.jaccard_similarity(name, email)
 ```
 
-Expressions are not supported in Python resolvers, so you cannot use Chalk functions like `F.jaccard_similarity`
-in a Python resolver. Instead, use expressions to define the feature directly in the feature class.
+Instead, use expressions to define the feature directly in the feature class:
+
+<TipGood>Use expressions in feature classes</TipGood>
 
 ```python
 @features
@@ -291,11 +310,12 @@ To compute `User.total_spend`, we needed to create a projection of the `User.tra
 In contrast, no projection was needed for the `num_large_transactions` aggregation because `count`
 works on `DataFrames` with any number of columns.
 
-<TipGood>Use materialized aggregations</TipGood>
+<TipGoodText header={"Use materialized aggregations"}>
+    For computing low-latency aggregations over high volumes of data, Chalk also offers
+    [materialized windowed aggregations](/docs/materialized_aggregations)
+    that uses materialization of buckets of data to compute large aggregations efficiently.
+</TipGoodText>
 
-For computing low-latency aggregations over high volumes of data, Chalk also offers
-[materialized windowed aggregations](/docs/materialized_aggregations)
-that uses materialization of buckets of data to compute large aggregations efficiently.
 
 ### Aggregation functions
 

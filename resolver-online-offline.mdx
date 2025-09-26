@@ -1,25 +1,111 @@
 ---
 title: Online / Offline
-description: Predict and train.
+description: Eliminate train-serve skew with shared logic.
 published: true
 ---
----
 
-Chalk is composed of an online and an offline store. The online store is used to cache data to make
-realtime data requests extremely fast, while the offline store is a data warehouse that stores
-all the features that you've computed—enabling monitoring and dataset generation for training.
-Chalk enables you to query the online and offline store, and run online and offline resolvers, to fetch
-data for your online and offline queries. These online/offline interactions are detailed below.
+import { TipBad, TipGood, TipBadText, TipGoodText } from '@/components/Tip'
 
 ---
 
-## Defining Online and Offline Resolvers
+Chalk supports two primary execution contexts: online (for inference) and offline (for training).
+Online contexts handle real-time prediction requests with millisecond latency requirements, while
+offline contexts process historical data for model training and analysis.
 
-There are three types of resolvers--Python resolvers, SQL resolvers, and expressions.
-By default, Chalk [expressions](/docs/expression) are online resolvers, while Python
-and SQL resolvers can be either online or offline.
+Chalk enables you to write resolvers that can run in either or both contexts,
+helping eliminate train-serve skew while optimizing for the different performance
+characteristics of each environment.
 
-To define a Python resolver as online or offline, use the `@online` or `@offline` decorator.
+---
+
+## Online and Offline Resolvers
+
+[//]: # (Both SQL and Python resolvers can be written as online or offline resolvers.)
+[//]: # (You can control whether a resolver will run)
+
+Online resolvers are eligible to run in online and offline queries.
+However, in an offline context, Chalk will _prefer_ to run an offline resolver
+to an online resolver if both are available for the same feature.
+
+Offline resolvers can run _only_ in offline queries, and can _never_
+be used as part of an online query.
+
+There are three types of resolvers: [expressions](/docs/expression), [Python resolvers](/docs/python-resolvers), and [SQL resolvers](/docs/sql-resolvers).
+Expressions are online resolvers, while Python and SQL resolvers can be specified as
+either offline or online.
+
+### Expressions
+
+Chalk [expressions](/docs/expression) are online resolvers.
+However, an expression can operate on data that is fetched from either an online or offline resolver.
+Expressions are written in terms of the data model, and thus are portable between online and offline contexts.
+
+For example, consider the following feature definition:
+
+```python
+from chalk import _
+from chalk.features import features
+
+@features
+class User:
+    id: int
+    first_name: str
+    last_name: str
+    full_name: str = _.first_name + " " + _.last_name
+```
+
+The `full_name` feature is defined as an expression that concatenates the `first_name` and `last_name` features.
+No matter how we compute `first_name` and `last_name`, the expression for `full_name` remains the same.
+If we have a PostgreSQL online resolver that computes `first_name` and `last_name` from a low-latency database,
+we can use that resolver in an online query.
+If we have a Snowflake offline resolver that computes `first_name` and `last_name`
+from a data warehouse, we can use that resolver in an offline query.
+
+Scalar expressions like this one are also time-independent. So long as the underlying features
+are temporally consistent, the expression will be as well.
+If your expression depends on time-varying data, such as a `DataFrame` aggregation,
+you can use `_.chalk_now` or `_.chalk_window` (in the case of a windowed aggregation)
+to ensure temporal consistency.
+
+```python
+from datetime import timedelta, datetime
+from chalk import _
+from chalk.features import features, DataFrame, windowed, Windowed
+
+@features
+class Transaction:
+    id: int
+    user_id: "User.id"
+    amount: float
+    at: datetime
+
+@features
+class User:
+    id: int
+    transactions: DataFrame[Transaction]
+    total_amount_last_30d: float = _.transactions[
+        _.at >= _.chalk_now - timedelta(days=30),
+        _.amount
+    ].sum()
+    average_transaction_amount: Windowed[float] = windowed(
+        "1d", "30d", "365d",
+        expression=_.transactions[_.amount, _.at > _.chalk_window].mean(),
+    )
+```
+
+Now, `total_amount_last_30d` and `average_transaction_amount` will compute
+the same values in both online and offline contexts,
+regardless of how the `transactions` for the `User` are fetched.
+
+At inference time, `_.chalk_now` will be the current time,
+and `_.chalk_window` will be the time of the query less the window size.
+At training time, `_.chalk_now` will be the point-in-time of the query,
+and `_.chalk_window` will be the point-in-time of the query less the window size.
+
+### Python
+
+To define a Python resolver as online or offline,
+use the [`@online`](/api-docs#online) or [`@offline`](/api-docs#offline) decorator.
 
 ```python
 from chalk.features import online, offline, DataFrame
@@ -33,7 +119,7 @@ def get_email_username(email: User.email) -> User.email_username:
     return username.lower()
 
 @offline
-def get_transactions(txns: User.transactions) -> DataFrame[
+def get_transactions() -> DataFrame[
     Transaction.id,
     Transaction.amount,
     Transaction.date,
@@ -41,26 +127,190 @@ def get_transactions(txns: User.transactions) -> DataFrame[
     return DataFrame.read_parquet(...)
 ```
 
+Online Python resolvers can run in both online and offline queries,
+while offline Python resolvers can run only in offline queries.
+Typically, almost all Python resolvers will be online.
+The most common use-case for offline Python resolvers
+is to load parquet files or other data files that represent historical data.
+
+If your online Python resolver is time-dependent,
+you can pull in the point-in-time of the query
+to ensure temporal consistency.
+
+```python
+from chalk import Now, online
+
+@online
+def get_age(birthdate: User.birthdate, now: Now) -> User.age:
+    return (now.date() - birthdate).days // 365
+```
+
+At inference time, `chalk.Now` will be the current time,
+and at training time, `chalk.Now` will be the point-in-time of the query.
+
+### SQL
+
 To define a SQL resolver as online or offline, use the `type` field in the resolver comment.
 
-```sql
--- resolves: user
--- source: pg_users
+```diff-sql
+  -- resolves: User
+  -- source: postgres
++ -- type: online
+  select
+    id,
+    name,
+    age
+  from users
+```
+
+With SQL resolvers, you're likely to want to define an online and offline variant.
+You would never want to run a query against, for example,
+Snowflake in an online context. Snowflake, and other data warehouses
+like BigQuery, Databricks, and Redshift, are not designed for low-latency queries.
+Instead, you would want to run a query against a low-latency
+database like Postgres or MySQL in an online context.
+
+In contrast, with an offline query, you might want to run a query against
+Snowflake to get a large amount of data, and you might not have a Postgres
+instance that contains all the data you need or can handle unloading terabytes of data.
+
+```diff-sql
+  -- resolves: User
++ -- source: snowflake
++ -- type: offline
+  select
+    id,
+    name,
+    first_name,
+    last_name,
+    age
+  from users
+```
+
+```diff-sql
+  -- resolves: User
++ -- source: postgres
++ -- type: online
+  select
+    id,
+    name,
+    age
+  from users
+```
+
+Note that these two resolvers can have different schemas.
+The offline Snowflake resolver above returns `first_name` and `last_name` in addition to `name`,
+while the online Postgres resolver returns only `name`.
+
+---
+
+## Eliminating train-serve skew
+
+Introducing different online and offline resolvers leads to an opportunity
+to introduce different means of computing a feature.
+Online and offline SQL resolvers are a necessary source of skew.
+Data warehouses cannot stand up to production traffic request volumes,
+and transactional databases cannot store the nearly unlimited data volumes
+where warehouses excel.
+
+However, we should aim to minimize this skew as much as possible.
+For example, consider these aggregation features for user transaction statistics:
+
+```python
+@features
+class User:
+    id: int
+    count: int
+    avg_amount: float
+    amount_stddev: float
+```
+
+<TipBadText header="Train-serve skew risk">
+Implementing the same feature logic twice in different SQL dialects invites subtle bugs and inconsistencies.
+</TipBadText>
+
+These SQL resolvers look nearly identical, but they produce subtly different results due to differences in how Postgres and Snowflake handle standard deviation calculations and rounding. The `STDDEV_POP()` in Postgres computes population standard deviation, while Snowflake's `STDDEV()` defaults to sample standard deviation. Additionally, the rounding methods (`::DECIMAL` vs `ROUND()`) can produce different results for edge cases. These small numerical differences can compound and degrade model performance in production.
+
+<TipBad>
+Implementation for Postgres online context
+</TipBad>
+
+```sql users_online.chalk.sql
+-- resolves: User
+-- source: postgres
 -- type: online
-select id, name, age, transactions
-from users;
+select
+    user_id as id,
+    count(*) as count,
+    avg(amount)::decimal(10,2) as avg_amount,
+    stddev_pop(amount)::decimal(10,2) as amount_stddev
+from transactions
+where created_at >= current_date - interval '30 days'
+group by user_id
+```
+
+Now you need to implement the same logic again for the offline context, but adapted for Snowflake's SQL dialect.
+Notice how even though the intent is identical, the implementation details differ—different function names,
+different date arithmetic syntax, and different rounding behavior.
+
+<TipBad>
+Separate implementation for Snowflake offline context
+</TipBad>
+
+```sql users_offline.chalk.sql
+-- resolves: User
+-- source: snowflake
+-- type: offline
+select
+    user_id as id,
+    count(*) as count,
+    round(avg(amount), 2) as avg_amount,
+    round(stddev(amount), 2) as amount_stddev
+from transactions
+where created_at >= dateadd('day', -30, current_date())
+group by user_id
+```
+
+<TipGoodText header="Consistent computation with expressions">
+Write the aggregation logic once using Chalk expressions, and it runs identically in both online and offline contexts.
+</TipGoodText>
+
+Instead of computing these aggregations differently in each database, you can fetch the raw transaction data and compute the statistics using Chalk expressions. This ensures the exact same computation logic runs in both online and offline contexts, completely eliminating this source of train-serve skew. The expression syntax is simple and declarative—you just specify what you want to compute, and Chalk handles the execution optimally for each environment.
+
+<TipGood>
+Using expressions to compute derived features consistently
+</TipGood>
+
+```python
+from chalk import _
+from chalk.features import features, DataFrame
+
+@features
+class User:
+    id: int
+    transactions: DataFrame[Transaction]
+
+    count: int = _.transactions.count()
+    avg_amount: float = _.transactions[_.amount].mean()
+    amount_stddev: float = _.transactions[_.amount].std()
 ```
 
 ---
 
 ## Storage
 
+Chalk includes an online and an offline store. The online store is used to cache data to make
+realtime data requests extremely fast, while the offline store is a data warehouse that stores
+all the features that you've computed—enabling monitoring and dataset generation for training.
+
 Your online store holds data that you want to cache
 according to the cache policies you set on your [features](/docs/feature-caching) or
-on your [queries](/docs/query-caching). While this is usually a small amount of data,
-you want exceptionally fast reads.
-This kind of access pattern aligns
-with the performance characteristics of [Redis](https://redis.com) or [Dynamo DB](https://aws.amazon.com/dynamodb/)
+on your [queries](/docs/query-caching).
+At inference time, you need exceptionally fast reads to serve data at low latency.
+However, it's not important to keep every value of every historical feature value
+around for low-latency access.
+This access pattern aligns with the performance characteristics of
+[Redis](https://redis.com) or [DynamoDB](https://aws.amazon.com/dynamodb/),
 which Chalk uses to store your online data.
 
 The offline store holds far more data than the online store.
@@ -68,32 +318,32 @@ It keeps a record of [all online runs](#online-to-offline)
 and indexes all data brought in from your offline data sources.
 Chalk integrates with a number of different data warehouse systems for our large-scale
 offline storage depending on customer needs and deployment type,
-including BigQuery, Snowflake, and Redshift.
+including [BigQuery](https://cloud.google.com/bigquery), [Snowflake](https://www.snowflake.com/), and [Redshift](https://aws.amazon.com/redshift/).
 
 In addition, offline queries write their output to a [parquet file](https://parquet.apache.org/)
 in cloud storage (S3/GCS), whereas online queries write their results to database.
 
-| writes to the offline store                                            | writes to the online store                                                          |
-|------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
-| an online query writes all freshly computed features (those not read from the online store)     | an online query writes all freshly computed features with `max_staleness != 0`                      |
-| A triggered resolver run with `store_offline=True (default behavior)` | A triggered resolver run with `store_online=True (default behavior)`               |
-| scheduled queries with `recompute_features=True` and `store_offline=True (default behavior)` | scheduled query with `store_online=True (default behavior)`         |
-| Ingesting a dataset to the offline store: `dataset.ingest(store_offline=True)` | Ingesting a dataset to the online store: `dataset.ingest(store_online=True)`|
-| offline queries with `ChalkClient.offline_query(store_offline=True)` | offline queries with `ChalkClient.offline_query(store_online=True)`|
-| An `@online` or `@offline` scheduled resolver                          | An `@online` or `@offline` scheduled resolver that computes features with `max_staleness!=0` and `etl_offline_to_online=True` |
-| A streaming resolver: `@stream`                                        | A streaming resolver: `@stream`                                                      |
+| writes to the offline store                                                                       | writes to the online store                                                                                                      |
+|----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| an online query writes all freshly computed features (those not read from the online store)       | an online query writes all freshly computed features with `max_staleness != 0`                                                  |
+| A triggered resolver run with `store_offline=True (default behavior)`                             | A triggered resolver run with `store_online=True (default behavior)`                                                            |
+| scheduled queries with `recompute_features=True` and `store_offline=True (default behavior)`      | scheduled query with `store_online=True (default behavior)`                                                                     |
+| Ingesting a dataset to the offline store: `dataset.ingest(store_offline=True)`                    | Ingesting a dataset to the online store: `dataset.ingest(store_online=True)`                                                    |
+| offline queries with `ChalkClient.offline_query(store_offline=True)`                              | offline queries with `ChalkClient.offline_query(store_online=True)`                                                             |
+| An `@online` or `@offline` scheduled resolver                                                     | An `@online` or `@offline` scheduled resolver that computes features with `max_staleness!=0` and `etl_offline_to_online=True`  |
+| A streaming resolver: `@stream`                                                                   | A streaming resolver: `@stream`                                                                                                 |
 
 ---
 
 ## Querying
 
-Every request you make to Chalk for data is done through a query and every query
+Every request you make to Chalk for data is done through a query, and every query
 you make is either an online or an offline query.
 
 Online queries are used to receive information about a single entity.
 For example, you might be looking to compute the features of a
 credit model for a single user, or decide what products to suggest
-to a customer. Thus, online queries are designed to be as quick as possible -
+to a customer. Thus, online queries are designed to be as quick as possible—
 within milliseconds. You can use our [API client](/docs/query-basics) to run
 queries.
 
@@ -103,13 +353,13 @@ When you execute an offline query, Chalk will kick off a job that acquires the r
 every primary key/timestamp combination presented. This could take a few seconds!
 Since offline queries often lookup data for thousands of
 rows, they are not designed to be used to make millisecond-level decisions.
-See our guide on [online queries](/docs/query-offline)
+See our guide on [offline queries](/docs/query-offline)
 for a more in-depth treatment.
 
-|                  | online query                                                                                                                       | offline query                                                                                                                                                                                                                                                                           |
-|------------------|------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| online resolver  | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolver will run        | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolver will run if there is no <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver with the same definition |
-| offline resolver | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver will never run | <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolver will run                                                                                                                                                            |
+|                  | online query                      | offline query                                                                                        |
+|------------------|-----------------------------------|------------------------------------------------------------------------------------------------------|
+| online resolver  | `@online` resolver will run       | `@online` resolver will run if there is no `@offline` resolver with the same definition             |
+| offline resolver | `@offline` resolver will never run | `@offline` resolver will run                                                                        |
 
 ---
 
@@ -140,10 +390,10 @@ More details are provided in the section [Reverse ETL](/docs/reverse-etl).
 
 ## Summary
 
-| Online query                                                                                                                  | Offline query                                                                                                                                                                                                                                |
-|-------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Runs only <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> resolvers | Runs both <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @online </code> and <code className="whitespace-nowrap before:content-none text-pink-400 after:content-none"> @offline </code> resolvers |
-| Returns one row of data about one entity                                                                                      | Returns a DataFrame of many rows of historical data corresponding to multiple entities point-in-time                                                                                                                                         |
-| Designed to return data in milliseconds                                                                           | Blocks until computation is complete, not designed for millisecond-level computation                                                                                                                                                         |
-| Queries the online store and calls `@online` resolvers for quick retrieval                                                    | Queries the offline store which stores all data from online queries, unless `recompute_features=True` in which case `@offline` and `@online` resolvers are used to resolve the outputs
-| Writes output data to online store database and offline store database                                                        | Writes output to a parquet file containing results to cloud storage. Only writes to online store or offline store if specified.
+| Online query                                                               | Offline query                                                                                                                                                                           |
+|----------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Runs only `@online` resolvers                                              | Runs both `@online` and `@offline` resolvers                                                                                                                                            |
+| Returns one row of data about one entity                                   | Returns a DataFrame of many rows of historical data corresponding to multiple entities at historical time points                                                                        |
+| Designed to return data in milliseconds                                    | Blocks until computation is complete, not designed for millisecond-level computation                                                                                                    |
+| Queries the online store and calls `@online` resolvers for quick retrieval | Queries the offline store which stores all data from online queries, unless `recompute_features=True`, in which case `@offline` and `@online` resolvers are used to resolve the outputs |
+| Writes output data to online store database and offline store database     | Writes output to a parquet file containing results to cloud storage. Only writes to online store or offline store if specified.                                                         |
