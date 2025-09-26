@@ -6,6 +6,52 @@ description: Updates to Chalk!
 published: true
 ---
 
+## September 26, 2025
+
+### Derive features at query time with Chalk's Dynamic Expressions
+
+[Dynamic expressions](https://docs.chalk.ai/docs/expression#dynamic-expressions) enable you to compute new features on-the-fly during online queries without needing to define them in advance.
+Leverage Chalk's extensive function library directly in an online query to build adaptive systems that respond to changing requirements without code changes or deployments; this enables:
+- Rapid experimentation, A/B testing, and hotfixes to feature logic
+- Customization and conditional logic based on user context, business rules, etc.
+- Seasonal or time-sensitive feature adjustments (e.g., holiday promotions)
+
+### Added new filtering options to Chalk's log explorer
+
+The log explorer now supports escaped quotes and also negation--making it easier to filter out unwanted results.
+Clicking on a log operator toggles it to negation to filter out logs e.g. from a particular service.
+
+### Improvements to Chalk's diff viewer
+
+Enhanced Chalk's diff viewer to show the entire file contents for added/removed files instead of just file names; helps track feature and resolver changes between deployments and branches.
+
+### Chalk developer experience improvements
+
+- Improved the performance of Chalk branch deployment times
+- Added support for aggregations over Vector types (sum, mean)
+- Usage data on the number of requests made to your pods can be exported from the Chalk Dashboard as a CSV
+- Pod metrics e.g. request count, etc. are now easily exportable from the Chalk Dashboard (as a CSV)
+
+### Introduced an `approx_top_k` windowed aggregation
+
+Added a new windowed aggregation (`approx_top_k`), for computing an approximation of the most common values in a field.
+Takes in a required `k` parameter, such as `approx_top_k(k=5)` for the five approximately-most common values.
+
+```py
+@feature
+class User:
+    id: int
+    transactions: DataFrame[Transaction]
+    most_common_transaction_category: Windowed[list[str]] = windowed(
+        "1h",
+        max_staleness="15m",
+        expression=_.transactions[
+            _.category,
+            _.at > _.chalk_window,
+        ].approx_top_k(k=5)
+    )
+```
+
 ## July 30, 2025
 
 ### Chalk diff viewer
