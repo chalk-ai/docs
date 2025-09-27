@@ -23,18 +23,17 @@ Clicking on a log operator toggles it to negation to filter out logs e.g. from a
 
 ### Improvements to Chalk's diff viewer
 
-Enhanced Chalk's diff viewer to show the entire file contents for added/removed files instead of just file names; helps track feature and resolver changes between deployments and branches.
+Enhanced [Chalk's diff viewer](https://docs.chalk.ai/cli?command=diff) to show the entire file contents for added/removed files instead of just file names; helps track feature and resolver changes between deployments and branches.
 
 ### Chalk developer experience improvements
 
-- Improved the performance of Chalk branch deployment times
+- Re-running an offline query from the Chalk Dashboard auto-fills the input parameters with the previous values for easier experimentation
 - Added support for aggregations over Vector types (sum, mean)
 - Pod metrics e.g. request count, etc. are now easily exportable from the Chalk Dashboard (as a CSV)
-- Re-running an offline query from the Chalk Dashboard auto-fills the input parameters with the previous values for easier experimentation
 
 ### Introduced an `approx_top_k` windowed aggregation
 
-Added a new windowed aggregation (`approx_top_k`), for computing an approximation of the most common values in a field.
+Added a [new windowed aggregation](https://docs.chalk.ai/docs/aggregations#define-an-aggregation) (`approx_top_k`), for computing an approximation of the most common values in a field.
 Takes in a required `k` parameter, such as `approx_top_k(k=5)` for the five approximately-most common values.
 
 ```py
