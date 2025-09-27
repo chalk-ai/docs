@@ -144,7 +144,7 @@ using the `Room.sq_ft` feature, but accidentally
 excluded the `Room.sq_ft` column in the `DataFrame`
 argument:
 
-```py example.py
+```py home.py
 @online
 def get_sqft(
     rooms: Home.rooms[Room.name]
@@ -155,7 +155,7 @@ def get_sqft(
 
 Then our unit tests will fail:
 
-```py test_example.py
+```py test_home.py
 def test_get_sqft():
     rooms = [
         Room(id=1, name="bedroom", sq_ft=100),
