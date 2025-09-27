@@ -25,7 +25,7 @@ Clicking on a log operator toggles it to negation to filter out logs e.g. from a
 
 Enhanced [Chalk's diff viewer](https://docs.chalk.ai/cli?command=diff) to show the entire file contents for added/removed files instead of just file names; helps track feature and resolver changes between deployments and branches.
 
-### Introduced an `approx_top_k` windowed aggregation
+### New Chalk expression for computing the top most common values for a field
 
 Added a [new windowed aggregation](https://docs.chalk.ai/docs/aggregations#define-an-aggregation) (`approx_top_k`), for computing an approximation of the most common values in a field.
 Takes in a required `k` parameter, such as `approx_top_k(k=5)` for the five approximately-most common values.
