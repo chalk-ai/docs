@@ -13,6 +13,8 @@ Chalk also offers blue-green deployments for a release strategy that can further
 and risk when deploying changes. If your team is interested in using blue-green deployments in your
 production environment, please reach out to the Chalk team.
 
+---
+
 ## Blue-Green Deployments with Chalk
 
 Chalk offers blue-green deployments as a way to minimize downtime when deploying new code by
@@ -97,6 +99,8 @@ between your deployments. Furthermore, Chalk will automatically scale down unuse
 resource usage. If you run the command `chalk traffic set` and do not specify some amount of traffic for a
 tagged deployment, then Chalk will recognize that the deployment is no longer in use and will scale it down.
 
+---
+
 ## Managing your Blue-Green Deployments
 
 In order to create a new tagged deployment in Chalk, you can either specify a `--deployment-tag` when
@@ -145,6 +149,7 @@ traffic weight to `nil`, which will scale down the pods for that deployment.
 $ chalk traffic suspend --deployment-tag blue
 ```
 
+---
 
 ## Should I use Blue-Green Deployments?
 
@@ -156,6 +161,7 @@ where the benefit of minimizing downtime risk is worth the cost of additional re
 If you are interested in using blue-green deployments, please reach out to the Chalk team and we can help you
 determine what configurations are best suited for your release strategy. 
 
+---
 
 ## Mirror Traffic
 
@@ -175,7 +181,6 @@ Metrics, logs, and traces from the mirrored traffic will be available in the new
 impact the online store, but will impact the offline store if the new deployment is configured to write to
 the offline store. This permits statistical analysis of the new deployment using tooling like the query log
 or the offline store.
-
 
 ### Light-weight Cookbook
 
