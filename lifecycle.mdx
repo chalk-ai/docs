@@ -33,7 +33,7 @@ Put another way:
 
 The first step is to add the new feature, and a resolver for that feature.
 
-<PyDiffEditor html={createResolverCode} filename={'example.py'} />
+<PyDiffEditor html={createResolverCode} filename={'user_resolvers.py'} />
 
 Our new resolver `name_email_match_scorer` takes a dependency on
 the user's email and fullname in the argument list.
@@ -99,7 +99,7 @@ chalk apply --branch test
 With the [branch deployment](/docs/integration-tests#branch-deployments) created, you can run integration tests
 on your changes.
 
-<PyEditor html={integrationTest} filename={'integration_test.py'} />
+<PyEditor html={integrationTest} filename={'test_user_resolvers.py'} />
 
 Here, the
 [Chalk API client](/docs/query-basics)

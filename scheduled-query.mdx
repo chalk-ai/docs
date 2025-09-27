@@ -83,6 +83,6 @@ All alerts integrate with your other [Chalk alerting integrations](/docs/alertco
 email, [PagerDuty](/docs/pagerduty), [Slack](/docs/slack), and [incident.io](/docs/incidentio).
 
 Additionally, you can export metrics about scheduled query executions to your observability tools.
-The [`cron_run_request` metric](/docs/metricexport#cron_run_request) tracks the number of times a scheduled
+The `cron_run_request` metric (see [metrics export documentation](/docs/metricexport)) tracks the number of times a scheduled
 query was executed, with tags for success/failure status. This allows you to monitor scheduled query reliability
 and alert when executions fall below expected thresholds in your preferred monitoring system.

@@ -2125,7 +2125,7 @@ features with SQL queries.
 Now, you can get your SQL file resolvers in Python by the name of the SQL file resolver.
 For example, if you have the following SQL file resolver:
 
-```sql example.chalk.sql
+```sql person.chalk.sql
 -- source: postgres
 -- cron: 1h
 -- resolves: Person
@@ -2137,7 +2137,7 @@ you can test out your resolver with the following code.
 ```py
 from chalk import get_resolver
 
-resolver = get_resolver('example') # get_resolver('example.chalk.sql') will also work
+resolver = get_resolver('person') # get_resolver('person.chalk.sql') will also work
 result = resolver('my_id')
 ```
 
@@ -2188,7 +2188,7 @@ the input data.
 Below, we test a resolver that filters rooms in
 a house to only the bedrooms:
 
-```py example.py
+```py home.py
 @features
 class Room:
     id: str
@@ -2212,7 +2212,7 @@ def get_num_bedrooms(
 Now, we may want to write a [unit test](/docs/unit-tests)
 for this resolver.
 
-```py test_example.py
+```py test_home.py
 def test_get_num_rooms():
     # Rooms is automatically converted to a `DataFrame`
     rooms = [
