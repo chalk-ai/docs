@@ -18,7 +18,7 @@ Read more about how to write integration tests for resolvers [here](/docs/integr
 
 Consider the following features and resolvers:
 
-```py example.py
+```py home.py
 from chalk.features import features, Features
 from chalk import online
 
@@ -46,7 +46,7 @@ def get_home_data(
 You can test them just like normal Python functions
 using any unit testing framework:
 
-```py test_example.py
+```py test_home.py
 def test_single_output(self):
     assert get_address(2) == "Filbert Street"
 
@@ -74,7 +74,7 @@ the input data.
 Consider if we extend the `Home` class to include
 a `rooms` field:
 
-```diff-py example.py
+```diff-py home.py
 + @features
 + class Room:
 +     id: str
@@ -103,7 +103,7 @@ argument to only include bedrooms. We can test this
 by passing in a list of rooms, some of which are
 bedrooms and some of which are not:
 
-```py test_example.py
+```py test_home.py
 def test_get_num_rooms():
     # Rooms is automatically converted to a `DataFrame`
     rooms = [
