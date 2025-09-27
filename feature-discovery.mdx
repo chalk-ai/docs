@@ -159,3 +159,45 @@ with the `tags(...)` function:
 from chalk.feature import tags
 assert tags(User.email) == ["pii", "group:risk"]
 ```
+
+---
+
+## Semantic search
+
+Chalk provides powerful semantic search capabilities to help you quickly find features across your entire feature catalog. You can access semantic search in two ways:
+
+1. **Keyboard shortcut**: Press `Cmd+K` (Mac) or `Ctrl+K` (Windows/Linux) from anywhere in the Chalk web interface
+2. **Search button**: Click the search icon in the header navigation bar
+
+The semantic search understands natural language queries and searches across:
+- Feature names and namespaces
+- Feature descriptions and documentation
+- Owner information
+- Tags and metadata
+- Resolver implementations
+
+This makes it easy to find features even when you don't know their exact names. For example, you can search for "user risk features" or "features updated last week" or "features owned by data team".
+
+![Feature Search](/img/feature-search.png)
+
+---
+
+## Data lineage
+
+Understanding how features are computed and what data they depend on is critical for debugging, compliance, and impact analysis. Chalk automatically tracks and visualizes the complete data lineage for every feature.
+
+The data lineage view shows:
+- **Upstream dependencies**: Data sources, SQL queries, and other features that this feature depends on
+- **Downstream consumers**: Features, models, and queries that depend on this feature
+- **Resolver chain**: The sequence of resolvers that compute this feature
+- **Data sources**: External databases, APIs, and streaming sources that provide raw data
+
+You can access the lineage view by clicking on any feature in the web interface and selecting the "Lineage" tab. The interactive graph allows you to explore dependencies, trace data flow, and understand the full context of how a feature is computed.
+
+![Data Lineage](/img/datalineage.png)
+
+This visualization is particularly useful for:
+- **Impact analysis**: Before modifying a feature, see what downstream features and models would be affected
+- **Debugging**: Trace back through the computation graph to identify where issues may be occurring
+- **Compliance**: Document data provenance for regulatory requirements
+- **Optimization**: Identify redundant computations or opportunities to consolidate resolvers
