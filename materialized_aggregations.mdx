@@ -227,7 +227,7 @@ Now `backfill_schedule` has been set, the `total_transaction_amount` feature wil
 
 In addition to backfilling your aggregation with the recurring batch job, you can also integrate fresh data into your
 windowed aggregation with continuous backfills.
-Continuous backfills can be configured by supplying a [Duration](/api-docs#Duration)] to the `continuous_buffer_duration` e.g. `"36h"`.
+Continuous backfills can be configured by supplying a [Duration](/api-docs#Duration) to the `continuous_buffer_duration` e.g. `"36h"`.
 Chalk will compute data within your `continuous_buffer_duration` directly from your online resolvers.
 
 <TipInfo>Note: Chalk includes all the data contained in overlapping buckets.
