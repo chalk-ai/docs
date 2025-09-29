@@ -68,11 +68,13 @@ compute aggregations over visit to each of their departments. We could write the
 ```python
 from chalk import _
 from chalk.features import features, DataFrame, has_many
+import chalk.functions as F
 from datetime import datetime
+
 
 @features
 class HospitalVisit:
-    id: str = _.user_id + _.hospital + _.department + _.date
+    id: str = _.user_id + _.hospital + _.department + F.cast(_.date, str)
     composite_key: str = _.hospital + "-" + _.department
     department: str
     hospital: str
