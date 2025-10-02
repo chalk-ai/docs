@@ -263,3 +263,31 @@ then run the following:
 chalk drop --features user.risk_score_1
 chalk apply
 ```
+
+## LRU Caching
+
+Chalk also supports tiered caching using an LRU cache in front of the online store. To enable LRU caching, you can
+create an OnlineStoreConfig with an `lru_cache`, and then pass that configuration to the feature classes that you
+want to cache:
+
+```python
+from chalk.features import features
+from chalk.stores import LRUCache, OnlineStoreConfig
+
+lru_cache_config = OnlineStoreConfig(
+    lru_cache=LRUCache(
+        max_size=10000,
+        ttl="60s",
+        store_cache_misses=True,
+    )
+)
+
+@features(online_store_config=lru_cache_config)
+class User:
+    id: int
+    risk_score: float = feature(max_staleness="1h")
+```
+
+In this example, the `User` feature class is configured to use an LRU cache with a maximum size of 10,000 entries. Every worker process will maintain its own LRU cache. If a feature value is found in the LRU cache, it will be returned directly.
+
+If it is not found in the LRU cache, the online store will be queried. If it is not found in the online store, the resolver will be run to compute a fresh value. If the `store_cache_misses` parameter is set to true, then a cache miss against the online store is stored in the LRU cache: subsequent requests for the same primary key will not hit the online store until the TTL of the LRU cache for the pkey expires.
