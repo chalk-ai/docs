@@ -267,7 +267,7 @@ chalk apply
 ## LRU Caching
 
 Chalk also supports tiered caching using an LRU cache in front of the online store. To enable LRU caching, you can
-create an OnlineStoreConfig with the `lru_cache_size` parameter set to a positive integer value, and then pass that
+create an OnlineStoreConfig with an `lru_cache` parameter, and then pass that
 configuration to the feature classes that you want to cache:
 
 ```python
