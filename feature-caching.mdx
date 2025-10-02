@@ -275,7 +275,6 @@ from chalk.features import features
 from chalk.stores import LRUCache, OnlineStoreConfig
 
 lru_cache_config = OnlineStoreConfig(
-    name="lru_cache",
     lru_cache=LRUCache(
         max_size=10000,
         ttl="60s",
