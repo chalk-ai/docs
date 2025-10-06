@@ -196,6 +196,10 @@ features and resolvers.
                         tag, like `v3.0.0`, or a release stream like `stable`. If not specified, defaults to `stable`.
                         Releases are documented in the <a href="/release-notes">Platform Release Notes</a>.
                     </SubAttribute>
+                    <SubAttribute field='chalkignore' kind='str'>
+                        Path to a custom ignore file for this environment. If not specified, defaults to <code>.chalkignore</code> in
+                        the project root. Use this to exclude different files from deployment in different environments.
+                    </SubAttribute>
                 </SubAttributeTable>
             </SubAttribute>
         </SubAttributeTable>
@@ -246,7 +250,7 @@ features and resolvers.
 
 ### Sample file
 
-Here is a sample `chalk.yaml` file. In this file, we use a different Dockerfile in production.
+Here is a sample `chalk.yaml` file. In this file, we use a different Dockerfile in production and different chalkignore files per environment.
 
 ```yaml
 project: my-project-id
@@ -255,8 +259,11 @@ environments:
   default:
     runtime: python312
     requirements: requirements.txt
+  dev:
+    chalkignore: .chalkignore.dev
   prod:
     dockerfile: ./DockerfileProd
+    chalkignore: .chalkignore.prod
 
 validation:
   feature:
@@ -279,6 +286,26 @@ validation:
 ## .chalkignore
 Your `.chalkignore` file should include your scripts, notebooks, and tests. Anything that you are not actively using in
 your deployment should be added so that non-deployment code does not clutter or interfere with your deployment.
+
+### Per-Environment Chalkignore Files
+
+You can specify different chalkignore files for each environment in your `chalk.yaml` file. This is useful when you want to exclude different files from deployment in different environments. For example, you might want to include experimental features in dev but exclude them from production.
+
+```yaml
+project: my-project
+environments:
+  dev:
+    runtime: python312
+    chalkignore: .chalkignore.dev  # Custom ignore file for dev
+  prod:
+    runtime: python312
+    chalkignore: .chalkignore.prod  # Custom ignore file for prod
+  staging:
+    runtime: python312
+    # No chalkignore specified - defaults to .chalkignore
+```
+
+If no `chalkignore` field is specified for an environment, Chalk will use the default `.chalkignore` file in your project root.
 
 ---
 
