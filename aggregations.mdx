@@ -176,6 +176,27 @@ In this code, the windowed feature will return the sum of transaction amounts fo
 and 90 days. `_.at > _.chalk_window` is a boolean condition checking that the current transaction's timestamp is greater
 than the start of the current window duration.
 
+For aggregating across all features for all time, Chalk offers `"all"` and `"infinity"` as keywords for
+window durations. As a default, Chalk will look back 100 years for the `"all"` window. If your team requires
+a larger window duration, please reach out to the Chalk team.
+
+```python
+from chalk.features import features, DataFrame, _
+from chalk.streams import windowed, Windowed
+
+@features
+class TennisPlayer:
+    id: int
+
+    games: DataFrame[Game]
+    lifetime_wins: Windowed[int] = windowed(
+        "all",
+        expression=_.games[_.winner_id == _.id].count(),
+        default=0,
+    )
+```
+
+
 ### Nested windowed feature references
 
 Windowed features can also be referenced by other windowed features in the same feature class using
