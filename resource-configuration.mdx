@@ -121,48 +121,14 @@ Min Instances, Max Instances, and Target CPU% all set for the service.
 
 #### Scheduled Autoscaling
 
-To enable scheduled autoscaling, you can modify the spec config in the `JSON` tab of the `Cloud
-Resource Configuration` page. In order to do scheduled scaling, you must have KEDA enabled in your
-environment. If you are usnure whether KEDA is enabled, please reach out to the Chalk team.
+To enable scheduled autoscaling, you can define Scaling Trigger's for each service configuration in the
+`Cloud Resource Configuration` page. For each service in a resource group that you would like to autoscale,
+define the Min Instances and Max Instances under `Scaling`. Then, under the `ADVANCED` section, under
+`Time-based Scaling`, you can define one or more Scaling Triggers. For each Scaling Trigger, you can define
+the desired number of replicas, the start time, the end time, and the timezone for the schedule. The start
+time and end time are defined using standard cron syntax.
 
-In the `JSON` tab, you can view the same configurations from the form fields for each of your services.
-Depending on whether you want to configure scheduled autoscaling for your Query Server or your
-gRPC Query Server, you can edit the spec for `engine` or `engine-grpc` respectively.
-
-Let's say that each day, you want to scale up your Query Server to somewhere between 50 and 100 replicas
-from 8:45 AM to 10:15 AM on weekdays to handle a daily traffic spike at 9 AM ET. The following
-configuration will enable such scaling on the cron schedule, while returning to the default
-configurations outside of that time window.
-
-```
-"engine": {
-    "autoscaler_config": {
-        "default_timezone": "America/New_York",
-        "max_replica_count": 100,
-        "min_replica_count": 50,
-        "triggers": [
-            {
-                "desired_replicas": 100,
-                "end": "15 10 * * 1-5",
-                "start": "45 8 * * 1-5"
-            },
-        ]
-    },
-    "deploy_engine_proxy": false,
-    "enable_engine_proxy": false,
-    "limit": {},
-    "min_instances": 20,
-    "node_selector": {
-        "cloud.google.com/gke-nodepool": "your-default-nodepool"
-    },
-    "request": {
-        "cpu": "5",
-        "memory": "10Gi"
-    },
-    "worker_count": 8
-}
-
-```
+![scheduled autoscaling](/img/schedule_based_scaling.png)
 
 ## Shared Resources
 
