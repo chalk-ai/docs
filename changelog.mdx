@@ -8,11 +8,11 @@ published: true
 
 ## October 14, 2025
 
-### New Chalk expressions for retrieving the top and bottom N records based on any field
+### New Chalk expressions for retrieving the top and bottom N records
 
-Added new (materialize-able) aggregations (min_by_n/max_by_n) for computing the smallest/largest n elements based on any specified ordering column.
+Added new (materialize-able) [aggregations](https://docs.chalk.ai/docs/materialized_aggregations) (min_by_n/max_by_n) for computing the smallest/largest n elements based on any specified ordering column.
 
-Easily compute features like the 5 most recent transactions or the top 3 highest value purchases; combine them with windowed aggregations to compute these at various intervals – e.g., past day, week, month… etc.
+Easily compute features like the 5 most recent transactions or the top 3 highest value purchases; combine them with windowed aggregations to compute these at various intervals – e.g., past day, week, month, etc.
 
 ```py
 @features
