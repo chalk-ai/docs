@@ -6,6 +6,39 @@ description: Updates to Chalk!
 published: true
 ---
 
+## October 14, 2025
+
+### New Chalk expressions for retrieving the top and bottom N records based on any field
+
+Added new (materialize-able) aggregations (min_by_n/max_by_n) for computing the smallest/largest n elements based on any specified ordering column.
+
+Easily compute features like the 5 most recent transactions or the top 3 highest value purchases; combine them with windowed aggregations to compute these at various intervals – e.g., past day, week, month… etc.
+
+```py
+@features
+class Transaction:
+    id: int
+    user_id: "User.id"
+    timestamp: datetime
+    amount: float
+
+
+@features
+class User:
+    id: int
+
+    transactions: DataFrame[Transaction]
+    recent_transaction_amounts: list[int] | None = F.max_by_n(_.transactions[_.amount], _.timestamp, 3)
+```
+
+## Chalk Dashboard Improvements
+
+- Custom role creation and assignment functionality, enabling specialized roles like "Machine Learning Scientist" and "Platform Engineer"
+- You can now search and filter environment variables in your Chalk dashboard
+- Added a connections pane to the overview section of Chalk dashboard that shows the health status of each underlying service in your Chalk deployment
+
+![Connections pane](/img/changelog-2025_10_13-connections_pane.png)
+
 ## September 26, 2025
 
 ### Derive features at query time with Chalk's Dynamic Expressions
