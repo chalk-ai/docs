@@ -150,7 +150,7 @@ This ensures that only the features needed are fetched — optimizing for speed,
 Each node in the DAG is a Chalk expression or resolver (SQL / Python):
 
 - An expression e.g. `is_expensive_purchase: bool = _.amount > 100`
-- A SQL file ending in `.chalk.sql` that connects to an underlying data store like Athena
+- A SQL file ending in `.chalk.sql` that connects to an underlying data store like [Athena](/docs/athena)
 - A Python function that explicitly inputs and outputs features
     - Use the Python packages you're familiar with e.g. Polars, httpx, OpenAI, etc.
 
