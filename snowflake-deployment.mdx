@@ -37,8 +37,18 @@ data teams for training set generation.
 To use Snowflake as your offline store, we require
 a warehouse, a database, a schema within that database, and a user with a role that
 has `OWNER` on that database. To provision all of these, you can run the following
-commands in a Snowflake worksheet or console. Be sure to change the password, and
-you can share the password with us securely via an encrypted message following [using GPG](/docs/public-key).
+commands in a Snowflake worksheet or console. To generate your SSH key pair you can run
+the following:
+
+```bash
+# Generate the key pair
+ssh-keygen -t rsa -b 4096 -m PEM -f snowflake_key
+
+# Get the public key in the right format (remove header/footer and newlines)
+grep -v "BEGIN PUBLIC KEY" snowflake_key.pub | grep -v "END PUBLIC KEY" | tr -d '\n'
+```
+
+Then, in SnowSQL, run the following commands, replacing the variables at the top:
 
 ```sql
 -- input variables (feel free to change these)
@@ -47,28 +57,31 @@ SET WAREHOUSE_SIZE='XSMALL';
 SET ROLE_NAME='CHALK_ROLE';
 SET USER_NAME='CHALK_USER';
 SET DB_NAME='CHALK';
-SET SCHEMA_NAME='SANDBOX';
+SET SCHEMA_NAME='OFFLINE_STORE';
 
--- **** NOTE: Choose a secure password ****
-SET PASSWORD=<change this password>;
+-- Create the database + schema + warehouse
+CREATE DATABASE IF NOT EXISTS IDENTIFIER($DB_NAME);
+USE DATABASE IDENTIFIER($DB_NAME);
+CREATE SCHEMA IF NOT EXISTS IDENTIFIER($SCHEMA_NAME);
+CREATE WAREHOUSE IF NOT EXISTS IDENTIFIER($WAREHOUSE_NAME) WITH WAREHOUSE_SIZE=$WAREHOUSE_SIZE;
+
+-- Create a role for Chalk
+CREATE ROLE IF NOT EXISTS IDENTIFIER($ROLE_NAME);
+GRANT OWNERSHIP ON DATABASE IDENTIFIER($DB_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+GRANT USAGE ON WAREHOUSE IDENTIFIER($WAREHOUSE_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+
+-- Create a user for Chalk
+CREATE USER IF NOT EXISTS IDENTIFIER($USER_NAME)
+    RSA_PUBLIC_KEY=`<your-public-key-here-without-BEGIN/END-lines>`
+    DEFAULT_ROLE=IDENTIFIER($ROLE_NAME)
+    DEFAULT_WAREHOUSE=IDENTIFIER($WAREHOUSE_NAME)
+    DEFAULT_NAMESPACE=IDENTIFIER(concat($DB_NAME, '.', $SCHEMA_NAME));
 
 -- derived variables
 SET QUALIFIED_SCHEMA_NAME=concat($DB_NAME, '.', $SCHEMA_NAME);
 
--- Create a warehouse for Chalk
-CREATE WAREHOUSE IF NOT EXISTS IDENTIFIER($WAREHOUSE_NAME) WITH WAREHOUSE_SIZE=$WAREHOUSE_SIZE;
-
--- Create a user and role for Chalk
-CREATE USER IF NOT EXISTS IDENTIFIER($USER_NAME) PASSWORD=$PASSWORD;
-CREATE ROLE IF NOT EXISTS IDENTIFIER($ROLE_NAME);
-
 -- Allow Chalk to create storage integrations for bulk loads from cloud object storage
 GRANT CREATE INTEGRATION ON ACCOUNT TO IDENTIFIER($ROLE_NAME);
-
--- Create the database + schema
-CREATE DATABASE IF NOT EXISTS IDENTIFIER($DB_NAME);
-USE DATABASE IDENTIFIER($DB_NAME);
-CREATE SCHEMA IF NOT EXISTS IDENTIFIER($SCHEMA_NAME);
 
 -- Allow Chalk to create internal/external stages for bulk loading
 GRANT CREATE STAGE ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO IDENTIFIER($ROLE_NAME);
@@ -84,7 +97,7 @@ GRANT ROLE IDENTIFIER($ROLE_NAME) TO USER IDENTIFIER($USER_NAME);
 
 Please share:
 
-- The `USER_NAME` and `PASSWORD` with us securely via an encrypted message following [using GPG](/docs/public-key).
+- The `USER_NAME` and RSA private key with us securely via an encrypted message following [using GPG](/docs/public-key).
 - The `WAREHOUSE_NAME`, `DB_NAME`, `SCHEMA_NAME`, and `ROLE_NAME` so that we can configure the Chalk platform to use them.
 - Your Snowflake account name (`select current_account_name();`) and organization name (`select current_organization_name();`).
 

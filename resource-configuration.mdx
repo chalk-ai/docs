@@ -60,7 +60,8 @@ each service if you would like to cap the maximum resources that can be allocate
 The Instance Type selector enables you to specify the machine family you would like to use for your
 deployment. For example, this would map to [EC2 Instance Types](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html)
 for AWS deployments or [Compute Engine Machine Families](https://cloud.google.com/compute/docs/machine-resource)
-for GCP deployments.
+for GCP deployments. By default, the Ephemeral Storage for a service will be set to the same as the
+Memory, but if you are deploying larger files, you can specify the Ephemeral Storage separately. 
 
 ### How are Pods and Nodes Provisioned? 
 
