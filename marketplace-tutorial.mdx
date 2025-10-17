@@ -12,7 +12,8 @@ import { TipInfo } from '@/components/Tip'
 
 ## Introduction
 
-Whether you're building a content platform, a multi-sided marketplace, or the next FinTech, giving your users the best recommendations and in a timely fashion can make or break customer satisfaction and revenue.
+Whether you're building a content platform, or a multi-sided marketplace, giving your users the best recommendations possible and in a timely fashion can make or break customer satisfaction and revenue.
+
 In this tutorial, we'll walkthrough setting up a marketplace recommendation system and dive into how Chalk abstracts away the complexity of deploying high-throughput low-latency production infrastructure.
 
 **Want to dive right into the code?**
@@ -22,7 +23,7 @@ Check out this [GitHub repo](https://github.com/chalk-ai/examples/blob/main/mark
 
 Let's first set the stage by modeling some of our core entities and their relationships.
 
-Our marketplace has a few core entities and many interdependent relationships (primarily through interactions between users and sellers over a particular item):
+Our demo marketplace has a few core entities with many interdependent relationships (primarily through interactions between users and sellers over a particular item):
 
 - Users
 - Sellers
@@ -30,11 +31,10 @@ Our marketplace has a few core entities and many interdependent relationships (p
 - Interactions
 - Reviews
 
-
 Entities are represented with a Pythonic data class-esque syntax.
-Each set of features is decorated with `@features` (imported from [Chalk's SDK](https://docs.chalk.ai/api-docs)).
+Each set of features is decorated with `@features` which is a decorator imported from [Chalk's SDK](https://docs.chalk.ai/api-docs).
 
-Note: Keyword arguments can be passed into our `@features` decorator to define metadata like [data ownership, tags, cache-policies, etc.](https://docs.chalk.ai/api-docs#features)
+Note: Keyword arguments can be passed into our `@features` decorator to define [metadata](https://docs.chalk.ai/api-docs#features) like feature ownership, tags, cache-policies, etc.
 
 ```py
 @features(owner="ml-core@chalk.ai")
@@ -47,12 +47,18 @@ class User:
     # computed after we've fetched first and last name
 ```
 
-Whenever we request features for a User, with a command like: `chalk query --in user.id=50 --out full_name`;
-Chalk knows to first fetch the `first_name` and `last_name` from the underlying data source, then compute `full_name` using the provided [expression](https://docs.chalk.ai/docs/expression).
+Whenever we request features for a User, with a command like:
 
-This is all handled automatically, Chalk at it's core is a feature orchestration engine that can dynamically build query plans to fetch and compute features on-demand. 
+`chalk query --in user.id=50 --out full_name`
 
-In otherwards, requesting `chalk query --in user.id=50 --out first_name` would produce a different query plan than when we requested just the `full_name`.
+Chalk knows to first fetch the `first_name` and `last_name` from the underlying data source, before computing the `full_name` using the provided [Chalk expression](https://docs.chalk.ai/docs/expression):
+
+`full_name: str = _.first_name + " " + _.last_name`
+
+This is all handled automatically!
+Chalk at it's core is a feature orchestration engine that dynamically builds query plans for fetching and computing features on-demand.
+
+In otherwards, requesting `first_name` instead of `full_name` with `chalk query --in user.id=50 --out first_name` produces a totally different query plan than when we requested just `full_name`.
 
 ### Data resolution
 
