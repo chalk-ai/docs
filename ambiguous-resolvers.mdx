@@ -1,0 +1,90 @@
+## Resolving Ambiguous Resolver Errors
+
+In standard operation, Chalk assumes that each [feature](FIXME) is un-ambiguously resolved by a single "in-scope" [resolver](FIXME). If this assumption
+is violated, Chalk's planner will raise an "ambiguous resolver" error that looks like --
+
+```
+Chalk was unable to determine which resolvers to run for feature 'user.id'. There were multiple candidates ....
+```
+
+This error typically indicates that there is a mistake in resolver definitions, but it may arise in other situations as well.
+This document describes common causes of ambiguous resolver errors and how to resolve them.
+
+## Multiple Dataframe-Returning Resolvers
+
+Often, ambiguous resolver errors arise when there are multiple resolvers that return dataframes that include the
+same feature. This occurs most often when multiple offline resolvers return the "primary feature" for a given
+feature class.
+
+For example:
+
+```python
+@online
+def get_users() -> DataFrame[User.id, User.name]:
+ ...
+
+@online
+def get_user_registration_dates() -> DataFrame[User.id, user.registration_date]:
+ ...
+```
+
+This tends to arise when some of the features for a particular entity are resolved from one data source, and other features
+for the same entity are resolved from another data source (i.e. a different SQL table).
+
+This causes ambiguity because the query planner cannot determine which resolver returns "all" of the user rows.
+To resolve this ambiguity, you can define a single "primary" resolver that returns all of the features for the entity in question
+by adding the "total=True" keyword argument --
+
+```python
+@online(total=True)
+def get_users() -> DataFrame[User.id, User.name]:
+```
+
+or for SQL resolvers:
+
+```sql
+-- total: true
+select
+    id,
+    name
+from users
+```
+
+The "total" keyword argument indicates to the Chalk query planner that *all* primary keys for the entity are returned by this resolver.
+Other resolvers which return subsets of the entity's features can still be defined, but they will be combined with
+the "total" resolver to ensure that all rows are returned via a left-outer-join operation.
+
+
+## Multiple Implementations of Resolvers
+
+Sometimes, overlaps in resolver definitions arise when multiple implementations of the same feature are defined. Common
+scenarios include:
+
+- if an A/B test is being run
+- a new version of a feature is being rolled out
+- offline query workloads with multiple different source parquet/csv datasets
+
+In these cases, you can resolve the ambiguity by adding tags to resolvers in order to break scoping ties --
+
+```python
+@online(tags=["experiment_a"])
+def get_user_risk_score_a(id: User.id) -> User.risk_score:
+    ...
+
+@online(tags=["experiment_b"])
+def get_user_risk_score_b(id: User.id) -> User.risk_score:
+    ...
+
+@online
+def get_user_risk_score_default(id: User.id) -> User.risk_score:
+    ...
+```
+
+In this example, the "experiment_a" and "experiment_b" resolvers can be selected by specifying the appropriate tag
+when making a feature request. The "default" resolver will be used when no tags are specified.
+
+## Online and Offline Resolvers with Overlapping Features
+
+Often, a single feature may have a natural "online" source (i.e. Postgresql, or a microservice API), and a natural
+"offline" source (i.e. Snowflake, or another bulk warehouse system). This case is handled automatically by Chalk's
+planner, which will prioritize `@online` resolvers over `@offline` resolvers when both are available.
