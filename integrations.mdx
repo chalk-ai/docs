@@ -3,45 +3,253 @@ title: Integrations overview
 shortTitle: Overview
 metaTitle: Integrations and APIs
 metaDescription: Instead of complex ETL jobs and streaming pipelines, make direct calls to your data sources. Chalk makes it fast and easy to connect to AWS, GCP, databases, streaming data, and more.
-description: Integrate with any data source.
+description: Integrate any API, 3rd-party client or data source without needing to orchestrate data pipelines
 published: true
 ---
 
 ---
 
-## Integrate any API or Data Source
+Chalk integrates seamlessly with your underlying systems--querying your data sources directly eliminating the need for ETL!
 
-Instead of complex ETL jobs and streaming pipelines,
-make direct calls to your data sources. Chalk makes
-it fast and easy to call external APIs, query production
-databases and data warehouses, or fetch parquet files
-from S3. Chalk orchestrates pipeline stages automatically
-to achieve maximum possible parallelism, and makes it
-easy to pre-compute + cache features when necessary.
+This unlocks several key benefits:
+- alleviates the need to move data across multiple systems
+    - single source of truth (define once and use everywhere)
+    - prevents data drift (same feature logic for offline and online workloads)
+    - reduces data duplication and storage costs
+- optimizes compute by only ever fetching exactly what you need when you need it (dynamic query planning)
+- enables real-time data delivery by satisfying strict (under 5ms) latency requirements
+
+## Cloud platforms
+
+Anywhere that you can run Kubernetes, Chalk can also run (using Terraform and Helm Charts).
+
+Chalk deploys into your VPC co-located with your data sources for the lowest latency and cost.
+Multi-cloud deployments for high availability and disaster recovery.
+
+- AWS [(Amazon Web Services)](/docs/aws)
+- GCP [(Google Cloud Platform)](/docs/gcp)
+- Azure Cloud [(Microsoft)](/docs/azure-cloud-deployment_)
 
 ---
 
-## What to read next
+## SQL data sources and data warehouses
 
-Chalk enables integration with any data source, in addition to some more customized
-logic for common data sources. For some of our out-of-the-box solutions for popular
-storage providers, find more below:
+We have native drivers and integrations with a variety of [SQL data sources](/docs/sql) and query engines, and provide a unified interface for adding new data sources.
+Adding a new SQL source is as simple as providing a connection string and a few configuration options through your Chalk dashboard.
+Once it's been added to your Chalk deployment, you can start querying it right away with [SQL Resolvers.](/docs/sql-resolvers)
 
-* **[AWS](/docs/aws)** -
-Integrate with Amazon Web Services to read from data sources such as **[Redshift](/docs/redshift)**,
-**[S3](/docs/s3)**, and **[Kinesis](/docs/stream-sources)**.
-* **[GCP](/docs/gcp)** -
-Integrate with Google CLoud Platform to read from data sources such as **[BigQuery](/docs/bigquery)**, **[Spanner](/docs/spanner)**,
-**[PubSub](/docs/stream-sources)**, and **[Cloud Storage](/docs/s3)**.
-- **[SQL Integrations](/docs/sql)** -
-Chalk has special support for [SQLAlchemy](https://www.sqlalchemy.org/) and can push down filters into SQL
-queries for more efficient data fetching.
-- **[Snowflake](/docs/snowflake)** -
-Chalk offers custom support for Snowflake as a SQL source.
-- **[Databricks](/docs/databricks)** -
-Chalk provides out-of-the-box support for Databricks as a SQL source.
-- **[MySQL](/docs/mysql)** - Read from your MySQL data sources.
-- **[PostgreSQL](/docs/postgresql)** - Integrate your PostgreSQL data sources.
-- **[Custom Data Sources](/docs/generic)** -
-  Chalk offers extra optimizations for some data sources, but you don't need Chalk to officially support a data source to use it!
+```
+-- resolves: User
+-- source: postgres
+select
+    id,
+    name,
+from users
+```
 
+A feature class can be hydrated / resolved by multiple SQL sources; we can pull a user's social security number from a different database that has stricter access controls.
+
+In addition, Chalk can reverse-etl features from your data warehouses into Chalk's online store for low-latency access.
+Chalk integrates natively (C++ integration) with the following data sources and pushes down filters and projections into SQL queries for more efficient data fetching.
+
+**Data Warehouses**
+- [Snowflake](/docs/snowflake)
+- [Databricks](/docs/databricks)
+
+**Native:**
+- [MySQL](/docs/mysql)
+- [PostgreSQL](/docs/postgresql)
+- Clickhouse
+- Presto / Trino
+- DuckDB
+
+**AWS:**
+- [Redshift](/docs/redshift)
+- Athena
+- DynamoDB
+
+**GCP:**
+- [BigQuery](/docs/bigquery)
+- Spanner
+- Alloy
+
+**Azure:**
+- Database for PostgreSQL
+- Database for MySQL
+
+---
+
+## 🔄 Streaming / Real-Time Data Systems
+
+We also provide [Stream resolvers](/docs/stream-sources) for integrating Kafka compatible systems data sources. 
+
+- Kafka compatible
+    - Confluent
+    - Redpanda
+- Kinesis
+- Pub/Sub
+- Event Hubs
+
+Streams can also be filtered, processed, and materialized as a step in Chalk's feature computation pipelines.
+
+```py
+@stream(source=KafkaSource(name='...'))
+def process_transaction_topic(
+    value: TransactionMsg,
+) -> Features[Transaction.id, Transaction.user_id, Transaction.amount]:
+    return Transaction(
+        id=value.id,
+        user_id=value.user_id,
+        amount=value.amount,
+    )
+```
+
+---
+
+## Feature caching with expensive features with Redis/Valkey, Memcached, DynamoDB, and more
+
+Chalk makes it easy to [cache features for low-latency](/docs/feature-caching) access with the `max_stalness` keyword argument.
+These features skip expensive API calls and are fetched from the online store.
+
+```py
+@feature
+class User: 
+    id: int
+    name: str
+    ssn: int
+    credit_score: int = feature(max_staleness="30d")
+```
+
+We support a variety of caching backends:
+
+- Redis / Valkey
+- Memcached
+- DynamoDB
+- Amazon ElastiCache
+- Google Cloud Memorystore
+- Azure Cache for Redis
+- Azure Cosmos DB
+
+## APIs & Microservices
+
+Call internal APIs, third-party services, and microservices with built-in retry logic and circuit breakers:
+
+```py
+@online
+def get_credit_score(ssn: User.ssn) -> User.credit_score:
+    response = requests.get(
+        f"https://api.creditbureau.com/score/{ssn}",
+        headers={"Authorization": f"Bearer {API_KEY}"},
+        timeout=2.0
+    )
+    return response.json()["score"]
+```
+
+Chalk Symbolic Python Interpreter supports accelerating libraries like requests, and so this function gets run in C++.
+
+
+
+## Object Storage and Iceberg Catalogs
+
+**AWS (Amazon Web Services)**
+- S3 [(Amazon Simple Storage Service)](/docs/s3)
+- Glue Catalog
+
+**GCP (Google Cloud)**
+- Google Cloud Storage
+- Cloud Data Catalog
+- BigLake
+
+**Microsoft**
+- Azure Blob Storage
+- Microsoft Purview
+- Azure Data Lake
+
+Chalk is Iceberg native and can write to your underlying object storage and [catalog directly from offline queries.](/docs/datasets)
+
+```py
+from chalk.integrations import GlueCatalog
+
+catalog = GlueCatalog(
+    name="aws_glue_catalog",
+    aws_region="us-west-2",
+    catalog_id="123",
+    aws_role_arn="arn:aws:iam::123456789012:role/YourCatalogueAccessRole",
+)
+results.write_to(destination="database.table_name", catalog=catalog)
+```
+
+---
+
+## AI & ML Services
+
+Access traditional machine learning functions like Scikit, XGBoost, and your own models directly within feature definitions using Chalk Expressions:
+
+- [Sci-kit functions](https://docs.chalk.ai/api-docs#section-ml-modeling-functions)
+- ONNX Models (Open Neural Network Exchange) through Chalk's model registry
+
+Integrating unstructured data with LLMS (large language models) or computing embeddings is straightforward with Chalk's built-in integrations.
+Easily conduct Evals, switch out different models and providers, and reference the features you need in your prompts without having to configure complex pipelines.
+
+- OpenAI
+- Anthropic
+- AWS Bedrock
+- Azure OpenAI
+- Google Vertex
+- Any OpenAI compatible chat completion model
+    - Cerebras
+    - Groq
+    - Ollama Cloud
+    - Together.ai
+
+You can override the base url and API key to connect to any OpenAI compatible endpoint.
+
+```py
+@features
+class Item:
+    id: int
+    title: str
+    description: str
+    llm: P.PromptResponse = P.completion(
+        model="gpt-4o-mini-2024-07-18",
+        messages=[
+            P.message(
+                role="user",
+                content=F.jinja(
+                    """
+                    Classify the following item category using its title and description:
+                    Item title: {{ Item.title }}
+                    Item description: {{ Item.description }}
+                    """,
+                ),
+            ),
+        ],
+        output_structure=StructuredOutput,
+    )
+```
+
+Just as easily compute embeddings for items, users, or any other entity using built-in integrations:
+
+```py
+@features
+class VectorSearch:
+    q: Primary[str]
+    # from chalk.features import embed
+    vector: Vector = embed(
+        input=lambda: VectorSearch.q,
+        provider="vertexai",
+        model="text-embedding-005",
+    )
+    query_type: str = "vector"
+
+    results: "DataFrame[ItemDocument]"
+```
+
+---
+
+## Get started today
+
+With dozens of native integrations across cloud platforms, databases, streaming systems, caching layers, and AI services, Chalk eliminates the complexity of building and maintaining production machine learning systems.
+Whether you're pulling user data from PostgreSQL, processing real-time events from Kafka, caching expensive feature computations in Redis, or extracting features from unstructured data with LLMs—Chalk's unified platform handles it all.
+
+The result? **Faster time to production**, **lower operational overhead**, and **consistent feature logic** across your entire ML stack.
