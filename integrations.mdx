@@ -86,9 +86,9 @@ We also provide [Stream resolvers](/docs/stream-sources) for integrating Kafka c
 - Kafka compatible
     - Confluent
     - Redpanda
-- Kinesis
-- Pub/Sub
-- Event Hubs
+- Kinesis (AWS)
+- Pub/Sub (GCP)
+- Event Hubs (Azure)
 
 Streams can also be filtered, processed, and materialized as a step in Chalk's feature computation pipelines.
 
@@ -108,7 +108,7 @@ def process_transaction_topic(
 
 ## Feature caching with expensive features with Redis/Valkey, Memcached, DynamoDB, and more
 
-Chalk makes it easy to [cache features for low-latency](/docs/feature-caching) access with the `max_stalness` keyword argument.
+Chalk makes it easy to [cache features for low-latency](/docs/feature-caching) access with the `max_staleness` keyword argument.
 These features skip expensive API calls and are fetched from the online store.
 
 ```py
@@ -145,9 +145,9 @@ def get_credit_score(ssn: User.ssn) -> User.credit_score:
     return response.json()["score"]
 ```
 
-Chalk Symbolic Python Interpreter supports accelerating libraries like requests, and so this function gets run in C++.
+[Chalk's Symbolic Python Interpreter](/docs/static-resolver-optimization) supports accelerating libraries like requests, and so this function gets run in C++.
 
-
+---
 
 ## Object Storage and Iceberg Catalogs
 
