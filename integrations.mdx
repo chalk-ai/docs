@@ -9,7 +9,9 @@ published: true
 
 ---
 
-Chalk integrates seamlessly with your underlying systems--querying your data sources directly and eliminating the need for ETL!
+
+Chalk integrates seamlessly with your underlying systems--querying your data sources directly, eliminating the need
+for ETL!
 
 This unlocks several key benefits:
 - alleviates the need to move data across multiple systems
@@ -19,23 +21,25 @@ This unlocks several key benefits:
 - optimizes compute by only ever fetching exactly what you need when you need it (dynamic query planning)
 - enables real-time data delivery by satisfying strict (under 5ms) latency requirements
 
-## Cloud platforms
+## Cloud Platforms
 
-Anywhere that you can run Kubernetes, Chalk can also run.
+Anywhere that you can run Kubernetes, you can run Chalk--Chalk is cloud-agnostic.
 
 Chalk deploys into your VPC co-located with your data sources for the lowest latency and cost.
 Multi-cloud deployments for high availability and disaster recovery.
 
 - AWS [(Amazon Web Services)](/docs/aws)
 - GCP [(Google Cloud Platform)](/docs/gcp)
-- Azure Cloud [(Microsoft)](/docs/azure-cloud-deployment_)
+- Azure Cloud [(Microsoft)](/docs/azure-cloud-deployment)
 
 ---
 
 ## SQL data sources and data warehouses
 
-We have native drivers and integrations with a variety of [SQL data sources](/docs/sql) and query engines, and provide a unified interface for adding new data sources.
-Adding a new SQL source is as simple as providing a connection string and a few configuration options through your Chalk dashboard.
+Chalk has native drivers and integrations with a variety of [SQL data sources](/docs/sql) and query engines, and
+provide a unified interface for adding new data sources.
+Adding a new SQL source is as simple as providing a connection string and a few configuration options through your
+Chalk dashboard.
 Once it's been added to your Chalk deployment, you can start querying it right away with [SQL Resolvers.](/docs/sql-resolvers)
 
 ```
@@ -47,10 +51,21 @@ select
 from users
 ```
 
-A feature class can be hydrated / resolved by multiple SQL sources; we can pull a user's social security number from a different database that has stricter access controls.
+The features in a feature class can be hydrated from multiple SQL sources--we can pull a user's social security number
+from a different database that has stricter access controls.
 
-In addition, Chalk can reverse-ETL features from your data warehouses into Chalk's online store for low-latency access.
-Chalk integrates natively (C++ integration) with the following data sources and pushes down filters and projections into SQL queries for more efficient data fetching.
+```
+-- resolves: User
+-- source: restricted_postgres
+select
+    id,
+    ssn
+from sensitive_user_data
+```
+
+In addition, Chalk can reverse ETL features from your data warehouses into Chalk's online store for low-latency access.
+Chalk integrates natively (C++ integration) with the following data sources and pushes down filters and projections
+into SQL queries for more efficient data fetching.
 
 **Data Warehouses**
 - [Snowflake](/docs/snowflake)
@@ -81,7 +96,7 @@ Chalk integrates natively (C++ integration) with the following data sources and 
 
 ## Streaming / Real-Time Data Systems
 
-We also provide [Stream resolvers](/docs/stream-sources) for integrating Kafka compatible systems data sources. 
+We provide [stream resolvers](/docs/stream-sources) for integrating Kafka compatible systems data sources.
 
 - Kafka compatible
     - Confluent
@@ -93,7 +108,7 @@ We also provide [Stream resolvers](/docs/stream-sources) for integrating Kafka c
 Streams can also be filtered, processed, and materialized as a step in Chalk's feature computation pipelines.
 
 ```py
-@stream(source=KafkaSource(name='...'))
+@stream(source=KafkaSource(name='transactions_stream'))
 def process_transaction_topic(
     value: TransactionMsg,
 ) -> Features[Transaction.id, Transaction.user_id, Transaction.amount]:
@@ -108,8 +123,8 @@ def process_transaction_topic(
 
 ## Feature caching with expensive features with Redis/Valkey, Memcached, DynamoDB, and more
 
-Chalk makes it easy to [cache features for low-latency](/docs/feature-caching) access with the `max_staleness` keyword argument.
-These features skip expensive API calls and are fetched from the online store.
+Chalk makes it easy to [cache features for low-latency](/docs/feature-caching) access with the `max_staleness` keyword
+argument. These features skip expensive API calls and are fetched from the online store.
 
 ```py
 @feature
@@ -145,7 +160,8 @@ def get_credit_score(ssn: User.ssn) -> User.credit_score:
     return response.json()["score"]
 ```
 
-[Chalk's Symbolic Python Interpreter](/docs/static-resolver-optimization) supports accelerating libraries like requests, and so this function gets run in C++.
+[Chalk's Symbolic Python Interpreter](/docs/static-resolver-optimization) supports accelerating libraries like requests,
+and so this function gets run in C++.
 
 ---
 
@@ -228,7 +244,7 @@ class Item:
     )
 ```
 
-Just as easily compute embeddings for items, users, or any other entity using built-in integrations:
+You can just as easily compute embeddings for items, users, or any other entity using built-in integrations:
 
 ```py
 @features
@@ -249,8 +265,11 @@ class VectorSearch:
 
 ## Get started today
 
-With dozens of native integrations across cloud platforms, databases, streaming systems, caching layers, and AI services, Chalk eliminates the complexity of building and maintaining production machine learning systems.
+With dozens of native integrations across cloud platforms, databases, streaming systems, caching layers, and AI services,
+Chalk eliminates the complexity of building and maintaining production machine learning systems.
 
-Whether you're pulling user data from PostgreSQL, processing real-time events from Kafka, caching expensive feature computations in Redis, or extracting features from unstructured data with LLMs—Chalk's unified platform handles it all.
+Whether you're pulling user data from PostgreSQL, processing real-time events from Kafka, caching expensive feature
+computations in Redis, or extracting features from unstructured data with LLM's-—Chalk's unified platform handles it all.
 
-The result? faster time to production, lower operational overhead, and consistent feature logic across your entire ML stack.
+The result? **Faster time to production**, **lower operational overhead**, and **consistent feature logic** across your
+entire ML stack.
