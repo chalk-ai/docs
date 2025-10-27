@@ -22,17 +22,30 @@ The Chalk DataFrame library now supports method chaining, allowing expressions l
 
 ```python
 tbl = pa.table(
-    {
-        "txns_last_hour": [[1, 2, 3, 4, 5], [100], [200, 201],
-        "max_txns_allowed": [3, 5, 4],
-    }
+  {
+    "txns_last_hour": [[1, 2, 3, 4, 5], [100], [200, 201],
+    "max_txns_allowed": [3, 5, 4],
+  }
 )
 df = DataFrame.from_arrow(tbl)
 out = df.project(
-    {
-        "velocity_score": _.txns_last_hour.cardinality().cast(float).least(_.max_txns_allowed + 0.5).ceil().cast(int),
-        "velocity_score_2": F.cast(F.ceil(F.least(F.cast(F.cardinality(_.txns_last_hour), float), _.max_txns_allowed + 0.5)), int),
-    }
+  {
+    "velocity_score": _.txns_last_hour
+      .cardinality()
+      .cast(float)
+      .least(_.max_txns_allowed + 0.5)
+      .ceil()
+      .cast(int),
+    "velocity_score_2": F.cast(
+      F.ceil(
+        F.least(
+          F.cast(F.cardinality(_.txns_last_hour), float),
+          _.max_txns_allowed + 0.5
+        )
+      ),
+      int,
+    ),
+  }
 )
 ```
 
