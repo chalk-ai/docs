@@ -13,7 +13,7 @@ With Chalk, teams don’t need to spin up separate pipelines. Developers can mat
 performance, without compromising on flexibility, with just a single line of code:
 
 ```py
-from chalk.features import features
+from chalk.features import features, Vector, _
 from chalk import DataFrame, Windowed, windowed
 
 @features
@@ -22,6 +22,7 @@ class Transaction:
     amount: float
     category: str
     user_id: "User.id"
+    embedding: Vector[384]
 
 @features
 class User:
@@ -38,6 +39,14 @@ class User:
         # The approximate top 10 categories that the user has
         # spent at in each of the windowed buckets.
         expression=_.transactions[_.category].approx_top_k(k=10)
+    )
+    avg_embedding: Windowed[Vector[384]] = windowed(
+        "30d", "60d", "all",
+        materialization={"bucket_duration": "1h"},
+        # Vector mean will be computed as the element-wise
+        # mean for each component of the vector
+        expression=_.transactions[_.embedding].mean(),
+        default=Vector(np.zeros(384, dtype=np.float16)),
     )
 ```
 
@@ -75,7 +84,7 @@ The following table lists the supported aggregations along with some notes.
 | `sum` | Support for vector and scalar feature aggregations. |
 | `min` | |
 | `max` | |
-| `mean` | Feature type must be vector, `float` or <code>float &#124; None</code>. `None` values are skipped, meaning they are not included in the mean calculation.  |
+| `mean` | Feature type must be `Vector`, `float` or <code>float &#124; None</code>. `None` values are skipped, meaning they are not included in the mean calculation.  |
 | `min_by_n` | Returns a list of the `k` values for the minimum `by` values. |
 | `max_by_n` | Returns a list of the `k` values for the maximum `by` values. |
 | `approx_top_k` | Returns a list of the approximate top `k` non-null values. |
