@@ -5,7 +5,36 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 published: true
 ---
+## October 27, 2025
 
+### Stream consumption analytics
+
+Stream incidents now record failure events at one-minute granularity, up from five minutes previously.
+
+This provides finer visibility into where and when stream consumption fails, improving incident analysis and recovery time.
+Read more about Chalk’s [metrics monitoring](https://docs.chalk.ai/docs/metricmonitor).
+
+![Stream Monitoring Incident Graph](/img/changelog-2025_10_27-stream-metric-incident.png)
+
+### Method chaining for Chalk DataFrame
+
+The Chalk DataFrame library now supports method chaining, allowing expressions like
+
+```python
+tbl = pa.table(
+    {
+        "txns_last_hour": [[1, 2, 3, 4, 5], [100], [200, 201],
+        "max_txns_allowed": [3, 5, 4],
+    }
+)
+df = DataFrame.from_arrow(tbl)
+out = df.project(
+    {
+        "velocity_score": _.txns_last_hour.cardinality().cast(float).least(_.max_txns_allowed + 0.5).ceil().cast(int),
+        "velocity_score_2": F.cast(F.ceil(F.least(F.cast(F.cardinality(_.txns_last_hour), float), _.max_txns_allowed + 0.5)), int),
+    }
+)
+```
 
 ## October 23, 2025
 
