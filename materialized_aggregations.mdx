@@ -72,14 +72,14 @@ The following table lists the supported aggregations along with some notes.
 
 | Function | Notes |
 | ---  | --- |
-| `sum` | |
+| `sum` | Support for vector and scalar feature aggregations. |
 | `min` | |
 | `max` | |
-| `mean` | Feature type must be `float` or <code>float &#124; None</code>. `None` values are skipped, meaning they are not included in the mean calculation.  |
+| `mean` | Feature type must be vector, `float` or <code>float &#124; None</code>. `None` values are skipped, meaning they are not included in the mean calculation.  |
 | `min_by_n` | Returns a list of the `k` values for the minimum `by` values. |
 | `max_by_n` | Returns a list of the `k` values for the maximum `by` values. |
 | `approx_top_k` | Returns a list of the approximate top `k` non-null values. |
-|`count` | |
+|`count` | Support for vector and scalar feature aggregations. |
 |`std` | Standard deviation. Requires at least 2 values. |
 |`var` | Variance. Same requirements as `std`. |
 |`approx_count_distinct` | An approximation of the cardinality of non-null data. |
