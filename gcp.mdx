@@ -26,3 +26,15 @@ with the permissions you require.
 Credentials are created through GCP's dashboard.
 You can create a key and download it from your console
 [here](https://console.cloud.google.com/projectselector2/iam-admin/serviceaccounts/create).
+
+### BigQuery permissions
+
+If you plan to add a BigQuery data source to your Chalk deployment, then you should ensure
+that the permissions set includes `bigquery.tables.create` and `bigquery.jobs.create`.
+
+When querying your BigQuery data source, Chalk will push down filters on top of your
+queries to optimize the amount of data read from your tables. For larger queries, rather than
+interpolating values directly in the SQL string for the query, which has length limits in
+BigQuery, Chalk will use a table to temporarily hold the values against which to query.
+
+
