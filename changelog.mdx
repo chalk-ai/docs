@@ -5,6 +5,72 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 published: true
 ---
+## October 27, 2025
+
+### Stream consumption analytics
+
+Stream incidents now record failure events at one-minute granularity, up from five minutes previously.
+
+This provides finer visibility into where and when stream consumption fails, improving incident analysis and recovery time.
+Read more about Chalk’s [metrics monitoring](https://docs.chalk.ai/docs/metricmonitor).
+
+![Stream Monitoring Incident Graph](/img/changelog-2025_10_27-stream_metric_incident.png)
+
+### Method chaining for Chalk DataFrame
+
+The Chalk DataFrame library now supports method chaining, allowing expressions like
+
+```python
+tbl = pa.table(
+  {
+    "txns_last_hour": [[1, 2, 3, 4, 5], [100], [200, 201],
+    "max_txns_allowed": [3, 5, 4],
+  }
+)
+df = DataFrame.from_arrow(tbl)
+out = df.project(
+  {
+    "velocity_score": _.txns_last_hour
+      .cardinality()
+      .cast(float)
+      .least(_.max_txns_allowed + 0.5)
+      .ceil()
+      .cast(int),
+    "velocity_score_2": F.cast(
+      F.ceil(
+        F.least(
+          F.cast(F.cardinality(_.txns_last_hour), float),
+          _.max_txns_allowed + 0.5
+        )
+      ),
+      int,
+    ),
+  }
+)
+```
+
+The underscore interface is now the recommended API — it’s cleaner, type-safe, and validated by the Chalk function registry.
+Discover more about [Chalk DataFrame](https://docs.chalk.ai/docs/dataframe) aggregations and filters.
+
+### Cron query tracking
+
+Scheduled (cron) queries now include detailed job-level status tracking, mirroring the system used for backfills.
+
+Teams can now see when jobs start, skip, or fail — and identify the exact cause directly in the UI.
+Learn more about [scheduling queries](https://docs.chalk.ai/docs/resolver-cron) for automated runs.
+
+![Stream Monitoring Incident Graph](/img/changelog-2025_10_27-scheduled_query.png)
+
+### Vector aggregates
+
+Chalk now supports materialized vector aggregates such as `sum` and `mean`.
+These precomputed embeddings accelerate workloads involving vector math and high-dimensional similarity features.
+
+### Velox integration in Query Plan Viewer
+
+The query plan viewer now links Velox physical execution data to individual plan nodes.
+This lets teams analyze operator-level performance, data flow, and throughput directly from plan output —
+helping diagnose slow or memory-heavy offline queries.
 
 
 ## October 23, 2025
