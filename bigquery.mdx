@@ -17,6 +17,14 @@ in your resolvers, you first need to add the
 where you would like to use
 [BigQuery](https://cloud.google.com/bigquery).
 
+When querying your BigQuery data source, Chalk will push down filters on top of your
+queries to optimize the amount of data read from your tables. For larger queries, rather than
+interpolating values directly in the SQL string for the query, which has length limits in
+BigQuery, Chalk will use a table to temporarily hold the values against which to query.
+As such, we require `bigquery.tables.create` and `bigquery.jobs.create` permissions to
+create and use these temporary tables.
+
+
 ## Usage
 
 Chalk's [BigQuery](https://cloud.google.com/bigquery)
