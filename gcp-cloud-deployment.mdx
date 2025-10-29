@@ -42,6 +42,71 @@ Typically, Chalk recommends:
 
 ---
 
+## Required Google Cloud APIs
+
+Chalk requires the following Google Cloud APIs to be enabled in your GCP project for operations.
+
+### API Requirements
+
+| API | URI | Purpose |
+|-----|-----|---------|
+| Artifact Registry | `artifactregistry.googleapis.com` | Stores container and build artifacts |
+| BigQuery | `bigquery.googleapis.com` | Provides data warehouse and analytics platform |
+| Certificate Manager | `certificatemanager.googleapis.com` | Manages SSL/TLS certificates |
+| Cloud Asset Inventory | `cloudasset.googleapis.com` | Tracks and audits GCP resources |
+| Cloud Billing | `cloudbilling.googleapis.com` | Manages billing and cost tracking |
+| Cloud DNS | `dns.googleapis.com` | Manages DNS zones and domain records |
+| Cloud Logging | `logging.googleapis.com` | Collects and stores application and infrastructure logs |
+| Cloud Monitoring | `monitoring.googleapis.com` | Collects metrics and enables alerting |
+| Cloud Resource Manager | `cloudresourcemanager.googleapis.com` | Manages GCP project resources and permissions |
+| Cloud SQL Admin | `sqladmin.googleapis.com` | Manages database instances |
+| Cloud Storage | `storage.googleapis.com` | Provides object storage for datasets and backups |
+| Compute Engine | `compute.googleapis.com` | Provides networking, firewalls, and load balancers |
+| Container Registry | `containerregistry.googleapis.com` | Stores Docker container images |
+| Google Kubernetes Engine (GKE) | `container.googleapis.com` | Provisions and manages Kubernetes clusters |
+| Identity and Access Management (IAM) | `iam.googleapis.com` | Manages service accounts and permissions |
+| Memorystore for Redis | `redis.googleapis.com` | Provides distributed caching layer |
+| Memorystore (Valkey) | `memorystore.googleapis.com` | Provides modern distributed caching |
+| Network Connectivity | `networkconnectivity.googleapis.com` | Enables private service connections |
+| Pub/Sub | `pubsub.googleapis.com` | Enables message streaming and data pipelines |
+| Secret Manager | `secretmanager.googleapis.com` | Stores sensitive configuration and credentials |
+| Service Consumer Management | `serviceconsumermanagement.googleapis.com` | Manages service consumption policies |
+| Service Networking | `servicenetworking.googleapis.com` | Enables private VPC peering for managed services |
+
+### Enabling APIs
+
+A managed Chalk deployment will enable these APIs automatically as part of the deployment process. If preferred, your GCP administrator can enable these APIs in advance through the Google Cloud Console, via CLI commands, or infrastructure as code.
+
+#### Enable via gcloud CLI
+
+```bash
+gcloud services enable \
+  artifactregistry.googleapis.com \
+  bigquery.googleapis.com \
+  certificatemanager.googleapis.com \
+  cloudasset.googleapis.com \
+  cloudbilling.googleapis.com \
+  cloudresourcemanager.googleapis.com \
+  compute.googleapis.com \
+  container.googleapis.com \
+  containerregistry.googleapis.com \
+  dns.googleapis.com \
+  iam.googleapis.com \
+  logging.googleapis.com \
+  memorystore.googleapis.com \
+  monitoring.googleapis.com \
+  networkconnectivity.googleapis.com \
+  pubsub.googleapis.com \
+  redis.googleapis.com \
+  secretmanager.googleapis.com \
+  serviceconsumermanagement.googleapis.com \
+  servicenetworking.googleapis.com \
+  sqladmin.googleapis.com \
+  storage.googleapis.com
+```
+
+---
+
 ## Setup permissions
 
 Chalk recommends creating a custom "role" in your organization with the following permissions granted.
