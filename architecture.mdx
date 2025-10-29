@@ -6,7 +6,8 @@ description: How it all fits together.
 published: true
 ---
 
-import { ArchitectureDiagram, ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
+import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
+import { TipGoodText } from "@/components/Tip"
 
 ---
 
@@ -66,6 +67,8 @@ There's no need to write custom glue code because Chalk interfaces directly with
 
 Note: Features can also be computed on a recurring basis with [scheduled queries.](/docs/scheduled-query)
 
+---
+
 ## Data persistence and storage
 
 Chalk uses different storage technologies to support online and offline use cases.
@@ -119,38 +122,87 @@ Users write simple Python decorators and SQL queries, while Velox handles the co
 We offer both a hosted model (“Chalk Cloud”) and a customer-hosted model (“Customer Cloud”).
 
 Most companies choose to run Chalk in their own cloud (VPC) for data residency and compliance.
-Chalk is deployed with Terraform ([sample config](https://github.com/chalk-ai/terraform-samples/tree/main/aws/)) and uses common cloud primitives, making it easy to integrate deployments with your existing infrastructure.
+Chalk is deployed with Terraform and uses common cloud primitives, making it easy to integrate deployments with your existing infrastructure.
 
-Compute nodes run on Kubernetes (typically EKS on AWS and GKE on GCP).
+Compute nodes run on Kubernetes (typically EKS on AWS, GKE on GCP, and AKS on Azure).
 If you have custom needs, we are happy to customize the deployment to fit with your service architecture.
 
 <ServiceDiagramSwitcher />
 
-### Management Plane
+### Metadata Plane
 
-The Management Plane is responsible for storing and serving non-customer data (like alert and RBAC configurations).
-Workloads in the Data Plane are managed through the Kubernetes API, enabling tasks such as scaling deployments and running batch jobs.
+The Metadata Plane is responsible for storing and serving non-customer data (like alert and RBAC configurations).
+It can control many Data Planes, which it manages through the Kubernetes API,
+enabling tasks such as scaling deployments and running batch jobs.
 
-Most customers choose our Customer Cloud deployment; however, we also offer a self-hosted option for highly regulated environments (like FedRAMP) that require additional security control.
-
-In short, the Management Plane handles
+In short, the Metadata Plane handles:
 
 - Deployment orchestration
 - Access control
 - Monitoring and alerting
+- Feature discovery
 
 It does not have access to customer data.
 
 ### Data Plane
 
-The Data Plane encompasses the execution environment for feature pipelines along with the storage and serving infrastructure for both online and offline feature stores.
+The Data Plane encompasses the execution environment for feature pipelines along with the storage and serving
+infrastructure for both online and offline feature stores.
 
 A single Data Plane can run many Chalk Environments.
 Often, companies will have 2-3 environments (like `qa`, `stage`, and `prod`.)
 If running in a single data plane, these environments share resources, which helps with cost and ease of setup.
 
-However, if you prefer to have stronger isolation between Chalk Environments, each Chalk Environment can run in a separate Data Plane.
-You would typically run only one Management Plane to orchestrate all Data Planes, and deploy the Management Plane to the most sensitive of the environments.
+However, if you prefer to have stronger isolation between Chalk Environments,
+each Chalk Environment can run in a separate Data Plane.
+You would typically run only one Metadata Plane to orchestrate all Data Planes,
+and deploy the Metadata Plane to the most sensitive of the environments.
+
+---
+
+## Deployment Models
+
+Chalk offers several deployment options
+to provide you with the right level of infrastructure
+control.
+
+### Chalk-Hosted Deployment
+
+In the Chalk-Hosted Deployment, both the [Metadata Plane](#metadata-plane) and [Data Plane](#data-plane)
+run in Chalk's cloud account. Deployed in this manner, Chalk runs
+as a SaaS application. There is no infrastructure to manage,
+and no ability to see inside the cloud account running Chalk.
+
+### Customer Cloud Deployment
+
+<TipGoodText>
+    The Customer Cloud Deployment is Chalk's most common deployment.
+</TipGoodText>
+
+Most customers choose our Customer Cloud Deployment.
+In this model, the customer runs the [Data Plane](#data-plane) in its own cloud account,
+and Chalk runs the [Metadata Plane](#metadata-plane) in its cloud account.
+
+This deployment model strikes a good balance between security and ease of maintenance.
+No one at Chalk will be able to access your data, but the Chalk team
+can handle upgrades to the underlying resources without your team's involvement.
+
+### Air-Gapped Deployment
+
+Chalk offers the option to self-host _both_ the [Data Plane](#data-plane) and [Metadata Plane](#metadata-plane).
+In the [Customer Cloud Deployment](#customer-cloud-deployment), only the Data Plane runs in your cloud account,
+whereas in the Air-Gapped Deployment, the [Metadata Plane](#metadata-plane)
+joins the [Data Plane](#data-plane) in your cloud account.
+
+There are two primary reasons that customers will choose to host the [Metadata Plane](#metadata-plane):
+- *Regulatory requirements*: highly regulated environments (like FedRAMP) may require additional security control.
+- *Disaster recovery*: deploying both the Metadata Plane and Data Plane into your cloud account means that Chalk will continue to run independent of any Chalk uptime.
+
+In this configuration, no service hosted by Chalk needs to talk to your instance.
+Telemetry can be exported for billing purposes (over topics), but is non-essential
+to uptime of your instance.
+In the event of a complete outage in Chalk's cloud accounts,
+your instance service would continue running indefinitely without disruption.
 
 ---
 
