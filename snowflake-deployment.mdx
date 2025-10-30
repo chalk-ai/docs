@@ -116,8 +116,8 @@ and unload data from the offline store.
 
 Before setting up the storage integration, ensure you have:
 
-- **AWS Access**: Permissions to create IAM policies and roles in your AWS account
-- **Snowflake Access**: Admin or role creation privileges in your Snowflake account
+- **AWS Access**: Use the `IAMFullAccess` AWS managed policy, or a custom IAM policy with permissions for `iam:CreatePolicy`, `iam:CreateRole`, `iam:AttachRolePolicy`, and `iam:UpdateAssumeRolePolicy`
+- **Snowflake Access**: Use the `ACCOUNTADMIN` role, or a custom role with `CREATE DATABASE`, `CREATE WAREHOUSE`, `CREATE INTEGRATION`, and `SECURITYADMIN` privileges (note: only `ACCOUNTADMIN` can initially grant the `CREATE INTEGRATION` privilege)
 - **Required Information**:
   - **AWS Account ID**: The AWS account ID where your Chalk environment is deployed. You should have this from your Chalk deployment, or Chalk can provide it.
   - **S3 Bucket Name**: Standard naming is `chalk-{organization}-data-bucket`. If this bucket does not exist or uses a different name, contact Chalk for clarification.
