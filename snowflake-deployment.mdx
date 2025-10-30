@@ -120,7 +120,7 @@ Before setting up the storage integration, ensure you have:
 - **Snowflake Access**: Use the `ACCOUNTADMIN` role, or a custom role with `CREATE DATABASE`, `CREATE WAREHOUSE`, `CREATE INTEGRATION`, and `SECURITYADMIN` privileges (note: only `ACCOUNTADMIN` can initially grant the `CREATE INTEGRATION` privilege)
 - **Required Information**:
   - **AWS Account ID**: The AWS account ID where your Chalk environment is deployed. You should have this from your Chalk deployment, or Chalk can provide it.
-  - **S3 Bucket Name**: Standard naming is `chalk-{organization}-data-bucket`. If this bucket does not exist or uses a different name, contact Chalk for clarification.
+  - **S3 Bucket Name**: Standard naming is `chalk-{organization}-data-bucket`. If this bucket does not exist or uses a different name, contact Chalk for clarification. Note that `{organization}` is a placeholder that should be replaced with the identifiers used for your implementation. 
   - **Snowflake Role Name**: The role name you defined in the Database Setup step (above), typically `CHALK_ROLE`
 
 ---
