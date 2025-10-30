@@ -308,6 +308,19 @@ These variables enable:
 
 ---
 
+### Storage Integration Configuration
+
+After setting up the storage integration and environment variables, configure the storage integration name in the Chalk UI:
+
+**To configure the storage integration:**
+1. Navigate to **Settings** → **Shared Resources** → **Background Persistence** → **General Configuration** → **Advanced**
+2. Enter the Snowflake Storage Integration Name in the provided field (e.g., `s3-integration-chalk-{organization}-data-bucket`)
+3. Click **Save and Apply Changes**
+
+**Note:** Clicking **Save and Apply Changes** will re-deploy Background Persistence workers. Please use due caution when deploying resources.
+
+---
+
 ### Troubleshooting
 
 **Issue: "Access Denied" when querying data in Snowflake**
