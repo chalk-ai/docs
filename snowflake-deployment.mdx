@@ -112,21 +112,204 @@ The storage integration will create an IAM entity
 along with allowed or blocked storage locations that will allow Chalk to securely load
 and unload data from the offline store.
 
-*Please ask us for a confirmation of which commands to run and the s3 bucket name before
-creating the storage integrations,* but it should look something like this:
+### Prerequisites
 
-```sql
-CREATE STORAGE INTEGRATION "s3-integration-chalk-{organization}-dataset-bucket"
-TYPE = EXTERNAL_STAGE
-STORAGE_PROVIDER='s3'
-STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::<your aws account id>:role/snowflake-chalk-{organization}-dataset-bucket'
-ENABLED = true
-STORAGE_ALLOWED_LOCATIONS = ('s3://chalk-{organization}-dataset-bucket/');
+Before setting up the storage integration, ensure you have:
 
-GRANT USAGE ON INTEGRATION "s3-integration-chalk-{organization}-dataset-bucket" TO ROLE "CHALK_ROLE";
+- **AWS Access**: Permissions to create IAM policies and roles in your AWS account
+- **Snowflake Access**: Admin or role creation privileges in your Snowflake account
+- **Required Information from Chalk**:
+  - AWS Account ID for the IAM role (provided by Chalk)
+  - S3 bucket name to use (provided by Chalk)
+  - Your Snowflake role name (e.g., `CHALK_ROLE`)
 
-DESCRIBE INTEGRATION "s3-integration-chalk-{organization}-dataset-bucket";
+---
+
+### Step 1: Create AWS IAM Policy
+
+This policy grants Snowflake the minimum permissions needed to read and write objects to your S3 bucket.
+
+**Actions:**
+1. Navigate to AWS IAM → Policies
+2. Create a new policy named `chalk-{organization}-offline-store-access-policy`
+3. Paste the following JSON policy (replacing `chalk-{organization}-data-bucket` with your actual bucket name):
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+              "s3:PutObject",
+              "s3:GetObject",
+              "s3:GetObjectVersion",
+              "s3:DeleteObject",
+              "s3:DeleteObjectVersion"
+            ],
+            "Resource": "arn:aws:s3:::chalk-{organization}-data-bucket/*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket",
+                "s3:GetBucketLocation"
+            ],
+            "Resource": "arn:aws:s3:::chalk-{organization}-data-bucket",
+            "Condition": {
+                "StringLike": {
+                    "s3:prefix": [
+                        "*"
+                    ]
+                }
+            }
+        }
+    ]
+}
 ```
 
-Once you have created the storage integration, please send us the `STORAGE_AWS_IAM_USER_ARN`,
-`STORAGE_AWS_ROLE_ARN`, and `STORAGE_AWS_EXTERNAL_ID`.
+**Policy Permissions Explained:**
+- `s3:*Object*`: Allows reading, writing, and deleting objects in the bucket
+- `s3:ListBucket`: Allows listing the bucket contents
+- `s3:GetBucketLocation`: Required by Snowflake for S3 operations
+
+---
+
+### Step 2: Create AWS IAM Role
+
+This role will be assumed by Snowflake to access the S3 bucket.
+
+**Actions:**
+1. Navigate to AWS IAM → Roles
+2. Create a new role named `chalk-{organization}-offline-store-access-role`
+3. Set the trust relationship with the following policy (you will update this in Step 4):
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Principal": {
+                "AWS": "<STORAGE_AWS_IAM_USER_ARN>"
+            },
+            "Condition": {
+                "StringEquals": {
+                    "sts:ExternalId": "<STORAGE_AWS_EXTERNAL_ID>"
+                }
+            }
+        }
+    ]
+}
+```
+
+4. Attach the IAM policy created in Step 1 to this role
+
+---
+
+### Step 3: Create Snowflake Storage Integration
+
+This creates the storage integration object in Snowflake that links to the AWS role and S3 bucket.
+
+**Actions:**
+1. Connect to your Snowflake account
+2. Execute the following SQL commands (replace placeholders with actual values):
+
+```sql
+-- Create the storage integration pointing to your AWS S3 bucket and IAM role
+CREATE STORAGE INTEGRATION "s3-integration-chalk-{organization}-data-bucket"
+TYPE = EXTERNAL_STAGE
+STORAGE_PROVIDER='s3'
+STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::<your-aws-account-id>:role/chalk-{organization}-offline-store-access-role'
+ENABLED = true
+STORAGE_ALLOWED_LOCATIONS = ('s3://chalk-{organization}-data-bucket/');
+
+-- Grant usage permissions to the Chalk role
+GRANT USAGE ON INTEGRATION "s3-integration-chalk-{organization}-data-bucket" TO ROLE "CHALK_ROLE";
+
+-- Verify the integration was created successfully and retrieve Snowflake credentials
+DESCRIBE INTEGRATION "s3-integration-chalk-{organization}-data-bucket";
+```
+
+3. From the `DESCRIBE INTEGRATION` output, record the following values:
+   - `STORAGE_AWS_IAM_USER_ARN`
+   - `STORAGE_AWS_ROLE_ARN`
+   - `STORAGE_AWS_EXTERNAL_ID`
+
+You will need these values for Step 4.
+
+---
+
+### Step 4: Update IAM Role Trust Policy with Snowflake Credentials
+
+This step completes the trust relationship between Snowflake and AWS by updating the IAM role's trust policy with the actual Snowflake credentials obtained from Step 3.
+
+**Actions:**
+1. Navigate to AWS IAM → Roles
+2. Select the role `chalk-{organization}-offline-store-access-role` created in Step 2
+3. Click the "Trust relationships" tab
+4. Click "Edit trust policy"
+5. Replace the placeholder values with the actual values from Step 3's `DESCRIBE INTEGRATION` output:
+   - Replace `<STORAGE_AWS_IAM_USER_ARN>` with the actual `STORAGE_AWS_IAM_USER_ARN`
+   - Replace `<STORAGE_AWS_EXTERNAL_ID>` with the actual `STORAGE_AWS_EXTERNAL_ID`
+
+6. Save the updated trust policy
+
+**Expected Outcome:**
+- IAM role trust policy now contains Snowflake's actual IAM user ARN and external ID
+- Snowflake can now successfully assume the AWS role to access the S3 bucket
+- Trust relationship is fully configured for secure cross-account access
+
+---
+
+### Environment Variables Configuration
+
+After completing the storage integration setup, configure the following environment variables through the Chalk UI to enable offline store persistence logging and feature value tracking:
+
+**To add environment variables:**
+1. Navigate to **Settings** → **Variables**
+2. Add each of the following key-value pairs:
+
+| Key | Value |
+|-----|-------|
+| `CHALK_PERSIST_TO_OFFLINE_STORE_QUERY_LOG` | `1` |
+| `CHALK_PLANNER_PERSIST_VALUES_OFFLINE_STORE` | `1` |
+| `CHALK_PLANNER_PERSIST_VALUES_PARQUET` | `1` |
+
+These variables enable:
+- Query logging for offline store operations
+- Persistence of feature values to the offline store
+- Parquet file format support for offline data
+
+---
+
+### Troubleshooting
+
+**Issue: "Access Denied" when querying data in Snowflake**
+- Verify the AWS role ARN in the storage integration matches your actual IAM role
+- Confirm the IAM policy is attached to the AWS role
+- Check that the S3 bucket names in both AWS and Snowflake configurations match exactly
+- Verify the trust policy has been updated with the correct `STORAGE_AWS_IAM_USER_ARN` and `STORAGE_AWS_EXTERNAL_ID`
+
+**Issue: DESCRIBE INTEGRATION returns an error**
+- Ensure you're connected to Snowflake with admin or equivalent privileges
+- Verify the integration name is spelled correctly
+- Check that the role has USAGE permissions on the integration
+
+---
+
+### Next Steps
+
+After completing this setup:
+
+1. Record the Storage Integration Name (e.g., `s3-integration-chalk-{organization}-data-bucket`)
+2. Share the following values with Chalk:
+   - Storage Integration Name
+   - `STORAGE_AWS_IAM_USER_ARN`
+   - `STORAGE_AWS_ROLE_ARN`
+   - `STORAGE_AWS_EXTERNAL_ID`
+   - AWS Account ID used
+   - S3 bucket name
+
+Chalk will use these values to configure your offline store in the platform.
