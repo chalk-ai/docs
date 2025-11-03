@@ -1,5 +1,5 @@
 ---
-title: Integrations overview
+title: Integrations Overview
 shortTitle: Overview
 metaTitle: Integrations and APIs
 metaDescription: Instead of complex ETL jobs and streaming pipelines, make direct calls to your data sources. Chalk makes it fast and easy to connect to AWS, GCP, databases, streaming data, and more.
@@ -9,15 +9,15 @@ published: true
 
 ---
 
-
 Chalk integrates seamlessly with your underlying systems--querying your data sources directly, eliminating the need
 for ETL!
 
 This unlocks several key benefits:
+
 - alleviates the need to move data across multiple systems
-    - single source of truth (define once and use everywhere)
-    - prevents data drift (same feature logic for offline and online workloads)
-    - reduces data duplication and storage costs
+  - single source of truth (define once and use everywhere)
+  - prevents data drift (same feature logic for offline and online workloads)
+  - reduces data duplication and storage costs
 - optimizes compute by only ever fetching exactly what you need when you need it (dynamic query planning)
 - enables real-time data delivery by satisfying strict (under 5ms) latency requirements
 
@@ -68,10 +68,12 @@ Chalk integrates natively (C++ integration) with the following data sources and 
 into SQL queries for more efficient data fetching.
 
 **Data Warehouses**
+
 - [Snowflake](/docs/snowflake)
 - [Databricks](/docs/databricks)
 
 **Native:**
+
 - [MySQL](/docs/mysql)
 - [PostgreSQL](/docs/postgresql)
 - Clickhouse
@@ -79,16 +81,19 @@ into SQL queries for more efficient data fetching.
 - DuckDB
 
 **AWS:**
+
 - [Redshift](/docs/redshift)
 - Athena
 - DynamoDB
 
 **GCP:**
+
 - [BigQuery](/docs/bigquery)
 - Spanner
 - Alloy
 
 **Azure:**
+
 - Database for PostgreSQL
 - Database for MySQL
 
@@ -99,8 +104,8 @@ into SQL queries for more efficient data fetching.
 We provide [stream resolvers](/docs/stream-sources) for integrating Kafka compatible systems data sources.
 
 - Kafka compatible
-    - Confluent
-    - Redpanda
+  - Confluent
+  - Redpanda
 - Kinesis (AWS)
 - Pub/Sub (GCP)
 - Event Hubs (Azure)
@@ -128,7 +133,7 @@ argument. These features skip expensive API calls and are fetched from the onlin
 
 ```py
 @feature
-class User: 
+class User:
     id: int
     name: str
     ssn: int
@@ -168,15 +173,18 @@ and so this function gets run in C++.
 ## Object Storage and Iceberg Catalogs
 
 **AWS (Amazon Web Services)**
+
 - S3 [(Amazon Simple Storage Service)](/docs/s3)
 - Glue Catalog
 
 **GCP (Google Cloud)**
+
 - Google Cloud Storage
 - Cloud Data Catalog
 - BigLake
 
 **Microsoft**
+
 - Azure Blob Storage
 - Microsoft Purview
 - Azure Data Lake
@@ -213,10 +221,10 @@ Easily conduct Evals, switch out different models and providers, and reference t
 - Azure OpenAI
 - Google Vertex
 - Any OpenAI compatible chat completion model
-    - Cerebras
-    - Groq
-    - Ollama Cloud
-    - Together.ai
+  - Cerebras
+  - Groq
+  - Ollama Cloud
+  - Together.ai
 
 You can override the base url and API key to connect to any OpenAI compatible endpoint.
 
