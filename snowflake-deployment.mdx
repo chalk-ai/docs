@@ -147,9 +147,7 @@ Attach the IAM policy created in Step 1 to this role.
 
 This creates the storage integration object in Snowflake that links to the AWS role and S3 bucket.
 
-**Actions:**
-1. Connect to your Snowflake account
-2. Execute the following SQL commands (replace placeholders with actual values):
+Follow the [Snowflake Storage Integration Setup documentation](https://docs.snowflake.com/en/user-guide/data-load-s3-config-storage-integration#step-3-create-a-cloud-storage-integration-in-snowflake) and execute the following SQL commands (replace placeholders with actual values):
 
 ```sql
 -- Create the storage integration pointing to your AWS S3 bucket and IAM role
@@ -167,7 +165,7 @@ GRANT USAGE ON INTEGRATION "s3-integration-chalk-{organization}-data-bucket" TO 
 DESCRIBE INTEGRATION "s3-integration-chalk-{organization}-data-bucket";
 ```
 
-3. From the `DESCRIBE INTEGRATION` output, record the following values:
+From the `DESCRIBE INTEGRATION` output, record the following values:
    - `STORAGE_AWS_IAM_USER_ARN`
    - `STORAGE_AWS_EXTERNAL_ID`
 
