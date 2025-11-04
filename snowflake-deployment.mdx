@@ -187,59 +187,6 @@ Replace the placeholder values with the actual values from Step 3's `DESCRIBE IN
 
 ---
 
-### Environment Variables Configuration
-
-After completing the storage integration setup, configure the following environment variables through the Chalk UI to enable offline store persistence logging and feature value tracking:
-
-**To add environment variables:**
-1. Navigate to **Settings** → **Variables**
-2. Add each of the following key-value pairs:
-
-| Key | Value |
-|-----|-------|
-| `CHALK_PERSIST_TO_OFFLINE_STORE_QUERY_LOG` | `1` |
-| `CHALK_PLANNER_PERSIST_VALUES_OFFLINE_STORE` | `1` |
-| `CHALK_PLANNER_PERSIST_VALUES_PARQUET` | `1` |
-
-These variables enable:
-- Query logging for offline store operations
-- Persistence of feature values to the offline store
-- Parquet file format support for offline data
-
----
-
-### Storage Integration Configuration
-
-After setting up the storage integration and environment variables, configure the storage integration name in the Chalk UI:
-
-**To configure the storage integration:**
-1. Navigate to **Settings** → **Shared Resources** → **Background Persistence** → **General Configuration** → **Advanced**
-2. Enter the Snowflake Storage Integration Name in the provided field (e.g., `s3-integration-chalk-{organization}-data-bucket`)
-3. Click **Save and Apply Changes**
-
-**Note:** Clicking **Save and Apply Changes** will re-deploy Background Persistence workers. Please use due caution when deploying resources.
-
----
-
-### Troubleshooting
-
-**Issue: "Access Denied" when querying data in Snowflake**
-
-This is the most common issue and is typically caused by an incomplete trust policy update.
-
-- **Did you update the IAM role trust policy with Snowflake credentials?** This is the most critical step. The trust policy must include the actual `STORAGE_AWS_IAM_USER_ARN` and `STORAGE_AWS_EXTERNAL_ID` from your Snowflake storage integration. Placeholder values will not work.
-- Verify the AWS role ARN in the storage integration matches your actual IAM role
-- Confirm the IAM policy is attached to the AWS role
-- Check that the S3 bucket names in both AWS and Snowflake configurations match exactly
-- Verify the trust policy has been updated with the correct `STORAGE_AWS_IAM_USER_ARN` and `STORAGE_AWS_EXTERNAL_ID`
-
-**Issue: DESCRIBE INTEGRATION returns an error**
-- Ensure you're connected to Snowflake with admin or equivalent privileges
-- Verify the integration name is spelled correctly
-- Check that the role has USAGE permissions on the integration
-
----
-
 ### Next Steps
 
 After completing this setup:
