@@ -53,8 +53,6 @@ client.register_model(
         "./tokenizer.json"
     ],
     description="Model for predicting user risk scores",
-    model_type="pytorch",
-    model_format="pytorch",
     metadata={
         "framework": "pytorch",
         "training_date": "2025-07-29",
@@ -86,15 +84,11 @@ client.register_model_version(
     aliases=["v1.0.0"],
     model=rfc,  # Directly pass the model object
     description="Model for predicting user risk scores",
-    model_type="sklearn",
-    model_format="pickle",
     metadata={
         "framework": "sklearn",
         "training_date": "2025-07-29",
-        "performance_metrics": {
-            "accuracy": 0.89,
-            "precision": 0.91
-        }
+        "accuracy": 0.89,
+        "precision": 0.91
     }
 )
 ```
