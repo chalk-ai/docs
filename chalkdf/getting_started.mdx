@@ -19,6 +19,44 @@ Given Python 3.10-3.13 and Linux/macOS 15+, you can install `chalkdf` via pip:
 pip install chalkdf chalkpy
 ```
 
-## Reading and WRiting
+## Reading and Writing
+
+`chalkdf` supports reading data from several formats and sources, including JSON, CSV, and Parquet files,
+Arrow objects and tables, as well as AWS Glue Iceberg tables, and SQL sources defined via
+`chalkpy`.
+
+Below we can initialize a `chalkdf.DataFrame` from a Python dictionary.
+
+```python
+from chalkdf import DataFrame
+
+df = DataFrame.from_dict(
+    {
+        "name": ["Alice", "Bob", "Charlie"],
+        "age": [25, 30, 35],
+        "city": ["New York", "Los Angeles", "Chicago"],
+    }
+)
+
+df.run()
+```
+
+```
+DataFrame(materialized 3 rows x 3 columns)
+Schema: name (string), age (int64), city (string)
+Showing all rows:
+name (string) | age (int64) | city (string)
+--------------+-------------+--------------
+Alice         | 25          | New York
+Bob           | 30          | Los Angeles
+Charlie       | 35          | Chicago
+```
+
+You can also scan files directly into a DataFrame. Below, we scan a CSV file:
+
+```python
+from chalkdf import DataFrame
+
+```
 
 ## Expressions 
