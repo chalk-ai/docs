@@ -1,6 +1,6 @@
 ---
 title: Getting Started
-metaTitle: chalkdf - getting started
+metaTitle: chalkdf.DataFrame - Getting Started
 description: Install and run your first chalkdf commands
 published: true
 ---
@@ -16,7 +16,7 @@ are already familiar with DataFrame libraries you can skip ahead to the full
 Given Python 3.10-3.13 and Linux/macOS 15+, you can install `chalkdf` via pip:
 
 ```bash
-pip install "chalkdf[chalkpy]"
+uv pip install "chalkdf[chalkpy]"
 ```
 
 ## Reading Data
@@ -113,7 +113,7 @@ id (int64) | value_sum_by_id (int64)
 
 Below are some common operations you can use to construct DataFrame expressions.
 
-### `select`
+### select
 
 `DataFrame.select` allows you to extract specific columns from a DataFrame.
 
@@ -132,7 +132,7 @@ user_004         | item_4521        | add_to_cart               | 2024-11-08 17:
 user_005         | item_9944        | click                     | 2024-11-08 18:20:05
 ```
 
-### `with_columns`
+### with_columns
 
 To add new columns or modify existing columns in your DataFrame while retaining all original
 columns, you can use `DataFrame.with_columns`.
@@ -152,7 +152,7 @@ user_004         | 210                          | True
 user_005         | 167                          | False
 ```
 
-### `project`
+### project
 
 To define more complex transformations without retaining all original columns, you can use `DataFrame.project` to take
 in a DataFrame as input and project to new columns based on provided expressions. In these expressions, you can use the
@@ -200,7 +200,7 @@ velocity_score (int64) | velocity_score_2 (int64)
 2                      | 2
 ```
 
-### `filter`
+### filter
 
 You can filter rows in a DataFrame using `DataFrame.filter`, which takes in a boolean expression.
 
@@ -227,7 +227,7 @@ user_002         | item_8832        | purchase                  | 2024-11-08 15:
 user_005         | item_9944        | click                     | 2024-11-08 18:20:05       | 0.81           | sports            | 167
 ```
 
-### `agg`
+### agg
 
 To compute aggregations over groups of data, you can use `DataFrame.agg`.
 
@@ -242,9 +242,7 @@ False               | 0.776667
 True                | 0.85
 ```
 
-## Working with Multiple DataFrames
-
-### `join`
+###  join
 
 You can combine data from multiple DataFrames using `DataFrame.join`. Below is an example of joining two
 DataFrames using an inner join on the `user_id` column. You can also specify right and left joins.
