@@ -1,0 +1,42 @@
+---
+title: Iceberg Setup Requirements
+description: Setting up Iceberg as your offline store.
+published: true 
+---
+
+import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
+
+---
+
+Chalk's feature platform enables
+machine learning teams to focus on building the unique products and models
+that make their business stand out. Chalk provides a feature store so that
+you can deploy production machine learning pipelines for real time data
+in minutes.
+
+Chalk is both a framework and a platform — developers can write code
+using familiar Python packages, and deploy their feature and data pipeline definitions
+to Chalk’s platform. In the Customer Cloud deployment, Chalk runs &
+administers its platform on the customer’s cloud account. Chalk's managed
+infrastructure then executes the customer defined pipelines to compute
+[feature](/docs/features)
+data for machine learning applications. Chalk then serves this data
+back to customer applications for online inference and to customer
+data teams for training set generation.
+
+---
+
+## Architecture
+
+<ServiceDiagramSwitcher default_option={"AWS"} hideSwitch />
+
+---
+
+To configure an Iceberg offline store, we need to configure the AWS Glue Catalog. This catalog ensures atomic operations on the underlying S3 storage. 
+
+To get this setup, please share: 
+- **S3 bucket** URI where you would like the offline store to be located.  The bucket name is typically `chalk-{organization}-data-bucket` (confirm with Chalk if different)
+- **AWS Account ID**: The AWS account where your Chalk environment is deployed
+
+You’ll also need to provide appropriate AWS permissions:
+- **AWS**: Permissions to perform glue operations. 
