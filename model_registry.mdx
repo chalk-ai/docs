@@ -38,14 +38,14 @@ To register a model from local files, provide the path to the model files and an
 You'll also want to specify the input and output schema for the model, which helps with validation and integration in your Chalk deployment.
 
 When registering a new model, you can specify a description which will be shown for the `Model` object in the Chalk dashboard. To register a new
-model, you should use the `client.register_model` method. This will create a new model in the registry and add a new model version.
+model, you should use the `client.register_model_namespace` method. This will create a new model in the registry and add a new model version.
 
 ```python
 from chalk.client import ChalkClient
 
 client = ChalkClient()
 
-client.register_model(
+client.register_model_namespace(
     name="RiskScoreModel",
     aliases=["v1.0"],
     model_paths=["./risk_score_model.pth"],
@@ -53,8 +53,6 @@ client.register_model(
         "./tokenizer.json"
     ],
     description="Model for predicting user risk scores",
-    model_type="pytorch",
-    model_format="pytorch",
     metadata={
         "framework": "pytorch",
         "training_date": "2025-07-29",
@@ -86,15 +84,11 @@ client.register_model_version(
     aliases=["v1.0.0"],
     model=rfc,  # Directly pass the model object
     description="Model for predicting user risk scores",
-    model_type="sklearn",
-    model_format="pickle",
     metadata={
         "framework": "sklearn",
         "training_date": "2025-07-29",
-        "performance_metrics": {
-            "accuracy": 0.89,
-            "precision": 0.91
-        }
+        "accuracy": 0.89,
+        "precision": 0.91
     }
 )
 ```
