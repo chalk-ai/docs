@@ -52,7 +52,7 @@ Currently, Chalk SQL only supports making `SELECT` queries, with the following r
 In the SQL Interface, there exist various schema providers, which all exist under the `chalk` catalog:
 
 - `chalk.datasources`: directly query against the [data sources](/docs/integrations) configured in your
-  environment (e.g. Postgres, Snowflake, BigQuery, etc.). Table names are tables within the data sources themselves.
+  environment (e.g. Postgres, Snowflake, BigQuery, Iceberg, etc.). Table names are tables within the data sources themselves.
 
   **Schema**: Exactly that of the table in the data source.
 - `chalk.historical_values`: query against historically observed feature values with table names of the form

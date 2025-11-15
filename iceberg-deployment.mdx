@@ -1,0 +1,66 @@
+---
+title: Iceberg Setup Requirements
+description: Setting up Iceberg as your offline store.
+published: true 
+---
+
+Chalk's feature platform enables
+machine learning teams to focus on building the unique products and models
+that make their business stand out. Chalk provides a feature store so that
+you can deploy production machine learning pipelines for real time data
+in minutes.
+
+Chalk is both a framework and a platform — developers can write code
+using familiar Python packages, and deploy their feature and data pipeline definitions
+to Chalk’s platform. In the Customer Cloud deployment, Chalk runs &
+administers its platform on the customer’s cloud account. Chalk's managed
+infrastructure then executes the customer defined pipelines to compute
+[feature](/docs/features)
+data for machine learning applications. Chalk then serves this data
+back to customer applications for online inference and to customer
+data teams for training set generation.
+
+---
+
+## Configuring an Iceberg Offline Store
+
+The Iceberg offline store leverages AWS Glue Catalog, a fully managed metadata
+catalog that simplifies data discovery and schema management for data lakes. This
+option gives you direct control over your AWS infrastructure and data storage,
+unlike managed solutions like Snowflake or Databricks where compute and storage are 
+abstracted away. Your data remains in your S3 buckets without vendor lock-in. 
+
+### Required Information
+
+To set up the Iceberg offline store, please provide:
+
+- **S3 bucket URI**: The location where your offline store data will be written. 
+Typically follows the pattern `s3://chalk-{organization}-data-bucket` (confirm with Chalk if different)
+- **AWS Account ID**: The AWS account where your Chalk environment is deployed
+
+### AWS Permissions
+
+You'll need to grant the following IAM permissions. Note that many of these are
+base permissions you may have already configured. The key addition is Glue
+access for catalog operations, including table creation, schema evolution, and 
+metadata management:
+
+```json
+{
+    "Statement": [
+        {
+            "Action": [
+                "s3:*",
+                "dynamodb:*",
+                "secretsmanager:*",
+                "sqs:*",
+                "sts:AssumeRole",
+                "glue:*"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        }
+    ]
+}
+```
+
