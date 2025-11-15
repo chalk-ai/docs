@@ -32,11 +32,44 @@ data teams for training set generation.
 
 ---
 
-To configure an Iceberg offline store, we need to configure the AWS Glue Catalog. This catalog ensures atomic operations on the underlying S3 storage. 
+  ## Configuring an Iceberg Offline Store
 
-To get this setup, please share: 
-- **S3 bucket** URI where you would like the offline store to be located.  The bucket name is typically `chalk-{organization}-data-bucket` (confirm with Chalk if different)
-- **AWS Account ID**: The AWS account where your Chalk environment is deployed
+  The Iceberg offline store leverages AWS Glue Catalog, a fully managed metadata
+  catalog that simplifies data discovery and schema management for data lakes. This
+  option gives you direct control over your AWS infrastructure and data storage,
+  unlike managed solutions like Snowflake or Databricks where compute and storage are 
+  abstracted away. Your data remains in your S3 buckets without vendor lock-in. 
 
-You’ll also need to provide appropriate AWS permissions:
-- **AWS**: Permissions to perform glue operations. 
+  ### Required Information
+
+  To set up the Iceberg offline store, please provide:
+
+  - **S3 bucket URI**: The location where your offline store data will be written
+    - Typically follows the pattern `s3://chalk-{organization}-data-bucket` (confirm with Chalk if different)
+  - **AWS Account ID**: The AWS account where your Chalk environment is deployed
+
+  ### AWS Permissions
+
+  You'll need to grant the following IAM permissions. Note that many of these are
+  base permissions you may have already configured. The key addition is Glue
+  access for catalog operations, including table creation, schema evolution, and 
+  metadata management:
+
+  ```json
+  {
+      "Statement": [
+          {
+              "Action": [
+                  "s3:*",
+                  "dynamodb:*",
+                  "secretsmanager:*",
+                  "sqs:*",
+                  "sts:AssumeRole",
+                  "glue:*"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+          }
+      ]
+  }
+
