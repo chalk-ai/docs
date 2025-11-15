@@ -4,10 +4,6 @@ description: Setting up Iceberg as your offline store.
 published: true 
 ---
 
-import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
-
----
-
 Chalk's feature platform enables
 machine learning teams to focus on building the unique products and models
 that make their business stand out. Chalk provides a feature store so that
@@ -26,44 +22,45 @@ data teams for training set generation.
 
 ---
 
-  ## Configuring an Iceberg Offline Store
+## Configuring an Iceberg Offline Store
 
-  The Iceberg offline store leverages AWS Glue Catalog, a fully managed metadata
-  catalog that simplifies data discovery and schema management for data lakes. This
-  option gives you direct control over your AWS infrastructure and data storage,
-  unlike managed solutions like Snowflake or Databricks where compute and storage are 
-  abstracted away. Your data remains in your S3 buckets without vendor lock-in. 
+The Iceberg offline store leverages AWS Glue Catalog, a fully managed metadata
+catalog that simplifies data discovery and schema management for data lakes. This
+option gives you direct control over your AWS infrastructure and data storage,
+unlike managed solutions like Snowflake or Databricks where compute and storage are 
+abstracted away. Your data remains in your S3 buckets without vendor lock-in. 
 
-  ### Required Information
+### Required Information
 
-  To set up the Iceberg offline store, please provide:
+To set up the Iceberg offline store, please provide:
 
-  - **S3 bucket URI**: The location where your offline store data will be written
-    - Typically follows the pattern `s3://chalk-{organization}-data-bucket` (confirm with Chalk if different)
-  - **AWS Account ID**: The AWS account where your Chalk environment is deployed
+- **S3 bucket URI**: The location where your offline store data will be written. 
+Typically follows the pattern `s3://chalk-{organization}-data-bucket` (confirm with Chalk if different)
+- **AWS Account ID**: The AWS account where your Chalk environment is deployed
 
-  ### AWS Permissions
+### AWS Permissions
 
-  You'll need to grant the following IAM permissions. Note that many of these are
-  base permissions you may have already configured. The key addition is Glue
-  access for catalog operations, including table creation, schema evolution, and 
-  metadata management:
+You'll need to grant the following IAM permissions. Note that many of these are
+base permissions you may have already configured. The key addition is Glue
+access for catalog operations, including table creation, schema evolution, and 
+metadata management:
 
-  ```json
-  {
-      "Statement": [
-          {
-              "Action": [
-                  "s3:*",
-                  "dynamodb:*",
-                  "secretsmanager:*",
-                  "sqs:*",
-                  "sts:AssumeRole",
-                  "glue:*"
-              ],
-              "Effect": "Allow",
-              "Resource": "*"
-          }
-      ]
-  }
+```json
+{
+    "Statement": [
+        {
+            "Action": [
+                "s3:*",
+                "dynamodb:*",
+                "secretsmanager:*",
+                "sqs:*",
+                "sts:AssumeRole",
+                "glue:*"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        }
+    ]
+}
+```
 
