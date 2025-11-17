@@ -37,16 +37,11 @@ data teams for training set generation.
 To use Snowflake as your offline store, we require
 a warehouse, a database, a schema within that database, and a user with a role that
 has `OWNER` on that database. To provision all of these, you can run the following
-commands in a Snowflake worksheet or console. To generate your SSH key pair you can run
-the following:
+commands in a Snowflake worksheet or console. 
 
-```bash
-# Generate the key pair
-ssh-keygen -t rsa -b 4096 -m PEM -f snowflake_key
-
-# Get the public key in the right format (remove header/footer and newlines)
-grep -v "BEGIN PUBLIC KEY" snowflake_key.pub | grep -v "END PUBLIC KEY" | tr -d '\n'
-```
+Please follow the instructions [here](https://docs.snowflake.com/en/user-guide/key-pair-auth#generate-the-private-keys) 
+to generate your private and public keys for key-pair authentication in Snowflake. 
+Once you have generated your public and private keys, you can continue. 
 
 Then, in SnowSQL, run the following commands, replacing the variables at the top:
 
