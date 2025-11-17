@@ -241,3 +241,85 @@ When using manually-configured GKE nodepools, the nodepool for a workload can be
 workloads on a nodepool called `chalk-c3d-standard-4-nodepool`, use the node selector `cloud.google.com/gke-nodepool: chalk-c3d-standard-4-nodepool`.
 
 GKE nodepools cannot currently be configured in the Chalk dashboard, so they must be configured via the GCP console.
+
+
+## Advanced configuration via JSON
+
+While selecting an individual instance type or assigning workloads to a nodepool is typically sufficient for most production
+use-cases, this set of controls may not be sufficient when trying to achieve certain complex scheduling behaviors. In these cases,
+manual configuration via the raw JSON editor may be required.
+
+### Preferential scheduling on multiple nodepools
+
+Spot VMs in GKE and EKS can provide reduced underlying compute costs from your cloud provider, with several tradeoffs. The maintain
+caveat of spot VMs is that their availability may be limited, which means that if you request a spot instance, you are not guaranteed
+to actually get one. This means, for instance, that Chalk workloads scheduled on a spot GKE nodepool may fail to schedule for potentially
+long periods of time if spot VMs are not available, which can cause unexpected service outages.
+
+GKE nodepools cannot be configured to preferentially provision spot VMs but fall back to on-demand VMs; they must be strictly spot
+or on-demand. This means that if you want to preferentially schedule on spot VMs but fall back to on-demand VMs in the case where spot
+is not available, the best solution is to configure a custom `NodeAffinity` with a high-weight preference for a spot nodepool and a
+_requirement_ for a list of on-demand and spot nodepools.
+
+This advanced piece of configuration is not available via the guided UI and must be configured via JSON directly. Here is an example configuration for 
+a query server workload:
+
+```json
+{
+  "services": {
+    "engine": {
+      "affinity": {
+        "node_affinity": {
+          "preferred_during_scheduling_ignored_during_execution": [
+            {
+              "weight": 100,
+              "preference": {
+                "match_expressions": [
+                  {
+                    "key": "cloud.google.com/gke-nodepool",
+                    "operator": "In",
+                    "values": ["spot-nodepool-name"]
+                  }
+                ]
+              }
+            }
+          ],
+          "required_during_scheduling_ignored_during_execution": {
+            "node_selector_terms": [
+              {
+                "match_expressions": [
+                  {
+                    "key": "cloud.google.com/gke-nodepool",
+                    "operator": "In",
+                    "values": ["ondemand-nodepool-name", "spot-nodepool-name"]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "tolerations": [
+        {
+          "effect": "NoSchedule",
+          "key": "chalk.ai/nodepool",
+          "operator": "Equal",
+          "value": "ondemand-nodepool-name"
+        },
+        {
+          "effect": "NoSchedule",
+          "key": "chalk.ai/nodepool",
+          "operator": "Equal",
+          "value": "spot-nodepool-name"
+        }
+      ]
+    }
+  }
+}
+```
+
+Note that this preferred/required node affinity pair is not compatible with explicit node selectors, which means that any existing
+instance type or nodepool configuration must be removed before applying this JSON configuration.
+
+Note also that tolerations will need to be applied manually to allow the workload to run on these nodepools (if they are 
+marked as isolated nodepools, which is recommended).
