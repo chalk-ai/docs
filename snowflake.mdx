@@ -87,3 +87,96 @@ snowflake = SnowflakeSource(
 def resolver_fn(...) -> ...:
     return snowflake.query(...).first()
 ```
+
+## Required Permissions
+
+To use Snowflake as a Chalk datasource, the user or role specified in your integration must have the following permissions:
+
+### Core Query Permissions
+
+- `USAGE` on the warehouse
+- `USAGE` on the database
+- `USAGE` on the schema
+- `SELECT` on all tables and views being queried
+
+### Temporary Table Operations
+
+Chalk creates temporary tables during feature computation, so the role also needs:
+
+- `CREATE TEMPORARY TABLE` in the schema
+- `DROP` on temporary tables in the schema
+
+### Data Unloading (Optional)
+
+If you're using Chalk's data unload optimization to stages, grant:
+
+- `USAGE` on the stage
+- `READ` on the stage
+- `WRITE` on the stage
+
+### Recommended RBAC Setup
+
+Here's an example of setting up a role with the appropriate permissions:
+
+```sql
+-- Create a role for Chalk
+CREATE ROLE IF NOT EXISTS CHALK_ROLE;
+
+-- Grant warehouse permissions
+GRANT USAGE ON WAREHOUSE <warehouse_name> TO ROLE CHALK_ROLE;
+
+-- Grant database/schema permissions
+GRANT USAGE ON DATABASE <database_name> TO ROLE CHALK_ROLE;
+GRANT USAGE ON SCHEMA <database_name>.<schema_name> TO ROLE CHALK_ROLE;
+GRANT SELECT ON ALL TABLES IN SCHEMA <database_name>.<schema_name> TO ROLE CHALK_ROLE;
+
+-- Grant temporary table permissions
+GRANT CREATE TEMPORARY TABLE ON SCHEMA <database_name>.<schema_name> TO ROLE CHALK_ROLE;
+
+-- Grant stage permissions (if using data unloading)
+GRANT USAGE ON STAGE <stage_name> TO ROLE CHALK_ROLE;
+GRANT READ, WRITE ON STAGE <stage_name> TO ROLE CHALK_ROLE;
+
+-- Assign role to user
+GRANT ROLE CHALK_ROLE TO USER <chalk_user>;
+```
+
+## Creating a Stage for Data Unloading
+
+Chalk can optimize large query result transfers by unloading data to a Snowflake stage
+and reading it from cloud storage (GCS or S3). This is particularly useful for large
+feature computations.
+
+### Create a Named Stage
+
+First, create a stage in your Snowflake account:
+
+```sql
+-- Create an internal named stage
+CREATE OR REPLACE STAGE <stage_name>;
+
+-- Or create an external stage (e.g., for S3)
+CREATE OR REPLACE STAGE <stage_name>
+  URL = 's3://<bucket>/<path>'
+  CREDENTIALS = (AWS_KEY_ID = '<key>' AWS_SECRET_KEY = '<secret>');
+```
+
+### Configure the Stage Path
+
+After creating a stage, you'll see output like:
+
+```
+@CHALK_UNLOAD_STAGE
+```
+
+To enable data unloading in your Chalk features, add this stage reference to your environment variables
+in the Chalk UI. Go to **Settings → Variables** and add:
+
+```
+CHALK_SNOWFLAKE_UNLOAD_STAGE=<CHALK_UNLOAD_STAGE>
+```
+
+(Replace `<CHALK_UNLOAD_STAGE>` with your actual stage name.)
+
+Chalk will use this stage to unload and transfer large result sets efficiently, improving performance
+for large feature computations.
