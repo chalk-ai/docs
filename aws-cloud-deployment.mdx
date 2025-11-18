@@ -173,7 +173,8 @@ infrastructure in your cloud account:
                 "elasticache:DescribeCacheClusters",
                 "elasticache:AddTagsToResource",
                 "elasticache:RemoveTagsFromResource",
-                "elasticache:ListTagsForResource"
+                "elasticache:ListTagsForResource",
+                "glue:*",
                 "route53:*",
             ],
             "Effect": "Allow"
@@ -203,7 +204,7 @@ infrastructure in your cloud account:
 - `eks`: EKS cluster management for running feature engineering workloads
 - `kms`: Encryption keys for secrets
 - `secretsmanager`: Encrypting data source secrets from the web UI
-
+- `glue`: Iceberg Glue offline store
 ---
 
 ## Ongoing permissions

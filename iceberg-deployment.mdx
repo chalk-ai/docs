@@ -38,10 +38,12 @@ To set up the Iceberg offline store, please provide:
 Typically follows the pattern `s3://chalk-{organization}-data-bucket` (confirm with Chalk if different)
 - **AWS Account ID**: The AWS account where your Chalk environment is deployed
 
-### AWS Permissions
+---
 
-You'll need to grant the following IAM permissions. Note that many of these are
-base permissions you may have already configured. The key addition is Glue
+### Step 1: AWS Permissions
+
+You'll need to grant the following IAM permissions.
+Note that many of these are base permissions you may have already configured. The key addition is Glue
 access for catalog operations, including table creation, schema evolution, and 
 metadata management:
 
@@ -63,4 +65,19 @@ metadata management:
     ]
 }
 ```
+
+---
+
+### Step 2: Creating the database in Glue Catalog
+
+Before Chalk can use Iceberg for your offline store, you must create an AWS Glue database
+configured with your S3 bucket URI. This catalog will serve as the metadata store for your
+Iceberg tables.
+
+When creating your Glue catalog, ensure it is configured to use the same S3 bucket URI
+that you provided in the Required Information section above (typically
+`s3://chalk-{organization}-data-bucket`). The database within the Glue catalog should 
+be named `offline-store`. This ensures that Chalk can properly write and
+manage your offline store data within your designated storage location.
+
 
