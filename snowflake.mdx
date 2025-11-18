@@ -205,7 +205,7 @@ This role will be assumed by Snowflake to access the S3 bucket.
 
 Follow the [Snowflake IAM Role documentation](https://docs.snowflake.com/en/user-guide/data-load-s3-config-storage-integration#step-2-create-the-iam-role-in-aws) to create a role named `chalk-{organization}-offline-store-access-role`.
 
-**Important**: When setting the trust policy, use a temporary placeholder with your AWS account ID and external ID `"0000"`. You will update this with actual Snowflake credentials in Step 4.
+When setting the trust policy, use a temporary placeholder with your AWS account ID and external ID `"0000"`. You will update this with actual Snowflake credentials in Step 4.
 
 Attach an IAM policy that grants S3 permissions to this role (see Snowflake documentation for policy details).
 
