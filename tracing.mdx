@@ -39,6 +39,9 @@ ChalkClient().query(
 )
 ```
 
+Python tracing requires a peer dependency of `ddtrace<3,>=2.6` installed in the same
+environment as the `chalk` package for this feature to work.
+
 Once you have run a traced query, you can view the trace in the `Trace` tab of the Online Query page.
 
 ![Trace Tab](/img/online_query_trace_tab.png)
@@ -49,7 +52,10 @@ Once you have run a traced query, you can view the trace in the `Trace` tab of t
 Following [OpenTelemetry standards](https://opentelemetry.io/docs/languages/sdk-configuration/general/#otel_traces_sampler),
 you can also configure tracing via environment variables. Tracing across your environment can be configured using the
 environment variables `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG`, which you can set in your dashboard under
-`Settings > Variables`. The supported sampling strategies are detailed below:
+`Settings > Variables`. The default values of `OTEL_TRACES_SAMPLER=parentbased_traceidratio`
+and `OTEL_TRACES_SAMPLER_ARG=0.0001` will be used,unless an explicit value is set
+
+The supported sampling strategies are detailed below:
 
 | Environment Variable Configuration | Description                                               |
 |------------------------------------|-----------------------------------------------------------|
