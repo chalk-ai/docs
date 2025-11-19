@@ -39,13 +39,15 @@ ChalkClient().query(
 )
 ```
 
-Python tracing requires a peer dependency of `ddtrace<3,>=2.6` installed in the same
-environment as the `chalk` package for this feature to work.
-
 Once you have run a traced query, you can view the trace in the `Trace` tab of the Online Query page.
 
 ![Trace Tab](/img/online_query_trace_tab.png)
 
+
+### Requirements
+
+For Python, the following peer dependencies must be installed:
+- `ddtrace<3,>=2.6`
 
 ### Environment Configuration
 
