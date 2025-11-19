@@ -62,8 +62,8 @@ ScheduledQuery(
     name="enrich-transactions",
     schedule="0 0 * * *",
     output=[Transaction.clean_name, Transaction.category],
-    online=True,
-    offline=True,
+    store_online=True,
+    store_offline=True,
     incremental_resolvers="transactions",
 )
 ```
