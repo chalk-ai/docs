@@ -21,6 +21,7 @@ from datetime import timedelta
 
 @features
 class User:
+    id: int
     # Using text descriptors:
     expensive_fraud_score: float = feature(
         max_staleness="**1m 30s**"
