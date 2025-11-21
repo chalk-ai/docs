@@ -42,7 +42,7 @@ class Transaction:
     receipt: Receipt
 
     llm: P.PromptResponse = P.completion(
-        model="gpt-4o-mini-2024-07-18",
+        model="gpt-5.1-2025-11-13",
         messages=[P.message(
                 role="user",
                 content=F.jinja(
@@ -109,7 +109,7 @@ Combined with `F.jinja` templates, you can dynamically inject relevant feature v
 @features
 class Transaction:
     llm: P.PromptResponse = P.completion(
-        model="gpt-4o-mini-2024-07-18",
+        model="gpt-5.1-2025-11-13",
         messages=[...],
     )
 ```
@@ -164,7 +164,7 @@ This unlocks image analysis workflows like receipt or PDF parsing with minimal c
 class Receipt:
    image_url: str
    image_response: P.MultimodalPromptResponse = P.completion(
-       model="gpt-4o",
+       model="gpt-5.1",
        messages=[
            P.message(
                "user",
@@ -312,7 +312,7 @@ eval_run = chalk_client.prompt_evaluation(
         "analyze_sentiment-v1",
         "analyze_sentiment-v2",
         P.completion(
-            model="gpt-4o",
+            model="gpt-5.1",
             messages=[
                 P.message(role="system", content=system_message),
                 P.message(role="user", content=user_message),
