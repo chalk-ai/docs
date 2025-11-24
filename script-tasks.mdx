@@ -311,6 +311,37 @@ The task detail page displays:
 - `FAILED` - Task encountered an error or non-zero exit code
 - `CANCELED` - Task was manually canceled
 
+### Viewing Logs from CLI
+
+You can view task logs directly from the command line using the `chalk logs` command with the task's operation ID:
+
+```bash
+chalk logs --query "operation_id:TASK_ID"
+```
+
+The task ID is displayed in the CLI output when you submit a task, or you can find it in the dashboard URL.
+
+**Additional flags:**
+
+- `--follow` / `-f` - Stream logs in real-time as they are generated
+- `--start-time` - Filter logs from a specific time (e.g., `"1h ago"`, `"2024-01-01T00:00:00Z"`)
+- `--end-time` - Filter logs until a specific time (e.g., `"now"`, `"2024-01-01T01:00:00Z"`)
+
+**Examples:**
+
+```bash
+# Follow logs in real-time
+chalk logs --follow --query "operation_id:550e8400-e29b-41d4-a716-446655440000"
+
+# View logs from the last 2 hours
+chalk logs --query "operation_id:550e8400-e29b-41d4-a716-446655440000" --start-time "2h ago"
+
+# Search logs by other fields
+chalk logs --query "component:engine message:error"
+```
+
+For more information about the `chalk logs` command and available search fields, run `chalk logs --help`.
+
 ---
 
 ## Troubleshooting
@@ -343,6 +374,31 @@ If arguments aren't being passed correctly:
 ---
 
 ## Additional Usage
+
+### Logging in Script Tasks
+
+Script tasks can use `chalk_logger` for structured logging that appears in the Chalk dashboard. Logs are captured from your script's output and displayed in the task detail page.
+
+```python
+from chalk import chalk_logger
+
+def process_data(batch_size: str):
+    batch_size_int = int(batch_size)
+
+    chalk_logger.info(f"Starting data processing with batch_size={batch_size_int}")
+
+    # Your processing logic
+    for i in range(batch_size_int):
+        chalk_logger.debug(f"Processing batch {i+1}/{batch_size_int}")
+        # ... process data ...
+
+    chalk_logger.info("Data processing completed successfully")
+```
+
+You can also use standard `print()` statements, which will be captured in the task logs. However, `chalk_logger` provides:
+- Structured log levels (debug, info, warning, error)
+- Better integration with Chalk's logging infrastructure
+- Consistent formatting with resolver logs
 
 ### Running Class Methods
 
