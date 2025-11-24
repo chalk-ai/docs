@@ -344,35 +344,6 @@ For more information about the `chalk logs` command and available search fields,
 
 ---
 
-## Troubleshooting
-
-### Task Stuck in QUEUED
-
-If a task remains in `QUEUED` status:
-- Verify Kubernetes pods are running
-- Check for image pull errors or pod crashloops
-- Ensure the job queue is processing tasks
-
-### Import Errors
-
-```
-ModuleNotFoundError: No module named 'mypackage'
-```
-
-Solutions:
-- Ensure the package is in `requirements.txt` or `pyproject.toml`
-- Verify the package is installed in your active deployment
-- For modules, ensure the module path is correct
-
-### Argument Issues
-
-If arguments aren't being passed correctly:
-- Remember CLI args are always strings - convert types in your function
-- Use `key=value` format for kwargs, plain values for positional args
-- Test locally first with the same argument format
-
----
-
 ## Additional Usage
 
 ### Logging in Script Tasks
@@ -411,6 +382,35 @@ chalk task run scripts/processor.py::DataProcessor::run
 # Module-based class method
 chalk task run mypackage.processors::ETLProcessor::execute --module
 ```
+
+---
+
+## Troubleshooting
+
+### Task Stuck in QUEUED
+
+If a task remains in `QUEUED` status:
+- Verify Kubernetes pods are running
+- Check for image pull errors or pod crashloops
+- Ensure the job queue is processing tasks
+
+### Import Errors
+
+```
+ModuleNotFoundError: No module named 'mypackage'
+```
+
+Solutions:
+- Ensure the package is in `requirements.txt` or `pyproject.toml`
+- Verify the package is installed in your active deployment
+- For modules, ensure the module path is correct
+
+### Argument Issues
+
+If arguments aren't being passed correctly:
+- Remember CLI args are always strings - convert types in your function
+- Use `key=value` format for kwargs, plain values for positional args
+- Test locally first with the same argument format
 
 ---
 
