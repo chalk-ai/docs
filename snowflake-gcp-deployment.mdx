@@ -79,7 +79,7 @@ The storage integration creates a GCS service account with allowed storage locat
 Before setting up the storage integration, gather the following from your Chalk deployment:
 
 - **GCP Project ID**: The GCP project where your Chalk environment is deployed
-- **GCS Bucket Name**: Typically `chalk-{organization}-data-bucket` (confirm with Chalk if different)
+- **GCS Bucket Name**: Typically `chalk-{organization}-offline-store-bulk-insert` (confirm with Chalk if different)
 - **Snowflake Role Name**: The role name created in the Database Setup step (typically `CHALK_ROLE`)
 
 You'll also need appropriate GCP and Snowflake permissions:
@@ -96,17 +96,17 @@ Follow the [Snowflake GCS Storage Integration documentation](https://docs.snowfl
 
 ```sql
 -- Create the storage integration pointing to your GCS bucket
-CREATE STORAGE INTEGRATION "gcs-integration-chalk-{organization}-data-bucket"
+CREATE STORAGE INTEGRATION "gcs-integration-chalk-{organization}-offline-store-bulk-insert"
 TYPE = EXTERNAL_STAGE
 STORAGE_PROVIDER = 'GCS'
 ENABLED = true
-STORAGE_ALLOWED_LOCATIONS = ('gcs://chalk-{organization}-data-bucket/');
+STORAGE_ALLOWED_LOCATIONS = ('gcs://chalk-{organization}-offline-store-bulk-insert/');
 
 -- Grant usage permissions to the Chalk role
-GRANT USAGE ON INTEGRATION "gcs-integration-chalk-{organization}-data-bucket" TO ROLE "CHALK_ROLE";
+GRANT USAGE ON INTEGRATION "gcs-integration-chalk-{organization}-offline-store-bulk-insert" TO ROLE "CHALK_ROLE";
 
 -- Verify the integration was created successfully and retrieve the service account
-DESCRIBE INTEGRATION "gcs-integration-chalk-{organization}-data-bucket";
+DESCRIBE INTEGRATION "gcs-integration-chalk-{organization}-offline-store-bulk-insert";
 ```
 
 From the `DESCRIBE INTEGRATION` output, record the `STORAGE_GCP_SERVICE_ACCOUNT` value. This is the service account that Snowflake will use to access your GCS bucket.
@@ -169,7 +169,7 @@ Follow the [Snowflake IAM role assignment documentation](https://docs.snowflake.
 #### Using GCP Console:
 
 1. Navigate to Cloud Storage > Buckets
-2. Select your bucket: `chalk-{organization}-data-bucket`
+2. Select your bucket: `chalk-{organization}-offline-store-bulk-insert`
 3. Go to the "Permissions" tab
 4. Click "Grant Access"
 5. Add the service account from Step 1: `service-account@<id>.iam.gserviceaccount.com`
@@ -181,7 +181,7 @@ Follow the [Snowflake IAM role assignment documentation](https://docs.snowflake.
 ```bash
 # Grant the custom role to the Snowflake service account
 gsutil iam ch serviceAccount:<service-account>@<id>.iam.gserviceaccount.com:projects/<your-gcp-project-id>/roles/ChalkSnowflakeGCSAccess \
-    gs://chalk-{organization}-data-bucket
+    gs://chalk-{organization}-offline-store-bulk-insert
 ```
 
 **Important**: The service account must have access to the bucket before Snowflake can load or unload data.
@@ -207,8 +207,8 @@ You can optionally create an external stage in Snowflake that references your st
 ```sql
 -- Create an external stage pointing to your GCS bucket
 CREATE STAGE IF NOT EXISTS CHALK_GCS_STAGE
-  URL = 'gcs://chalk-{organization}-data-bucket/'
-  STORAGE_INTEGRATION = "gcs-integration-chalk-{organization}-data-bucket";
+  URL = 'gcs://chalk-{organization}-offline-store-bulk-insert/'
+  STORAGE_INTEGRATION = "gcs-integration-chalk-{organization}-offline-store-bulk-insert";
 
 -- Grant usage permissions to the Chalk role
 GRANT USAGE ON STAGE CHALK_GCS_STAGE TO ROLE "CHALK_ROLE";
@@ -224,7 +224,7 @@ LIST @CHALK_GCS_STAGE;
 After completing this setup:
 
 1. Share the following values with Chalk:
-   - Storage Integration Name (e.g., `gcs-integration-chalk-{organization}-data-bucket`)
+   - Storage Integration Name (e.g., `gcs-integration-chalk-{organization}-offline-store-bulk-insert`)
    - `STORAGE_GCP_SERVICE_ACCOUNT` (from Step 1)
    - GCP Project ID
    - GCS Bucket Name
@@ -250,7 +250,7 @@ Configure GCS lifecycle rules to automatically clean up incomplete multipart upl
 
 ```bash
 # Create a lifecycle rule to delete incomplete uploads after 7 days
-gsutil lifecycle set lifecycle-config.json gs://chalk-{organization}-data-bucket
+gsutil lifecycle set lifecycle-config.json gs://chalk-{organization}-offline-store-bulk-insert
 ```
 
 Example `lifecycle-config.json`:
