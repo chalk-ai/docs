@@ -142,6 +142,7 @@ In your GCP Console or using `gcloud`:
 
 ```bash
 # Create a custom role definition file: chalk-snowflake-gcs-role.yaml
+cat > chalk-snowflake-gcs-role.yaml <<EOF
 title: "Chalk Snowflake GCS Access"
 description: "Custom role for Snowflake to access Chalk GCS bucket"
 stage: "GA"
@@ -151,6 +152,7 @@ includedPermissions:
 - storage.objects.list
 - storage.objects.create
 - storage.objects.delete
+EOF
 
 # Create the custom role
 gcloud iam roles create ChalkSnowflakeGCSAccess \
@@ -164,7 +166,7 @@ gcloud iam roles create ChalkSnowflakeGCSAccess \
 
 Assign the custom IAM role to the Snowflake service account at the bucket level.
 
-Follow the [Snowflake IAM role assignment documentation](https://docs.snowflake.com/en/user-guide/data-load-gcs-config#step-2-configure-iam-permissions-for-the-bucket) to grant the role.
+Follow the [Snowflake IAM role assignment documentation](https://docs.snowflake.com/en/user-guide/data-load-gcs-config#assigning-the-custom-role-to-the-cloud-storage-service-account) to grant the role.
 
 #### Using GCP Console:
 
