@@ -1,0 +1,288 @@
+---
+title: Snowflake Setup Requirements (GCP)
+description: Setting up Snowflake as your offline store with Google Cloud Storage.
+published: true
+---
+
+To use Snowflake as your offline store, we require
+a warehouse, a database, a schema within that database, and a user with a role that
+has `OWNER` on that database. To provision all of these, you can run the following
+commands in a Snowflake worksheet or console.
+
+Please follow the instructions [here](https://docs.snowflake.com/en/user-guide/key-pair-auth#generate-the-private-keys)
+to generate your private and public keys for key-pair authentication in Snowflake.
+Once you have generated your public and private keys, you can continue.
+
+Then, in SnowSQL, run the following commands, replacing the variables at the top:
+
+```sql
+-- input variables (feel free to change these)
+SET WAREHOUSE_NAME='CHALK_WAREHOUSE';
+SET WAREHOUSE_SIZE='XSMALL';
+SET ROLE_NAME='CHALK_ROLE';
+SET USER_NAME='CHALK_USER';
+SET DB_NAME='CHALK';
+SET SCHEMA_NAME='OFFLINE_STORE';
+
+-- Create the database + schema + warehouse
+CREATE DATABASE IF NOT EXISTS IDENTIFIER($DB_NAME);
+USE DATABASE IDENTIFIER($DB_NAME);
+CREATE SCHEMA IF NOT EXISTS IDENTIFIER($SCHEMA_NAME);
+CREATE WAREHOUSE IF NOT EXISTS IDENTIFIER($WAREHOUSE_NAME) WITH WAREHOUSE_SIZE=$WAREHOUSE_SIZE;
+
+-- Create a role for Chalk
+CREATE ROLE IF NOT EXISTS IDENTIFIER($ROLE_NAME);
+GRANT OWNERSHIP ON DATABASE IDENTIFIER($DB_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+GRANT USAGE ON WAREHOUSE IDENTIFIER($WAREHOUSE_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+
+-- Create a user for Chalk
+CREATE USER IF NOT EXISTS IDENTIFIER($USER_NAME)
+    RSA_PUBLIC_KEY=`<your-public-key-here-without-BEGIN/END-lines>`
+    DEFAULT_ROLE=IDENTIFIER($ROLE_NAME)
+    DEFAULT_WAREHOUSE=IDENTIFIER($WAREHOUSE_NAME)
+    DEFAULT_NAMESPACE=IDENTIFIER(concat($DB_NAME, '.', $SCHEMA_NAME));
+
+-- derived variables
+SET QUALIFIED_SCHEMA_NAME=concat($DB_NAME, '.', $SCHEMA_NAME);
+
+-- Allow Chalk to create storage integrations for bulk loads from cloud object storage
+GRANT CREATE INTEGRATION ON ACCOUNT TO IDENTIFIER($ROLE_NAME);
+
+-- Allow Chalk to create internal/external stages for bulk loading
+GRANT CREATE STAGE ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO IDENTIFIER($ROLE_NAME);
+
+-- Grant Chalk owner on the db/schema and usage on the warehouse
+GRANT OWNERSHIP ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO IDENTIFIER($ROLE_NAME) REVOKE CURRENT GRANTS;
+GRANT USAGE ON WAREHOUSE IDENTIFIER($WAREHOUSE_NAME) TO IDENTIFIER($ROLE_NAME);
+GRANT OWNERSHIP ON DATABASE IDENTIFIER($DB_NAME) TO IDENTIFIER($ROLE_NAME);
+
+-- Grant the Chalk role to the Chalk user
+GRANT ROLE IDENTIFIER($ROLE_NAME) TO USER IDENTIFIER($USER_NAME);
+```
+
+Please share:
+
+- The `USER_NAME` and RSA private key with us securely via an encrypted message following [using GPG](/docs/public-key).
+- The `WAREHOUSE_NAME`, `DB_NAME`, `SCHEMA_NAME`, and `ROLE_NAME` so that we can configure the Chalk platform to use them.
+- Your Snowflake account name (`select current_account_name();`) and organization name (`select current_organization_name();`).
+
+---
+
+## Storage Integration Setup
+
+Once you have created the warehouse, database, schema, user, and role, the next step is to create storage integration(s).
+
+The storage integration creates a GCS service account with allowed storage locations, enabling Chalk to securely load and unload data from the offline store.
+
+### Required Information
+
+Before setting up the storage integration, gather the following from your Chalk deployment:
+
+- **GCP Project ID**: The GCP project where your Chalk environment is deployed
+- **GCS Bucket Name**: This is subject to custom naming, but may resemble `chalk-{organization}-offline-store-bulk-insert` (confirm with Chalk if different)
+- **Snowflake Role Name**: The role name created in the Database Setup step (typically `CHALK_ROLE`)
+
+You'll also need appropriate GCP and Snowflake permissions:
+- **GCP**: Permissions to create IAM custom roles and assign roles to service accounts
+- **Snowflake**: `ACCOUNTADMIN` role or equivalent permissions for `CREATE INTEGRATION`
+
+---
+
+### Step 1: Create Snowflake Storage Integration
+
+This creates the storage integration object in Snowflake that links to your GCS bucket.
+
+Follow the [Snowflake GCS Storage Integration documentation](https://docs.snowflake.com/en/user-guide/data-load-gcs-config#step-1-create-a-cloud-storage-integration-in-snowflake) and execute the following SQL commands (replace placeholders with actual values):
+
+```sql
+-- Create the storage integration pointing to your GCS bucket
+CREATE STORAGE INTEGRATION "gcs-integration-chalk-{organization}-offline-store-bulk-insert"
+TYPE = EXTERNAL_STAGE
+STORAGE_PROVIDER = 'GCS'
+ENABLED = true
+STORAGE_ALLOWED_LOCATIONS = ('gcs://chalk-{organization}-offline-store-bulk-insert/');
+
+-- Grant usage permissions to the Chalk role
+GRANT USAGE ON INTEGRATION "gcs-integration-chalk-{organization}-offline-store-bulk-insert" TO ROLE "CHALK_ROLE";
+
+-- Verify the integration was created successfully and retrieve the service account
+DESCRIBE INTEGRATION "gcs-integration-chalk-{organization}-offline-store-bulk-insert";
+```
+
+From the `DESCRIBE INTEGRATION` output, record the `STORAGE_GCP_SERVICE_ACCOUNT` value. This is the service account that Snowflake will use to access your GCS bucket.
+
+**Note**: Snowflake creates a single service account that is referenced by all GCS storage integrations in your Snowflake account. The service account identifier will look like: `service-account@<id>.iam.gserviceaccount.com`
+
+---
+
+### Step 2: Create Custom IAM Role in GCP
+
+This custom role will grant Snowflake the minimum permissions needed to read and write objects to your GCS bucket.
+
+Follow the [Snowflake GCS IAM configuration documentation](https://docs.snowflake.com/en/user-guide/data-load-gcs-config#step-3-grant-the-service-account-permissions-to-access-bucket-objects) to create a custom IAM role with the following permissions:
+
+**For data loading only:**
+- `storage.buckets.get`
+- `storage.objects.get`
+- `storage.objects.list`
+
+**For data loading and unloading (recommended):**
+- `storage.buckets.get`
+- `storage.objects.get`
+- `storage.objects.list`
+- `storage.objects.create`
+- `storage.objects.delete`
+
+**If using Cloud KMS encryption:**
+Additionally grant the service account the "Cloud KMS CryptoKey Encryptor/Decryptor" role on your key ring.
+
+#### Create the Custom Role
+
+In your GCP Console or using `gcloud`:
+
+```bash
+# Create a custom role definition file: chalk-snowflake-gcs-role.yaml
+cat > chalk-snowflake-gcs-role.yaml <<EOF
+title: "Chalk Snowflake GCS Access"
+description: "Custom role for Snowflake to access Chalk GCS bucket"
+stage: "GA"
+includedPermissions:
+- storage.buckets.get
+- storage.objects.get
+- storage.objects.list
+- storage.objects.create
+- storage.objects.delete
+EOF
+
+# Create the custom role
+gcloud iam roles create ChalkSnowflakeGCSAccess \
+    --project=<your-gcp-project-id> \
+    --file=chalk-snowflake-gcs-role.yaml
+```
+
+---
+
+### Step 3: Grant IAM Role to Service Account
+
+Assign the custom IAM role to the Snowflake service account at the bucket level.
+
+Follow the [Snowflake IAM role assignment documentation](https://docs.snowflake.com/en/user-guide/data-load-gcs-config#assigning-the-custom-role-to-the-cloud-storage-service-account) to grant the role.
+
+#### Using GCP Console:
+
+1. Navigate to Cloud Storage > Buckets
+2. Select your bucket: `chalk-{organization}-offline-store-bulk-insert`
+3. Go to the "Permissions" tab
+4. Click "Grant Access"
+5. Add the service account from Step 1: `service-account@<id>.iam.gserviceaccount.com`
+6. Select the custom role: `ChalkSnowflakeGCSAccess`
+7. Save the changes
+
+#### Using gcloud:
+
+```bash
+# Grant the custom role to the Snowflake service account
+gsutil iam ch serviceAccount:<service-account>@<id>.iam.gserviceaccount.com:projects/<your-gcp-project-id>/roles/ChalkSnowflakeGCSAccess \
+    gs://chalk-{organization}-offline-store-bulk-insert
+```
+
+**Important**: The service account must have access to the bucket before Snowflake can load or unload data.
+
+---
+
+### Step 4: Configure Domain Restrictions (if applicable)
+
+For organizations created after May 3, 2024, Snowflake enforces domain restrictions that may require additional configuration.
+
+If you encounter access issues related to domain restrictions:
+
+1. Review your organization's domain restriction policy in GCP
+2. Ensure the Snowflake service account is authorized
+3. Contact Chalk support if you need assistance with domain configuration
+
+---
+
+### Step 5: Create External Stage (Optional)
+
+You can optionally create an external stage in Snowflake that references your storage integration for easier data access:
+
+```sql
+-- Create an external stage pointing to your GCS bucket
+CREATE STAGE IF NOT EXISTS CHALK_GCS_STAGE
+  URL = 'gcs://chalk-{organization}-offline-store-bulk-insert/'
+  STORAGE_INTEGRATION = "gcs-integration-chalk-{organization}-offline-store-bulk-insert";
+
+-- Grant usage permissions to the Chalk role
+GRANT USAGE ON STAGE CHALK_GCS_STAGE TO ROLE "CHALK_ROLE";
+
+-- List files in the stage to verify it works
+LIST @CHALK_GCS_STAGE;
+```
+
+---
+
+### Next Steps
+
+After completing this setup:
+
+1. Share the following values with Chalk:
+   - Storage Integration Name (e.g., `gcs-integration-chalk-{organization}-offline-store-bulk-insert`)
+   - `STORAGE_GCP_SERVICE_ACCOUNT` (from Step 1)
+   - GCP Project ID
+   - GCS Bucket Name
+   - External Stage Name (if created in Step 5)
+
+2. Verify the integration works:
+   ```sql
+   -- Test loading a sample file (if available)
+   COPY INTO <test_table>
+   FROM @CHALK_GCS_STAGE/<test_file>
+   FILE_FORMAT = (TYPE = CSV);
+   ```
+
+Chalk will use these values to configure your offline store in the platform.
+
+---
+
+## Additional Considerations
+
+### Lifecycle Management
+
+Configure GCS lifecycle rules to automatically clean up incomplete multipart uploads:
+
+```bash
+# Create a lifecycle rule to delete incomplete uploads after 7 days
+gsutil lifecycle set lifecycle-config.json gs://chalk-{organization}-offline-store-bulk-insert
+```
+
+Example `lifecycle-config.json`:
+```json
+{
+  "lifecycle": {
+    "rule": [
+      {
+        "action": {"type": "Delete"},
+        "condition": {
+          "age": 7,
+          "matchesPrefix": [""]
+        }
+      }
+    ]
+  }
+}
+```
+
+### Monitoring and Auditing
+
+Enable Cloud Audit Logs for your GCS bucket to monitor Snowflake's access:
+
+1. Go to IAM & Admin > Audit Logs
+2. Enable "Admin Read", "Data Read", and "Data Write" logs for Cloud Storage
+3. Review logs in Cloud Logging to track access patterns
+
+### Performance Optimization
+
+- Use appropriate warehouse sizes based on your data volume
+- Consider using clustering keys for frequently queried tables
+- Monitor warehouse usage and adjust AUTO_SUSPEND and AUTO_RESUME settings
+- Use folder structures in GCS with trailing slashes in stage URLs for better organization
