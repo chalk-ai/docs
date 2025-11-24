@@ -20,17 +20,27 @@ All tasks are tracked and monitored through the Chalk dashboard with full logs, 
 
 ## Quick Start
 
-The fastest way to run a script task is using the Chalk CLI:
+The fastest way to run a script task is using the Chalk CLI.
+
+First, create a simple Python script:
 
 ```bash
-chalk task run my_script.py
+echo 'print("Hello from Chalk script tasks!")' > script.py
 ```
 
-You can also run specific functions:
+Then, run it with the Chalk CLI:
 
 ```bash
-chalk task run scripts/backfill.py::process_users --arg dry_run=true
+chalk task run script.py
 ```
+
+The CLI will output a link to view your task in the dashboard:
+
+```
+✓ View task at: https://chalk.ai/projects/my-project/environments/prod/tasks/550e8400...
+```
+
+Click the link to see your script's output, status, and execution metrics.
 
 ---
 
@@ -41,12 +51,12 @@ chalk task run scripts/backfill.py::process_users --arg dry_run=true
 The `chalk task run` command executes Python scripts in your deployment:
 
 ```bash
-chalk task run [function_reference] [flags]
+chalk task run [target] [flags]
 ```
 
-### Function Reference Formats
+### Target Formats
 
-The `function_reference` supports multiple formats:
+The `target` supports multiple formats:
 
 #### Running a File
 
@@ -64,114 +74,116 @@ Execute a specific function from a file:
 chalk task run scripts/backfill.py::process_batch
 ```
 
-#### Running a Class Method
-
-Execute a class method:
-
-```bash
-chalk task run scripts/processor.py::DataProcessor::run
-```
-
 #### Running a Module
 
-For installed Python modules, use the `--module` flag:
+For installed Python modules, use the `-m` / `--module` flag. Modules require `--branch` for access to your deployment. See [Branch Execution](#branch-execution) for details.
 
 ```bash
 # Module execution
-chalk task run mypackage.scripts.backfill --module
+chalk task run -m mypackage.scripts.backfill --branch my-branch
 
 # Module function
-chalk task run mypackage.scripts.backfill::main --module
-
-# Module class method
-chalk task run mypackage.processors::ETLProcessor::execute --module
+chalk task run -m mypackage.scripts.backfill::main --branch my-branch
 ```
 
 ---
 
 ## Passing Arguments
 
-### Keyword Arguments
-
-Pass arguments using `key=value` syntax:
-
-```bash
-chalk task run script.py::process \
-  --arg user_id=123 \
-  --arg dry_run=true \
-  --arg region=us-west
-```
-
-These are passed as keyword arguments to your function:
-
-```python
-def process(user_id: str, dry_run: str = "false", region: str = "us-east"):
-    # Arguments are passed as strings from CLI
-    is_dry_run = dry_run == "true"
-    print(f"Processing user {user_id} in {region}, dry_run={is_dry_run}")
-```
-
 <TipInfo>
 CLI arguments are always passed as strings. Your function should handle type conversion as needed.
 </TipInfo>
 
-### Positional Arguments
+### Arguments for Functions
 
-Pass positional arguments without the `=`:
+When running a specific function (with `::function`), arguments are passed directly to your function as `*args` and `**kwargs`:
 
 ```bash
-chalk task run script.py::greet --arg Alice --arg Bob
+chalk task run script.py::backfill --arg 2024-01-01 --arg 2024-12-31 --arg dry_run=true
 ```
 
 ```python
-def greet(name1: str, name2: str):
-    print(f"Hello {name1} and {name2}!")
+def backfill(start_date: str, end_date: str, dry_run: str = "false"):
+    """
+    Positional arguments: start_date, end_date
+    Keyword arguments: dry_run
+    """
+    is_dry_run = dry_run == "true"
+    print(f"Backfilling from {start_date} to {end_date} (dry_run={is_dry_run})")
+
+    if not is_dry_run:
+        # Perform actual backfill
+        pass
 ```
 
-### Mixed Arguments
+### Arguments for Whole Files
 
-Combine positional and keyword arguments:
+When running a whole file (without `::function`), arguments are passed as command-line arguments. You can use `sys.argv` or an argument parser to access them:
+
+**Using sys.argv:**
+
+Direct access to raw command-line arguments as a list:
 
 ```bash
-chalk task run script.py::generate_report \
-  --arg sales \
-  --arg format=pdf \
-  --arg email=team@company.com
+chalk task run script.py --arg 2024-01-01 --arg 2024-12-31
+```
+
+```python
+#!/usr/bin/env python3
+import sys
+
+if len(sys.argv) >= 3:
+    start_date = sys.argv[1]
+    end_date = sys.argv[2]
+    print(f"Processing data from {start_date} to {end_date}")
+```
+
+**Using argparse:**
+
+Provides automatic parsing, help messages, and type handling:
+
+```bash
+chalk task run process.py --arg users.csv --arg --dry-run --arg output_dir=./results
+```
+
+```python
+#!/usr/bin/env python3
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('input_file', help='Input CSV file')
+parser.add_argument('--dry-run', action='store_true', help='Run without making changes')
+parser.add_argument('--output_dir', default='./output', help='Output directory')
+args = parser.parse_args()
+
+print(f"Processing {args.input_file}")
+print(f"Dry run: {args.dry_run}")
+print(f"Output directory: {args.output_dir}")
 ```
 
 ---
 
 ## Batch Execution
 
-Execute the same script multiple times with different parameters using a JSONL file.
+Execute the same script multiple times with different parameters using a JSONL file. This is useful for hyperparameter sweeps, batch processing, or running experiments across different data segments.
 
 ### JSONL Format
 
 Each line is a JSON object with `kwargs` (and optionally `args`):
 
 ```jsonl
-{"kwargs": {"user_id": 101, "region": "us-west"}}
-{"kwargs": {"user_id": 102, "region": "us-east"}}
-{"kwargs": {"user_id": 103, "region": "eu-central"}}
+{"kwargs": {"learning_rate": "0.001", "batch_size": "32", "epochs": "10"}}
+{"kwargs": {"learning_rate": "0.005", "batch_size": "64", "epochs": "10"}}
+{"kwargs": {"learning_rate": "0.01", "batch_size": "128", "epochs": "5"}}
 ```
 
 ### Running Batch Tasks
 
 ```bash
-chalk task run scripts/backfill.py::process_user --args-file users.jsonl
+chalk task run scripts/train_model.py::train --args-file hyperparams.jsonl
 ```
 
-This creates a separate task for each line in the file. The CLI returns all created task IDs:
-
-```json
-{
-  "task_ids": [
-    "550e8400-e29b-41d4-a716-446655440001",
-    "550e8400-e29b-41d4-a716-446655440002",
-    "550e8400-e29b-41d4-a716-446655440003"
-  ]
-}
-```
+This creates a separate task for each line in the file. The CLI will show progress and provide a link to view all tasks in the dashboard.
 
 ### Generating JSONL Files
 
@@ -214,7 +226,7 @@ with open("users_to_backfill.jsonl", "w") as f:
 Test code changes before merging by running tasks on a branch deployment:
 
 ```bash
-chalk task run my_script.py --branch feature/new-algorithm
+chalk task run scripts.py --branch feature/new-algorithm
 ```
 
 This automatically:
@@ -225,7 +237,7 @@ This automatically:
 You can skip the automatic apply if the branch is already deployed:
 
 ```bash
-chalk task run my_script.py --branch feature/new-algorithm --skip-apply
+chalk task run scripts/hello.py --branch feature/new-algorithm --skip-apply
 ```
 
 See [Working with Branches](/docs/branches) for more information.
@@ -234,56 +246,33 @@ See [Working with Branches](/docs/branches) for more information.
 
 ## CLI Flags Reference
 
-### `--module`, `-m`
-Treat the function reference as a module import path instead of a file path.
+### Module flag
+
+`-m, --module` - Treat the target as a module import path instead of a file path.
 
 ```bash
-chalk task run mypackage.analytics.report --module
+chalk task run -m mypackage.analytics.report
 ```
 
-### `--branch BRANCH_NAME`
-Execute code from a specific git branch. See [Branch Execution](#branch-execution).
+### Branch flag
 
-### `--arg KEY=VALUE` or `--arg VALUE`
-Pass arguments to your script. Can be specified multiple times. See [Passing Arguments](#passing-arguments).
+`--branch BRANCH_NAME` - Execute code from a specific git branch. See [Branch Execution](#branch-execution).
 
-### `--args-file FILE.jsonl`
-Execute script multiple times with different arguments. See [Batch Execution](#batch-execution).
+### Argument flags
 
-### `--max-retries N`
-Set number of retry attempts on failure. Defaults to `0` (no retries).
+`--arg KEY=VALUE` or `--arg VALUE` - Pass arguments to your script. Can be specified multiple times. See [Passing Arguments](#passing-arguments).
+
+### Batch execution flag
+
+`--args-file FILE.jsonl` - Execute script multiple times with different arguments. See [Batch Execution](#batch-execution).
+
+### Retry flag
+
+`--max-retries N` - Set number of retry attempts on failure. Defaults to `0` (no retries).
 
 ```bash
 chalk task run flaky_api_call.py --max-retries 3
 ```
-
----
-
-## Python Client API
-
-<TipInfo>
-The Python client API for script tasks is primarily used internally. For most use cases, use the CLI.
-</TipInfo>
-
-### Submitting a Script Task
-
-To submit a script task programmatically, use the Chalk CLI. Full Python client API support is planned for future releases.
-
-For now, you can shell out to the CLI from Python:
-
-```python
-import subprocess
-import json
-
-result = subprocess.run([
-    "chalk", "task", "run", "my_script.py",
-    "--arg", "param=value"
-], capture_output=True, text=True)
-
-output = json.loads(result.stdout)
-task_ids = output.get("task_ids", [])
-```
-
 
 ---
 
@@ -296,26 +285,23 @@ Script tasks appear in the Chalk dashboard where you can monitor their execution
 After submitting a task, the CLI outputs a link to the dashboard:
 
 ```bash
-$ chalk task run my_script.py
+$ chalk task run scripts/hello.py
 
-Task submitted successfully!
-Task ID: 550e8400-e29b-41d4-a716-446655440000
-Status: QUEUED
-
-View in dashboard:
-https://chalk.ai/projects/my-project/environments/prod/tasks/550e8400...
+✓ View task at: https://chalk.ai/projects/my-project/environments/prod/tasks/550e8400...
 ```
 
-### Task Information
+You can also view all tasks at the tasks overview page, which shows aggregate CPU and memory utilization charts across all running tasks.
 
-The dashboard displays:
+### Task Details
 
-- **Status**: Current state (QUEUED, WORKING, COMPLETED, FAILED)
-- **Execution logs**: Full stdout and stderr output
-- **CPU/Memory metrics**: Resource utilization charts
-- **Execution timeline**: Visual timeline of task lifecycle
-- **Source code**: Download button for uploaded scripts
-- **Error details**: Stack traces and exit codes for failures
+The task detail page displays:
+
+- **Execution timeline** - Visual timeline showing queue time, execution attempts, and retries
+- **Status** - Current state (QUEUED, WORKING, COMPLETED, FAILED, CANCELED)
+- **Logs** - Full stdout and stderr output with search and filtering
+- **Metrics** - CPU and memory utilization for the task
+- **Source code** - View and download the uploaded script
+- **Task metadata** - Branch, deployment ID, resource group, start/end times, and author
 
 ### Task Statuses
 
@@ -323,207 +309,7 @@ The dashboard displays:
 - `WORKING` - Task is currently running
 - `COMPLETED` - Task finished successfully
 - `FAILED` - Task encountered an error or non-zero exit code
-
----
-
-## Complete Example
-
-Here's a complete example demonstrating best practices for a production script task:
-
-```python
-#!/usr/bin/env python3
-"""
-User Feature Backfill Script
-"""
-import os
-import sys
-import json
-from datetime import datetime
-
-def backfill_user_features(
-    start_date: str,
-    end_date: str,
-    user_segment: str = "all",
-    dry_run: str = "true"
-):
-    """
-    Backfill user features for date range.
-
-    Args:
-        start_date: Start date in YYYY-MM-DD format
-        end_date: End date in YYYY-MM-DD format
-        user_segment: User segment filter
-        dry_run: If "true", don't make actual changes
-    """
-    is_dry_run = dry_run.lower() == "true"
-
-    print(json.dumps({
-        "level": "INFO",
-        "message": "Backfill started",
-        "start_date": start_date,
-        "end_date": end_date,
-        "user_segment": user_segment,
-        "dry_run": is_dry_run
-    }))
-
-    try:
-        users = get_users_for_backfill(user_segment)
-        total_users = len(users)
-        print(f"Processing {total_users} users")
-
-        processed = 0
-        failed = []
-
-        for i, user_id in enumerate(users, 1):
-            try:
-                if not is_dry_run:
-                    compute_features_for_user(user_id, start_date, end_date)
-                processed += 1
-
-                if i % (total_users // 10 or 1) == 0:
-                    percent = (i / total_users) * 100
-                    print(f"Progress: {i}/{total_users} ({percent:.1f}%)")
-
-            except Exception as e:
-                print(f"ERROR: Failed user {user_id}: {e}")
-                failed.append(user_id)
-
-        success_rate = ((processed - len(failed)) / processed * 100) if processed > 0 else 0
-        print(json.dumps({
-            "level": "INFO",
-            "message": "Backfill completed",
-            "total_users": total_users,
-            "processed": processed,
-            "failed": len(failed),
-            "success_rate": f"{success_rate:.1f}%"
-        }))
-
-        if failed:
-            print(f"Failed user IDs: {failed[:100]}")
-            sys.exit(1)
-
-    except Exception as e:
-        print(json.dumps({
-            "level": "ERROR",
-            "message": "Fatal error",
-            "error": str(e)
-        }))
-        sys.exit(1)
-
-def get_users_for_backfill(segment: str) -> list[int]:
-    # Your logic here
-    return list(range(1, 1001))
-
-def compute_features_for_user(user_id: int, start_date: str, end_date: str):
-    # Your feature computation logic
-    pass
-```
-
-### Running the Example
-
-**Dry run first:**
-
-```bash
-chalk task run backfill.py::backfill_user_features \
-  --arg start_date=2025-01-01 \
-  --arg end_date=2025-01-31 \
-  --arg user_segment=premium \
-  --arg dry_run=true
-```
-
-**Then run for real:**
-
-```bash
-chalk task run backfill.py::backfill_user_features \
-  --arg start_date=2025-01-01 \
-  --arg end_date=2025-01-31 \
-  --arg user_segment=premium \
-  --arg dry_run=false \
-  --max-retries 2
-```
-
----
-
-## Best Practices
-
-### 1. Idempotency
-
-Design scripts to be safely re-runnable:
-
-```python
-def process_user(user_id: int):
-    if is_already_processed(user_id):
-        print(f"User {user_id} already processed, skipping")
-        return
-
-    perform_work(user_id)
-    mark_processed(user_id)
-```
-
-### 2. Structured Logging
-
-Use JSON logging for better observability:
-
-```python
-import json
-from datetime import datetime
-
-def log(level: str, message: str, **context):
-    entry = {
-        "timestamp": datetime.now().isoformat(),
-        "level": level,
-        "message": message,
-        **context
-    }
-    print(json.dumps(entry))
-```
-
-### 3. Error Handling
-
-Catch and log errors with context:
-
-```python
-def process_batch(items: list):
-    failed = []
-    for item in items:
-        try:
-            process_item(item)
-        except Exception as e:
-            print(f"ERROR processing {item}: {e}")
-            failed.append(item)
-
-    if failed:
-        print(f"SUMMARY: {len(failed)} failures")
-        sys.exit(1)
-```
-
-### 4. Progress Tracking
-
-Report progress for long-running tasks:
-
-```python
-def process_large_dataset(items: list):
-    total = len(items)
-    for i, item in enumerate(items, 1):
-        process_item(item)
-        if i % 100 == 0:
-            print(f"Progress: {i}/{total} ({i/total*100:.1f}%)")
-```
-
-### 5. Dry Run Mode
-
-Always support dry-run for testing:
-
-```python
-def migrate_data(dry_run: str = "true"):
-    is_dry_run = dry_run.lower() == "true"
-    print(f"Running in {'DRY RUN' if is_dry_run else 'LIVE'} mode")
-
-    for record in get_records():
-        print(f"Would update: {record}")
-        if not is_dry_run:
-            update_record(record)
-```
+- `CANCELED` - Task was manually canceled
 
 ---
 
@@ -554,12 +340,21 @@ If arguments aren't being passed correctly:
 - Use `key=value` format for kwargs, plain values for positional args
 - Test locally first with the same argument format
 
-### Memory Issues
+---
 
-If tasks are killed due to memory:
-- Process data in smaller batches
-- Use generators instead of loading everything into memory
-- Optimize your code to use less memory
+## Additional Usage
+
+### Running Class Methods
+
+You can execute class methods using the double-colon syntax:
+
+```bash
+# File-based class method
+chalk task run scripts/processor.py::DataProcessor::run
+
+# Module-based class method
+chalk task run mypackage.processors::ETLProcessor::execute --module
+```
 
 ---
 
