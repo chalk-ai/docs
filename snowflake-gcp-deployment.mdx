@@ -79,7 +79,7 @@ The storage integration creates a GCS service account with allowed storage locat
 Before setting up the storage integration, gather the following from your Chalk deployment:
 
 - **GCP Project ID**: The GCP project where your Chalk environment is deployed
-- **GCS Bucket Name**: Typically `chalk-{organization}-offline-store-bulk-insert` (confirm with Chalk if different)
+- **GCS Bucket Name**: This is subject to custom naming, but may resemble `chalk-{organization}-offline-store-bulk-insert` (confirm with Chalk if different)
 - **Snowflake Role Name**: The role name created in the Database Setup step (typically `CHALK_ROLE`)
 
 You'll also need appropriate GCP and Snowflake permissions:
