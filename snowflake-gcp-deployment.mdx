@@ -119,7 +119,7 @@ From the `DESCRIBE INTEGRATION` output, record the `STORAGE_GCP_SERVICE_ACCOUNT`
 
 This custom role will grant Snowflake the minimum permissions needed to read and write objects to your GCS bucket.
 
-Follow the [Snowflake GCS IAM configuration documentation](https://docs.snowflake.com/en/user-guide/data-load-gcs-config#step-2-configure-iam-permissions-for-the-bucket) to create a custom IAM role with the following permissions:
+Follow the [Snowflake GCS IAM configuration documentation](https://docs.snowflake.com/en/user-guide/data-load-gcs-config#step-3-grant-the-service-account-permissions-to-access-bucket-objects) to create a custom IAM role with the following permissions:
 
 **For data loading only:**
 - `storage.buckets.get`
