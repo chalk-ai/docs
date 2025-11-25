@@ -1,0 +1,390 @@
+---
+title: Tasks
+description: Run arbitrary Python scripts in your Chalk deployment
+published: true
+---
+
+import { TipInfo, TipGood } from '@/components/Tip'
+
+Tasks let you run arbitrary Python code in your Chalk deployment environment with full access to your resolvers, dependencies, and infrastructure.
+
+Tasks execute in the same environment as your resolvers, making them ideal for:
+- **Data backfills**: Recompute historical features or migrate data
+- **One-off computations**: Run ad-hoc analyses, reports, or maintenance tasks
+- **ML training**: Execute training scripts with access to your feature infrastructure
+- **Testing and validation**: Run data quality checks or integration tests
+
+All tasks are tracked and monitored through the Chalk dashboard with full logs, metrics, and status tracking.
+
+---
+
+## Quick Start
+
+The fastest way to run a task is using the Chalk CLI.
+
+First, create a simple Python script:
+
+```bash
+echo 'print("Hello from Chalk tasks!")' > script.py
+```
+
+Then, run it with the Chalk CLI:
+
+```bash
+chalk task run script.py
+```
+
+The CLI will output a link to view your task in the dashboard:
+
+```
+✓ View task at: https://chalk.ai/projects/my-project/environments/prod/tasks/550e8400...
+```
+
+Click the link to see your script's output, status, and execution metrics.
+
+---
+
+## CLI Reference
+
+### Basic Usage
+
+The `chalk task run` command executes Python scripts in your deployment:
+
+```bash
+chalk task run [target] [flags]
+```
+
+### Target Formats
+
+The `target` supports multiple formats:
+
+#### Running a File
+
+Execute an entire Python script:
+
+```bash
+chalk task run scripts/data_migration.py
+```
+
+#### Running a Function
+
+Execute a specific function from a file:
+
+```bash
+chalk task run scripts/backfill.py::process_batch
+```
+
+#### Running a Module
+
+For installed Python modules, use the `-m` / `--module` flag. Modules require `--branch` for access to your deployment. See [Branch Execution](#branch-execution) for details.
+
+```bash
+# Module execution
+chalk task run -m mypackage.scripts.backfill --branch my-branch
+
+# Module function
+chalk task run -m mypackage.scripts.backfill::main --branch my-branch
+```
+
+---
+
+## Passing Arguments
+
+<TipInfo>
+CLI arguments are always passed as strings. Your function should handle type conversion as needed.
+</TipInfo>
+
+### Arguments for Functions
+
+When running a specific function (with `::function`), arguments are passed directly to your function as `*args` and `**kwargs`:
+
+```bash
+chalk task run script.py::backfill --arg 2024-01-01 --arg 2024-12-31 --arg dry_run=true
+```
+
+```python
+def backfill(start_date: str, end_date: str, dry_run: str = "false"):
+    """
+    Positional arguments: start_date, end_date
+    Keyword arguments: dry_run
+    """
+    is_dry_run = dry_run == "true"
+    print(f"Backfilling from {start_date} to {end_date} (dry_run={is_dry_run})")
+
+    if not is_dry_run:
+        # Perform actual backfill
+        pass
+```
+
+### Arguments for Whole Files
+
+When running a whole file (without `::function`), arguments are passed as command-line arguments. You can use `sys.argv` or an argument parser to access them:
+
+**Using sys.argv:**
+
+Direct access to raw command-line arguments as a list:
+
+```bash
+chalk task run script.py --arg 2024-01-01 --arg 2024-12-31
+```
+
+```python
+#!/usr/bin/env python3
+import sys
+
+if len(sys.argv) >= 3:
+    start_date = sys.argv[1]
+    end_date = sys.argv[2]
+    print(f"Processing data from {start_date} to {end_date}")
+```
+
+**Using argparse:**
+
+Provides automatic parsing, help messages, and type handling:
+
+```bash
+chalk task run process.py --arg users.csv --arg --dry-run --arg output_dir=./results
+```
+
+```python
+#!/usr/bin/env python3
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('input_file', help='Input CSV file')
+parser.add_argument('--dry-run', action='store_true', help='Run without making changes')
+parser.add_argument('--output_dir', default='./output', help='Output directory')
+args = parser.parse_args()
+
+print(f"Processing {args.input_file}")
+print(f"Dry run: {args.dry_run}")
+print(f"Output directory: {args.output_dir}")
+```
+
+---
+
+## Batch Execution
+
+Execute the same script multiple times with different parameters using a JSONL file. This is useful for hyperparameter sweeps, batch processing, or running experiments across different data segments.
+
+### JSONL Format
+
+Each line is a JSON object with `kwargs` (and optionally `args`):
+
+```jsonl
+{"kwargs": {"learning_rate": "0.001", "batch_size": "32", "epochs": "10"}}
+{"kwargs": {"learning_rate": "0.005", "batch_size": "64", "epochs": "10"}}
+{"kwargs": {"learning_rate": "0.01", "batch_size": "128", "epochs": "5"}}
+```
+
+### Running Batch Tasks
+
+```bash
+chalk task run scripts/train_model.py::train --args-file hyperparams.jsonl
+```
+
+This creates a separate task for each line in the file. The CLI will show progress and provide a link to view all tasks in the dashboard.
+
+### Generating JSONL Files
+
+**From Python:**
+
+```python
+import json
+
+params = [
+    {"kwargs": {"user_id": i, "region": "us-west"}}
+    for i in range(1000, 2000)
+]
+
+with open("batch_params.jsonl", "w") as f:
+    for param in params:
+        f.write(json.dumps(param) + "\n")
+```
+
+**From a database query:**
+
+```python
+import json
+import psycopg2
+
+conn = psycopg2.connect(...)
+cursor = conn.cursor()
+cursor.execute("SELECT user_id, region FROM users WHERE needs_backfill = true")
+
+with open("users_to_backfill.jsonl", "w") as f:
+    for user_id, region in cursor:
+        f.write(json.dumps({
+            "kwargs": {"user_id": user_id, "region": region}
+        }) + "\n")
+```
+
+---
+
+## Branch Execution
+
+When you're making changes across multiple files, updating dependencies, or modifying resolvers that your script uses, it's important to test everything together before merging to production. Branch deployments let you run tasks in an isolated environment that includes all your changes:
+
+```bash
+chalk task run scripts.py --branch feature/new-algorithm
+```
+
+This automatically:
+1. Runs `chalk apply --branch feature/new-algorithm`
+2. Waits for the branch deployment to be ready
+3. Submits the task to the branch environment
+
+You can skip the automatic apply if the branch is already deployed:
+
+```bash
+chalk task run scripts/hello.py --branch feature/new-algorithm --skip-apply
+```
+
+See [Working with Branches](/docs/branches) for more information.
+
+---
+
+## CLI Flags Reference
+
+### Module flag
+
+`-m, --module` - Treat the target as a module import path instead of a file path.
+
+```bash
+chalk task run -m mypackage.analytics.report
+```
+
+### Branch flags
+
+`--branch BRANCH_NAME` - Execute code from a specific git branch. See [Branch Execution](#branch-execution).
+
+`--skip-apply` - Skip the automatic `chalk apply` when running with `--branch`. Use this if the branch is already deployed.
+
+
+### Argument flags
+
+`--arg KEY=VALUE` or `--arg VALUE` - Pass arguments to your script. Can be specified multiple times. See [Passing Arguments](#passing-arguments).
+
+`--args-file FILE.jsonl` - Execute script multiple times with different arguments from a JSONL file. See [Batch Execution](#batch-execution).
+
+### Execution flags
+
+`--max-retries N` - Set number of retry attempts on failure. Defaults to `0` (no retries).
+
+```bash
+chalk task run flaky_api_call.py --max-retries 3
+```
+
+---
+
+## Monitoring and Dashboard
+
+Tasks appear in the Chalk dashboard where you can monitor their execution and debug failures.
+
+### Accessing the Dashboard
+
+After submitting a task, the CLI outputs a link to the dashboard:
+
+```bash
+$ chalk task run scripts/hello.py
+
+✓ View task at: https://chalk.ai/projects/my-project/environments/prod/tasks/550e8400...
+```
+
+You can also view all tasks at the tasks overview page, which shows aggregate CPU and memory utilization charts across all running tasks.
+
+### Task Details
+
+The task detail page displays:
+
+- **Execution timeline** - Visual timeline showing queue time, execution attempts, and retries
+- **Status** - Current state (QUEUED, WORKING, COMPLETED, FAILED, CANCELED)
+- **Logs** - Full stdout and stderr output with search and filtering
+- **Metrics** - CPU and memory utilization for the task
+- **Source code** - View and download the uploaded script
+- **Task metadata** - Branch, deployment ID, resource group, start/end times, and author
+
+### Task Statuses
+
+- `QUEUED` - Task is waiting to execute
+- `WORKING` - Task is currently running
+- `COMPLETED` - Task finished successfully
+- `FAILED` - Task encountered an error or non-zero exit code
+- `CANCELED` - Task was manually canceled
+
+---
+
+## Additional Usage
+
+### Logging in Tasks
+
+Tasks can use `chalk_logger` for structured logging that appears in the Chalk dashboard. Logs are captured from your script's output and displayed in the task detail page.
+
+```python
+from chalk import chalk_logger
+
+def process_data(batch_size: str):
+    batch_size_int = int(batch_size)
+
+    chalk_logger.info(f"Starting data processing with batch_size={batch_size_int}")
+
+    # Your processing logic
+    for i in range(batch_size_int):
+        chalk_logger.debug(f"Processing batch {i+1}/{batch_size_int}")
+        # ... process data ...
+
+    chalk_logger.info("Data processing completed successfully")
+```
+
+You can also use standard `print()` statements, which will be captured in the task logs. However, `chalk_logger` provides:
+- Structured log levels (debug, info, warning, error)
+- Better integration with Chalk's logging infrastructure
+- Consistent formatting with resolver logs
+
+### Running Class Methods
+
+You can execute class methods using the double-colon syntax:
+
+```bash
+# File-based class method
+chalk task run scripts/processor.py::DataProcessor::run
+
+# Module-based class method
+chalk task run mypackage.processors::ETLProcessor::execute --module
+```
+
+---
+
+## Troubleshooting
+
+### Task Stuck in QUEUED
+
+If a task remains in `QUEUED` status:
+- Verify Kubernetes pods are running
+- Check for image pull errors or pod crashloops
+- Ensure the job queue is processing tasks
+
+### Import Errors
+
+```
+ModuleNotFoundError: No module named 'mypackage'
+```
+
+Solutions:
+- Ensure the package is in `requirements.txt` or `pyproject.toml`
+- Verify the package is installed in your active deployment
+- For modules, ensure the module path is correct
+
+### Argument Issues
+
+If arguments aren't being passed correctly:
+- Remember CLI args are always strings - convert types in your function
+- Use `key=value` format for kwargs, plain values for positional args
+- Test locally first with the same argument format
+
+---
+
+## Next Steps
+
+- Learn about [Working with Branches](/docs/branches) for development workflows
+- Explore [Model Training](/docs/model_training) for ML-specific tasks
