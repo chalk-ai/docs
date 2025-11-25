@@ -5,6 +5,22 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 published: true
 ---
+## November 25, 2025
+
+[Tracing](https://docs.chalk.ai/docs/tracing) now provides full visibility into how queries execute inside Chalk.
+
+Each resolver and model call is instrumented and timed, allowing teams to pinpoint slow spans, identify inefficient SQL,
+and understand query behavior end to end.
+
+Trace data is surfaced directly in the dashboard, so engineers can drill into individual spans to view execution time,
+rows returned, and linked data source details.
+
+Traces can be enabled per query using the Traces can be enabled per query using CLI or ChalkClient() or configured to
+sample automatically in production for continuous monitoring.
+
+![Example Query Trace](/img/changelog-2025_11_25-query_trace.png)
+
+
 ## October 27, 2025
 
 ### Stream consumption analytics
