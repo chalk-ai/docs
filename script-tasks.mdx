@@ -223,7 +223,7 @@ with open("users_to_backfill.jsonl", "w") as f:
 
 ## Branch Execution
 
-Test code changes before merging by running tasks on a branch deployment:
+When you're making changes across multiple files, updating dependencies, or modifying resolvers that your script uses, it's important to test everything together before merging to production. Branch deployments let you run script tasks in an isolated environment that includes all your changes:
 
 ```bash
 chalk task run scripts.py --branch feature/new-algorithm
@@ -254,19 +254,20 @@ See [Working with Branches](/docs/branches) for more information.
 chalk task run -m mypackage.analytics.report
 ```
 
-### Branch flag
+### Branch flags
 
 `--branch BRANCH_NAME` - Execute code from a specific git branch. See [Branch Execution](#branch-execution).
+
+`--skip-apply` - Skip the automatic `chalk apply` when running with `--branch`. Use this if the branch is already deployed.
+
 
 ### Argument flags
 
 `--arg KEY=VALUE` or `--arg VALUE` - Pass arguments to your script. Can be specified multiple times. See [Passing Arguments](#passing-arguments).
 
-### Batch execution flag
+`--args-file FILE.jsonl` - Execute script multiple times with different arguments from a JSONL file. See [Batch Execution](#batch-execution).
 
-`--args-file FILE.jsonl` - Execute script multiple times with different arguments. See [Batch Execution](#batch-execution).
-
-### Retry flag
+### Execution flags
 
 `--max-retries N` - Set number of retry attempts on failure. Defaults to `0` (no retries).
 
@@ -310,37 +311,6 @@ The task detail page displays:
 - `COMPLETED` - Task finished successfully
 - `FAILED` - Task encountered an error or non-zero exit code
 - `CANCELED` - Task was manually canceled
-
-### Viewing Logs from CLI
-
-You can view task logs directly from the command line using the `chalk logs` command with the task's operation ID:
-
-```bash
-chalk logs --query "operation_id:TASK_ID"
-```
-
-The task ID is displayed in the CLI output when you submit a task, or you can find it in the dashboard URL.
-
-**Additional flags:**
-
-- `--follow` / `-f` - Stream logs in real-time as they are generated
-- `--start-time` - Filter logs from a specific time (e.g., `"1h ago"`, `"2024-01-01T00:00:00Z"`)
-- `--end-time` - Filter logs until a specific time (e.g., `"now"`, `"2024-01-01T01:00:00Z"`)
-
-**Examples:**
-
-```bash
-# Follow logs in real-time
-chalk logs --follow --query "operation_id:550e8400-e29b-41d4-a716-446655440000"
-
-# View logs from the last 2 hours
-chalk logs --query "operation_id:550e8400-e29b-41d4-a716-446655440000" --start-time "2h ago"
-
-# Search logs by other fields
-chalk logs --query "component:engine message:error"
-```
-
-For more information about the `chalk logs` command and available search fields, run `chalk logs --help`.
 
 ---
 
