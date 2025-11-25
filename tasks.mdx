@@ -318,7 +318,7 @@ The task detail page displays:
 
 ### Logging in Tasks
 
-Tasks can use `chalk_logger` for structured logging that appears in the Chalk dashboard. Logs are captured from your script's output and displayed in the task detail page.
+Task logs are captured and displayed in the Chalk dashboard. You can use standard `print()` statements which will appear in your task logs. You can also use `chalk_logger` in your script for structured logging:
 
 ```python
 from chalk import chalk_logger
@@ -336,7 +336,7 @@ def process_data(batch_size: str):
     chalk_logger.info("Data processing completed successfully")
 ```
 
-You can also use standard `print()` statements, which will be captured in the task logs. However, `chalk_logger` provides:
+`chalk_logger` provides:
 - Structured log levels (debug, info, warning, error)
 - Better integration with Chalk's logging infrastructure
 - Consistent formatting with resolver logs
