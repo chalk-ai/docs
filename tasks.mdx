@@ -1,14 +1,14 @@
 ---
-title: Script Tasks
+title: Tasks
 description: Run arbitrary Python scripts in your Chalk deployment
 published: true
 ---
 
 import { TipInfo, TipGood } from '@/components/Tip'
 
-Script tasks let you run arbitrary Python code in your Chalk deployment environment with full access to your resolvers, dependencies, and infrastructure.
+Tasks let you run arbitrary Python code in your Chalk deployment environment with full access to your resolvers, dependencies, and infrastructure.
 
-Scripts execute in the same environment as your resolvers, making them ideal for:
+Tasks execute in the same environment as your resolvers, making them ideal for:
 - **Data backfills**: Recompute historical features or migrate data
 - **One-off computations**: Run ad-hoc analyses, reports, or maintenance tasks
 - **ML training**: Execute training scripts with access to your feature infrastructure
@@ -20,12 +20,12 @@ All tasks are tracked and monitored through the Chalk dashboard with full logs, 
 
 ## Quick Start
 
-The fastest way to run a script task is using the Chalk CLI.
+The fastest way to run a task is using the Chalk CLI.
 
 First, create a simple Python script:
 
 ```bash
-echo 'print("Hello from Chalk script tasks!")' > script.py
+echo 'print("Hello from Chalk tasks!")' > script.py
 ```
 
 Then, run it with the Chalk CLI:
@@ -223,7 +223,7 @@ with open("users_to_backfill.jsonl", "w") as f:
 
 ## Branch Execution
 
-When you're making changes across multiple files, updating dependencies, or modifying resolvers that your script uses, it's important to test everything together before merging to production. Branch deployments let you run script tasks in an isolated environment that includes all your changes:
+When you're making changes across multiple files, updating dependencies, or modifying resolvers that your script uses, it's important to test everything together before merging to production. Branch deployments let you run tasks in an isolated environment that includes all your changes:
 
 ```bash
 chalk task run scripts.py --branch feature/new-algorithm
@@ -279,7 +279,7 @@ chalk task run flaky_api_call.py --max-retries 3
 
 ## Monitoring and Dashboard
 
-Script tasks appear in the Chalk dashboard where you can monitor their execution and debug failures.
+Tasks appear in the Chalk dashboard where you can monitor their execution and debug failures.
 
 ### Accessing the Dashboard
 
@@ -316,9 +316,9 @@ The task detail page displays:
 
 ## Additional Usage
 
-### Logging in Script Tasks
+### Logging in Tasks
 
-Script tasks can use `chalk_logger` for structured logging that appears in the Chalk dashboard. Logs are captured from your script's output and displayed in the task detail page.
+Task logs are captured and displayed in the Chalk dashboard. You can use standard `print()` statements which will appear in your task logs. You can also use `chalk_logger` in your script for structured logging:
 
 ```python
 from chalk import chalk_logger
@@ -336,7 +336,7 @@ def process_data(batch_size: str):
     chalk_logger.info("Data processing completed successfully")
 ```
 
-You can also use standard `print()` statements, which will be captured in the task logs. However, `chalk_logger` provides:
+`chalk_logger` provides:
 - Structured log levels (debug, info, warning, error)
 - Better integration with Chalk's logging infrastructure
 - Consistent formatting with resolver logs
