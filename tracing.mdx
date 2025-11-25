@@ -55,7 +55,7 @@ Following [OpenTelemetry standards](https://opentelemetry.io/docs/languages/sdk-
 you can also configure tracing via environment variables. Tracing across your environment can be configured using the
 environment variables `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG`, which you can set in your dashboard under
 `Settings > Variables`. The default values of `OTEL_TRACES_SAMPLER=parentbased_traceidratio`
-and `OTEL_TRACES_SAMPLER_ARG=0.0001` will be used,unless an explicit value is set
+and `OTEL_TRACES_SAMPLER_ARG=0.01` will be used, unless an explicit value is set
 
 The supported sampling strategies are detailed below:
 
