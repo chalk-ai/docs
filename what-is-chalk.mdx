@@ -362,7 +362,7 @@ class Transaction:
     receipt: Receipt
 
     llm: P.PromptResponse = P.completion(
-        model="gpt-4o-mini-2024-07-18",
+        model="gpt-5.1-2025-11-13",
         messages=[P.message(
                 role="user",
                 content=F.jinja(
