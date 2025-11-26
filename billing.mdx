@@ -63,6 +63,26 @@ Chalk only applies charges to nodes labeled “Chalk Managed.” Other workloads
 incur Chalk charges. You can also configure your cluster to have isolated nodepools to ensure that
 unrelated workloads are completely isolated from your Chalk Managed nodes.
 
+### What do these labels in the nodepool configuration pane mean?
+
+You may notice labels like `Chalk`, `Restricted`, and `Isolated` in the nodepools settings pane.
+
+![Different nodepool labels](/img/nodepool-labels.png)
+
+- `Chalk`: This label indicates that the nodepool makes Chalk-managed nodes, whose uptime contributes to credit usage. All nodepools 
+created through the Chalk dashboard automatically have this label, although the dashboard will also _display_ nodepools without it.
+- `Isolated`: This label indicates that the nodepool will not allow any workloads to schedule on its nodes 
+ unless they are explicitly configured to do so by setting the `Nodepool` field in the `Resources` settings pane. Controlled by the checkbox 
+ "Isolate this nodepool".
+- `Restricted`: This label indicates that the nodepool makes nodes that **only** allow Chalk workloads to schedule on them. This is
+useful in the case where Chalk is running in your cluster alongside other unrelated workloads, and it prevents those workloads from 
+inadvertently consuming Chalk credits. Controlled by the checkbox "Restrict to Chalk workloads only".
+
+Chalk workloads are **only** allowed to schedule on nodes from nodepools with the `Chalk` label. They will not schedule on an `Isolated` nodepool 
+unless configured to do so, and the `Restricted` label has no effect on whether Chalk workloads can schedule on the nodepool, but only affects 
+unrelated non-Chalk workloads.
+
+
 ### Do more branches cost more money?
 
 No. Because one pod runs all branches, there is no extra cost for having multiple branches.

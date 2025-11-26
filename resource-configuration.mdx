@@ -28,14 +28,25 @@ to use in your deployment, as different machine families are optimized for diffe
 also set a CPU limit on your NodePool. This page will allow you to provision the resources and machine
 families that are best suited for your workload and [usage](/docs/billing) requirements.
 
-When configuring a nodepool, you can also select whether to isolate the nodepool and whether to
-restrict the nodepool to Chalk workloads only. Nodepool isolation means that workloads cannot
+When configuring a nodepool, you'll notice two checkboxes, "Isolate this nodepool" and "Restrict to 
+Chalk workloads only". 
+
+**"Isolate this nodepool"** being set means that workloads cannot 
 be scheduled in the nodepool unless they are specifically configured to do so under
 `Settings > Resources`, which can be useful to minimize interference or reserve certain instance
-types for specific workloads. In addition to isolating the nodepool, you can also restrict the
-nodepool to Chalk workloads only, which can be useful for environments deployed on clusters where
-Chalk is running alongside other unrelated workloads to ensure that you are not billed for nodes
-allocated for non-Chalk workloads.
+types for specific workloads. This causes the nodepool to have the `Isolated` label.
+
+**"Restrict to Chalk workloads only"** being set means that unrelated non-Chalk workloads in the cluster 
+will not be allowed to schedule on this nodepool, which can be useful for environments deployed into pre-existing 
+clusters that also run unrelated workloads. This ensures that those non-Chalk workloads do not inadvertently consume 
+Chalk credits. This causes the nodepool to have the `Restricted` label.
+
+You may also notice that the nodepools you create through the Chalk dashboard automatically have the `Chalk` label. 
+This indicates that the nodepool makes Chalk-managed nodes, whose uptime contributes to credit usage. All nodepools 
+created through the Chalk dashboard automatically have this label, although the dashboard will also _display_ nodepools 
+without it. Chalk workloads are **only** allowed to schedule on nodes from nodepools with the `Chalk` label.
+
+More details about these labels can be found in the [Billing Documentation](/docs/billing#what-do-these-labels-in-the-nodepool-configuration-pane-mean).
 
 Once you have configured your Nodepools, under `Settings > Resources`, you can select the Nodepool
 to use for each service in each resource group in your environment, as well as the Pod Disruption
