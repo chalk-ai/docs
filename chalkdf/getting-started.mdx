@@ -94,6 +94,7 @@ access columns without any additional wrappers.
 
 ```python
 >>> df.run()
+
 DataFrame(materialized 5 rows x 2 columns)
 ┌───────┬───────┐
 │ id    ┆ value │
@@ -106,9 +107,13 @@ DataFrame(materialized 5 rows x 2 columns)
 │ 2     ┆ 2     │
 │ 2     ┆ 3     │
 └───────┴───────┘
+```
+
+```python
 >>> from chalk.features import _
 >>> grouped = df.agg(["id"], _.value.sum().alias("value_sum_by_id"))
 >>> grouped.run()
+
 DataFrame(materialized 2 rows x 2 columns)
 ┌───────┬─────────────────┐
 │ id    ┆ value_sum_by_id │
@@ -129,6 +134,7 @@ Below are some common operations you can use to construct DataFrame expressions.
 ```python
 >>> interactions = df.select("user_id", "item_id", "interaction_type", "timestamp")
 >>> interactions.run()
+
 DataFrame(materialized 5 rows x 4 columns)
 ┌──────────┬───────────┬──────────────────┬─────────────────────┐
 │ user_id  ┆ item_id   ┆ interaction_type ┆ timestamp           │
@@ -151,6 +157,7 @@ columns, you can use `DataFrame.with_columns`.
 ```python
 >>> processed_interactions = df.with_columns({"user_id": _.user_id, "long_session": _.session_duration_sec > 180})
 >>> processed_interactions.select("user_id", "session_duration_sec", "long_session").run()
+
 DataFrame(materialized 5 rows x 3 columns)
 ┌──────────┬──────────────────────┬──────────────┐
 │ user_id  ┆ session_duration_sec ┆ long_session │
@@ -229,6 +236,7 @@ You can filter rows in a DataFrame using `DataFrame.filter`, which takes in a bo
 
 ```python
 >>> df.run()
+
 DataFrame(materialized 5 rows x 7 columns)
 ┌──────────┬───────────┬──────────────────┬─────────────────────┬────────┬─────────────┬──────────────────────┐
 │ user_id  ┆ item_id   ┆ interaction_type ┆ timestamp           ┆ score  ┆ category    ┆ session_duration_sec │
@@ -241,8 +249,11 @@ DataFrame(materialized 5 rows x 7 columns)
 │ user_004 ┆ item_4521 ┆ add_to_cart      ┆ 2024-11-08 17:45:12 ┆ 0.78   ┆ electronics ┆ 210                  │
 │ user_005 ┆ item_9944 ┆ click            ┆ 2024-11-08 18:20:05 ┆ 0.81   ┆ sports      ┆ 167                  │
 └──────────┴───────────┴──────────────────┴─────────────────────┴────────┴─────────────┴──────────────────────┘
+```
 
+```python
 >>> df.filter(_.score > 0.8).run()
+
 DataFrame(materialized 3 rows x 7 columns)
 ┌──────────┬───────────┬──────────────────┬─────────────────────┬────────┬─────────────┬──────────────────────┐
 │ user_id  ┆ item_id   ┆ interaction_type ┆ timestamp           ┆ score  ┆ category    ┆ session_duration_sec │
