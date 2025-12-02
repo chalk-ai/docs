@@ -65,8 +65,7 @@ infrastructure in your cloud account:
                 "AWS": "arn:aws:iam::754784422779:role/chalk-api-server"
             },
             "Action": "sts:AssumeRole",
-            "Condition":
-{
+            "Condition": {
                 "StringEquals": {
                     "sts:ExternalId": "<your-chalk-external-id>"
                 }
@@ -547,24 +546,24 @@ Our default configuration is:
 
 ```yaml
 vpc_cidr_block = "10.130.0.0/16"
-  vpc_subnets = [
-    {
-      name              = "primary"
-      cidr_block        = "10.130.0.0/20"
-      az                = "a"
-      public_cidr_block = "10.130.16.0/20"
-    },
-    {
-      name              = "secondary"
-      cidr_block        = "10.130.32.0/20"
-      az                = "b"
-      public_cidr_block = "10.130.48.0/20"
-    },
-    {
-      name              = "tertiary"
-      cidr_block        = "10.130.64.0/20"
-      az                = "c"
-      public_cidr_block = "10.130.80.0/20"
-    }
-  ]
+vpc_subnets = [
+  {
+    name              = "primary"
+    cidr_block        = "10.130.0.0/20"
+    az                = "a"
+    public_cidr_block = "10.130.16.0/20"
+  },
+  {
+    name              = "secondary"
+    cidr_block        = "10.130.32.0/20"
+    az                = "b"
+    public_cidr_block = "10.130.48.0/20"
+  },
+  {
+    name              = "tertiary"
+    cidr_block        = "10.130.64.0/20"
+    az                = "c"
+    public_cidr_block = "10.130.80.0/20"
+  }
+]
 ```
