@@ -42,6 +42,23 @@ class User:
     transaction_volume: float
 ```
 
+You can then use [SQL file resolvers](/docs/sql-resolvers) to query your database:
+
+```sql
+-- type: online
+-- resolves: User
+-- source: spanner
+SELECT id, transaction_volume FROM UserTable
+```
+
+Or use the source directly in Python resolvers:
+
+```py
+@online
+def fn(...) -> ...:
+    return spanner_source.query(...).first()
+```
+
 ## Multiple Integrations
 
 <span>{getNamedIntegrationText()}</span>

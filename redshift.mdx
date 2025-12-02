@@ -39,7 +39,20 @@ to construct the source in your code.
 from chalk.sql import RedshiftSource
 
 redshift = RedshiftSource()
+```
 
+You can then use [SQL file resolvers](/docs/sql-resolvers) to query your database:
+
+```sql
+-- type: online
+-- resolves: User
+-- source: redshift
+SELECT id, name, email FROM users
+```
+
+Or use the source directly in Python resolvers:
+
+```py
 @online
 def fn(...) -> ...:
     return redshift.query(...).first()
@@ -54,7 +67,20 @@ from chalk.sql import RedshiftSource
 
 risk = RedshiftSource(name="**RISK**")
 marketing = RedshiftSource(name="**MARKETING**")
+```
 
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter:
+
+```sql
+-- type: online
+-- resolves: User
+-- source: RISK
+SELECT id, credit_score FROM users
+```
+
+Or in Python resolvers:
+
+```py
 @online
 def risk_resolver(...) -> ...:
     return risk.query(...).first()

@@ -33,7 +33,20 @@ to construct the source in your code.
 from chalk.sql import PostgreSQLSource
 
 pg = PostgreSQLSource()
+```
 
+You can then use [SQL file resolvers](/docs/sql-resolvers) to query your database:
+
+```sql
+-- type: online
+-- resolves: User
+-- source: postgres
+SELECT id, name, email FROM users
+```
+
+Or use the source directly in Python resolvers:
+
+```py
 @online
 def resolver_fn(...) -> ...:
     return pg.query(...).first()
@@ -48,7 +61,20 @@ from chalk.sql import PostgreSQLSource
 
 risk_pg = PostgreSQLSource(name="**RISK_PG**")
 marketing_pg = PostgreSQLSource(name="**MARKETING_PG**")
+```
 
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter:
+
+```sql
+-- type: online
+-- resolves: User
+-- source: RISK_PG
+SELECT id, credit_score FROM users
+```
+
+Or in Python resolvers:
+
+```py
 @online
 def risk_resolver(...) -> ...:
     return risk_pg.query(...).first()
