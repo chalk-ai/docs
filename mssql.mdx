@@ -1,0 +1,132 @@
+---
+title: Microsoft SQL Server
+description: Integrate with Microsoft SQL Server data sources.
+published: true
+---
+
+import {getEnvironmentVariableText, getNamedIntegrationText} from "@/components/NamedIntegration";
+
+---
+
+Chalk supports [Microsoft SQL Server](https://www.microsoft.com/en-us/sql-server)
+and [Azure SQL Database](https://azure.microsoft.com/en-us/products/azure-sql/database/)
+as a [SQL source](/docs/sql).
+You can configure the Microsoft SQL Server-specific
+options using the `MSSQLSource` **init** args,
+or configure the source through your dashboard, and
+reference the source in your code.
+
+## Adding Microsoft SQL Server
+
+On the dashboard, you can plug in the configuration for your
+Microsoft SQL Server database.
+
+### Authentication Methods
+
+Chalk supports three authentication methods:
+
+**SQL Authentication** - Traditional username and password authentication
+
+**Azure AD Managed Identity** - When running in Azure (such as in AKS or Azure VMs), Chalk can automatically authenticate using [Managed Identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview). Simply omit authentication credentials when configuring your source.
+
+**Azure AD Service Principal** - For authentication using an Azure AD application, provide `client_id`, `client_secret`, and `tenant_id`.
+
+## Single Integration
+
+If you have only one Microsoft SQL Server connection that you'd like
+to add to Chalk, you do not need to specify any arguments
+to construct the source in your code.
+
+```py
+from chalk.sql import MSSQLSource
+
+mssql = MSSQLSource()
+
+@online
+def fn(...) -> ...:
+    return mssql.query(...).first()
+```
+
+## Multiple Integrations
+
+<span>{getNamedIntegrationText()}</span>
+
+```py
+from chalk.sql import MSSQLSource
+
+risk = MSSQLSource(name="**RISK**")
+marketing = MSSQLSource(name="**MARKETING**")
+
+@online
+def risk_resolver(...) -> ...:
+    return risk.query(...).first()
+
+@online
+def marketing_resolver(...) -> ...:
+    return marketing.query(...).first()
+```
+
+<span>{getEnvironmentVariableText("RISK", "MSSQL_HOST")}</span>
+
+## Environment Variables
+
+You can also configure the integration directly using environment variables
+on your local machine or from those added through the
+[generic environment variable](/docs/env-vars) support.
+
+### SQL Authentication
+
+```py
+import os
+from chalk.sql import MSSQLSource
+
+mssql = MSSQLSource(
+    host=os.getenv("MSSQL_HOST"),
+    port=os.getenv("MSSQL_TCP_PORT"),
+    db=os.getenv("MSSQL_DATABASE"),
+    user=os.getenv("MSSQL_USER"),
+    password=os.getenv("MSSQL_PWD"),
+)
+
+@online
+def fn(...) -> ...:
+    return mssql.query(...).first()
+```
+
+### Azure AD Service Principal
+
+```py
+import os
+from chalk.sql import MSSQLSource
+
+mssql = MSSQLSource(
+    host=os.getenv("MSSQL_HOST"),
+    port=os.getenv("MSSQL_TCP_PORT"),
+    db=os.getenv("MSSQL_DATABASE"),
+    client_id=os.getenv("MSSQL_CLIENT_ID"),
+    client_secret=os.getenv("MSSQL_CLIENT_SECRET"),
+    tenant_id=os.getenv("MSSQL_TENANT_ID"),
+)
+
+@online
+def fn(...) -> ...:
+    return mssql.query(...).first()
+```
+
+### Managed Identity
+
+```py
+import os
+from chalk.sql import MSSQLSource
+
+# Only connection details needed - authentication is automatic
+mssql = MSSQLSource(
+    host=os.getenv("MSSQL_HOST"),
+    port=os.getenv("MSSQL_TCP_PORT"),
+    db=os.getenv("MSSQL_DATABASE"),
+)
+
+@online
+def fn(...) -> ...:
+    return mssql.query(...).first()
+```
