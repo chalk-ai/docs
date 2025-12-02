@@ -4,6 +4,7 @@ description: Integrate with Microsoft SQL Server data sources.
 published: true
 ---
 
+import { AddMSSQLIntegration } from '@/components/shared/mssql'
 import {getEnvironmentVariableText, getNamedIntegrationText} from "@/components/NamedIntegration";
 
 ---
@@ -16,10 +17,24 @@ options using the `MSSQLSource` **init** args,
 or configure the source through your dashboard, and
 reference the source in your code.
 
+## Prerequisites
+
+For local development, you'll need to install ODBC drivers:
+
+- **macOS**: `brew install unixodbc`
+- **Linux (Ubuntu/Debian)**: `sudo apt-get install unixodbc unixodbc-dev`
+- **Linux (RHEL/CentOS)**: `sudo yum install unixODBC unixODBC-devel`
+
+Then install the Python package: `pip install 'chalkpy[mssql]'`
+
+Production deployments on Chalk handle ODBC drivers automatically.
+
 ## Adding Microsoft SQL Server
 
 On the dashboard, you can plug in the configuration for your
-Microsoft SQL Server database.
+Microsoft SQL Server database:
+
+<AddMSSQLIntegration onSubmit={(e) => e.preventDefault()} />
 
 ### Authentication Methods
 
@@ -40,11 +55,24 @@ to construct the source in your code.
 ```py
 from chalk.sql import MSSQLSource
 
-mssql = MSSQLSource()
+mssql_source = MSSQLSource()
+```
 
+You can then use [SQL file resolvers](/docs/sql-resolvers) to query your database:
+
+```sql
+-- type: online
+-- resolves: User
+-- source: mssql
+SELECT id, name, email FROM users
+```
+
+Or use the source directly in Python resolvers:
+
+```py
 @online
 def fn(...) -> ...:
-    return mssql.query(...).first()
+    return mssql_source.query(...).first()
 ```
 
 ## Multiple Integrations
@@ -54,19 +82,32 @@ def fn(...) -> ...:
 ```py
 from chalk.sql import MSSQLSource
 
-risk = MSSQLSource(name="**RISK**")
-marketing = MSSQLSource(name="**MARKETING**")
+risk_source = MSSQLSource(name="risk")
+marketing_source = MSSQLSource(name="marketing")
+```
 
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter:
+
+```sql
+-- type: online
+-- resolves: User
+-- source: risk
+SELECT id, credit_score FROM users
+```
+
+Or in Python resolvers:
+
+```py
 @online
 def risk_resolver(...) -> ...:
-    return risk.query(...).first()
+    return risk_source.query(...).first()
 
 @online
 def marketing_resolver(...) -> ...:
-    return marketing.query(...).first()
+    return marketing_source.query(...).first()
 ```
 
-<span>{getEnvironmentVariableText("RISK", "MSSQL_HOST")}</span>
+<span>{getEnvironmentVariableText("risk", "MSSQL_HOST")}</span>
 
 ## Environment Variables
 
@@ -80,7 +121,7 @@ on your local machine or from those added through the
 import os
 from chalk.sql import MSSQLSource
 
-mssql = MSSQLSource(
+mssql_source = MSSQLSource(
     host=os.getenv("MSSQL_HOST"),
     port=os.getenv("MSSQL_TCP_PORT"),
     db=os.getenv("MSSQL_DATABASE"),
@@ -90,7 +131,7 @@ mssql = MSSQLSource(
 
 @online
 def fn(...) -> ...:
-    return mssql.query(...).first()
+    return mssql_source.query(...).first()
 ```
 
 ### Azure AD Service Principal
@@ -99,7 +140,7 @@ def fn(...) -> ...:
 import os
 from chalk.sql import MSSQLSource
 
-mssql = MSSQLSource(
+mssql_source = MSSQLSource(
     host=os.getenv("MSSQL_HOST"),
     port=os.getenv("MSSQL_TCP_PORT"),
     db=os.getenv("MSSQL_DATABASE"),
@@ -110,23 +151,22 @@ mssql = MSSQLSource(
 
 @online
 def fn(...) -> ...:
-    return mssql.query(...).first()
+    return mssql_source.query(...).first()
 ```
 
 ### Managed Identity
 
 ```py
-import os
 from chalk.sql import MSSQLSource
 
 # Only connection details needed - authentication is automatic
-mssql = MSSQLSource(
-    host=os.getenv("MSSQL_HOST"),
-    port=os.getenv("MSSQL_TCP_PORT"),
-    db=os.getenv("MSSQL_DATABASE"),
+mssql_source = MSSQLSource(
+    host="myserver.database.windows.net",
+    port=1433,
+    db="mydatabase",
 )
 
 @online
 def fn(...) -> ...:
-    return mssql.query(...).first()
+    return mssql_source.query(...).first()
 ```
