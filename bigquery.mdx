@@ -34,8 +34,13 @@ integration can be used as a [SQL source](/docs/sql).
 from chalk.sql import BigQuerySource
 
 bq = BigQuerySource()
+```
 
-@online
-def fn(...) -> ...:
-    return bq.query(...).first()
+You can then use [SQL file resolvers](/docs/sql-resolvers) to query your database:
+
+```sql
+-- type: online
+-- resolves: User
+-- source: bigquery
+SELECT id, name, email FROM users
 ```

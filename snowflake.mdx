@@ -35,12 +35,16 @@ to construct the source in your code.
 from chalk.sql import SnowflakeSource
 
 snowflake = SnowflakeSource()
-
-@online
-def fn(...) -> ...:
-    return snowflake.query(...).first()
 ```
 
+You can then use [SQL file resolvers](/docs/sql-resolvers) to query your database:
+
+```sql
+-- type: online
+-- resolves: User
+-- source: snowflake
+SELECT id, name, email FROM users
+```
 
 ## Multiple Integrations
 
@@ -51,42 +55,27 @@ from chalk.sql import SnowflakeSource
 
 risk = SnowflakeSource(name="**RISK**")
 marketing = SnowflakeSource(name="**MARKETING**")
+```
 
-@online
-def risk_resolver(...) -> ...:
-    return risk.query(...).first()
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `RISK` source:
 
-@online
-def marketing_resolver(...) -> ...:
-    return marketing.query(...).first()
+```sql
+-- type: online
+-- resolves: User
+-- source: RISK
+SELECT id, credit_score FROM users
+```
+
+And to query from the `MARKETING` source:
+
+```sql
+-- type: online
+-- resolves: User
+-- source: MARKETING
+SELECT id, email, campaign_status FROM users
 ```
 
 <span>{getEnvironmentVariableText("RISK", "SNOWSQL_SCHEMA")}</span>
-
-## Environment Variables
-
-You can also configure the integration directly using environment variables
-on your local machine or from those added through the
-[generic environment variable](/docs/env-vars) support.
-
-```py
-import os
-from chalk.sql import SnowflakeSource
-
-snowflake = SnowflakeSource(
-    db=os.getenv("SNOWSQL_DATABASE"),
-    schema=os.getenv("SNOWSQL_SCHEMA"),
-    role=os.getenv("SNOWSQL_ROLE"),
-    warehouse=os.getenv("SNOWSQL_WAREHOUSE"),
-    user=os.getenv("SNOWSQL_USER"),
-    password=os.getenv("SNOWSQL_PWD"),
-    account_identifier=os.getenv("SNOWSQL_ACCOUNT_IDENTIFIER")
-)
-
-@online
-def resolver_fn(...) -> ...:
-    return snowflake.query(...).first()
-```
 
 ## Configuring Your Snowflake Integration
 
