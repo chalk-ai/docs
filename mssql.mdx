@@ -67,14 +67,6 @@ You can then use [SQL file resolvers](/docs/sql-resolvers) to query your databas
 SELECT id, name, email FROM users
 ```
 
-Or use the source directly in Python resolvers:
-
-```py
-@online
-def fn(...) -> ...:
-    return mssql_source.query(...).first()
-```
-
 ## Multiple Integrations
 
 <span>{getNamedIntegrationText()}</span>
@@ -86,7 +78,7 @@ risk_source = MSSQLSource(name="risk")
 marketing_source = MSSQLSource(name="marketing")
 ```
 
-Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter:
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `risk` source:
 
 ```sql
 -- type: online
@@ -95,78 +87,13 @@ Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name
 SELECT id, credit_score FROM users
 ```
 
-Or in Python resolvers:
+And to query from the `marketing` source:
 
-```py
-@online
-def risk_resolver(...) -> ...:
-    return risk_source.query(...).first()
-
-@online
-def marketing_resolver(...) -> ...:
-    return marketing_source.query(...).first()
+```sql
+-- type: online
+-- resolves: User
+-- source: marketing
+SELECT id, email, campaign_status FROM users
 ```
 
 <span>{getEnvironmentVariableText("risk", "MSSQL_HOST")}</span>
-
-## Environment Variables
-
-You can also configure the integration directly using environment variables
-on your local machine or from those added through the
-[generic environment variable](/docs/env-vars) support.
-
-### SQL Authentication
-
-```py
-import os
-from chalk.sql import MSSQLSource
-
-mssql_source = MSSQLSource(
-    host=os.getenv("MSSQL_HOST"),
-    port=os.getenv("MSSQL_TCP_PORT"),
-    db=os.getenv("MSSQL_DATABASE"),
-    user=os.getenv("MSSQL_USER"),
-    password=os.getenv("MSSQL_PWD"),
-)
-
-@online
-def fn(...) -> ...:
-    return mssql_source.query(...).first()
-```
-
-### Azure AD Service Principal
-
-```py
-import os
-from chalk.sql import MSSQLSource
-
-mssql_source = MSSQLSource(
-    host=os.getenv("MSSQL_HOST"),
-    port=os.getenv("MSSQL_TCP_PORT"),
-    db=os.getenv("MSSQL_DATABASE"),
-    client_id=os.getenv("MSSQL_CLIENT_ID"),
-    client_secret=os.getenv("MSSQL_CLIENT_SECRET"),
-    tenant_id=os.getenv("MSSQL_TENANT_ID"),
-)
-
-@online
-def fn(...) -> ...:
-    return mssql_source.query(...).first()
-```
-
-### Managed Identity
-
-```py
-from chalk.sql import MSSQLSource
-
-# Only connection details needed - authentication is automatic
-mssql_source = MSSQLSource(
-    host="myserver.database.windows.net",
-    port=1433,
-    db="mydatabase",
-)
-
-@online
-def fn(...) -> ...:
-    return mssql_source.query(...).first()
-```

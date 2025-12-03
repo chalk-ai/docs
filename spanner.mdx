@@ -51,14 +51,6 @@ You can then use [SQL file resolvers](/docs/sql-resolvers) to query your databas
 SELECT id, transaction_volume FROM UserTable
 ```
 
-Or use the source directly in Python resolvers:
-
-```py
-@online
-def fn(...) -> ...:
-    return spanner_source.query(...).first()
-```
-
 ## Multiple Integrations
 
 <span>{getNamedIntegrationText()}</span>
@@ -68,10 +60,9 @@ from chalk.sql import SpannerSource
 
 spanner_source_txns = SpannerSource(name="**SPANNER_TRANSACTIONS**")
 spanner_source_marketing = SpannerSource(name="**SPANNER_MARKETING**")
-
 ```
 
-Now, you are all set to use Spanner with [SQL file resolvers](/docs/sql#sql-file-resolvers).
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `SPANNER_TRANSACTIONS` source:
 
 ```sql
 -- type: online
@@ -82,9 +73,18 @@ SELECT
     TransactionVolume AS transaction_volume
 FROM
     UserTable
-LIMIT 10
 ```
 
-This file resolves the `User.transaction_volume` feature. Please note that the `--source: my_spanner` line is necessary
-and should match the `name` provided to your [`SpannerSource`](/api-docs#SpannerSource). If you have a single integration,
-you should use the name that is defined in the dashboard.
+And to query from the `SPANNER_MARKETING` source:
+
+```sql
+-- type: online
+-- resolves: User
+-- source: SPANNER_MARKETING
+SELECT
+    id,
+    email,
+    campaign_status
+FROM
+    MarketingTable
+```

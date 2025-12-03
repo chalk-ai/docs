@@ -44,11 +44,3 @@ You can then use [SQL file resolvers](/docs/sql-resolvers) to query your databas
 -- source: bigquery
 SELECT id, name, email FROM users
 ```
-
-Or use the source directly in Python resolvers:
-
-```py
-@online
-def fn(...) -> ...:
-    return bq.query(...).first()
-```

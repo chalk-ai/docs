@@ -45,14 +45,6 @@ You can then use [SQL file resolvers](/docs/sql-resolvers) to query your databas
 SELECT id, name, email FROM users
 ```
 
-Or use the source directly in Python resolvers:
-
-```py
-@online
-def fn(...) -> ...:
-    return mysql.query(...).first()
-```
-
 ## Multiple Integrations
 
 <span>{getNamedIntegrationText()}</span>
@@ -64,7 +56,7 @@ risk = MySQLSource(name="**RISK**")
 marketing = MySQLSource(name="**MARKETING**")
 ```
 
-Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter:
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `RISK` source:
 
 ```sql
 -- type: online
@@ -73,39 +65,13 @@ Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name
 SELECT id, credit_score FROM users
 ```
 
-Or in Python resolvers:
+And to query from the `MARKETING` source:
 
-```py
-@online
-def risk_resolver(...) -> ...:
-    return risk.query(...).first()
-
-@online
-def marketing_resolver(...) -> ...:
-    return marketing.query(...).first()
+```sql
+-- type: online
+-- resolves: User
+-- source: MARKETING
+SELECT id, email, campaign_status FROM users
 ```
 
 <span>{getEnvironmentVariableText("RISK", "MYSQL_HOST")}</span>
-
-## Environment Variables
-
-You can also configure the integration directly using environment variables
-on your local machine or from those added through the
-[generic environment variable](/docs/env-vars) support.
-
-```py
-import os
-from chalk.sql import MySQLSource
-
-mysql = MySQLSource(
-    host=os.getenv(...),
-    port=os.getenv(...),
-    db=os.getenv(...),
-    user=os.getenv(...),
-    password=os.getenv(...),
-)
-
-@online
-def fn(...) -> ...:
-    return mysql.query(...).first()
-```
