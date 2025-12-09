@@ -367,4 +367,4 @@ In this example:
 
 This pattern allows the lightweight native streaming resolver to handle high-throughput message parsing while delegating compute-intensive embedding generation to specialized GPU resources. The sink acts as a bridge, automatically triggering the downstream computation and routing results to the appropriate stream.
 
-Messages are encoded as arrow feather tables.
+Messages can be encoded as either arrow IPC streams or as JSON. The fully qualified feature names are used as the column names in the output stream or as the JSON keys.
