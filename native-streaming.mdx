@@ -340,7 +340,7 @@ make_stream_resolver(
     },
     sink=Sink(
         send_to=embedding_stream,
-        output_features=[Item.id, Item.item_embedding],
+        output_features=[Item.id, Item.embedding],
     ),
 )
 
@@ -350,7 +350,7 @@ def run_item_embedding_model(
     description: Item.description,
     state: Item.state,
     image_url: Item.image_url,
-) -> Item.item_embedding:
+) -> Item.embedding:
     """Mock generate item embedding using a pre-trained model."""
     # In a real implementation, this function would load a pre-trained model
     # and generate an embedding based on the input features or make an API
@@ -361,7 +361,7 @@ def run_item_embedding_model(
 In this example:
 
 1. The `process_new_items` resolver consumes messages from the `new_items` Kafka source and extracts basic item features
-2. The sink configuration specifies that `Item.id` and `Item.item_embedding` should be written to the `item_embeddings` stream
+2. The sink configuration specifies that `Item.id` and `Item.embedding` should be written to the `item_embeddings` stream
 3. When a message is processed, Chalk computes `Item.item_embedding` by calling the `run_item_embedding_model` resolver, which runs on a GPU-enabled instance
 4. The computed features are then written to the `item_embeddings` topic
 
