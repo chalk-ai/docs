@@ -366,3 +366,5 @@ In this example:
 4. The computed features are then written to the `item_embeddings` topic
 
 This pattern allows the lightweight native streaming resolver to handle high-throughput message parsing while delegating compute-intensive embedding generation to specialized GPU resources. The sink acts as a bridge, automatically triggering the downstream computation and routing results to the appropriate stream.
+
+Messages are encoded as arrow feather tables.
