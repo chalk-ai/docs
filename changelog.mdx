@@ -5,6 +5,21 @@ metaDescription: Chalk's latest updates.
 description: Updates to Chalk!
 published: true
 ---
+
+## December 12, 2025
+
+### Preview messages when setting up stream sources
+
+You can now preview sample messages while configuring a new stream source. This makes it easier to verify that data is flowing correctly and that message formats (like JSON) are being parsed as expected before saving the connection.
+
+![Example of stream message preview interface](/img/changelog-25_12_12-stream-message-previews.png)
+
+### Updated navigation pane for faster workflows
+
+We refreshed the left-hand navigation pane to make Chalk easier to move through. Related concepts are now grouped more clearly, visual noise has been reduced, and high-frequency actions are easier to access. The result is a more predictable, friction-free workflow, especially in larger projects.
+
+![Optional new navigation pane layout example](/img/changelog-25_12_12-new-layout.png)
+
 ## November 25, 2025
 
 ### Tracing for query performance diagnosis
@@ -21,7 +36,6 @@ Traces can be enabled per query using CLI, `ChalkClient()`, or configured to
 sample automatically in production for continuous monitoring.
 
 ![Example Query Trace](/img/changelog-2025_11_25-query_trace.png)
-
 
 ## October 27, 2025
 
@@ -89,7 +103,6 @@ These precomputed embeddings accelerate workloads involving vector math and high
 The query plan viewer now links Velox physical execution data to individual plan nodes.
 This lets teams analyze operator-level performance, data flow, and throughput directly from plan output —
 helping diagnose slow or memory-heavy offline queries.
-
 
 ## October 23, 2025
 
