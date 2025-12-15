@@ -23,15 +23,15 @@ PostgreSQL database:
 
 <AddPostgresIntegration onSubmit={(e) => e.preventDefault()} />
 
-## Usage
+## Setup
 
 After configuring your PostgreSQL integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import PostgreSQLSource
 
-risk_pg = PostgreSQLSource(name="**RISK_PG**")
-marketing_pg = PostgreSQLSource(name="**MARKETING_PG**")
+risk_pg = PostgreSQLSource(name="RISK_PG")
+marketing_pg = PostgreSQLSource(name="MARKETING_PG")
 ```
 
 Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `RISK_PG` source:

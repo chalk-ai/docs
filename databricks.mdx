@@ -14,15 +14,15 @@ Alternately, you can configure the source through your dashboard.
 
 ---
 
-## Usage
+## Setup
 
 After configuring your Databricks integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import DatabricksSource
 
-risk = DatabricksSource(name="**RISK**")
-marketing = DatabricksSource(name="**MARKETING**")
+risk = DatabricksSource(name="RISK")
+marketing = DatabricksSource(name="MARKETING")
 ```
 
 Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `RISK` source:

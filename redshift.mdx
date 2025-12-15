@@ -29,15 +29,15 @@ in the S3 bucket provided. The S3 bucket itself does not require versioning, but
 set a retention policy on the bucket. The retention policy should be somewhere from 1 - 14 days,
 to balance storage efficiency with history that can be useful in debugging.
 
-## Usage
+## Setup
 
 After configuring your Redshift integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import RedshiftSource
 
-risk = RedshiftSource(name="**RISK**")
-marketing = RedshiftSource(name="**MARKETING**")
+risk = RedshiftSource(name="RISK")
+marketing = RedshiftSource(name="MARKETING")
 ```
 
 Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `RISK` source:

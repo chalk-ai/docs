@@ -25,15 +25,15 @@ defaults set in the data source definition.
 
 ---
 
-## Usage
+## Setup
 
 After configuring your Snowflake integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import SnowflakeSource
 
-risk = SnowflakeSource(name="**RISK**")
-marketing = SnowflakeSource(name="**MARKETING**")
+risk = SnowflakeSource(name="RISK")
+marketing = SnowflakeSource(name="MARKETING")
 ```
 
 Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `RISK` source:

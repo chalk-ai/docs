@@ -23,15 +23,15 @@ MySQL database:
 
 <AddMySQLIntegration onSubmit={(e) => e.preventDefault()} />
 
-## Usage
+## Setup
 
 After configuring your MySQL integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import MySQLSource
 
-risk = MySQLSource(name="**RISK**")
-marketing = MySQLSource(name="**MARKETING**")
+risk = MySQLSource(name="RISK")
+marketing = MySQLSource(name="MARKETING")
 ```
 
 Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `RISK` source:
