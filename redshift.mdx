@@ -26,33 +26,12 @@ Redshift database:
 As part of the Redshift configuration, you will be prompted to also provide an IAM role and a 
 S3 bucket. The IAM role would be assumed by Redshift to do basic operations (get, put, list objects) 
 in the S3 bucket provided. The S3 bucket itself does not require versioning, but you can 
-set a retention policy on the bucket. The retention policy should be somewhere from 1 - 14 days, 
-to balance storage efficiency with history that can be useful in debugging. 
+set a retention policy on the bucket. The retention policy should be somewhere from 1 - 14 days,
+to balance storage efficiency with history that can be useful in debugging.
 
-## Single Integration
+## Usage
 
-If you have only one Redshift connection that you'd like
-to add to Chalk, you do not need to specify any arguments
-to construct the source in your code.
-
-```py
-from chalk.sql import RedshiftSource
-
-redshift = RedshiftSource()
-```
-
-You can then use [SQL file resolvers](/docs/sql-resolvers) to query your database:
-
-```sql
--- type: online
--- resolves: User
--- source: redshift
-SELECT id, name, email FROM users
-```
-
-## Multiple Integrations
-
-<span>{getNamedIntegrationText()}</span>
+After configuring your Redshift integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import RedshiftSource

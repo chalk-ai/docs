@@ -27,20 +27,29 @@ create and use these temporary tables.
 
 ## Usage
 
-Chalk's [BigQuery](https://cloud.google.com/bigquery)
-integration can be used as a [SQL source](/docs/sql).
+After configuring your BigQuery integration with the [GCP integration](/docs/gcp), define your data sources in Python:
 
 ```py
 from chalk.sql import BigQuerySource
 
-bq = BigQuerySource()
+risk = BigQuerySource(name="**RISK**")
+marketing = BigQuerySource(name="**MARKETING**")
 ```
 
-You can then use [SQL file resolvers](/docs/sql-resolvers) to query your database:
+You can then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `RISK` source:
 
 ```sql
 -- type: online
 -- resolves: User
--- source: bigquery
-SELECT id, name, email FROM users
+-- source: RISK
+SELECT id, credit_score FROM users
+```
+
+And to query from the `MARKETING` source:
+
+```sql
+-- type: online
+-- resolves: User
+-- source: MARKETING
+SELECT id, email, campaign_status FROM users
 ```

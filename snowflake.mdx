@@ -25,30 +25,9 @@ defaults set in the data source definition.
 
 ---
 
-## Single Integration
+## Usage
 
-If you have only one Snowflake connection that you'd like
-to add to Chalk, you do not need to specify any arguments
-to construct the source in your code.
-
-```py
-from chalk.sql import SnowflakeSource
-
-snowflake = SnowflakeSource()
-```
-
-You can then use [SQL file resolvers](/docs/sql-resolvers) to query your database:
-
-```sql
--- type: online
--- resolves: User
--- source: snowflake
-SELECT id, name, email FROM users
-```
-
-## Multiple Integrations
-
-<span>{getNamedIntegrationText()}</span>
+After configuring your Snowflake integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import SnowflakeSource

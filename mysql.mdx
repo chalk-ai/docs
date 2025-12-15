@@ -23,31 +23,9 @@ MySQL database:
 
 <AddMySQLIntegration onSubmit={(e) => e.preventDefault()} />
 
+## Usage
 
-## Single Integration
-
-If you have only one MySQL connection that you'd like
-to add to Chalk, you do not need to specify any arguments
-to construct the source in your code.
-
-```py
-from chalk.sql import MySQLSource
-
-mysql = MySQLSource()
-```
-
-You can then use [SQL file resolvers](/docs/sql-resolvers) to query your database:
-
-```sql
--- type: online
--- resolves: User
--- source: mysql
-SELECT id, name, email FROM users
-```
-
-## Multiple Integrations
-
-<span>{getNamedIntegrationText()}</span>
+After configuring your MySQL integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import MySQLSource

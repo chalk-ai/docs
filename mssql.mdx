@@ -46,30 +46,9 @@ Chalk supports three authentication methods:
 
 **Azure AD Service Principal** - For authentication using an Azure AD application, provide `client_id`, `client_secret`, and `tenant_id`.
 
-## Single Integration
+## Usage
 
-If you have only one Microsoft SQL Server connection that you'd like
-to add to Chalk, you do not need to specify any arguments
-to construct the source in your code.
-
-```py
-from chalk.sql import MSSQLSource
-
-mssql_source = MSSQLSource()
-```
-
-You can then use [SQL file resolvers](/docs/sql-resolvers) to query your database:
-
-```sql
--- type: online
--- resolves: User
--- source: mssql
-SELECT id, name, email FROM users
-```
-
-## Multiple Integrations
-
-<span>{getNamedIntegrationText()}</span>
+After configuring your Microsoft SQL Server integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import MSSQLSource

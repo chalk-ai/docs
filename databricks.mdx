@@ -14,30 +14,9 @@ Alternately, you can configure the source through your dashboard.
 
 ---
 
-## Single Integration
+## Usage
 
-If you have only one Databricks connection that you'd like
-to add to Chalk, you do not need to specify any arguments
-to construct the source in your code.
-
-```py
-from chalk.sql import DatabricksSource
-
-databricks = DatabricksSource()
-```
-
-You can then use [SQL file resolvers](/docs/sql-resolvers) to query your database:
-
-```sql
--- type: online
--- resolves: User
--- source: databricks
-SELECT id, name, email FROM users
-```
-
-## Multiple Integrations
-
-<span>{getNamedIntegrationText()}</span>
+After configuring your Databricks integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import DatabricksSource
