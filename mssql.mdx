@@ -4,6 +4,7 @@ description: Integrate with Microsoft SQL Server data sources.
 published: true
 ---
 
+import { AddMSSQLIntegration } from '@/components/shared/mssql'
 import {getEnvironmentVariableText, getNamedIntegrationText} from "@/components/NamedIntegration";
 
 ---
@@ -16,10 +17,24 @@ options using the `MSSQLSource` **init** args,
 or configure the source through your dashboard, and
 reference the source in your code.
 
+## Prerequisites
+
+For local development, you'll need to install ODBC drivers:
+
+- **macOS**: `brew install unixodbc`
+- **Linux (Ubuntu/Debian)**: `sudo apt-get install unixodbc unixodbc-dev`
+- **Linux (RHEL/CentOS)**: `sudo yum install unixODBC unixODBC-devel`
+
+Then install the Python package: `pip install 'chalkpy[mssql]'`
+
+Production deployments on Chalk handle ODBC drivers automatically.
+
 ## Adding Microsoft SQL Server
 
 On the dashboard, you can plug in the configuration for your
-Microsoft SQL Server database.
+Microsoft SQL Server database:
+
+<AddMSSQLIntegration onSubmit={(e) => e.preventDefault()} />
 
 ### Authentication Methods
 
@@ -31,102 +46,33 @@ Chalk supports three authentication methods:
 
 **Azure AD Service Principal** - For authentication using an Azure AD application, provide `client_id`, `client_secret`, and `tenant_id`.
 
-## Single Integration
+## Integrations Setup
 
-If you have only one Microsoft SQL Server connection that you'd like
-to add to Chalk, you do not need to specify any arguments
-to construct the source in your code.
+After configuring your Microsoft SQL Server integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import MSSQLSource
 
-mssql = MSSQLSource()
-
-@online
-def fn(...) -> ...:
-    return mssql.query(...).first()
+risk_source = MSSQLSource(name="risk")
+marketing_source = MSSQLSource(name="marketing")
 ```
 
-## Multiple Integrations
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `risk` source:
 
-<span>{getNamedIntegrationText()}</span>
-
-```py
-from chalk.sql import MSSQLSource
-
-risk = MSSQLSource(name="**RISK**")
-marketing = MSSQLSource(name="**MARKETING**")
-
-@online
-def risk_resolver(...) -> ...:
-    return risk.query(...).first()
-
-@online
-def marketing_resolver(...) -> ...:
-    return marketing.query(...).first()
+```sql
+-- type: online
+-- resolves: User
+-- source: risk
+SELECT id, credit_score FROM users
 ```
 
-<span>{getEnvironmentVariableText("RISK", "MSSQL_HOST")}</span>
+And to query from the `marketing` source:
 
-## Environment Variables
-
-You can also configure the integration directly using environment variables
-on your local machine or from those added through the
-[generic environment variable](/docs/env-vars) support.
-
-### SQL Authentication
-
-```py
-import os
-from chalk.sql import MSSQLSource
-
-mssql = MSSQLSource(
-    host=os.getenv("MSSQL_HOST"),
-    port=os.getenv("MSSQL_TCP_PORT"),
-    db=os.getenv("MSSQL_DATABASE"),
-    user=os.getenv("MSSQL_USER"),
-    password=os.getenv("MSSQL_PWD"),
-)
-
-@online
-def fn(...) -> ...:
-    return mssql.query(...).first()
+```sql
+-- type: online
+-- resolves: User
+-- source: marketing
+SELECT id, email, campaign_status FROM users
 ```
 
-### Azure AD Service Principal
-
-```py
-import os
-from chalk.sql import MSSQLSource
-
-mssql = MSSQLSource(
-    host=os.getenv("MSSQL_HOST"),
-    port=os.getenv("MSSQL_TCP_PORT"),
-    db=os.getenv("MSSQL_DATABASE"),
-    client_id=os.getenv("MSSQL_CLIENT_ID"),
-    client_secret=os.getenv("MSSQL_CLIENT_SECRET"),
-    tenant_id=os.getenv("MSSQL_TENANT_ID"),
-)
-
-@online
-def fn(...) -> ...:
-    return mssql.query(...).first()
-```
-
-### Managed Identity
-
-```py
-import os
-from chalk.sql import MSSQLSource
-
-# Only connection details needed - authentication is automatic
-mssql = MSSQLSource(
-    host=os.getenv("MSSQL_HOST"),
-    port=os.getenv("MSSQL_TCP_PORT"),
-    db=os.getenv("MSSQL_DATABASE"),
-)
-
-@online
-def fn(...) -> ...:
-    return mssql.query(...).first()
-```
+<span>{getEnvironmentVariableText("risk", "MSSQL_HOST")}</span>

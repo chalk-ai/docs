@@ -19,42 +19,18 @@ Spanner database:
 
 <AddSpannerIntegration onSubmit={(e) => e.preventDefault()} />
 
+## Integrations Setup
 
-## Single Integration
-
-Add your Spanner data source in a Python file and give it a `name`. This line is required for all Spanner
-integrations. In this file, we'll also define a `User` feature class with a `transaction_volume` feature which will be
-resolved with Spanner.
-
-If you have only one Spanner connection that you'd like
-to add to Chalk, you do not need to specify any arguments
-to construct the source in your code.
-
-```py
-from chalk.features import features
-from chalk.sql import SpannerSource
-
-spanner_source = SpannerSource()
-
-@features
-class User:
-    id: str
-    transaction_volume: float
-```
-
-## Multiple Integrations
-
-<span>{getNamedIntegrationText()}</span>
+After configuring your Spanner integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import SpannerSource
 
-spanner_source_txns = SpannerSource(name="**SPANNER_TRANSACTIONS**")
-spanner_source_marketing = SpannerSource(name="**SPANNER_MARKETING**")
-
+spanner_source_txns = SpannerSource(name="SPANNER_TRANSACTIONS")
+spanner_source_marketing = SpannerSource(name="SPANNER_MARKETING")
 ```
 
-Now, you are all set to use Spanner with [SQL file resolvers](/docs/sql#sql-file-resolvers).
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `SPANNER_TRANSACTIONS` source:
 
 ```sql
 -- type: online
@@ -65,9 +41,18 @@ SELECT
     TransactionVolume AS transaction_volume
 FROM
     UserTable
-LIMIT 10
 ```
 
-This file resolves the `User.transaction_volume` feature. Please note that the `--source: my_spanner` line is necessary
-and should match the `name` provided to your [`SpannerSource`](/api-docs#SpannerSource). If you have a single integration,
-you should use the name that is defined in the dashboard.
+And to query from the `SPANNER_MARKETING` source:
+
+```sql
+-- type: online
+-- resolves: User
+-- source: SPANNER_MARKETING
+SELECT
+    id,
+    email,
+    campaign_status
+FROM
+    MarketingTable
+```
