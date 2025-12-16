@@ -110,6 +110,7 @@ client.offline_query(
 | **Execution** | One job at a time (FIFO) | Multiple concurrent requests |
 | **Resources** | Fixed per resource group | Requested per query |
 | **Scaling** | Horizontal (more instances) | Vertical (larger pods) |
+| **Workload Isolation** | Jobs run sequentially without resource contention | Multiple concurrent queries may compete for resources on the same server |
 
 ---
 
