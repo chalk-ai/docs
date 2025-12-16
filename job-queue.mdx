@@ -45,7 +45,7 @@ client.offline_query(
 Jobs are processed in **first-in, first-out (FIFO)** order. Each job queue server processes one job at a time sequentially.
 
 ### Fixed Resources
-Each job queue server has a single, pre-configured resource allocation (CPU and memory). This contrasts with synchronous queries, which can request arbitrary resources on-demand.
+Each job queue server has a single, pre-configured resource allocation (CPU and memory).
 
 ### Automatic Fallback
 If a job requests resources larger than the job queue server can handle, Chalk automatically skips the queue and runs the job as a standalone Kubernetes pod with the requested resources.
