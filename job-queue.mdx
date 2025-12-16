@@ -111,6 +111,7 @@ client.offline_query(
 | **Resources** | Fixed per resource group | Requested per query |
 | **Scaling** | Horizontal (more instances) | Vertical (larger pods) |
 | **Workload Isolation** | Jobs run sequentially without resource contention | Multiple concurrent queries may compete for resources on the same server |
+| **Timeout Behavior** | Can run indefinitely beyond load balancer timeout | Will report an error if execution exceeds load balancer timeout |
 
 ---
 
