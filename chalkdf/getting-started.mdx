@@ -43,13 +43,15 @@ df.run()
 
 ```
 DataFrame(materialized 3 rows x 3 columns)
-Schema: name (string), age (int64), city (string)
-Showing all rows:
-name (string) | age (int64) | city (string)
---------------+-------------+--------------
-Alice         | 25          | New York
-Bob           | 30          | Los Angeles
-Charlie       | 35          | Chicago
+┌─────────┬───────┬─────────────┐
+│ name    ┆ age   ┆ city        │
+│ ─────── ┆ ───── ┆ ─────────── │
+│ string  ┆ int64 ┆ string      │
+╞═════════╪═══════╪═════════════╡
+│ Alice   ┆ 25    ┆ New York    │
+│ Bob     ┆ 30    ┆ Los Angeles │
+│ Charlie ┆ 35    ┆ Chicago     │
+└─────────┴───────┴─────────────┘
 ```
 
 You can also scan files directly into a DataFrame. Below, we scan a CSV file:
@@ -72,13 +74,15 @@ df.run()
 
 ```
 DataFrame(materialized 3 rows x 3 columns)
-Schema: name (string), birthday (date32[day]), occupation (string)
-Showing all rows:
-name (string) | birthday (date32[day]) | occupation (string)
---------------+------------------------+--------------------
-Alice Chen    | 1990-03-15             | Software Engineer
-Bob Smith     | 1985-07-22             | Teacher
-Carol Johnson | 1992-11-08             | Data Analyst
+┌───────────────┬─────────────┬───────────────────┐
+│ name          ┆ birthday    ┆ occupation        │
+│ ───────────── ┆ ─────────── ┆ ───────────────── │
+│ string        ┆ date32[day] ┆ string            │
+╞═══════════════╪═════════════╪═══════════════════╡
+│ Alice Chen    ┆ 1990-03-15  ┆ Software Engineer │
+│ Bob Smith     ┆ 1985-07-22  ┆ Teacher           │
+│ Carol Johnson ┆ 1992-11-08  ┆ Data Analyst      │
+└───────────────┴─────────────┴───────────────────┘
 ```
 
 ## DataFrame Expressions
@@ -91,25 +95,35 @@ access columns without any additional wrappers. You can import `_` from the `cha
 ```python
 >>> from chalk import _
 >>> df.run()
+
 DataFrame(materialized 5 rows x 2 columns)
-Schema: id (int64), value (int64)
-Showing all rows:
-id (int64) | value (int64)
------------+--------------
-1          | 10
-1          | 20
-2          | 1
-2          | 2
-2          | 3
+┌───────┬───────┐
+│ id    ┆ value │
+│ ───── ┆ ───── │
+│ int64 ┆ int64 │
+╞═══════╪═══════╡
+│ 1     ┆ 10    │
+│ 1     ┆ 20    │
+│ 2     ┆ 1     │
+│ 2     ┆ 2     │
+│ 2     ┆ 3     │
+└───────┴───────┘
+```
+
+```python
+>>> from chalk.features import _
 >>> grouped = df.agg(["id"], _.value.sum().alias("value_sum_by_id"))
 >>> grouped.run()
+
 DataFrame(materialized 2 rows x 2 columns)
-Schema: id (int64), value_sum_by_id (int64)
-Showing all rows:
-id (int64) | value_sum_by_id (int64)
------------+------------------------
-1          | 30
-2          | 6
+┌───────┬─────────────────┐
+│ id    ┆ value_sum_by_id │
+│ ───── ┆ ─────────────── │
+│ int64 ┆ int64           │
+╞═══════╪═════════════════╡
+│ 1     ┆ 30              │
+│ 2     ┆ 6               │
+└───────┴─────────────────┘
 ```
 
 Below are some common operations you can use to construct DataFrame expressions.
@@ -121,16 +135,19 @@ Below are some common operations you can use to construct DataFrame expressions.
 ```python
 >>> interactions = df.select("user_id", "item_id", "interaction_type", "timestamp")
 >>> interactions.run()
+
 DataFrame(materialized 5 rows x 4 columns)
-Schema: user_id (string), item_id (string), interaction_type (string), timestamp (timestamp[us])
-Showing all rows:
-user_id (string) | item_id (string) | interaction_type (string) | timestamp (timestamp[us])
------------------+------------------+---------------------------+--------------------------
-user_001         | item_4521        | click                     | 2024-11-08 14:23:15
-user_002         | item_8832        | purchase                  | 2024-11-08 15:10:42
-user_003         | item_1203        | view                      | 2024-11-08 16:05:30
-user_004         | item_4521        | add_to_cart               | 2024-11-08 17:45:12
-user_005         | item_9944        | click                     | 2024-11-08 18:20:05
+┌──────────┬───────────┬──────────────────┬─────────────────────┐
+│ user_id  ┆ item_id   ┆ interaction_type ┆ timestamp           │
+│ ──────── ┆ ───────── ┆ ──────────────── ┆ ─────────────────── │
+│ string   ┆ string    ┆ string           ┆ timestamp[us]       │
+╞══════════╪═══════════╪══════════════════╪═════════════════════╡
+│ user_001 ┆ item_4521 ┆ click            ┆ 2024-11-08 14:23:15 │
+│ user_002 ┆ item_8832 ┆ purchase         ┆ 2024-11-08 15:10:42 │
+│ user_003 ┆ item_1203 ┆ view             ┆ 2024-11-08 16:05:30 │
+│ user_004 ┆ item_4521 ┆ add_to_cart      ┆ 2024-11-08 17:45:12 │
+│ user_005 ┆ item_9944 ┆ click            ┆ 2024-11-08 18:20:05 │
+└──────────┴───────────┴──────────────────┴─────────────────────┘
 ```
 
 ### with_columns
@@ -142,16 +159,19 @@ columns, you can use `DataFrame.with_columns`.
 >>> from chalk import _
 >>> processed_interactions = df.with_columns({"user_id": _.user_id, "long_session": _.session_duration_sec > 180})
 >>> processed_interactions.select("user_id", "session_duration_sec", "long_session").run()
+
 DataFrame(materialized 5 rows x 3 columns)
-Schema: user_id (string), session_duration_sec (int64), long_session (bool)
-Showing all rows:
-user_id (string) | session_duration_sec (int64) | long_session (bool)
------------------+------------------------------+--------------------
-user_001         | 145                          | False
-user_002         | 320                          | True
-user_003         | 78                           | False
-user_004         | 210                          | True
-user_005         | 167                          | False
+┌──────────┬──────────────────────┬──────────────┐
+│ user_id  ┆ session_duration_sec ┆ long_session │
+│ ──────── ┆ ──────────────────── ┆ ──────────── │
+│ string   ┆ int64                ┆ bool         │
+╞══════════╪══════════════════════╪══════════════╡
+│ user_001 ┆ 145                  ┆ False        │
+│ user_002 ┆ 320                  ┆ True         │
+│ user_003 ┆ 78                   ┆ False        │
+│ user_004 ┆ 210                  ┆ True         │
+│ user_005 ┆ 167                  ┆ False        │
+└──────────┴──────────────────────┴──────────────┘
 ```
 
 ### project
@@ -172,7 +192,9 @@ tbl = pa.table(
     "max_txns_allowed": [3, 5, 4],
   }
 )
+
 df = DataFrame.from_arrow(tbl)
+
 out = df.project(
   {
     "velocity_score": _.txns_last_hour
@@ -197,13 +219,15 @@ out.run()
 
 ```
 DataFrame(materialized 3 rows x 2 columns)
-Schema: velocity_score (int64), velocity_score_2 (int64)
-Showing all rows:
-velocity_score (int64) | velocity_score_2 (int64)
------------------------+-------------------------
-4                      | 4
-1                      | 1
-2                      | 2
+┌────────────────┬──────────────────┐
+│ velocity_score ┆ velocity_score_2 │
+│ ────────────── ┆ ──────────────── │
+│ int64          ┆ int64            │
+╞════════════════╪══════════════════╡
+│ 4              ┆ 4                │
+│ 1              ┆ 1                │
+│ 2              ┆ 2                │
+└────────────────┴──────────────────┘
 ```
 
 ### filter
@@ -213,25 +237,34 @@ You can filter rows in a DataFrame using `DataFrame.filter`, which takes in a bo
 ```python
 >>> from chalk import _
 >>> df.run()
+
 DataFrame(materialized 5 rows x 7 columns)
-Schema: user_id (string), item_id (string), interaction_type (string), timestamp (timestamp[us]), score (double), category (string), session_duration_sec (int64)
-Showing all rows:
-user_id (string) | item_id (string) | interaction_type (string) | timestamp (timestamp[us]) | score (double) | category (string) | session_duration_sec (int64)
------------------+------------------+---------------------------+---------------------------+----------------+-------------------+-----------------------------
-user_001         | item_4521        | click                     | 2024-11-08 14:23:15       | 0.85           | electronics       | 145
-user_002         | item_8832        | purchase                  | 2024-11-08 15:10:42       | 0.92           | fashion           | 320
-user_003         | item_1203        | view                      | 2024-11-08 16:05:30       | 0.67           | home              | 78
-user_004         | item_4521        | add_to_cart               | 2024-11-08 17:45:12       | 0.78           | electronics       | 210
-user_005         | item_9944        | click                     | 2024-11-08 18:20:05       | 0.81           | sports            | 167
+┌──────────┬───────────┬──────────────────┬─────────────────────┬────────┬─────────────┬──────────────────────┐
+│ user_id  ┆ item_id   ┆ interaction_type ┆ timestamp           ┆ score  ┆ category    ┆ session_duration_sec │
+│ ──────── ┆ ───────── ┆ ──────────────── ┆ ─────────────────── ┆ ────── ┆ ─────────── ┆ ──────────────────── │
+│ string   ┆ string    ┆ string           ┆ timestamp[us]       ┆ double ┆ string      ┆ int64                │
+╞══════════╪═══════════╪══════════════════╪═════════════════════╪════════╪═════════════╪══════════════════════╡
+│ user_001 ┆ item_4521 ┆ click            ┆ 2024-11-08 14:23:15 ┆ 0.85   ┆ electronics ┆ 145                  │
+│ user_002 ┆ item_8832 ┆ purchase         ┆ 2024-11-08 15:10:42 ┆ 0.92   ┆ fashion     ┆ 320                  │
+│ user_003 ┆ item_1203 ┆ view             ┆ 2024-11-08 16:05:30 ┆ 0.67   ┆ home        ┆ 78                   │
+│ user_004 ┆ item_4521 ┆ add_to_cart      ┆ 2024-11-08 17:45:12 ┆ 0.78   ┆ electronics ┆ 210                  │
+│ user_005 ┆ item_9944 ┆ click            ┆ 2024-11-08 18:20:05 ┆ 0.81   ┆ sports      ┆ 167                  │
+└──────────┴───────────┴──────────────────┴─────────────────────┴────────┴─────────────┴──────────────────────┘
+```
+
+```python
 >>> df.filter(_.score > 0.8).run()
+
 DataFrame(materialized 3 rows x 7 columns)
-Schema: user_id (string), item_id (string), interaction_type (string), timestamp (timestamp[us]), score (double), category (string), session_duration_sec (int64)
-Showing all rows:
-user_id (string) | item_id (string) | interaction_type (string) | timestamp (timestamp[us]) | score (double) | category (string) | session_duration_sec (int64)
------------------+------------------+---------------------------+---------------------------+----------------+-------------------+-----------------------------
-user_001         | item_4521        | click                     | 2024-11-08 14:23:15       | 0.85           | electronics       | 145
-user_002         | item_8832        | purchase                  | 2024-11-08 15:10:42       | 0.92           | fashion           | 320
-user_005         | item_9944        | click                     | 2024-11-08 18:20:05       | 0.81           | sports            | 167
+┌──────────┬───────────┬──────────────────┬─────────────────────┬────────┬─────────────┬──────────────────────┐
+│ user_id  ┆ item_id   ┆ interaction_type ┆ timestamp           ┆ score  ┆ category    ┆ session_duration_sec │
+│ ──────── ┆ ───────── ┆ ──────────────── ┆ ─────────────────── ┆ ────── ┆ ─────────── ┆ ──────────────────── │
+│ string   ┆ string    ┆ string           ┆ timestamp[us]       ┆ double ┆ string      ┆ int64                │
+╞══════════╪═══════════╪══════════════════╪═════════════════════╪════════╪═════════════╪══════════════════════╡
+│ user_001 ┆ item_4521 ┆ click            ┆ 2024-11-08 14:23:15 ┆ 0.85   ┆ electronics ┆ 145                  │
+│ user_002 ┆ item_8832 ┆ purchase         ┆ 2024-11-08 15:10:42 ┆ 0.92   ┆ fashion     ┆ 320                  │
+│ user_005 ┆ item_9944 ┆ click            ┆ 2024-11-08 18:20:05 ┆ 0.81   ┆ sports      ┆ 167                  │
+└──────────┴───────────┴──────────────────┴─────────────────────┴────────┴─────────────┴──────────────────────┘
 ```
 
 ### agg
@@ -239,14 +272,20 @@ user_005         | item_9944        | click                     | 2024-11-08 18:
 To compute aggregations over groups of data, you can use `DataFrame.agg`.
 
 ```python
->>> processed_interactions.agg(["long_session"], processed_interactions.column("score").mean().alias("avg_score")).run()
+>>> processed_interactions.agg(
+...    ["long_session"],
+...    processed_interactions.column("score").mean().alias("avg_score")
+... ).run()
+
 DataFrame(materialized 2 rows x 2 columns)
-Schema: long_session (bool), avg_score (double)
-Showing all rows:
-long_session (bool) | avg_score (double)
---------------------+-------------------
-False               | 0.776667
-True                | 0.85
+┌──────────────┬───────────┐
+│ long_session ┆ avg_score │
+│ ──────────── ┆ ───────── │
+│ bool         ┆ double    │
+╞══════════════╪═══════════╡
+│ False        ┆ 0.776667  │
+│ True         ┆ 0.85      │
+└──────────────┴───────────┘
 ```
 
 ###  join
@@ -256,25 +295,28 @@ DataFrames using an inner join on the `user_id` column. You can also specify rig
 
 ```python
 >>> txns_df.join(
-...     users_df,
-...     on=["user_id"],
-...     how="inner"
+...    users_df,
+...    on=["user_id"],
+...    how="inner"
 ... ).select(
-...     "transaction_id",
-...     "user_id",
-...     "name",
-...     "amount",
-...     "tier",
-...     "status"
+...    "transaction_id",
+...    "user_id",
+...    "name",
+...    "amount",
+...    "tier",
+...    "status"
 ... ).run()
+
 DataFrame(materialized 5 rows x 6 columns)
-Schema: transaction_id (string), user_id (string), name (string), amount (double), tier (string), status (string)
-Showing all rows:
-transaction_id (string) | user_id (string) | name (string) | amount (double) | tier (string) | status (string)
-------------------------+------------------+---------------+-----------------+---------------+----------------
-txn_101                 | user_001         | Alice         | 49.99           | premium       | completed
-txn_102                 | user_002         | Bob           | 19.99           | basic         | completed
-txn_103                 | user_001         | Alice         | 89.5            | premium       | pending
-txn_104                 | user_003         | Charlie       | 120             | premium       | completed
-txn_105                 | user_001         | Alice         | 15.75           | premium       | completed
+┌────────────────┬──────────┬─────────┬────────┬─────────┬───────────┐
+│ transaction_id ┆ user_id  ┆ name    ┆ amount ┆ tier    ┆ status    │
+│ ────────────── ┆ ──────── ┆ ─────── ┆ ────── ┆ ─────── ┆ ───────── │
+│ string         ┆ string   ┆ string  ┆ double ┆ string  ┆ string    │
+╞════════════════╪══════════╪═════════╪════════╪═════════╪═══════════╡
+│ txn_101        ┆ user_001 ┆ Alice   ┆ 49.99  ┆ premium ┆ completed │
+│ txn_102        ┆ user_002 ┆ Bob     ┆ 19.99  ┆ basic   ┆ completed │
+│ txn_103        ┆ user_001 ┆ Alice   ┆ 89.5   ┆ premium ┆ pending   │
+│ txn_104        ┆ user_003 ┆ Charlie ┆ 120    ┆ premium ┆ completed │
+│ txn_105        ┆ user_001 ┆ Alice   ┆ 15.75  ┆ premium ┆ completed │
+└────────────────┴──────────┴─────────┴────────┴─────────┴───────────┘
 ```
