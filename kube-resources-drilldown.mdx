@@ -67,8 +67,9 @@ The key scaling dimensions are:
 
 Horizontal scaling is achieved via autoscaling. `min_instances` and `max_instances` are set in the Chalk UI, and the
 autoscaler will scale the number of replicas based on the query volume. Simple CPU-based autoscaling is supported
-out of the box via the "Target CPU %" setting, and more advanced autoscaling can be achieved by setting up custom
-[KEDA scalers](https://keda.sh/docs/), controlled via the `JSON` field in the Chalk UI.
+out of the box via the "Target CPU %" setting, time-based scaling can be configured with a visualization UI, and more
+advanced autoscaling can be achieved by setting up custom [KEDA scalers](https://keda.sh/docs/), controlled via the
+`JSON` field in the Chalk UI.
 
 Different query workloads require different ratios of CPU and memory. The `engine` and `engine-grpc` deployments
 have a `resources` section in their deployment spec that can be customized to match your workload. Typically,
