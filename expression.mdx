@@ -344,7 +344,7 @@ to fall back to a default value.
 
 ---
 
-## Run conditions
+## Run conditions and Execution
 
 To specify run conditions such as environment, tags, and versions for a feature
 that is resolved through an expression,
@@ -365,6 +365,25 @@ class User:
         environment=["staging", "dev"],
         tags=["fraud", "credit"],
         version=1,
+    )
+```
+
+You may also want to define expressions that are only meant to be used for the offline pathway, say 
+if you would like to compute values or aggregations dependent on offline resolvers. To do so, you can 
+specify a distinct `offline_expression` as an offline resolver for your feature. 
+
+```python 
+from chalk.features import features, feature 
+
+@features 
+class Merchant: 
+    id: int 
+    
+    transactions: DataFrame[Transaction]
+
+    merchant_risk_score: float = feature(
+        expression=_.transactions[_.status=="approved"].count() / _.transactions.count(),
+        offline_expression=(0.50*_.transactions[_.is_chargeback==True].count()+0.25*_.transactions[_.is_refund==True].count()+0.25*_.transactions[_.status=="approved"].count())/_.transactions.count()
     )
 ```
 
@@ -391,7 +410,8 @@ Consider this `User` and `Transaction` model, which would be checked in to the c
 from chalk.features import features, DataFrame
 
 @features
-class Transaction:
+class 
+Transaction:
     id: int
     user_id: "User.id"
     user: "User"

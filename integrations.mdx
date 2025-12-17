@@ -42,7 +42,7 @@ Adding a new SQL source is as simple as providing a connection string and a few 
 Chalk dashboard.
 Once it's been added to your Chalk deployment, you can start querying it right away with [SQL Resolvers.](/docs/sql-resolvers)
 
-```
+```sql
 -- resolves: User
 -- source: postgres
 select
@@ -54,7 +54,7 @@ from users
 The features in a feature class can be hydrated from multiple SQL sources--we can pull a user's social security number
 from a different database that has stricter access controls.
 
-```
+```sql
 -- resolves: User
 -- source: restricted_postgres
 select
@@ -94,6 +94,7 @@ into SQL queries for more efficient data fetching.
 
 **Azure:**
 
+- [SQL Server / Azure SQL Database](/docs/mssql)
 - Database for PostgreSQL
 - Database for MySQL
 
@@ -279,5 +280,5 @@ Chalk eliminates the complexity of building and maintaining production machine l
 Whether you're pulling user data from PostgreSQL, processing real-time events from Kafka, caching expensive feature
 computations in Redis, or extracting features from unstructured data with LLM's-—Chalk's unified platform handles it all.
 
-The result? **Faster time to production**, **lower operational overhead**, and **consistent feature logic** across your
+The result? Faster time to production, lower operational overhead, and consistent feature logic across your
 entire ML stack.

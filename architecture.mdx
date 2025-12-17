@@ -100,7 +100,7 @@ There's an exhaustive list of supported ingestion sources in the [Integrations](
 
 ## High-performance execution engine
 
-Under the hood, Chalk uses [(Velox)](https://github.com/facebookincubator/velox), an open source unified execution engine, to deliver high-throughput feature computation.
+Under the hood, Chalk uses [Velox](https://github.com/facebookincubator/velox), an open source unified execution engine, to deliver high-throughput feature computation.
 We maintain a fork that's been optimized for low-latency online inference.
 
 You can think of Velox as a backend for query engine's like Presto (AWS Athena) and Spark i.e. you can't point Velox at a database and pass in a SQL expression.
@@ -246,7 +246,7 @@ trivial to integrate new data sources from other teams, dramatically increasing 
 accuracy and the context available to your models.
 
 Your systems can also bidirectionally integrate with Chalk's underlying infrastructure, which
-is built on widely-adopted technologies like Redis, DynamoDB, or Postgres and leverages open
+is built on widely-adopted technologies like Redis or DynamoDB, and leverages open
 standards like Arrow, Parquet, and Iceberg—ultimately maximizing compatibility and unlocking
 downstream analytical workflows
 

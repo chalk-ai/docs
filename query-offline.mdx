@@ -258,3 +258,33 @@ dataset = client.get_dataset(revision_id="21d9ceb7-c1ef-4c08-a39c-f8381e825a66")
 df = dataset.get_data_as_pandas()
 ```
 
+### Optimizing aggregations in offline queries
+
+When computing aggregations over large datasets in offline queries, your offline query may have to perform
+computationally expensive joins. To optimize these joins, Chalk provides a planner option `use_materialized_offline_query`
+that you can specify that follows similar bucketing logic to [Materialized Windowed Aggregations](/docs/materialized_aggregations)
+used in online queries. When this option is specified, the Chalk engine will bin the events over which you
+are aggregating into appropriately sized buckets based on timestamps and feature groupings, compute the
+bucket-level aggregations, and then merge the bucket-level aggregations to produce the final result. This
+approach can significantly reduce the amount of data that needs to be processed during joins, leading to faster
+offline query execution times, but the performance gain is a tradeoff with some loss of precision in the
+calculation of the aggregation.
+
+```python
+from chalk.client import ChalkClient
+
+client = ChalkClient()
+
+ds = client.offline_query(
+    inputs={'user.id': big_input_list},
+    input_times=big_input_time_list,
+    output=[
+        User.recent_transactions,
+        User.total_spent_last_30d,
+        User.recent_spending_score
+    ],
+    planner_options={
+        'use_materialized_offline_query': '1'
+    },
+)
+```

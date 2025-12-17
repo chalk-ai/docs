@@ -90,9 +90,10 @@ DataFrame(materialized 3 rows x 3 columns)
 DataFrame expressions allow you to transform and explore your data through a variety of operations.
 For example, given a DataFrame of values with id's, you could group the values by id and compute the
 aggregate sum. We use the underscore notation `_` to reference the current DataFrame, to easily
-access columns without any additional wrappers.
+access columns without any additional wrappers. You can import `_` from the `chalk` module.
 
 ```python
+>>> from chalk import _
 >>> df.run()
 
 DataFrame(materialized 5 rows x 2 columns)
@@ -155,6 +156,7 @@ To add new columns or modify existing columns in your DataFrame while retaining 
 columns, you can use `DataFrame.with_columns`.
 
 ```python
+>>> from chalk import _
 >>> processed_interactions = df.with_columns({"user_id": _.user_id, "long_session": _.session_duration_sec > 180})
 >>> processed_interactions.select("user_id", "session_duration_sec", "long_session").run()
 
@@ -177,13 +179,11 @@ DataFrame(materialized 5 rows x 3 columns)
 To define more complex transformations without retaining all original columns, you can use `DataFrame.project` to take
 in a DataFrame as input and project to new columns based on provided expressions. In these expressions, you can use the
 underscore notation `_` to reference columns within your source DataFrame, and utilize the [`chalk.functions`](/api-docs#section-chalk-functions)
-library for a variety of operations.
+library (typically imported as `F`) for a variety of operations.
 
 ```python
+from chalk import functions as F, _
 from chalkdf import DataFrame
-from chalk.features import _
-import chalk.functions as F
-
 import pyarrow as pa
 
 tbl = pa.table(
@@ -235,6 +235,7 @@ DataFrame(materialized 3 rows x 2 columns)
 You can filter rows in a DataFrame using `DataFrame.filter`, which takes in a boolean expression.
 
 ```python
+>>> from chalk import _
 >>> df.run()
 
 DataFrame(materialized 5 rows x 7 columns)

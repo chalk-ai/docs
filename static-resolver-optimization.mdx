@@ -11,6 +11,8 @@ import { TipInfo } from '@/components/Tip'
 Chalk's static resolver optimization transforms Python resolvers into high-performance columnar operations through
 symbolic execution, eliminating Python's runtime overhead while maintaining its developer-friendly syntax.
 
+---
+
 ## The Performance Challenge
 
 Python resolvers provide flexibility and ease of use for feature engineering, but traditional Python execution
@@ -23,6 +25,8 @@ introduces significant performance bottlenecks in real-time ML workloads:
 
 These limitations can make Python resolvers unsuitable for latency-sensitive applications requiring sub-millisecond
 response times.
+
+---
 
 ## Symbolic Execution Approach
 
@@ -38,9 +42,13 @@ happens automatically without requiring changes to your resolver code.
 4. **Columnar Translation**: Transforms Python logic into efficient columnar operations
 5. **Automatic Fallback**: Gracefully falls back to subprocess execution for unsupported functions
 
+For more details on the implementation, check out our [blog post](https://chalk.ai/blog/symbolic-python-interpreter).
+
 <TipInfo>
 Static optimization is automatically applied to compatible Python resolvers. No code changes or special decorators are required.
 </TipInfo>
+
+---
 
 ## Supported Operations
 
@@ -63,13 +71,15 @@ The symbolic interpreter supports a wide range of Python operations commonly use
 - Simple list comprehensions
 - Basic function calls
 
+---
+
 ## Performance Benefits
 
 Static resolver optimization delivers significant performance improvements:
 
 ### Parallel Execution
 - Eliminates Python's GIL restrictions
-- Enables true multi-threaded processing
+- Enables true multithreaded processing
 - Scales linearly with available CPU cores
 
 ### Vectorized Operations
@@ -98,6 +108,8 @@ def compute_risk_score(
 ```
 
 This resolver, when optimized, can process millions of transactions per second compared to thousands with traditional Python execution.
+
+---
 
 ## Best Practices
 
@@ -157,16 +169,19 @@ query plan in the dashboard. Optimized resolvers will be marked as accelerated, 
 optimized the query plan node will also provide information about why it was not optimized. Optimized resolvers will
 show significantly lower execution times and higher throughput.
 
+---
+
 ## Limitations
 
 While powerful, static optimization has some limitations:
 
 - **Complex control flow**: Deeply nested loops or recursive functions may not optimize
-- **I/O operations**: File or network operations cannot be symbolically executed
 - **Dynamic code**: `eval()`, `exec()`, or dynamic attribute access patterns
 
 When the optimizer encounters unsupported operations, it automatically falls back to standard Python execution, ensuring
 your resolvers always work correctly.
+
+---
 
 ## Summary
 

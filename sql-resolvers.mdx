@@ -8,6 +8,8 @@ published: true
 
 SQL resolvers enable you to load and transform data from your data sources as feature values.
 
+---
+
 ## Defining SQL Resolvers
 
 There are two ways to define SQL resolvers. The first is to write a SQL query in a file with the
@@ -20,12 +22,10 @@ To define a SQL resolver in a file, create a file with the `.chalk.sql` extensio
 the data source the SQL query will run on and the feature class whose features it will resolve, and write
 the SQL query.
 
-```sql src/get_user.chalk.sql
+```sql src/users.chalk.sql
 -- source: pg_users
 -- resolves: User
-
 select id, name, age, hobbies from users
-
 ```
 
 The output column names in the SQL query must match the feature names in the feature class specified in the
@@ -50,6 +50,8 @@ make_sql_file_resolver(
     query="select id, name, age, hobbies from users"
 )
 ```
+
+---
 
 ## SQL Resolver Configurations
 
@@ -81,7 +83,9 @@ select id, name, age, hobbies, updated_at from users
 
 For the full list of configurations, see [here](/docs/sql#configuration).
 
+---
+
 ## Testing
 
-To test your SQL resolvers, we recommend setting up [integration tests](/docs/integration-tests) or
-iterating on a branch.
+To test your SQL resolvers, we recommend setting up [integration tests](/docs/integration-tests)
+or iterating on a branch.

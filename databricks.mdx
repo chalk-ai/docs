@@ -14,63 +14,33 @@ Alternately, you can configure the source through your dashboard.
 
 ---
 
-## Single Integration
+## Integrations Setup
 
-If you have only one Databricks connection that you'd like
-to add to Chalk, you do not need to specify any arguments
-to construct the source in your code.
+After configuring your Databricks integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import DatabricksSource
 
-databricks = DatabricksSource()
-
-@online
-def fn(...) -> ...:
-    return databricks.query(...).first()
+risk = DatabricksSource(name="RISK")
+marketing = DatabricksSource(name="MARKETING")
 ```
 
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `RISK` source:
 
-## Multiple Integrations
+```sql
+-- type: online
+-- resolves: User
+-- source: RISK
+SELECT id, credit_score FROM users
+```
 
-<span>{getNamedIntegrationText()}</span>
+And to query from the `MARKETING` source:
 
-```py
-from chalk.sql import DatabricksSource
-
-risk = DatabricksSource(name="**RISK**")
-marketing = DatabricksSource(name="**MARKETING**")
-
-@online
-def risk_resolver(...) -> ...:
-    return risk.query(...).first()
-
-@online
-def marketing_resolver(...) -> ...:
-    return marketing.query(...).first()
+```sql
+-- type: online
+-- resolves: User
+-- source: MARKETING
+SELECT id, email, campaign_status FROM users
 ```
 
 <span>{getEnvironmentVariableText("RISK", "DATABRICKS_HOST")}</span>
-
-## Environment Variables
-
-You can also configure the integration directly using environment variables
-on your local machine or from those added through the
-[generic environment variable](/docs/env-vars) support.
-
-```py
-import os
-from chalk.sql import DatabricksSource
-
-databricks = DatabricksSource(
-    host=os.getenv("DATABRICKS_HOST"),
-    http_path=os.getenv("DATABRICKS_HTTP_PATH"),
-    access_token=os.getenv("DATABRICKS_TOKEN"),
-    db=os.getenv("DATABRICKS_DATABASE"),
-    port=os.getenv("DATABRICKS_PORT"),
-)
-
-@online
-def resolver_fn(...) -> ...:
-    return databricks.query(...).first()
-```
