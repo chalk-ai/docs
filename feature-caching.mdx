@@ -52,7 +52,7 @@ class User:
     email: str = feature(max_staleness="0s")
     ...
 
-@features(max_stasleness="infinity")
+@features(max_staleness="infinity")
 class UserReport:
     user_id: Primary[User.id]
     report_data: str
