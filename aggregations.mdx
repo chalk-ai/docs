@@ -23,15 +23,18 @@ The following table lists the supported aggregations along with some notes.
 
 | Function | Notes |
 | ---  | --- |
-| `sum` | |
+| `sum` | Support for vector and scalar feature aggregations. |
 | `min` | |
 | `max` | |
-| `mean` | Feature type must be `float` or <code>float &#124; None</code>. `None` values are skipped, meaning they are not included in the mean calculation.  |
+| `min_by_n` | Returns a list of the `n` values for the minimum `by` values. |
+| `max_by_n` | Returns a list of the `n` values for the maximum `by` values. |
+| `mean` | Feature type must be `Vector`, `float` or <code>float &#124; None</code>. `None` values are skipped, meaning they are not included in the mean calculation.  |
 |`count` | |
 |`std` | Standard deviation. Requires at least 2 values. |
 |`var` | Variance. Same requirements as `std`. |
 |`approx_count_distinct` | An approximation of the cardinality of non-null data. |
 |`approx_top_k` | An approximation of the most common values in a field. Takes in a required `k` parameter, such as `approx_top_k(k=5)` for the five approximately-most common values. Up to `k` values will be returned, sometimes fewer. |
+|`approx_percentile` | An approximation of the value a given percentage of your data falls below. Accepts `quantile` parameter, between `0` and `1`, such as `approx_percentile(quantile=.5)`. |
 
 For example, say you want to compute some aggregations over a document's revisions. You could define the features
 and aggregations below.
