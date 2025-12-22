@@ -6,6 +6,20 @@ description: Updates to Chalk!
 published: true
 ---
 
+## December 22, 2025 
+
+### Node monitoring improvements
+
+The `Nodes` tab on the `Kubernetes` page in the dashboard now supports filtering and sorting by node type, node pool, and CPU utilization. 
+
+### Expanded materialized aggregations
+
+Although previously supported as windowed aggregations, `approx_percentile` aggregations are now supported as materialized aggregations as well. Teams can compute windowed percentile statistics efficiently, improving latency for percentile-based monitoring and modeling. 
+
+### Native SQL driver for MS SQL 
+
+Chalk now provides a native drive for Microsoft SQL Server, enabling users to write SQL resolvers against their MS SQL data sources, and Chalk compiles and executes the queries using Rust and C++ for performance optimization. This expands Chalk's coverage across data ecosystems, allowing teams that store features or raw data in MS SQL to integrate directly without custom pipelines or data exports. 
+
 ## December 12, 2025
 
 ### Preview messages when setting up stream sources
