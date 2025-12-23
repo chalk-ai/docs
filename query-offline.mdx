@@ -218,6 +218,8 @@ client.offline_query(
 If you'd like to adjust the compute or memory resources for the job,
 set the `resources` parameter to a custom [`ResourceRequests`](/api-docs#ResourceRequests) object.
 Ensure that the request values are compatible with the resources available on Kubernetes cluster.
+By default, asynchronous offline queries will be picked up by a Job Queue Server worker, so the
+resource requests can override the Job Queue server configurations.
 
 Another option to consider is to parallelize the computation of the offline query by dividing the input into shards.
 If the `num_shards` parameter is set,
