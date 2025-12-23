@@ -61,14 +61,21 @@ in your Chalk environment.
 All Chalk environments will have a `Default` resource group. If you have a specific use case which would
 require more resource groups, please reach out to the Chalk Team.
 
-In a resource group, you can specify the default resource requests, instance types, and nodepools for
-each service. The resource requests for the Query Server, gRPC Query Server, and the Branch Server will
-be used whenever your configuration is applied to spin up the appropriate resources in your cluster. The
-resource request for Async Offline Query can be overridden at query time using the `ChalkClient.offline_query(resources=...)`
-parameter, but will default to the values set in the Resource Configuration page. For most use cases,
-setting the `Requests` configurations will be sufficient. However, you can also set `Limits` for
-each service if you would like to cap the maximum resources that can be allocated to a service.
-The Instance Type selector enables you to specify the machine family you would like to use for your
+In a resource group, you can specify the default resource requests, pod instances, instance types, and
+nodepools for each service. The resource configurations for thr Query Server, gRPC Query Server, and the
+Branch Server will be used to spin up pods during deployments. The Job Queue Server configuration
+specifies a pool of workers that are used to process asynchronous offline query jobs, scheduled queries,
+and aggregation backfills. The worker pool will automatically scale up and down based on the number of jobs
+in the queue to process. The resource requests for asynchronous offline queries can be overridden in the
+`resource_request` parameter of the `ChalkClient.offline_query()` method, and the resource requests for
+Scheduled Queries can be overridden in the dashboard in the `Scheduled Query Configuration` tab for the job.
+
+In order to isolate resources for different services, you can select `Isolate from other Chalk services`,
+which will ensure that pods for that service are only scheduled on nodes provisioned for that service.
+For example, if you serve production traffic against your gRPC query servers, you can isolate the resources
+such that Karpenter consolidation of other pods for offline jobs or the branch server will not affect
+your gRPC query server pods. For resource optimization, the Instance Type selector enables you to specify
+the machine family you would like to use for your
 deployment. For example, this would map to [EC2 Instance Types](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html)
 for AWS deployments or [Compute Engine Machine Families](https://cloud.google.com/compute/docs/machine-resource)
 for GCP deployments. By default, the Ephemeral Storage for a service will be set to the same as the
