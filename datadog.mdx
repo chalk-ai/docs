@@ -4,6 +4,8 @@ description: Ingest Chalk metrics into Datadog.
 published: true
 ---
 
+import { DocsImage } from '@/components/DocsImage'
+
 ---
 
 Chalk stores a variety of time series metrics that measure the latency and
@@ -37,7 +39,7 @@ accessing other Chalk systems.
 After creating a Datadog agent, generate a set of [service credentials](/docs/online-authentication) with the `logs.list`
 permission.
 
-![Datadog token](/img/ddogtoken.png)
+<DocsImage src={'/img/ddogtoken.png'} alt={'Datadog token'} noFullWidth />
 
 Keep the `client_id` and `client_secret` handy -- you'll need them in the next step.
 
