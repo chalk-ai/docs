@@ -118,4 +118,72 @@ SELECT value FROM "chalk.historical_values.user.name" WHERE pkey = 1
 
 
 
+## How do I run chalksql?
+### Python/Notebook
+By using a `ChalkGRPCClient` found in the python SDK, you're able to
+
+### Chalk CLI
+
+### Web UI
+
+## How fast is chalksql?
+
+ChalkSQL will execute queries
+
+## How complete is chalksql?
+
+## How do I get data into chalksql?
+
+Presently, ChalkSQL does will not materialize views or create persistent tables for you. If you would like to get your
+own tables in, it is recommended to create a dataframe resolver that will return the data you need or insert a table
+within one of your registered Data Sources and query it.
+
+## High level workflows:
+
+### How do I query the query log?
+
+The query log is available as the `chalk.query_log.data` view in ChalkSQL.
+
+TODO: Example of ChalkSQL for all Chalk queries for a specific query name+version.
+TODO: Example of ChalkSQL to determine query success percentage over last 24 hours.
+
+### How do I query historical feature values?
+
+
+
+### How do I query my own datasources?
+
+When you register a data source in your Chalk environment, it will appear as an **external catalog**. This catalog will
+be named the same as the data source, and can be used as a direct view into that datasource.
+
+TODO: Examples of joining across multiple datasources (federated query!)
+
+The following data source types are presently supported and registered as external catalogs in ChalkSQL automatically:
+- Postgres
+- Spanner
+- MySQL
+- Clickhouse
+- BigQuery
+- Redshift
+- Snowflake
+- Databricks
+
+### How do I query a resolver?
+
+Dataframe resolvers *that do not take in inputs* are registered as views in ChalkSQL under
+`chalk.resolver.<resolver-name>`. You may then treat them as any other view/table within your queries.
+
+TODO: Example of ChalkSQL returning all results of a resolver with some filter, order-by, etc.
+
+**Note: when defining resolvers in python, ChalkSQL will not be able to do pushdown into the view.** ChalkSQL will make
+a best effort attempt to pushdown for dataframe SQL resolvers, however.
+
+### How do I query my features?
+
+ChalkSQL does not presently offer a way to query features from other features, like you would see in a conventional
+online or offline query with Chalk. ChalkSQL does currently offer integration with these query endpoints by way
+of providing
+
+TODO: Example of ChalkSQL being used as online/offline query inputs.
+
 
