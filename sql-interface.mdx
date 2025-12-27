@@ -117,35 +117,32 @@ SELECT value FROM "chalk.historical_values.user.name" WHERE pkey = 1
 ```
 
 
-
-## How do I run chalksql?
-### Python/Notebook
-By using a `ChalkGRPCClient` found in the python SDK, you're able to
-
-### Chalk CLI
-
-### Web UI
-
-## How fast is chalksql?
-
-ChalkSQL will execute queries
-
-## How complete is chalksql?
-
-## How do I get data into chalksql?
-
-Presently, ChalkSQL does will not materialize views or create persistent tables for you. If you would like to get your
-own tables in, it is recommended to create a dataframe resolver that will return the data you need or insert a table
-within one of your registered Data Sources and query it.
-
 ## High level workflows:
 
 ### How do I query the query log?
 
 The query log is available as the `chalk.query_log.data` view in ChalkSQL.
 
-TODO: Example of ChalkSQL for all Chalk queries for a specific query name+version.
-TODO: Example of ChalkSQL to determine query success percentage over last 24 hours.
+Query to get all Chalk queries made under a named query `get_user_info`, version `7`:
+```sql
+SELECT * FROM chalk.query_log.data WHERE query_name = 'get_user_info' AND query_name_version = '7'
+```
+
+Query to determine success ratio of all Chalk queries over the last 24 hours
+```sql
+WITH last_24h_query_count_success AS (
+    SELECT COUNT(*) AS count_success
+    FROM chalk.query_log.data
+    WHERE execution_started_at >= (NOW - INTERVAL '1 day') AND query_status = 'SUCCESS'
+)
+WITH last_24h_query_count_failed AS (
+    SELECT COUNT(*) AS count_failed
+    FROM chalk.query_log.data
+    WHERE execution_started_at >= (NOW - INTERVAL '1 day') AND query_status = 'FAILED'
+)
+SELECT last_24h_query_count_success.count_success
+           / (last_24h_query_count_success.count_success + last_24h_query_count_failed.count_failed)
+```
 
 ### How do I query historical feature values?
 
@@ -156,13 +153,33 @@ TODO: Example of ChalkSQL to determine query success percentage over last 24 hou
 When you register a data source in your Chalk environment, it will appear as an **external catalog**. This catalog will
 be named the same as the data source, and can be used as a direct view into that datasource.
 
-TODO: Examples of joining across multiple datasources (federated query!)
+If you had a postgres source and a bigquery source defined in your code
+```py
+from chalk.sql import PostgresSource
+from chalk.sql import BigquerySource
+pg = PostgresSource(name='pg_source')
+bq = BigquerySource(name='bq_source')
+```
+
+You could make a federated query in ChalkSQL to join across a table `transactions` in `pg` and a table `users` in `bq`:
+```sql
+SELECT
+    bq_users.user_id AS user_id,
+    bq_users.full_name AS full_name,
+    pg_transactions.transaction_id AS transaction_id,
+    pg_transactions.amount AS transaction_amount
+FROM bq_source.my_dataset.users AS bq_users
+OUTER JOIN pg.public.transactions AS pg_transactions
+ON user_id = pg_transactions.user_id
+/* pg_source and bq_source are the name of the datasources
+   and therefore also the name of their respective catalogs */
+```
 
 The following data source types are presently supported and registered as external catalogs in ChalkSQL automatically:
-- Postgres
-- Spanner
-- MySQL
-- Clickhouse
+- Postgres (natively)
+- Spanner (natively)
+- MySQL (natively)
+- Clickhouse (natively)
 - BigQuery
 - Redshift
 - Snowflake
@@ -181,9 +198,93 @@ a best effort attempt to pushdown for dataframe SQL resolvers, however.
 ### How do I query my features?
 
 ChalkSQL does not presently offer a way to query features from other features, like you would see in a conventional
-online or offline query with Chalk. ChalkSQL does currently offer integration with these query endpoints by way
-of providing
+online or offline query with Chalk.
 
-TODO: Example of ChalkSQL being used as online/offline query inputs.
+### How can I integrate ChalkSQL with online and offline query?
 
+You may create online and offline queries with ChalkSQL as the inputs via the `input_sql` parameter
+on `ChalkClient.offline_query(...)` and `ChalkGRPCClient.online_query_bulk(...)`. This ChalkSQL query should output
+columns that are feature references, snakecased in a similar way to how they would be provided as inputs, and the
+result of this ChalkSQL query will be passed as the inputs to the resulting Chalk query.
+
+```py
+from dataclasses import dataclass
+from chalk.features import Primary, features, online
+
+@dataclass
+class Name:
+    first: str
+    last: str
+
+
+@dataclass
+class Pet:
+    name: str
+    species: str
+
+
+@features
+class User:
+    id: Primary[int]
+    first_name: str
+    last_name: str
+    full_name: str
+
+    structured_name: Name
+
+    pets: list[Pet]
+    num_cats: int
+```
+
+With these feature classes, the two following queries are equivalent,
+```py
+from chalk.client.client_grpc import ChalkGRPCClient
+client = ChalkGRPCClient()
+client.online_query_bulk(
+    input_sql="""
+    select *
+    from (values
+        (1, {'last': 'Aaronson', 'first': 'Alice'}, [
+                {'species': 'dog', 'name': 'fido'}
+        ]),
+        (2, {'last': 'Brown', 'first': 'Bob'}, [
+                {'species': 'cat', 'name': 'mittens'},
+                {'species': 'cat', 'name': 'felix'}
+        ])
+    )
+    as result(
+        "user.id",
+        "user.structured_name",
+        "user.pets"
+    )
+    """,
+    output=[
+        "user.id",
+        "user.first_name",
+        "user.last_name",
+        "user.full_name",
+        "user.structured_name",
+        "user.num_cats",
+    ],
+)
+
+client.online_query_bulk(
+    input={
+        "user.id": [1, 2],
+        "user.structured_name": [Name(first='Alice', last='Aaronson'), Name(first='Bob', last='Brown')],
+        "user.pets": [
+            [Pet(name='fido', species='cat')],
+            [Pet(name='mittens', species='cat'), Pet(name='felix', species='cat')],
+        ]
+    },
+    output=[
+        "user.id",
+        "user.first_name",
+        "user.last_name",
+        "user.full_name",
+        "user.structured_name",
+        "user.num_cats",
+    ],
+)
+```
 
