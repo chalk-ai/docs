@@ -200,6 +200,14 @@ If you want to use one bucket size for all of your window intervals, you can jus
 If your window intervals have a wide discrepancy (say, 1d and 365d), you can use the `bucket_durations` parameter to
 explicitly map bucket durations to each window interval. Selecting the right bucket duration is a tradeoff between
 accuracy and storage. Shorter bucket durations will yield more accurate results, but will also require more storage.
+To optimize for accuracy given a storage constraint, you can compute the approximate storage costs by computing the 
+number of buckets needed for your materialized aggregation (for a materialized aggregation, buckets of the same size 
+will be reused across all relevant window interval calculations, but each distinct bucket duration requires a distinct 
+set of buckets), and then computing the storage per bucket. The storage used per bucket is the sum of the size of the online 
+storage key representation for the primary key, as well as the size of the bucket state (which ranges from approximately 
+9 bytes for simple aggregations such as sum, min, and max, 18 bytes for mean, and then approximately 50-200 bytes for 
+more complex aggregations like approx_count_distinct). For more details on determining the tradeoff between accuracy 
+and storage space, please reach out to the Chalk team. 
 
 When you query for a specific window_interval, Chalk will aggregate over all the complete buckets that intersect with
 the window interval. If a bucket is only partially filled, it will not be included in that aggregation. If you have a
