@@ -6,6 +6,13 @@ description: Cache and materialize feature aggregations
 published: true
 ---
 
+import {
+    Attribute,
+    AttributeTable,
+} from '@/components/AttributeTable'
+
+---
+
 Machine learning teams often build and maintain separate pre-aggregation pipelines that relay data--as standalone
 features--into a feature store to reduce the latency of computing expensive features.
 
@@ -172,28 +179,28 @@ In the example above, we specify a `bucket_duration` of `"1d"`.
 The materialization parameter takes in a dictionary that adheres to the schema outlined by `MaterializationWindowConfig`:
 
 <AttributeTable title={'Materialization Configuration'}>
-    <Attribute field={'bucket_duration'} kind={'Duration'}>
-        The <a href="/api-docs#Duration">Duration</a> of each bucket in the window e.g. "1h"
-    </Attribute>
-    <Attribute field={'bucket_durations'} kind={'Mapping[Duration, Sequence[Duration] | Duration]'}>
-        A dictionary that specifically maps bucket durations to your window intervals e.g.
-        if you wanted to use <code className="dark:text-white">"10m"</code> bucket durations for your
-        <code className="dark:text-white">"1d"</code> window interval and
-        <code className="dark:text-white">"3d"</code> bucket durations for your <code className="dark:text-white">"30d"</code> window interval.
-        We recommend explicitly mapping bucket durations to each window if your window intervals have a wide discrepancy e.g.
-        ten minute bucket duration with a one year window interval.
-        Any window intervals not explicitly included in the <code className="dark:text-white">"bucket_durations"</code>
-        dictionary will use your supplied <code className="dark:text-white">"bucket_duration"</code> by default.
-    </Attribute>
-    <Attribute field={'backfill_schedule'} kind={'CronTab | None'}>
-        The schedule on which to automatically backfill the aggregation.
-        For example, <code className="dark:text-white">"* * * * *"</code>
-        or <code className="dark:text-white">"1h"</code>.
-        See <a href="/api-docs#CronTab">CronTab</a> for more details.
-    </Attribute>
-    <Attribute field={'continuous_buffer_duration'} kind={'Duration | None'}>
-        The minimum period of time for which to sample data directly via online query, rather than from the backfilled aggregations.
-    </Attribute>
+<Attribute field={'bucket_duration'} kind={'Duration'}>
+    The <a href="/api-docs#Duration">Duration</a> of each bucket in the window e.g. "1h"
+</Attribute>
+<Attribute field={'bucket_durations'} kind={'Mapping[Duration, Sequence[Duration] | Duration]'}>
+    A dictionary that specifically maps bucket durations to your window intervals e.g.
+    if you wanted to use <code className="dark:text-white">"10m"</code> bucket durations for your
+    <code className="dark:text-white">"1d"</code> window interval and
+    <code className="dark:text-white">"3d"</code> bucket durations for your <code className="dark:text-white">"30d"</code> window interval.
+    We recommend explicitly mapping bucket durations to each window if your window intervals have a wide discrepancy e.g.
+    ten minute bucket duration with a one year window interval.
+    Any window intervals not explicitly included in the <code className="dark:text-white">"bucket_durations"</code>
+    dictionary will use your supplied <code className="dark:text-white">"bucket_duration"</code> by default.
+</Attribute>
+<Attribute field={'backfill_schedule'} kind={'CronTab | None'}>
+    The schedule on which to automatically backfill the aggregation.
+    For example, <code className="dark:text-white">"* * * * *"</code>
+    or <code className="dark:text-white">"1h"</code>.
+    See <a href="/api-docs#CronTab">CronTab</a> for more details.
+</Attribute>
+<Attribute field={'continuous_buffer_duration'} kind={'Duration | None'}>
+    The minimum period of time for which to sample data directly via online query, rather than from the backfilled aggregations.
+</Attribute>
 </AttributeTable>
 
 If you want to use one bucket size for all of your window intervals, you can just use the `bucket_duration` parameter.
