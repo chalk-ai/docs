@@ -91,7 +91,7 @@ def compute_document_embedding(
     return compute_embedding(text)
 ```
 
-When vector features are computed through streaming resolvers, they are automatically persisted to your configured vector database.
+When vector features are computed in streaming resolvers, they are automatically persisted to your configured vector database.
 
 ### Using Offline or Scheduled Jobs
 
