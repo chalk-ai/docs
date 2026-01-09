@@ -46,7 +46,6 @@ In this example, the `has_many` response from the join will be delegated to the 
 Vector features—those used in nearest neighbor joins—are automatically persisted to your vector store. This ensures that your vectors are readily available 
 for efficient querying. Typically, embeddings are either generated from streams or offline/scheduled runs.
 
-
 ### Using Streams
 
 Vector features can be persisted through chalk streams. This approach allows you to continuously update your vector store as new data arrives:
