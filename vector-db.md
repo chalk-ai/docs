@@ -39,7 +39,7 @@ class FAQDocument:
     link: str
 ```
 
-In this example, the `has_many` response from the join will be delegated to the configured vector database which performs the efficient nearest neighbor search. The `FAQDocument.query_embedding` is stored in the vector store: the following section discusses how the embeddings are loaded into the vector store.
+In this example, the `has_many` response from the join will be delegated to the configured vector database which performs the efficient nearest neighbor search. The `FAQDocument.question_embedding` is stored in the vector store: the following section discusses how the embeddings are loaded into the vector store.
 
 ## Persisting Vector Features
 
