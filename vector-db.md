@@ -23,20 +23,23 @@ from chalk.features import DataFrame, embed, features, has_many, Vector
 class SearchQuery:
     query: str
     embedding: Vector = embed(...)
+    topic: str
     nearest_documents: DataFrame[FAQDocument] = has_many(
         lambda: SearchQuery.embedding.is_near(
-            FAQDocument.embedding
-        )
+            FAQDocument.question_embedding
+        ) & (SearchQuery.topic == FAQDocument.topic) # Additional filters can optionally be added to the join
+
     )
 
 @features
 class FAQDocument:
     question: str
     question_embedding: Vector = embed(...)
+    topic: str
     link: str
 ```
 
-In this example, the `has_many` response from the join will be delegated to the configured vector database, which performs the efficient nearest neighbor search.
+In this example, the `has_many` response from the join will be delegated to the configured vector database which performs the efficient nearest neighbor search. The `FAQDocument.query_embedding` is stored in the vector store: the following section discusses how the embeddings are loaded into the vector store.
 
 ## Persisting Vector Features
 
@@ -110,6 +113,7 @@ ScheduledQuery(
     name="generate_document_embeddings",
     schedule="0 0 * * *",
     output=[Document.embedding],
+    # store online will cause the vector to be persisted
     store_online=True,
     store_offline=True,
     incremental_resolvers="documents",
