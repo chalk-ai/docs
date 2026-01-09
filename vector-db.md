@@ -1,0 +1,90 @@
+---
+title: Vector Databases
+description: Configure and use vector databases for efficient nearest neighbor search
+published: true
+---
+
+---
+
+Vector databases enable efficient storage and retrieval of high-dimensional vectors for nearest neighbor search operations. Chalk integrates with vector databases to provide scalable vector search capabilities for your feature pipelines.
+
+## Configuration
+
+Vector databases can be configured through your Chalk dashboard at **Integrations -> Vector DB**. Once configured, your vector database becomes available for use with [vector search](/docs/vector-search) operations.
+
+## Vector Search
+
+After configuring a vector database integration, you can leverage Chalk's [nearest neighbor search capabilities](/docs/vector-search) to find similar vectors across your feature classes. When you define a `has_many` relationship using the `is_near` method, the query is delegated to the underlying vector store for efficient processing.
+
+```py
+from chalk.features import DataFrame, embed, features, has_many, Vector
+
+@features
+class SearchQuery:
+    query: str
+    embedding: Vector = embed(...)
+    nearest_documents: DataFrame[FAQDocument] = has_many(
+        lambda: SearchQuery.embedding.is_near(
+            FAQDocument.embedding
+        )
+    )
+
+@features
+class FAQDocument:
+    question: str
+    question_embedding: Vector = embed(...)
+    link: str
+```
+
+In this example, the `has_many` response from the join will be delegated to the configured vector database, which performs the efficient nearest neighbor search.
+
+## Persisting Vector Features
+
+Vector features—those used in nearest neighbor joins—are automatically persisted to your vector store. This ensures that your vectors are readily available for efficient querying.
+
+### Using Sinks
+
+Vector features can be persisted through [streaming sinks](/docs/native-streaming#example-item-embedding-pipeline). This approach allows you to continuously update your vector store as new data arrives:
+
+```py
+from chalk import stream, Features
+from chalk.features import Vector, embed
+
+@stream(source=KafkaSource(name='documents_stream'))
+def process_documents(
+    value: DocumentMessage,
+) -> Features[Document.id, Document.embedding]:
+    return Document(
+        id=value.id,
+        embedding=compute_embedding(value.text),
+    )
+```
+
+When vector features are computed through streaming resolvers, they are automatically persisted to your configured vector database.
+
+### Using Offline or Scheduled Jobs
+
+Alternatively, you can ingest vector features through offline or scheduled jobs. These jobs compute and load vector features to the vector database in batch:
+
+```py
+from chalk import offline
+
+@offline
+def ingest_embeddings(
+    document_text: Document.text
+) -> Document.embedding:
+    return compute_embedding(document_text)
+```
+
+Once the offline job completes, the computed vector features are loaded to the vector database and become immediately queryable through nearest neighbor operations.
+
+## Query Flow
+
+When you execute a query that includes a nearest neighbor relationship:
+
+1. Chalk identifies the vector search operation in your query
+2. The query is delegated to your configured vector database
+3. The vector store performs efficient approximate nearest neighbor search
+4. Results are returned as a Chalk DataFrame, ready to use in your resolvers
+
+This delegation ensures that vector search operations leverage the specialized indexing and query capabilities of your vector database, providing optimal performance for high-dimensional similarity search.
