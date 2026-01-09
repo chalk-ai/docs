@@ -40,24 +40,53 @@ In this example, the `has_many` response from the join will be delegated to the 
 
 ## Persisting Vector Features
 
-Vector features—those used in nearest neighbor joins—are automatically persisted to your vector store. This ensures that your vectors are readily available for efficient querying.
+Vector features—those used in nearest neighbor joins—are automatically persisted to your vector store. This ensures that your vectors are readily available 
+for efficient querying. Typically, embeddings are either generated from streams or offline/scheduled runs.
 
-### Using Sinks
 
-Vector features can be persisted through [streaming sinks](/docs/native-streaming#example-item-embedding-pipeline). This approach allows you to continuously update your vector store as new data arrives:
+### Using Streams
+
+Vector features can be persisted through chalk streams. This approach allows you to continuously update your vector store as new data arrives:
 
 ```py
-from chalk import stream, Features
-from chalk.features import Vector, embed
+from chalk.streams import KafkaSource
+from chalk.features.resolver import Sink, make_stream_resolver
+from chalk.features import _
+from chalk import online
+from pydantic import BaseModel
 
-@stream(source=KafkaSource(name='documents_stream'))
-def process_documents(
-    value: DocumentMessage,
-) -> Features[Document.id, Document.embedding]:
-    return Document(
-        id=value.id,
-        embedding=compute_embedding(value.text),
-    )
+
+class DocumentMessage(BaseModel):
+    id: int
+    text: str
+
+
+documents_stream = KafkaSource(
+    name="documents_stream",
+)
+
+embeddings_stream = KafkaSource(
+    name="document_embeddings",
+)
+
+make_stream_resolver(
+    name="process_documents",
+    source=documents_stream,
+    message_type=DocumentMessage,
+    output_features={
+        Document.id: _.id,
+        Document.text: _.text,
+        Document.embedding
+    },
+)
+
+@online
+def compute_document_embedding(
+    text: Document.text,
+) -> Document.embedding:
+    """Generate document embedding using a pre-trained model."""
+    # In a real implementation, this would use a model like sentence-transformers
+    return compute_embedding(text)
 ```
 
 When vector features are computed through streaming resolvers, they are automatically persisted to your configured vector database.
@@ -68,15 +97,26 @@ Alternatively, you can ingest vector features through offline or scheduled jobs.
 
 ```py
 from chalk import offline
+from chalk import ScheduledQuery
 
 @offline
 def ingest_embeddings(
     document_text: Document.text
 ) -> Document.embedding:
     return compute_embedding(document_text)
+
+
+ScheduledQuery(
+    name="generate_document_embeddings",
+    schedule="0 0 * * *",
+    output=[Document.embedding],
+    store_online=True,
+    store_offline=True,
+    incremental_resolvers="documents",
+)
 ```
 
-Once the offline job completes, the computed vector features are loaded to the vector database and become immediately queryable through nearest neighbor operations.
+The scheduled query will load newly calculated embeddings into the vector database, making them queryable through nearest neighbor operations.
 
 ## Query Flow
 
