@@ -1,139 +1,87 @@
 ---
 title: Webhooks
-description: Handling webhooks with Chalk.
+description: Integrate Chalk alerts with Webhooks.
 published: true
 ---
 
-import { Attribute, AttributeTable } from '@/components/AttributeTable'
+Chalk can send push notifications to configured external endpoints through webhooks.
+
+Webhooks are a beta feature for Chalk - contact our support team to get webhooks enabled in your
+environments.
 
 ---
 
-Webhook resolvers function almost exactly like [stream resolvers](/docs/streams).
+## Add a Webhook
 
-The first step is to create a webhook source:
+Webhook configuration is under the settings sidebar, under Environment. Users can configure:
 
-```py
-from chalk.webhooks import WebhookSource
+- The webhook endpoint
+- Subscriptions - see below for the catalog of subscriptions available
+- Any additional headers necessary to communicate with the webhook
 
-source = WebhookSource(id="my_webhook_id")
-```
+![Integration for Webhooks](/img/webhooks.png)
 
-You can optionally also specify a
-[Pydantic Model](https://pydantic-docs.helpmanual.io/)
-for any of the body, headers, and query parameters.
-Chalk will validate the parameters against the model.
-If the model doesn't validate, Chalk will return a 400
-with the Pydantic error message to the user.
+---
 
-```py
-from pydantic import BaseModel
+## Webhook Schema
 
-class WebhookBody(BaseModel):
-    username: str
-    friends: list[int]
-    ...
+All webhooks will pass a JSON body containing the following fields:
 
-class QueryParameters(BaseModel):
-    environment: str
-    ...
+- `subscription`: The name of the action that triggered this webhook. See below for options
+- `payload`: A map of strings whose content varies based on the specific subscription triggered. Individual action fields are documented below.
+- `environment_id`: The environment originating the webhook.
+- `webhook_id`: A unique ID for the configured webhook.
+- `idempotency_key`: A unique key for the webhook *event*.
+- `event_timestamp`: The original time the event was published, in [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339) format.
 
-class Headers(BaseModel):
-    ...
+## Available Subscriptions
 
-source = WebhookSource(
-    id="my_webhook_id",
-    body=WebhookBody,
-    query=QueryParameters,
-    headers=Headers
-)
-```
+Chalk supports webhook subscriptions for incidents and deployments.
 
-Once you create the source and deploy your change,
-Chalk will host a URL for your third-party service
-to hit.
+### Incidents
 
-Webhooks will be exposed at the url
+Incident Opens (`incident.opened`): When a metric chart goes over their alert threshold and opens a Chalk incident.
+The payload contains:
 
-```bash
-https://webhooks.chalk.ai/<client_id>/<environment>/<id>
-```
+- `incident_id`: The Chalk internal unique ID for the incident.
+- `incident_url`: A Chalk dashboard URL for the incident.
+- `metric_id`: The Chalk internal unique ID for the chart that triggered the incident.
+- `metric_name`: The name of the alert on the chart that triggered the incident.
+- `severity`: The severity of the configured alert. One of `Info`, `Warning`, `Error`, and `Critical`.
+- `summary`: A human-readable title message about the incident.
+- `environment_id`: The ID of the environment containing the incident.
+- `project_id`: The ID of the project containing the environment.
 
-After creating your webhook source,
-you can start processing messages and creating feature values.
-The webhook object above named `source` has an attribute
-named `Message` that gives a type you can use in your resolver,
-described below:
+Incident Closes (`incident.closed`): When a metric chart returns below their alert threshold and closes a Chalk incident.
+Includes the same payload fields, except that `severity` is always `Resolved`.
 
-## webhook.Message
+### Deployments
 
-<AttributeTable>
+All deployment and apply payloads have shared fields, in addition to action-specific fields:
 
-<Attribute field={'body'} kind={'BaseModel | str'}>
-  The body of the webhook. If you provided a Pydantic model in describing the webhook, this will be
-  a model. Otherwise, it will be the string contents of the body.
-</Attribute>
+- `deployment_id`: The id of the deployment.
+- `deployment_url`: A Chalk dashboard URL for the deployment.
+- `environment_id`: The environment ID for the deployment.
+- `project_id`: The ID of the project containing the environment.
 
-<Attribute field={'args'} kind={'dict[str, str | list[str]]'}>
-  The query parameters attached to the URL. If the same query arg is used more than once, the value
-  in the <code>dict</code> will be a list of strings.
-</Attribute>
+The following subscriptions are available:
 
-<Attribute
-  field={'headers'}
-  kind={
-    <span>
-      map[string, <a href={'/docs/duration'}>duration</a>]
-    </span>
-  }
->
-  Request headers from the webhook.
-</Attribute>
+Apply Starts (`apply.started`): When a chalk apply action successfully starts. Contains no extra payload fields.
 
-</AttributeTable>
+Apply Validation Error (`apply.validation_failed`): When a chart apply action fails to start due to source code or
+environment configuration errors. Contains an `error` field with more detail.
 
-[//]: # 'Input features are pulled from the webhook and used to run any downstream updates.'
-[//]: # 'They will be persisted to the offline store'
+Deployment Fails (`deployment.failed`): When a deployment fails to start up successfully. Contains a `reason` for the
+failed deployment.
 
-Once you've defined your webhook source,
-you can write a resolver for processing
-webhook updates with the `@webhook` decorator:
+Deployment Succeeds (`deployment.succeeded`): When a deployment successfully spins up. Contains no extra payload fields
 
-```py
-from chalk.webhooks import webhook
+---
 
-@webhook
-def fn(message: webhook.Message):
-    ...
-```
+## Test Webhooks
 
-## Full example
+Webhooks can be tested from the web dashboard and will send a test event with a `webhook.test` subscription.
 
-```py
-from pydantic import BaseModel, Field
-from chalk.webhooks import webhook, WebhookSource
+### Help
 
-class WebhookBody(BaseModel):
-    webhook_type: str
-    item_id: str
-
-
-class Headers(BaseModel):
-    plaid_verification: str = Field(alias="plaid-verification")
-
-source = WebhookSource(
-    id="plaid_transactions",
-    body=WebhookBody,
-    headers=Headers
-)
-
-@online
-def get_transactions(account: Account.item_id) -> DataFrame[PlaidTransaction]:
-    ...
-
-@webhook
-def fn(message: source.Message):
-    verify_webhook(message.headers.plaid_verification)
-
-    if message.body.webhook_type == "TRANSACTIONS":
-        return get_transactions(message.body.item_id)
-```
+If you need help with your integration, please contact us at `support@chalk.ai`.
