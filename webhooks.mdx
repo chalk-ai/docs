@@ -34,6 +34,27 @@ All webhooks will pass a JSON body containing the following fields:
 - `idempotency_key`: A unique key for the webhook *event*.
 - `event_timestamp`: The original time the event was published, in [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339) format.
 
+
+```json
+{
+  "environment_id": "chalk-env-id",
+  "webhook_id": "cea28e03-e4e9-4e42-a3cb-38b6790d8700",
+  "subscription": "incident.closed",
+  "payload": {
+    "environment_id": "chalk-env-id",
+    "incident_id": "cmk7lk72s000y012slnh1u863",
+    "incident_url": "https://staging.chalk.dev/projects/tmnmau5shs3qe/environments/tmnmc9beyujew/incidents/cmk7lk72s000y012slnh1u863",
+    "metric_id": "cmgk1rdpp0000knttvtku94xh",
+    "metric_name": "Failed Query Count Too High",
+    "project_id": "chalk-proj-id",
+    "severity": "Resolved",
+    "summary": "Chalk Metric Alert Resolved: Failed Query Count Too High"
+  },
+  "event_timestamp": "2026-01-10T02:06:05.577233847Z",
+  "idempotency_key": "cmk7nym6i000h01znf7w4w6fv"
+}
+```
+
 ## Available Subscriptions
 
 Chalk supports webhook subscriptions for incidents and deployments.
@@ -81,6 +102,28 @@ Deployment Succeeds (`deployment.succeeded`): When a deployment successfully spi
 ## Test Webhooks
 
 Webhooks can be tested from the web dashboard and will send a test event with a `webhook.test` subscription.
+
+## FireHydrant Support
+
+Chalk webhooks can be configured as a custom event source for FireHydrant, using the example webhook body as a testing
+source. Some subscriptions will have a `summary` in their payload, and some subscriptions may have non-string
+values in their payload. To mitigate this, we suggest the following transposition script:
+
+```javascript
+/*
+ * Transpose a payload from a webhook into a signal.
+ *
+ * @returns {{summary: string, body: string, level: number, links: {href: string, text: string}[], images: {src: string, alt: string}[], tags: string[], idempotency_key: string, status: number}} Signal object.
+ */
+function transpose(input) {
+  return {
+    summary: input.data.payload?.summary || `Chalk Webhook: ${input.data.subscription}`,
+    annotations: Object.fromEntries(
+      Array.from(Object.entries(input.data.payload)).map(([key, val]) => [key, `${val}`])
+    )
+  }
+}
+```
 
 ### Help
 
