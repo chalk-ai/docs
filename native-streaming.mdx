@@ -177,6 +177,9 @@ for users of type "GUEST". We can use a custom parse expression to do this:
 
 ```python
 from messages.user_pb2 import UserMessage # Import the generated protobuf classes
+from chalk import functions as F 
+from chalk.features.resolver import make_stream_resolver
+
 
 # Strip first 6 bytes, then parse the protobuf message
 parsed_message = F.proto_deserialize(F.substr(_, 6, None), UserMessage)
@@ -260,6 +263,11 @@ Consider traditional Python resolvers for:
 If you have an existing Python streaming resolver, you can create an equivalent native version:
 
 ```python
+from chalk.features.resolver import make_stream_resolver
+from chalk import stream, Features
+
+
+
 # Traditional Python resolver
 @stream(source=user_stream)
 def process_users(message: UsersMessage) -> Features[Users]:
