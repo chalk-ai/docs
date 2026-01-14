@@ -217,10 +217,10 @@ storage key representation for the primary key, as well as the size of the bucke
 more complex aggregations like approx_count_distinct). For more details on determining the tradeoff between accuracy 
 and storage space, please reach out to the Chalk team. 
 
-When you query for a specific window_interval, Chalk will aggregate over all the complete buckets that intersect with
-the window interval. If a bucket is only partially filled, it will not be included in that aggregation. If you have a
-continuous buffer duration configured, then if the continuous buffer duration does not intersect with a filled bucket,
-then online resolvers will bs used to compute the aggregation for the buffer duration time window. If the continuous
+When you query for a specific window_interval, Chalk will aggregate over all buckets that intersect with the window interval
+If you are backfilling the materialized buckets on a schedule, and would like to directly query for the leading edge of data 
+from a different source, then you can set a continuous buffer duration, which will run online resolvers to compute the aggregation 
+for the buffer duration time window. If the continuous
 buffer duration intersects with a filled bucket that starts at time `t`, then Chalk will run online resolvers to
 compute the aggregation from `t` to the current time. Chalk will only ever include filled buckets in the aggregation
 computation.
