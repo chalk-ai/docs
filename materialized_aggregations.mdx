@@ -88,7 +88,8 @@ Buckets that become stale i.e. no longer relevant to any of your active time win
 For each bucket, Chalk stores the minimal required data to compute the aggregation, and at query time, the aggregation
 is computed by merging the partial aggregate states for all buckets within the requested time window.
 
-Chalk aligns buckets on Unix epoch (ignoring leap seconds).
+Chalk aligns buckets on Unix epoch (ignoring leap seconds) by default. However, if you would like to customize 
+the bucket starts, you can use the `bucket_start` field on the `MaterializationWindowConfig` in your definition.
 When serving windowed queries, Chalk uses all buckets containing any overlap with the requested time window.
 
 ![Materialized Windowed Aggregations](/img/mat_windowed_aggs/mat_window_agg.png)
@@ -361,3 +362,16 @@ The `Dependent Features` column lists the features that are served by the given 
 
 For information on updating materialized aggregations with streaming data, see the example in the streaming
 documentation [here](/docs/windowed-streaming).
+
+### Materialization with Offline Queries 
+
+The aggregated buckets in the online store can currently only be accessed via an online query. 
+By default, if you specify a materialized windowed aggregation as output in an offline query, the engine will run resolvers,
+with a preference for offline resolvers over online resolvers, to compute the expression in the materialized windowed 
+aggregation. There are also a few configurations that you can use to optimize your offline queries, or reproduce the 
+results of online queries for materialized aggregations. If you set `align_offline_chalk_window_with_materialization`, 
+this means that the lower bound of each query will round down to the next bucket boundary, to perfectly simulate the 
+results of the online query. To optimize offline queries for the materialized aggregation features, you can set 
+`use_materialized_offline_query` which will bucket the input times and events, and aggregate across all complete buckets 
+that intersect with the window interval. 
+
