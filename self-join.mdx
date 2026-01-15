@@ -15,8 +15,8 @@ To implement a self join, add a new feature class, containing a join to your ini
 
 <TipInfo>
    You will need to resolve the primary key of the linking feature set. This can be done through a SQL resolver that pulls
-  in the Primary key of the feature. For example, for the `has-one` join below, you could create a SQL resolver that resolves `PrequelLink`
-  by running a query like: `SELECT id, prequel_id FROM books`.
+  in the Primary key of the feature. For example, for the <code>has-one</code> join below, you could create a SQL resolver that resolves <code>PrequelLink</code>
+  by running a query like: <code>SELECT id, prequel_id FROM books</code>.
 </TipInfo>
 
 ### Has-one self-join

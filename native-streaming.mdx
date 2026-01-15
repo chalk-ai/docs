@@ -69,7 +69,7 @@ users_streaming_resolver = make_stream_resolver(
 Here, stream messages will come in as JSON strings whose structure matches the definition of the UserMessage model. The output features are defined as simple field accesses into the JSON struct. Note that nested access, such as `_.contact_info.email_address`, works as expected. Similar to feature definitions, [scalar functions](/docs/expression#scalar-functions) can be used to process the raw message fields. Here, we convert a raw integer timestamp in microseconds into a UTC datetime.
 
 <TipInfo>
-Note that the expressions here are are essentially the same as those used in feature definitions. However, the semantics are slightly different: The "root" here (`_`), refers not to a namespace of features, but rather a table column whose datatype is based on the stream resolver's `message_type`. Thus, `_.amount` does not mean "get me Chalk feature `amount` in the current namespace" but rather "access struct field `amount` on this column." In addition, since these expressions represent projections on single columns, dataframe operations such as `_.transactions[_.amount, _.amount &gt; 100].sum()` don't apply here.
+Note that the expressions here are are essentially the same as those used in feature definitions. However, the semantics are slightly different: The "root" here (<code>_</code>), refers not to a namespace of features, but rather a table column whose datatype is based on the stream resolver's <code>message_type</code>. Thus, <code>_.amount</code> does not mean "get me Chalk feature <code>amount</code> in the current namespace" but rather "access struct field <code>amount</code> on this column." In addition, since these expressions represent projections on single columns, dataframe operations such as <code>_.transactions[_.amount, _.amount &gt; 100].sum()</code> don't apply here.
 </TipInfo>
 
 ### Example Stream Messages
@@ -116,7 +116,7 @@ The following message types are supported:
 ```
 
 <TipBad>
-Note: Not all pydantic or protobuf types are supported. The message type needs to be converted into a well-defined PyArrow schema. Types that are recursive and can be arbitrariliy nested will fail to be parsed. Similarly, Pydantic types with type annotations such as `Any` or complex union types are also not supported. To process these types in a native streaming resolver, use a custom parse function to only extract specific fields with well-known datatypes.
+Note: Not all pydantic or protobuf types are supported. The message type needs to be converted into a well-defined PyArrow schema. Types that are recursive and can be arbitrariliy nested will fail to be parsed. Similarly, Pydantic types with type annotations such as <code>Any</code> or complex union types are also not supported. To process these types in a native streaming resolver, use a custom parse function to only extract specific fields with well-known datatypes.
 </TipBad>
 
 ```python
