@@ -375,3 +375,54 @@ In this example:
 This pattern allows the lightweight native streaming resolver to handle high-throughput message parsing while delegating compute-intensive embedding generation to specialized GPU resources. The sink acts as a bridge, automatically triggering the downstream computation and routing results to the appropriate stream.
 
 Messages can be encoded as either arrow IPC streams or as JSON. The fully qualified feature names are used as the column names in the output stream or as the JSON keys.
+
+
+## Skip Writing to the Store
+
+In some cases you, you may find that your existing architecture already stores the historical log of data in a data warehouse. In cases like this, it may be helpful to not worry about writing duplicate data to the offline store from a stream and instead just use the existing data warehouse for historical look back with offline queries. This can be performed using `make_stream_resolver`'s [`skip_offline`](/api-docs#make_stream_resolver.skip_offline) parameter:
+
+```python
+users_streaming_resolver = make_stream_resolver(
+    name="get_users_stream",
+    source=kafka_source,
+    message_type=UsersMessage,
+    output_features={
+        User.user_id: _.id,
+        User.full_name: _.name,
+        User.email_address: _.contact_info.email_address,
+        User.updated_at: F.from_unix_seconds(_.updated_at / 1_000_000),
+    },
+    skip_offline=True, # don't write resolved events from stream to offline store
+)
+```
+
+## Environment-specific Stream Resolvers
+
+When working in multiple environments, there may be stream resolver you want to deploy to a specific environment, such as a new resolver in dev. This can be done using the [`environment`](api-docs#make_stream_resolver.environment) parameter:
+
+```python
+
+@features(max_staleness="30d", etl_offline_to_online=True)
+class Transaction:
+    transaction_id: Primary[int]
+    submitted: dt.datetime
+    amount: int
+
+class TransactionMessage(BaseModel):
+    id: int # maps to transaction_id
+    submitted: int # epoch microseconds
+    amount: int
+
+# new resolver to experiment with new Transaction class
+experimental_streaming_resolver = make_stream_resolver(
+    name="new_transaction_stream_resolver",
+    source=kafka_source,
+    message_type=UsersMessage,
+    output_features={
+        Transaction.transaction_id: _.id,
+        Transaction.timestamp: F.from_unix_seconds(_.submitted / 1_000_000),
+        Transaction.amount: int
+    },
+    environments=["dev"], # only deploy resolver in "dev" environment
+)
+```
