@@ -379,7 +379,7 @@ Messages can be encoded as either arrow IPC streams or as JSON. The fully qualif
 
 ## Skip Writing to the Store
 
-In some cases you, you may find that your existing architecture already stores the historical log of data in a data warehouse. In cases like this, it may be helpful to not worry about writing duplicate data to the offline store from a stream and instead just use the existing data warehouse for historical look back with offline queries. This can be performed using `make_stream_resolver`'s [`skip_offline`](/api-docs#make_stream_resolver.skip_offline) parameter:
+If you already store a historical log of your stream messages in a data warehouse, you can disable stream persistence to the Chalk offline store. This can be done by setting the [`skip_offline`](/api-docs#make_stream_resolver.skip_offline) parameter of `make_stream_resolver`:
 
 ```python
 users_streaming_resolver = make_stream_resolver(
