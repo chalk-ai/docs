@@ -377,7 +377,7 @@ This pattern allows the lightweight native streaming resolver to handle high-thr
 Messages can be encoded as either arrow IPC streams or as JSON. The fully qualified feature names are used as the column names in the output stream or as the JSON keys.
 
 
-## Skip Writing to the Store
+## Skip Writing to the Offline Store
 
 If you already store a historical log of your stream messages in a data warehouse, you can disable stream persistence to the Chalk offline store. This can be done by setting the [`skip_offline`](/api-docs#make_stream_resolver.skip_offline) parameter of `make_stream_resolver`:
 
