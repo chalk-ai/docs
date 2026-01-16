@@ -375,3 +375,54 @@ In this example:
 This pattern allows the lightweight native streaming resolver to handle high-throughput message parsing while delegating compute-intensive embedding generation to specialized GPU resources. The sink acts as a bridge, automatically triggering the downstream computation and routing results to the appropriate stream.
 
 Messages can be encoded as either arrow IPC streams or as JSON. The fully qualified feature names are used as the column names in the output stream or as the JSON keys.
+
+
+## Skip Writing to the Offline Store
+
+If you already store a historical log of your stream messages in a data warehouse, you can disable stream persistence to the Chalk offline store. This can be done by setting the [`skip_offline`](/api-docs#make_stream_resolver.skip_offline) parameter of `make_stream_resolver`:
+
+```python
+users_streaming_resolver = make_stream_resolver(
+    name="get_users_stream",
+    source=kafka_source,
+    message_type=UsersMessage,
+    output_features={
+        User.user_id: _.id,
+        User.full_name: _.name,
+        User.email_address: _.contact_info.email_address,
+        User.updated_at: F.from_unix_seconds(_.updated_at / 1_000_000),
+    },
+    skip_offline=True, # don't write resolved events from stream to offline store
+)
+```
+
+## Environment-specific Stream Resolvers
+
+A stream resolver can be restricted to a specific environment through the [`environment`](api-docs#make_stream_resolver.environment) parameter of `make_stream_resolver`:
+
+```python
+
+@features(max_staleness="30d", etl_offline_to_online=True)
+class Transaction:
+    transaction_id: Primary[int]
+    submitted: dt.datetime
+    amount: int
+
+class TransactionMessage(BaseModel):
+    id: int # maps to transaction_id
+    submitted: int # epoch microseconds
+    amount: int
+
+# new resolver to experiment with new Transaction class
+experimental_streaming_resolver = make_stream_resolver(
+    name="new_transaction_stream_resolver",
+    source=kafka_source,
+    message_type=UsersMessage,
+    output_features={
+        Transaction.transaction_id: _.id,
+        Transaction.timestamp: F.from_unix_seconds(_.submitted / 1_000_000),
+        Transaction.amount: int
+    },
+    environments=["dev"], # only deploy resolver in "dev" environment
+)
+```
