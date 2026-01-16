@@ -398,7 +398,7 @@ users_streaming_resolver = make_stream_resolver(
 
 ## Environment-specific Stream Resolvers
 
-When working in multiple environments, there may be stream resolver you want to deploy to a specific environment, such as a new resolver in dev. This can be done using the [`environment`](api-docs#make_stream_resolver.environment) parameter:
+A stream resolver can be restricted to a specific environment through the [`environment`](api-docs#make_stream_resolver.environment) parameter of `make_stream_resolver`:
 
 ```python
 
