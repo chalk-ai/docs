@@ -1,0 +1,160 @@
+---
+title: Job Queue
+description: Understanding Chalk's job queue and resource groups
+published: true
+---
+
+---
+
+## Overview
+
+The **job queue** in Chalk, together with **resource groups**, functions similarly to **warehouses in analytical data platforms** - they provide dedicated, configurable compute resources for processing workloads.
+
+A job queue server is a persistent worker process that consumes jobs from a queue and executes them one at a time. By configuring multiple resource groups with different job queue servers, you can create isolated compute environments optimized for different workload types.
+
+---
+
+## What does the job queue process?
+
+The job queue handles two primary types of workloads:
+
+1. **Scheduled queries** - Feature pipelines that run on a cron schedule (see [ScheduledQuery](/docs/scheduled-query))
+2. **Async offline queries** - Large offline queries that run asynchronously when `run_asynchronously=True` is set
+
+```python
+# This runs on the job queue
+client.offline_query(
+    input={'user.id': range(1_000_000)},
+    output=['user.name'],
+    run_asynchronously=True,  # Runs as a task on job queue
+)
+
+# This runs on the query server (NOT the job queue)
+client.offline_query(
+    input={'user.id': [1, 2, 3]},
+    output=['user.name'],
+    # run_asynchronously=False by default - runs as synchronous RPC
+)
+```
+
+---
+
+## How job queues work
+
+### FIFO Processing
+Jobs are processed in **first-in, first-out (FIFO)** order. Each job queue server processes one job at a time sequentially.
+
+### Fixed Resources
+Each job queue server has a single, pre-configured resource allocation (CPU and memory).
+
+### Automatic Fallback
+If a job requests resources larger than the job queue server can handle, Chalk automatically skips the queue and runs the job as a standalone Kubernetes pod with the requested resources.
+
+---
+
+## Resource Groups
+
+Resource groups allow you to create multiple job queue servers with different resource configurations. This is useful for:
+
+- **Isolating large scheduled queries** from smaller workloads
+- **Optimizing costs** by right-sizing compute for different job types
+- **Preventing resource contention** between different teams or use cases
+
+### Configuring Job Queue Servers
+
+In the Chalk dashboard under `Settings > Resources`, you can configure the "Job Queue Server" for each resource group:
+
+1. Set the CPU and memory allocation
+2. Configure autoscaling (min/max instances)
+3. Select the nodepool to use
+
+All Chalk environments start with a `Default` resource group.
+
+### Targeting Specific Resource Groups
+
+#### For Scheduled Queries
+
+```python
+from chalk import ScheduledQuery
+
+ScheduledQuery(
+    name="large-batch-job",
+    schedule="0 0 * * *",
+    output=[User.features],
+    resource_group="large-jobs",  # Runs on the "large-jobs" resource group
+)
+```
+
+#### For Async Offline Queries
+
+```python
+from chalk.client import ChalkClient, ResourceRequests
+
+client.offline_query(
+    input={'user.id': range(1_000_000)},
+    output=['user.name'],
+    run_asynchronously=True,
+    resources=ResourceRequests(
+        resource_group="large-jobs"  # Runs on the "large-jobs" resource group
+    ),
+)
+```
+
+---
+
+## Job Queue vs Query Server
+
+| Aspect | Job Queue Server | Query Server |
+|--------|------------------|--------------|
+| **Processes** | Scheduled queries, async offline queries | Synchronous offline queries, online queries |
+| **Execution** | One job at a time (FIFO) | Multiple concurrent requests |
+| **Resources** | Fixed per resource group | Requested per query |
+| **Scaling** | Horizontal (more instances) | Vertical (larger pods) |
+| **Workload Isolation** | Jobs run sequentially without resource contention | Multiple concurrent queries may compete for resources on the same server |
+| **Timeout Behavior** | Can run indefinitely beyond load balancer timeout | Will report an error if execution exceeds load balancer timeout |
+
+---
+
+## Best Practices
+
+1. **Create separate resource groups** for jobs with significantly different resource requirements
+   - Example: Small daily scheduled queries vs. large weekly batch jobs
+
+2. **Right-size your default job queue** to handle typical workloads
+   - Consider your most common scheduled query needs
+   - Remember that oversized requests will automatically get their own pods
+
+3. **Use resource groups for isolation**
+   - Prevent one team's large jobs from blocking another team's scheduled queries
+   - Guarantee resources for critical scheduled pipelines
+
+4. **Monitor queue depth** and adjust max instances if jobs are waiting too long
+   - Jobs will timeout and fail if they can't obtain resources within ~4 hours
+
+---
+
+## Example Configuration
+
+Here's a common setup with two resource groups:
+
+```python
+# Default resource group: moderate sizing for typical scheduled queries
+# Configured in dashboard: 8 CPU, 16 GB memory
+
+ScheduledQuery(
+    name="daily-features",
+    schedule="0 1 * * *",
+    output=[User.daily_features],
+    # Uses default resource group
+)
+
+# Large jobs resource group: high-memory machines for big batch processing
+# Configured in dashboard: 32 CPU, 450 GB memory
+
+ScheduledQuery(
+    name="weekly-aggregations",
+    schedule="0 0 * * 0",
+    output=[User.historical_aggregates],
+    resource_group="large-jobs",  # Uses dedicated high-memory queue
+)
+```
