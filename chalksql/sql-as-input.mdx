@@ -18,7 +18,7 @@ This can help you improve performance and reduce costs by avoiding extra round t
 - Each column the SQL query returns specifies an input feature.
     - The SQL can return a `__ts__` column to specify a [query time](/docs/time#query-time).
 
-# In online queries
+## In online queries
 
 For comparison, let's start with a simple query that does not use SQL:
 ```py
@@ -113,7 +113,7 @@ grpc_client.online_query_bulk(
 ```
 
 
-# In offline queries
+## In offline queries
 
 This is the same as the previous example: the only difference is you use `ChalkClient.offline_query` instead of `ChalkGRPCClient.online_query_bulk`.
 ```py
@@ -136,7 +136,7 @@ client.offline_query(
 )
 ```
 
-# Setting a query time
+## Setting a query time
 
 Normally, online and offline queries let you specify a [query time](/docs/time#query-time)
 by passing an `input_times` or `now` argument.
@@ -213,7 +213,7 @@ client.offline_query(
 
 
 
-# Using versioned features
+## Using versioned features
 
 Versioned features work as usual by appending a "@N" suffix to the fully-qualified name:
 ```py
