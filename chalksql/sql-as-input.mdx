@@ -136,12 +136,13 @@ client.offline_query(
 )
 ```
 
-# Setting a [query time](/docs/time#query-time)
+# Setting a query time](/docs/time#query-time)
 
-Normally, online and offline queries accept an `input_times` / `now` value.
-This isn't a feature, but it is part of the input to the query (for example, resolvers can refer to it).
+Normally, online and offline queries let you specify a [query time](/docs/time#query-time)
+by passing an `input_times` or `now` argument.
+This time value is not a feature value, but is part of the overall input to the query.
 
-For example, this query specifies an input feature and a query time:
+For example, this query specifies values for one input feature, and also a query time:
 ```py
 grpc_client = ChalkGRPCClient(...)
 grpc_client.online_query_bulk(
@@ -157,7 +158,7 @@ grpc_client.online_query_bulk(
     ],
 )
 ```
-Conceptually, the overall input is this table:
+Conceptually, the overall input to the query is this table:
 ```
 ┌────────────────┬─────────────────────┐
 │ thermometer.id │       __ts__        │
@@ -168,7 +169,7 @@ Conceptually, the overall input is this table:
 └────────────────┴─────────────────────┘
 ```
 
-So to get the same behavior with SQL, you would write a SQL query that outputs
+So to get the same behavior with SQL as the input, you would write a SQL query that outputs
 two columns: `thermometer.id` and `__ts__`:
 ```py
 grpc_client = ChalkGRPCClient(...)
