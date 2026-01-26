@@ -21,7 +21,7 @@ This can help you improve performance and reduce costs by avoiding extra round t
 # In online queries
 
 For comparison, let's start with a simple query that does not use SQL:
-```
+```py
 grpc_client = ChalkGRPCClient(...)
 
 grpc_client.online_query_bulk(
@@ -62,7 +62,7 @@ Note the `as t(...)` alias, which renames the columns to match our features' ful
 
 You can plug this SQL query into the Chalk query by replacing
 the `input` argument with `input_sql`:
-```
+```py
 grpc_client = ChalkGRPCClient(...)
 
 grpc_client.online_query_bulk(
@@ -83,7 +83,7 @@ This returns the same result that the original query with hardcoded inputs did.
 But now we can replace the SQL with something more dynamic, such as a data source.
 
 For example, to get the IDs of all users whose last name starts with "S":
-```
+```sql
 select
     id as "user.id",
     email_address as "user.email"
@@ -93,7 +93,7 @@ where last_name like "S%"
 (Note the `as` aliases, which rename each column to exactly match the feature FQN.)
 
 The overall Chalk query, using this SQL as its input, would look like this:
-```
+```py
 grpc_client = ChalkGRPCClient(...)
 
 grpc_client.online_query_bulk(
@@ -116,7 +116,7 @@ grpc_client.online_query_bulk(
 # In offline queries
 
 This is the same as the previous example: the only difference is you use `ChalkClient.offline_query` instead of `ChalkGRPCClient.online_query_bulk`.
-```
+```py
 client = ChalkClient(...)
 
 client.offline_query(
@@ -142,7 +142,7 @@ Normally, online and offline queries accept an `input_times` / `now` value.
 This isn't a feature, but it is part of the input to the query (for example, resolvers can refer to it).
 
 For example, this query specifies an input feature and a query time:
-```
+```py
 grpc_client = ChalkGRPCClient(...)
 grpc_client.online_query_bulk(
     input={
@@ -170,7 +170,7 @@ Conceptually, the overall input is this table:
 
 So to get the same behavior with SQL, you would write a SQL query that outputs
 two columns: `thermometer.id` and `__ts__`:
-```
+```py
 grpc_client = ChalkGRPCClient(...)
 grpc_client.online_query_bulk(
     input_sql=f"""
@@ -190,7 +190,7 @@ grpc_client.online_query_bulk(
 ```
 
 And the syntax for offline query follows the same pattern:
-```
+```py
 client = ChalkClient(...)
 client.offline_query(
     input_sql=f"""
@@ -215,7 +215,7 @@ client.offline_query(
 # Using versioned features
 
 Versioned features work as usual by appending a "@N" suffix to the fully-qualified name:
-```
+```py
 grpc_client.online_query_bulk(
     input_sql="""
         select
@@ -234,7 +234,7 @@ grpc_client.online_query_bulk(
 
 You may also find it convenient to use `str()` to access the fully-qualified name instead
 of hardcoding it:
-```
+```py
 input_sql=f"""
     select
         id as "{str(User.id)}",
