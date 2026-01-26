@@ -1,0 +1,177 @@
+# Using ChalkSQL as input to a query
+
+If you need to compute the inputs to a query dynamically,
+you can use ChalkSQL to do so in a single query.
+This can help you improve performance and reduce costs by avoiding
+extra round trips across the network.
+
+TODO other motivation here?
+
+
+## Quick overview
+
+- This feature works in:
+    - GRPC `online_query_bulk()`
+    - `offline_query()`
+- You can pass `input_sql=` as a SQL string, instead of `input=`.
+    - It uses the ChalkSQL dialect.
+    - It has access to the usual ChalkSQL catalog:
+        - This includes Data Sources and zero-argument Resolvers.
+        - You can see what's available in the SQL Data Explorer (TODO(for reviewer) link?)
+- Whatever table the SQL fragment returns becomes a set of feature values (input to the rest of the Chalk query).
+    - Each column name must exactly match a feature FQN.
+    - Each row is a separate example / datapoint. (TODO(for reviewer) what do we usually call this?)
+    - TODO special column name for feature times
+
+## In online queries
+
+For comparison let's start with a normal (non-SQL) query as a baseline:
+```
+grpc_client.online_query_bulk(
+    input={
+        User.id: [1, 2],
+        User.email: ["alice@example.com", "bob@example.com"],
+    },
+    output=[
+        User.id,
+        User.email,
+        User.is_fraud,
+    ],
+)
+```
+This query says we know the User.id and email, and we want to know the is_fraud value.
+The known values (inputs) are passed as literal data: `1` or `"alice@example.com"`.
+Because we're using the `_bulk` method, we can pass many input examples in one query.
+
+Conceptually the input is a table:
+```
+┌─────────┬───────────────────┐
+│ user.id │    user.email     │
+│  int32  │      varchar      │
+├─────────┼───────────────────┤
+│       1 │ alice@example.com │
+│       2 │ bob@example.com   │
+└─────────┴───────────────────┘
+```
+Where each column is a feature, and each row is an example.
+
+In any SQL implementation (not only ChalkSQL), you can build the same table
+with `VALUES`:
+```
+select *
+from (values (1, 'alice@example.com'), (2, 'bob@example.com'))
+as t("user.id", "user.email");
+```
+Note the `as t(...)` alias which renames the columns to match our features' fully-qualified names (FQNs).
+
+You can plug this SQL query into the Chalk query by replacing
+the `input` argument with `input_sql`:
+```
+grpc_client = ChalkGRPCClient(...)
+
+grpc_client.online_query_bulk(
+    input_sql="""
+        select *
+        from (values (1, 'alice@example.com'), (2, 'bob@example.com'))
+        as t("user.id", "user.email");
+    """,
+    output=[
+        User.id,
+        User.email,
+        User.is_fraud,
+    ],
+)
+```
+
+This returns the same result as the original query with hardcoded inputs.
+But now we can replace the SQL with something more dynamic: for example
+we can pull from a datasource.
+
+For example maybe we want to pull in the IDs of all users whose last name starts
+with "S":
+```
+select
+    id as "user.id",
+    email_address as "user.email"
+from my_postgres.users
+where last_name like "S%"
+```
+Note the `as "user.id"` aliases which rename each column to exactly match the feature FQN.
+
+The overall Chalk query, using this SQL as input, would look like this:
+```
+grpc_client = ChalkGRPCClient(...)
+
+grpc_client.online_query_bulk(
+    input_sql="""
+        select
+            id as "user.id",
+            email_address as "user.email"
+        from my_postgres.users
+        where last_name like "S%"
+    """,
+    output=[
+        User.id,
+        User.email,
+        User.is_fraud,
+    ],
+)
+```
+
+## In offline queries
+
+Same as the previous example, but using a different client and method:
+```
+client = ChalkClient(...)
+
+client.offline_query(
+    input_sql="""
+        select
+            id as "user.id",
+            email_address as "user.email"
+        from my_postgres.users
+        where last_name like "S%"
+    """,
+    output=[
+        User.id,
+        User.email,
+        User.is_fraud,
+    ],
+)
+```
+
+## Setting input times
+
+TODO This needs unit tests to confirm.
+TODO It should be just another column with a certain name.
+
+## Using versioned features
+
+Versioned features work as usual by appending a "@N" suffix to the fully-qualified name:
+```
+grpc_client.online_query_bulk(
+    input_sql="""
+        select
+            id as "user.id",
+            email_address as "user.email@2"
+        from my_postgres.users
+        where last_name like "S%"
+    """,
+    output=[
+        User.id,
+        User.email @ 2,
+        User.is_fraud,
+    ],
+)
+```
+
+You may also find it convenient to use `str()` to access the fully-qualified name instead
+of hardcoding it:
+```
+input_sql=f"""
+    select
+        id as "{str(User.id)}",
+        email_address as "{str(User.email @ 2)}",
+    from ...
+""",
+```
