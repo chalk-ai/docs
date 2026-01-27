@@ -6,6 +6,34 @@ description: Updates to Chalk!
 published: true
 ---
 
+## January 26, 2026
+
+### Faster Query Planning
+
+[Query planning](https://docs.chalk.ai/docs/query-online) is now even faster due to optimization work on the planner.
+Planning time improved by an average of 58%, reducing time-to-results and preventing online query timeouts for larger feature graphs.
+
+### ClickHouse for logs and tracing
+
+Logs and [tracing](https://docs.chalk.ai/docs/tracing) now run on ClickHouse, improving search performance. Facets—indexed attributes like service,
+environment, status, region, and user_id—help narrow searches and surface the most common values for easier production debugging.
+
+![Log Explorer Page with New Facets](/img/changelog-26_01_26-log-facets.png)
+
+### Enhanced query plan visualization
+
+The [query plan visualizer](https://docs.chalk.ai/docs/debugging-queries#query-plan-visualizer) now supports
+node-by-node navigation through query DAGs. View associations between plan nodes and see how data flows through
+each query. Async batch UDFs and conditional nodes display in the data flow, making query plans easier to read and understand.
+
+![Log Explorer Page with New Facets](/img/changelog-26_01_26-query-plan-nav.png)
+
+
+### Store plan stages for scheduled queries
+
+[Scheduled queries](https://docs.chalk.ai/docs/scheduled-query) now include a "Store plan stages" feature.
+This allows for improved query debugging.
+
 ## December 22, 2025 
 
 ### Node monitoring improvements
