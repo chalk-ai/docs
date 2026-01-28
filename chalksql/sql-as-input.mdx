@@ -15,7 +15,7 @@ This can improve performance and reduce cost by avoiding extra round trips acros
 - You can pass `input_sql=` as a SQL string, instead of `input=`.
     - It uses the ChalkSQL dialect.
     - It has access to the usual ChalkSQL catalog, which includes Data Sources and zero-argument Resolvers. You can see what's available in the SQL Data Explorer.
-- Each column the SQL query returns specifies an input feature.
+- Each column that the SQL query returns specifies an input feature.
     - The SQL can return a `__ts__` column to specify a [query time](/docs/time#query-time).
 
 ## In online queries
