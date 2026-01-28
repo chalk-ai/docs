@@ -1,0 +1,245 @@
+---
+title: SQL as Input
+metaTitle: Using Chalk SQL as a Query Input
+metaDescription: 'In a bulk query (online or offline), you can use Chalk SQL to compute the input values dynamically.'
+published: true
+---
+
+
+If you need to compute the inputs to a query dynamically, you can use ChalkSQL.
+This can improve performance and reduce cost by avoiding extra round trips across the network.
+
+- This feature works in:
+    - [`ChalkGRPCClient.online_query_bulk()`](/api-docs#ChalkGRPCClient.online_query_bulk)
+    - [`ChalkClient.offline_query()`](/api-docs#ChalkClient.offline_query)
+- You can pass `input_sql=` as a SQL string, instead of `input=`.
+    - It uses the ChalkSQL dialect.
+    - It has access to the usual ChalkSQL catalog, which includes Data Sources and zero-argument Resolvers. You can see what's available in the SQL Data Explorer.
+- Each column that the SQL query returns specifies an input feature.
+    - The SQL can return a `__ts__` column to specify a [query time](/docs/time#query-time).
+
+## In online queries
+
+For comparison, let's start with a simple query that does not use SQL:
+```py
+grpc_client = ChalkGRPCClient(...)
+
+grpc_client.online_query_bulk(
+    input={
+        User.id: [1, 2],
+        User.email: ["alice@example.com", "bob@example.com"],
+    },
+    output=[
+        User.id,
+        User.email,
+        User.is_fraud,
+    ],
+)
+```
+This query says we know the `User.id` and `email`, and we want to know `is_fraud`.
+The known values (inputs) are passed as literal data: `1` or `"alice@example.com"`.
+Because we're using the `_bulk` method, we can pass many input examples in one query.
+
+Conceptually the input is a table, where each column is a feature, and each row is a different example:
+```
+┌─────────┬───────────────────┐
+│ user.id │    user.email     │
+│  int32  │      varchar      │
+├─────────┼───────────────────┤
+│       1 │ alice@example.com │
+│       2 │ bob@example.com   │
+└─────────┴───────────────────┘
+```
+
+In any SQL implementation (not only ChalkSQL), you can build the same table
+with `VALUES`:
+```
+select *
+from (values (1, 'alice@example.com'), (2, 'bob@example.com'))
+as t("user.id", "user.email");
+```
+Note the `as t(...)` alias, which renames the columns to match our features' fully-qualified names (FQNs).
+
+You can plug this SQL query into the Chalk query by replacing
+the `input` argument with `input_sql`:
+```py
+grpc_client = ChalkGRPCClient(...)
+
+grpc_client.online_query_bulk(
+    input_sql="""
+        select *
+        from (values (1, 'alice@example.com'), (2, 'bob@example.com'))
+        as t("user.id", "user.email");
+    """,
+    output=[
+        User.id,
+        User.email,
+        User.is_fraud,
+    ],
+)
+```
+
+This returns the same result as the original query with hardcoded inputs.
+But now we can replace the SQL with something more dynamic, such as a data source.
+
+For example, to get the IDs of all users whose last name starts with "S":
+```sql
+select
+    id as "user.id",
+    email_address as "user.email"
+from my_postgres.users
+where last_name like "S%"
+```
+(Note the `as` aliases, which rename each column to exactly match the feature FQN.)
+
+The overall Chalk query, using this SQL as its input, would look like this:
+```py
+grpc_client = ChalkGRPCClient(...)
+
+grpc_client.online_query_bulk(
+    input_sql="""
+        select
+            id as "user.id",
+            email_address as "user.email"
+        from my_postgres.users
+        where last_name like "S%"
+    """,
+    output=[
+        User.id,
+        User.email,
+        User.is_fraud,
+    ],
+)
+```
+
+
+## In offline queries
+
+This is the same as the previous example: the only difference is that it uses `ChalkClient.offline_query` instead of `ChalkGRPCClient.online_query_bulk`.
+```py
+client = ChalkClient(...)
+
+client.offline_query(
+    input_sql="""
+        select
+            id as "user.id",
+            email_address as "user.email"
+        from my_postgres.users
+        where last_name like "S%"
+    """,
+    output=[
+        User.id,
+        User.email,
+        User.is_fraud,
+    ],
+    recompute_features=True,
+)
+```
+
+## Setting a query time
+
+Normally, online and offline queries let you specify a [query time](/docs/time#query-time)
+by passing an `input_times` or `now` argument.
+This time value is not a feature value, but is part of the overall input to the query.
+
+For example, this query specifies values for one input feature, and also a query time:
+```py
+grpc_client = ChalkGRPCClient(...)
+grpc_client.online_query_bulk(
+    input={
+        Thermometer.id: [2, 3],
+    },
+    now=[datetime(2025, 1, 2, 12, 0, 0), datetime(2025, 1, 2, 12, 0, 0)],
+
+    output=[
+        Thermometer.id,
+        Thermometer.measured_at,
+        Thermometer.degrees_fahrenheit,
+    ],
+)
+```
+Conceptually, the overall input to the query is this table:
+```
+┌────────────────┬─────────────────────┐
+│ thermometer.id │       __ts__        │
+│     int32      │      timestamp      │
+├────────────────┼─────────────────────┤
+│              2 │ 2025-01-02 00:00:00 │
+│              3 │ 2025-01-02 00:00:00 │
+└────────────────┴─────────────────────┘
+```
+
+So to get the same behavior with SQL as the input, you would write a SQL query that outputs
+two columns: `thermometer.id` and `__ts__`:
+```py
+grpc_client = ChalkGRPCClient(...)
+grpc_client.online_query_bulk(
+    input_sql=f"""
+        select *
+        from (values
+            (2, '2025-1-2 12:00:00'::datetime),
+            (3, '2025-1-2 12:00:00'::datetime)
+        )
+        as t("thermometer.id", "__ts__")
+    """,
+    output=[
+        Thermometer.id,
+        Thermometer.measured_at,
+        Thermometer.degrees_fahrenheit,
+    ],
+)
+```
+
+And the syntax for offline query follows the same pattern:
+```py
+client = ChalkClient(...)
+client.offline_query(
+    input_sql=f"""
+        select *
+        from (values
+            (2, '2025-1-2 12:00:00'::datetime),
+            (3, '2025-1-2 12:00:00'::datetime)
+        )
+        as t("thermometer.id", "__ts__")
+    """,
+    output=[
+        Thermometer.id,
+        Thermometer.measured_at,
+        Thermometer.degrees_fahrenheit,
+    ],
+    recompute_features=True,
+)
+```
+
+
+
+## Using versioned features
+
+Versioned features work as usual by appending a "@N" suffix to the fully-qualified name:
+```py
+grpc_client.online_query_bulk(
+    input_sql="""
+        select
+            id as "user.id",
+            email_address as "user.email@2"
+        from my_postgres.users
+        where last_name like "S%"
+    """,
+    output=[
+        User.id,
+        User.email @ 2,
+        User.is_fraud,
+    ],
+)
+```
+
+You may also find it convenient to use `str()` to access the fully-qualified name instead
+of hardcoding it:
+```py
+input_sql=f"""
+    select
+        id as "{str(User.id)}",
+        email_address as "{str(User.email @ 2)}",
+    from ...
+""",
+```
