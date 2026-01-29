@@ -1,0 +1,33 @@
+---
+title: Chalk SQL
+metaTitle: What is Chalk SQL?
+metaDescription: 'Chalk SQL is a powerful, familiar, and expressive language to make federated queries against all things Chalk.'
+published: false
+---
+
+Chalk SQL is dialect of SQL developed within Chalk built to create **federated queries** across a
+Chalk environment. Chalk SQL is a highly efficient, easy-to-write, and expressive language that enable:
+
+- Querying across multiple [SQL sources](/docs/sql) seamlessly
+- Introspecting the [online and offline store](/docs/choosing-online-offline-stores), [datasets](/docs/datasets) from
+offline queries, and many other entities across the Chalk ecosystem
+- Applying functions from the Chalk Function registry in ad-hoc contexts.
+- Integrating with existing [online](/docs/query-online) and [offline query](/docs/query-offline) paths
+via alternative form of input.
+
+Chalk SQL leverages the blazing-fast planning and execution that powers other queries against Chalk,
+including features such as [Native SQL drivers](/docs/integrations#sql-data-sources-and-data-warehouses),
+[static compilation](/docs/static-resolver-optimization) of expressions, and integration with
+[Velox](/docs/architecture#high-performance-execution-engine), the open-source low-latency execution engine. This
+makes Chalk SQL a federated query engine that is uniquely effective for both transactional and analytical workloads.
+
+
+---
+
+## How do I run Chalk SQL queries?
+
+Chalk SQL is automatically enabled and available for use in any environment that has at least one
+gRPC query server running. Both new and existing environments can start running Chalk SQL queries with extremely
+minimal setup.
+
+
