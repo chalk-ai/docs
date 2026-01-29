@@ -1,0 +1,65 @@
+---
+title: TypeScript Client
+description: Query features with Chalk's TypeScript client library
+published: true
+---
+
+The Chalk TypeScript client library provides a convenient way to query features from your TypeScript and
+JavaScript applications.
+- [chalk-ts GitHub Repository](https://github.com/chalk-ai/chalk-ts)
+- [NPM Package](https://www.npmjs.com/package/@chalk-ai/client)
+
+
+---
+
+## Installation
+
+Install the Chalk TypeScript client using npm or yarn:
+
+```bash
+npm install @chalk-ai/client
+```
+
+or
+
+```bash
+yarn add @chalk-ai/client
+```
+
+---
+
+## Basic Usage
+
+Here's a quick example of how to use the Chalk TypeScript client:
+
+```typescript
+import { ChalkClient } from '@chalk-ai/client';
+
+// Initialize the client
+const client = new ChalkClient({
+  clientId: 'your-client-id',
+  clientSecret: 'your-client-secret',
+  environmentId: 'your-environment-id'
+});
+
+// Query features
+const result = await client.query({
+  inputs: {
+    'user.id': 'user123'
+  },
+  outputs: [
+    'user.credit_score',
+    'user.account_age_days'
+  ]
+});
+
+console.log(result);
+```
+
+---
+
+## Next Steps
+
+- [Query Basics](/docs/query-basics) - Learn how to query features
+- [Authentication](/docs/auth) - Set up authentication for your client
+- [Online Query API](/docs/query-online) - Explore the online query API

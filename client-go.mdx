@@ -1,0 +1,75 @@
+---
+title: Go Client
+description: Query features with Chalk's Go client library
+published: true
+---
+
+The Chalk Go client library provides a convenient way to query features from your Go applications.
+- [chalk-go GitHub Repository](https://github.com/chalk-ai/chalk-go)
+- [pkg.go.dev Documentation](https://pkg.go.dev/github.com/chalk-ai/chalk-go)
+
+
+---
+
+## Installation
+
+Install the Chalk Go client using go get:
+
+```bash
+go get github.com/chalk-ai/chalk-go
+```
+
+
+---
+
+## Basic Usage
+
+Here's a quick example of how to use the Chalk Go client:
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+
+    "github.com/chalk-ai/chalk-go"
+)
+
+func main() {
+    // Initialize the client
+    client, err := chalk.NewClient(
+        chalk.WithClientID("your-client-id"),
+        chalk.WithClientSecret("your-client-secret"),
+        chalk.WithEnvironment("your-environment-id"),
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Query features
+    result, err := client.Query(context.Background(), chalk.QueryParams{
+        Inputs: map[string]interface{}{
+            "user.id": "user123",
+        },
+        Outputs: []string{
+            "user.credit_score",
+            "user.account_age_days",
+        },
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println(result)
+}
+```
+
+---
+
+## Next Steps
+
+- [Query Basics](/docs/query-basics) - Learn how to query features
+- [Authentication](/docs/auth) - Set up authentication for your client
+- [Online Query API](/docs/query-online) - Explore the online query API
