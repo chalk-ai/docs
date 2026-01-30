@@ -48,7 +48,8 @@ branch server will automatically spin back up.
 For the other nodes in your cluster, you can configure the resource configurations according to your needs
 in the dashboard under `Settings > Resources > Resource Configurations`. You can select the instance type
 for each server that is right for you, and set a scaling policy that ensures that you scale up when traffic
-is high, but notably that your nodes scale down when traffic is low.
+is high, but notably that your nodes scale down when traffic is low. The instance type selected should have
+enough capacity to support the resource request multiplied by the number of max instances, plus additional overhead.
 
 ## Frequently Asked Questions
 
