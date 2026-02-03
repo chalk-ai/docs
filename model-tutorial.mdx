@@ -23,7 +23,8 @@ First, define feature classes that represent the entities in your domain. Featur
 # src/features.py
 from datetime import datetime
 from typing import Optional
-from chalk.features import features, Primary, DataFrame, FeatureTime, windowed, _
+from chalk import windowed, Windowed
+from chalk.features import features, Primary, DataFrame, FeatureTime, _
 import chalk.functions as F
 
 @features
@@ -83,7 +84,7 @@ class Event:
     user: User
     type: str
     ts: datetime
-    ts_unix_seconds: int = F.unix_second(_.ts)
+    ts_unix_seconds: int = F.unix_seconds(_.ts)
     event_clicked: "EventClicked | None"
     event_was_clicked: bool = F.is_not_null(_.event_clicked.ts)
 
@@ -170,8 +171,7 @@ FROM events_clicked
 ```python
 # src/resolvers/computed.py
 from datetime import datetime
-from chalk import online
-from chalk.features import Now
+from chalk import online, Now
 from src.features import User
 
 @online
@@ -302,12 +302,6 @@ from chalk.client import ChalkClient
 
 client = ChalkClient()
 
-# Register a model namespace (first time only)
-client.register_model_namespace(
-    name="InteractionModel",
-    description="Gradient boosting model for predicting an event's interaction probability"
-)
-
 # Register the trained model version
 client.register_model_version(
     name="InteractionModel",
@@ -377,6 +371,8 @@ chalk apply
 
 Now you can query interaction predictions in real-time through the Chalk API:
 
+<TipInfo> To get good performance, you'll want to add an online source for your features (like a postgres
+or a stream). </TipInfo>
 ```python
 from chalk.client import ChalkClient
 from src.features import Event
@@ -389,11 +385,6 @@ result = client.query(
     input={Event.id: 12345},
     output=[
         Event.interaction_probability,
-        Event.user.engagement_score,
-        Event.user.days_since_last_login,
-        Event.user.total_logins["1d"],   # Query specific windows
-        Event.user.total_logins["7d"],
-        Event.user.total_logins["30d"],
     ],
 )
 
