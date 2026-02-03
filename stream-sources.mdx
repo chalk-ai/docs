@@ -154,10 +154,7 @@ class UserUpdateBody(BaseModel):
     user_id: str
     favorite_color: str
 
-kafka_source = KafkaSource(
-    bootstrap_server='kafka.website.com:9092',
-    topic='user_favorite_color_updates'
-)
+kafka_source = KafkaSource(name="user_favorite_color_updates")
 
 @stream(source=kafka_source)
 def fn(message: UserUpdateBody) -> Features[User.uid, User.favorite_color]:

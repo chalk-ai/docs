@@ -27,10 +27,7 @@ import pyarrow as pa
 import datetime as dt
 
 # Define the Kafka stream source
-kafka_source = KafkaSource(
-    bootstrap_server='kafka.website.com:9092',
-    topic='user_updates_topic'
-)
+kafka_source = KafkaSource(name="user_updates")
 
 # Define the feature class
 @features(max_staleness="30d", etl_offline_to_online=True)

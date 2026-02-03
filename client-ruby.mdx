@@ -1,0 +1,70 @@
+---
+title: Ruby Client
+description: Query features with Chalk's Ruby client library
+published: true
+---
+
+The Chalk Ruby client library provides a convenient way to query features from your Ruby applications.
+- [chalk-ruby GitHub Repository](https://github.com/chalk-ai/chalk-ruby)
+- [RubyGems Package](https://rubygems.org/gems/chalk_ruby)
+
+
+---
+
+## Installation
+
+Add chalk_ruby to your Gemfile:
+
+```ruby
+gem 'chalk_ruby'
+```
+
+Then run:
+
+```bash
+bundle install
+```
+
+Or install it directly:
+
+```bash
+gem install chalk_ruby
+```
+
+---
+
+## Basic Usage
+
+Here's a quick example of how to use the Chalk Ruby client:
+
+```ruby
+require 'chalk_ruby'
+
+# Initialize the client
+client = ChalkRuby::Client.new(
+  client_id: 'your-client-id',
+  client_secret: 'your-client-secret',
+  environment_id: 'your-environment-id'
+)
+
+# Query features
+result = client.query(
+  inputs: {
+    'user.id' => 'user123'
+  },
+  outputs: [
+    'user.credit_score',
+    'user.account_age_days'
+  ]
+)
+
+puts result
+```
+
+---
+
+## Next Steps
+
+- [Query Basics](/docs/query-basics) - Learn how to query features
+- [Authentication](/docs/online-authentication) - Set up authentication for your client
+- [Online Query API](/docs/query-online) - Explore the online query API

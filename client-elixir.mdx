@@ -1,0 +1,72 @@
+---
+title: Elixir Client
+description: Query features with Chalk's Elixir client library
+published: true
+---
+
+The Chalk Elixir client library provides a convenient way to query features from your Elixir applications.
+-  [chalk-elixir Github Repository](https://github.com/chalk-ai/chalk-elixir)
+-  [Hex Package](https://hex.pm/packages/chalk_elixir)
+
+---
+
+## Installation
+
+Add chalk_elixir to your list of dependencies in `mix.exs`:
+
+```elixir
+def deps do
+  [
+    {:chalk_elixir, "~> 0.1.0"}
+  ]
+end
+```
+
+Then run:
+
+```bash
+mix deps.get
+```
+
+---
+
+## Basic Usage
+
+Here's a quick example of how to use the Chalk Elixir client:
+
+```elixir
+# Configure the client
+config :chalk_elixir,
+  client_id: "your-client-id",
+  client_secret: "your-client-secret",
+  environment_id: "your-environment-id"
+
+# Query features
+defmodule MyApp do
+  alias ChalkElixir.Client
+
+  def query_features do
+    {:ok, result} = Client.query(
+      %{
+        inputs: %{
+          "user.id" => "user123"
+        },
+        outputs: [
+          "user.credit_score",
+          "user.account_age_days"
+        ]
+      }
+    )
+
+    IO.inspect(result)
+  end
+end
+```
+
+---
+
+## Next Steps
+
+- [Query Basics](/docs/query-basics) - Learn how to query features
+- [Authentication](/docs/online-authentication) - Set up authentication for your client
+- [Online Query API](/docs/query-online) - Explore the online query API

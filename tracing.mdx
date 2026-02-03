@@ -19,6 +19,17 @@ will adjust this automatically as storage limits are approached.
 Tracing is typically enabled by default in Chalk environments. In order to fetch a trace for an online query,
 you can either add a flag at query time or set environment variables for environment-wide configurations.
 
+### Requirements
+
+To use tracing features, please ensure that you add the following Python dependency
+- `chalkpy[tracing]`
+
+This links required peer dependencies for OpenTelemetry tracing:
+- `opentelemetry-api`
+- `opentelemetry-sdk`
+
+Please note that tracing is not fully supported in the python client until version `chalkpy>=2.95.9`
+
 ### Query-time traces
 
 To fetch a trace for a specific online query, you can use the `--trace` flag in the Chalk CLI:
@@ -43,13 +54,7 @@ Once you have run a traced query, you can view the trace in the `Trace` tab of t
 
 ![Trace Tab](/img/online_query_trace_tab.png)
 
-
-### Requirements
-
-For Python, the following peer dependencies must be installed:
-- `ddtrace<3,>=2.6`
-
-### Environment Configuration
+## Environment Configuration
 
 Following [OpenTelemetry standards](https://opentelemetry.io/docs/languages/sdk-configuration/general/#otel_traces_sampler),
 you can also configure tracing via environment variables. Tracing across your environment can be configured using the

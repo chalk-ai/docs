@@ -148,7 +148,7 @@ Setting up the type hints in this way enables us to (necessarily) build the depe
 
 In addition to referencing features across entity boundaries to compute new features, we can also query for them directly, in this case we can easily fetch the `User` that wrote a particular Review.
 
-```sh
+```bash
 chalk query --in review.id=241 --out user
 ```
 
@@ -156,7 +156,7 @@ chalk query --in review.id=241 --out user
 
 The inverse relationship is also automatically established, enabling us to easily query (a has-many) for **all** the Reviews that belong to a one particular User.
 
-```sh
+```bash
 chalk query --in user.id=50 --out reviews
 ```
 
