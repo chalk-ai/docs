@@ -43,7 +43,7 @@ class User:
         "30d", 
         expression= _.events[
             _.type == "login",
-            _.ts >= _.chalk_window,
+            _.ts > _.chalk_window,
             _.ts <= _.chalk_now
         ].count(),
         default=0
@@ -53,7 +53,7 @@ class User:
         expression=_.events[
             _.ts_unix_seconds,
             _.type == "login",
-            _.ts >= _.chalk_window,
+            _.ts > _.chalk_window,
             _.ts <= _.chalk_now
         ].min(),
         default=None
