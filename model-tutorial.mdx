@@ -19,12 +19,13 @@ We'll build an event engagement prediction model that predicts whether a user is
 
 First, define feature classes that represent the entities in your domain. Feature classes use the `@features` decorator and define typed attributes for each feature.
 
-```python
-# src/features.py
+```python src/features.py
 from datetime import datetime
+
 from chalk import windowed, Windowed
 from chalk.features import features, DataFrame, _
 import chalk.functions as F
+
 
 @features
 class User:
@@ -37,10 +38,10 @@ class User:
 
     # Windowed activity features - automatically creates versions for each window
     total_logins: Windowed[int] = windowed(
-        "1d", 
-        "7d", 
-        "30d", 
-        expression= _.events[
+        "1d",
+        "7d",
+        "30d",
+        expression=_.events[
             _.type == "login",
             _.ts > _.chalk_window,
             _.ts <= _.chalk_now
@@ -48,6 +49,9 @@ class User:
         default=0
     )
     first_login_unix_seconds: Windowed[int | None] = windowed(
+        "1d",
+        "7d",
+        "30d",
         "all",
         expression=_.events[
             _.ts_unix_seconds,
@@ -58,9 +62,10 @@ class User:
         default=None
     )
 
-
     # Non-windowed activity feature
-    days_since_last_login: int | None = (F.unix_seconds(_.chalk_now) - _.first_login_unix_seconds["all"]) / 86400
+    days_since_last_login: int | None = (
+        (F.unix_seconds(_.chalk_now) - _.first_login_unix_seconds["all"]) / 86400
+    )
 
     # Windowed billing features
     monthly_spend: float
@@ -115,8 +120,7 @@ In the Chalk dashboard, navigate to **Settings > Data Sources** and add a Snowfl
 
 ### Define Sources in Code
 
-```python
-# src/datasources.py
+```python src/datasources.py
 from chalk.sql import SnowflakeSource
 
 # Reference the integration configured in the dashboard
@@ -169,11 +173,12 @@ FROM events_clicked
 
 Create python resolvers to computed some simple derived features:
 
-```python
-# src/resolvers/computed.py
+```python src/resolvers/computed.py
 from datetime import datetime
+
 from chalk import online, Now
 from src.features import User
+
 
 @online
 def compute_account_age(
@@ -181,6 +186,7 @@ def compute_account_age(
     now: Now
 ) -> User.account_age_days:
     return (now - signup_date).days
+
 
 @online
 def compute_engagement_score(
@@ -338,8 +344,7 @@ print("Model registered successfully!")
 
 Create a model resolver that connects your registered model to your feature class for real-time inference.
 
-```python
-# src/resolvers/model_inference.py
+```python src/resolvers/model_inference.py
 from chalk.ml import ModelReference, make_model_resolver
 from src.features import Event
 
