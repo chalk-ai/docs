@@ -1,0 +1,43 @@
+---
+title: Metaplanning
+description: Automatic parallelization of scheduled offline queries
+published: true
+---
+
+import { MetaplanningDiagram } from '@/components/MetaplanningDiagram'
+
+Metaplanning is an environment-level feature that automatically parallelizes scheduled offline queries by splitting them into multiple shards that run concurrently.
+
+## How It Works
+
+When metaplanning is enabled for your environment, all scheduled offline queries go through a metaplanning workflow:
+
+<MetaplanningDiagram />
+
+**Example:** A query with 100,000 rows and the default target of 10,000 rows per shard creates 10 parallel shard jobs.
+
+## Configuration
+
+Metaplanning is configured at the environment level. Once enabled, all scheduled offline queries in that environment use metaplanning automatically.
+
+The shard size can be controlled via the `AUTOSHARDER_TARGET_ROWS_PER_SHARD` environment variable (default: 10,000 rows per shard).
+
+## Example
+
+```py
+ScheduledQuery(
+    name="daily_user_scores",
+    outputs=[User.id, User.score],
+    schedule="0 0 * * *",
+)
+```
+
+With metaplanning enabled, this query will:
+1. Compute shard keys to find all User IDs (since no `input` is specified)
+2. Autoshard the IDs based on the configured target
+3. Execute all shards in parallel
+
+## See Also
+
+- [Query Scheduling](/docs/query-cron) - Creating scheduled queries
+- [ScheduledQuery](/api-docs#ScheduledQuery) - API reference
