@@ -167,6 +167,8 @@ FROM events_clicked
 
 ### Create Python Resolvers
 
+Create python resolvers to computed some simple derived features:
+
 ```python
 # src/resolvers/computed.py
 from datetime import datetime
@@ -179,7 +181,6 @@ def compute_account_age(
     now: Now
 ) -> User.account_age_days:
     return (now - signup_date).days
-
 
 @online
 def compute_engagement_score(
@@ -211,9 +212,11 @@ client = ChalkClient()
 # Use bracket notation to select specific windows for windowed features
 dataset = client.offline_query(
     input_sql="""
-    SELECT id as "event.id", ts 
-    FROM chalk.datasources.sf.events
-    WHERE type='recommendation'
+    SELECT 
+        id as "event.id", 
+        ts  as "__ts__"
+    FROM "sf.prod.events"
+    WHERE type='recommendation';
     """,
     output=[
         Event.id,
