@@ -41,16 +41,14 @@ class User:
 
 Then, we'll define simple online resolvers to ingest user and transaction data from a Postgres database:
 
-```sql
--- (users.chalk.sql)
+```sql users.chalk.sql
 -- resolves: User
 -- source: postgres
 
 select id from users
 ```
 
-```sql
--- (transactions.chalk.sql)
+```sql transactions.chalk.sql
 -- resolves: Transaction
 -- source: postgres
 
