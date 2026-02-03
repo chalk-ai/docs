@@ -23,12 +23,12 @@ First, define feature classes that represent the entities in your domain. Featur
 # src/features.py
 from datetime import datetime
 from chalk import windowed, Windowed
-from chalk.features import features, Primary, DataFrame, _
+from chalk.features import features, DataFrame, _
 import chalk.functions as F
 
 @features
 class User:
-    id: Primary[int]
+    id: int
 
     # Account features
     email: str
@@ -78,7 +78,7 @@ class User:
 
 @features
 class Event:
-    id: Primary[int]
+    id: int
     user_id: User.id
     user: User
     type: str
@@ -93,7 +93,7 @@ class Event:
 
 @features
 class EventClicked:
-    id: Primary[Event.id]
+    id: Event.id
     ts: datetime
 ```
 
