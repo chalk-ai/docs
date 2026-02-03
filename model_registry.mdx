@@ -100,7 +100,9 @@ client.register_model_version(
         "training_date": "2025-07-29",
         "accuracy": 0.89,
         "precision": 0.91
-    }
+    },
+    input_features=[User.age, User.income],
+    output_features=[User.churn_risk],
 )
 ```
 
