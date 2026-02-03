@@ -316,8 +316,18 @@ client.register_model_version(
         "training_dataset": "event_recommendation_dataset",
         "feature_columns": feature_columns,
         "metrics": metrics,
-    }
-)
+    },
+    input_features=[
+        Event.user.total_logins["30d"],
+        Event.user.days_since_last_login,
+        Event.user.monthly_spend,
+        Event.user.account_age_days,
+        Event.user.engagement_score,
+    ],
+    output_features=[
+        Event.interaction_probability
+    ]
+
 
 print("Model registered successfully!")
 ```
