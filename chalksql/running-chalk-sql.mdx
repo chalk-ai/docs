@@ -1,0 +1,64 @@
+---
+title: How do I run Chalk SQL queries?
+metaTitle: How do I run Chalk SQL queries?
+metaDescription: 'A description of the various ways to run Chalk SQL queries.'
+published: false
+---
+
+import { TipInfo } from '@/components/Tip'
+
+Chalk SQL is automatically enabled and available for use in any environment that has at least one
+gRPC query server running. Both new and existing environments can start running Chalk SQL queries with extremely
+minimal setup.
+
+Chalk SQL queries can be run via the [CLI](/cli?command=sql), via the Python
+SDK's [GRPC Client](/api-docs#ChalkGRPCClient.run_sql), or via the SQL Explorer.
+
+
+## SQL Explorer
+
+The SQL Explorer is an interface built into Chalk's web dashboard, which provides an easy-to-use interface for
+making exploratory and experimental queries.
+
+![SQL Explorer Example](/img/sql_explorer_example.png)
+
+### Database Explorer
+
+The Database Explorer is an overview of the various catalogs, schemas, and tables that Chalk SQL can integrate with.
+This catalog of items is determined by your deployment, meaning that it will change as you make deployments to your
+environment.
+
+When referencing tables in your queries to Chalk SQL, you must **fully qualify their name**. For example, if you
+wish to query the `keys` table in the `online_store` schema within the `chalk` catalog, you should make queries like
+
+```sql
+SELECT * FROM chalk.online_store.keys;
+```
+
+You can learn more about available tables via the database explorer, or by making queries to Chalk's
+`INFORMATION_SCHEMA`.
+
+```sql
+-- Example query to find all schemas available in the "chalk" catalog
+SELECT * FROM chalk.information_schema.schemas WHERE catalog_name = 'chalk';
+```
+
+### Worksheets
+
+Chalk SQL worksheets can be created in the SQL explorer via the Worksheets tab. You can create a "New Sheet" or choose
+to use "Save Sheet" on an existing worksheet. Worksheets are tied to users and will be persisted across sessions,
+providing an easy way to revisit queries within the explorer.
+
+## Synchronous vs. Asynchronous Queries
+
+Chalk SQL can be run in synchronous and asynchronous modes, which are tailored for transactional and
+analytical workloads, respectively. Synchronous queries will hit the GRPC query servers directly, whereas async
+queries will create an isolated environment but will take some time to provision.
+
+<TipInfo header="Warning about synchronous queries">
+    Running synchronous Chalk SQL queries that are larger in nature can cause gRPC query servers to
+    go out-of-memory, which can impact any production traffic running on that engine.
+    Clients provide the ability to set memory limits for queries to mitigate this.
+</TipInfo>
+
+

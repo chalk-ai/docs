@@ -15,19 +15,31 @@ offline queries, and many other entities across the Chalk ecosystem
 - Integrating with existing [online](/docs/query-online) and [offline query](/docs/query-offline) paths
 via alternative form of input.
 
+```sql
+WITH total_spending AS (
+    SELECT
+        u.user_id AS user_id,
+        SUM(t.amount) AS user_spending,
+    FROM "my_postgres.public.user" u  -- Query against a data source named "my_postgres"
+    LEFT JOIN "my_bigquery.my_dataset.transactions" t -- Query against a data source named "my_bigquery"
+    ON u.user_id = t.user_id
+    GROUP BY u.user_id
+)
+SELECT
+    u.user_id AS user_id,
+    u.embedding AS user_embedding,
+    array_normalize(u.embedding, 2) AS l2_normalized_embedding,
+    json_extract(ts.random_transaction_data, '$.timestamp') AS txn_timestamp,
+    json_extract(ts.random_transaction_data, '$.metadata.country') AS country,
+    ts.user_spending AS user_spending,
+FROM "my_postgres.public.users" u
+LEFT JOIN total_spending ts
+ON u.user_id = ts.user_id
+```
+
 Chalk SQL leverages the blazing-fast planning and execution that powers other queries against Chalk,
 including features such as [Native SQL drivers](/docs/integrations#sql-data-sources-and-data-warehouses),
 [static compilation](/docs/static-resolver-optimization) of expressions, and integration with
 [Velox](/docs/architecture#high-performance-execution-engine), the open-source low-latency execution engine. This
 makes Chalk SQL a federated query engine that is uniquely effective for both transactional and analytical workloads.
-
-
----
-
-## How do I run Chalk SQL queries?
-
-Chalk SQL is automatically enabled and available for use in any environment that has at least one
-gRPC query server running. Both new and existing environments can start running Chalk SQL queries with extremely
-minimal setup.
-
 
