@@ -183,6 +183,28 @@ Replace the placeholder values with the actual values from Step 3's `DESCRIBE IN
 
 ---
 
+### Step 5: Test Storage Integration
+
+Before proceeding, validate that your storage integration is properly configured using Snowflake's built-in validation function.
+
+Run the following SQL command to test all operations (read, write, list, delete):
+
+```sql
+-- Test the storage integration
+SELECT SYSTEM$VALIDATE_STORAGE_INTEGRATION(
+  's3-integration-chalk-{organization}-data-bucket',
+  's3://chalk-{organization}-data-bucket/',
+  'validation_test.txt',
+  'all'
+);
+```
+
+A successful result will return a JSON object with `"status": "success"` for each action.
+
+For more details on this validation function, see the [Snowflake documentation](https://docs.snowflake.com/en/sql-reference/functions/system_validate_storage_integration).
+
+---
+
 ### Next Steps
 
 After completing this setup:
