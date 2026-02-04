@@ -191,7 +191,29 @@ gsutil iam ch serviceAccount:<service-account>@<id>.iam.gserviceaccount.com:proj
 
 ---
 
-### Step 4: Configure Domain Restrictions (if applicable)
+### Step 4: Test Storage Integration
+
+Before proceeding, validate that your storage integration is properly configured using Snowflake's built-in validation function.
+
+Run the following SQL command to test all operations (read, write, list, delete):
+
+```sql
+-- Test the storage integration
+SELECT SYSTEM$VALIDATE_STORAGE_INTEGRATION(
+  'gcs-integration-chalk-{organization}-offline-store-bulk-insert',
+  'gcs://chalk-{organization}-offline-store-bulk-insert/',
+  'validation_test.txt',
+  'all'
+);
+```
+
+A successful result will return a JSON object with `"status": "success"` for each action.
+
+For more details on this validation function, see the [Snowflake documentation](https://docs.snowflake.com/en/sql-reference/functions/system_validate_storage_integration).
+
+---
+
+### Step 5: Configure Domain Restrictions (if applicable)
 
 For organizations created after May 3, 2024, Snowflake enforces domain restrictions that may require additional configuration.
 
@@ -203,7 +225,7 @@ If you encounter access issues related to domain restrictions:
 
 ---
 
-### Step 5: Create External Stage (Optional)
+### Step 6: Create External Stage (Optional)
 
 You can optionally create an external stage in Snowflake that references your storage integration for easier data access:
 
@@ -231,7 +253,7 @@ After completing this setup:
    - `STORAGE_GCP_SERVICE_ACCOUNT` (from Step 1)
    - GCP Project ID
    - GCS Bucket Name
-   - External Stage Name (if created in Step 5)
+   - External Stage Name (if created in Step 6)
 
 2. Verify the integration works:
    ```sql
