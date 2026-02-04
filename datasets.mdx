@@ -4,6 +4,8 @@ description: Persist and evolve offline queries over time
 published: true
 ---
 
+import { TipInfo } from '@/components/Tip'
+
 The Chalk [Dataset](/api-docs#Dataset) class governs metadata related to offline queries,
 supports revisions to queries over time, and enables the easy retrieval
 of data from the cloud.
@@ -161,6 +163,33 @@ dataset: Dataset = ChalkClient().offline_query(
 df = dataset.get_input_dataframe()
 ```
 
+
+## Managing Datasets
+
+### Renaming Datasets
+
+You can rename a dataset from the Chalk dashboard to better organize your datasets or reflect changes in your workflow.
+
+To rename a dataset:
+1. From the **Datasets** page under the Offline Queries section in the sidebar, click on a dataset to open its detail page
+2. Click the **Edit** button in the page header next to the dataset name
+3. Enter the new name and click **Save**, or press Enter
+
+The dataset name is used when retrieving datasets via the API, so update any references in your code after renaming.
+
+### Archiving Dataset Revisions
+
+As datasets accumulate revisions over time, you can archive older revisions to keep your dataset history organized. Archived revisions are hidden by default but remain accessible if needed.
+
+To archive a revision:
+1. From the **Datasets** page under the Offline Queries section in the sidebar, click on a dataset to open its detail page
+2. Select the **Revisions** tab
+3. Click the **Archive** button in the table row for the revision you want to archive
+4. Confirm the action in the dialog
+
+To view archived revisions, check the **Include archived revisions** checkbox above the revisions table.
+
+<TipInfo>Archiving a revision cannot be undone. Archived revisions will no longer be accessible via the API.</TipInfo>
 
 ## Recompute a Dataset
 
