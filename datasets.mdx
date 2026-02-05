@@ -175,11 +175,13 @@ To rename a dataset:
 2. Click the **Edit** button in the page header next to the dataset name
 3. Enter the new name and click **Save**, or press Enter
 
-The dataset name is used when retrieving datasets via the API, so update any references in your code after renaming.
+<TipInfo>The dataset name is used when retrieving datasets via the API, so update any references in your code after renaming.</TipInfo>
 
 ### Archiving Dataset Revisions
 
-As datasets accumulate revisions over time, you can archive older revisions to keep your dataset history organized. Archived revisions are hidden by default but remain accessible if needed.
+<TipInfo>Archiving a revision cannot be undone. Archived revisions will no longer be accessible via the API.</TipInfo>
+
+As datasets accumulate revisions over time, you can archive older or buggy revisions to keep your dataset history organized. Some metadata about your revision will still be accessible through the dashboard but revisions will be **permanently inaccessible** after archiving.
 
 To archive a revision:
 1. From the **Datasets** page under the `Offline` section in the sidebar, click on a dataset to open its detail page
@@ -189,7 +191,7 @@ To archive a revision:
 
 To view archived revisions, check the **Include archived revisions** checkbox above the revisions table.
 
-<TipInfo>Archiving a revision cannot be undone. Archived revisions will no longer be accessible via the API.</TipInfo>
+Datasets are stored as parquet files in the storage buckets in your cloud. Archiving a revision does not delete the data there—to conserve storage, you can set an expiration policy directly on those buckets.
 
 ## Recompute a Dataset
 
