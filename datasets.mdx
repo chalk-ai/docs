@@ -181,6 +181,8 @@ To rename a dataset:
 
 As datasets accumulate revisions over time, you can archive older or buggy revisions to keep your dataset history organized. Some metadata about your revision will still be accessible through the dashboard but revisions will be **permanently inaccessible** after archiving.
 
+Datasets are stored as parquet files in the storage buckets in your cloud. Archiving a revision does not delete the data there—to conserve storage, you can set an expiration policy directly on those buckets.
+
 <TipInfo>Archiving a revision cannot be undone. Archived revisions will no longer be accessible via the API.</TipInfo>
 
 
