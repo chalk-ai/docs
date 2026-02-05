@@ -1,0 +1,410 @@
+---
+title: Snowflake Offline Store - Chalk Infrastructure Setup
+description: Internal guide for Chalk infrastructure team to complete Snowflake offline store configuration.
+published: false
+llms: hidden
+---
+
+---
+
+This guide is for **Chalk Infrastructure team** to complete the Snowflake offline store setup after
+the customer has finished their setup steps.
+
+---
+
+## Prerequisites
+
+Before starting, verify the customer has completed:
+- [Snowflake Setup Requirements (AWS)](/docs/snowflake-deployment) or [Snowflake Setup Requirements (GCP)](/docs/snowflake-gcp-deployment)
+- Provided all required credentials and configuration values
+
+### Customer Deliverables Checklist
+
+- [ ] AWS Account ID or GCP Project ID
+- [ ] Snowflake account name (`SELECT CURRENT_ACCOUNT_NAME();`)
+- [ ] Snowflake organization name (`SELECT CURRENT_ORGANIZATION_NAME();`)
+- [ ] S3/GCS bucket name
+- [ ] Snowflake role name (e.g., `CHALK_ROLE`)
+- [ ] Snowflake user name (e.g., `CHALK_USER`)
+- [ ] RSA private key (via GPG encryption)
+- [ ] Database name, schema name, warehouse name
+- [ ] Storage integration name
+- [ ] `STORAGE_AWS_IAM_USER_ARN` / `STORAGE_GCP_SERVICE_ACCOUNT`
+- [ ] `STORAGE_AWS_EXTERNAL_ID` (AWS only)
+
+---
+
+## Step 6: Gather Parameters
+
+Gather the following parameters from customer deliverables.
+
+### From Chalk Deployment
+- AWS Account ID **or** GCP Project ID (where Chalk is deployed)
+- S3 bucket name **or** GCS bucket name (typically `chalk-{organization}-data-bucket`)
+
+### From Customer (via GPG encryption)
+- Snowflake user name (e.g., `CHALK_USER`)
+- RSA private key file
+
+### From Customer (configuration)
+- Snowflake account name (`SELECT CURRENT_ACCOUNT_NAME();`)
+- Snowflake organization name (`SELECT CURRENT_ORGANIZATION_NAME();`)
+- Snowflake role name (e.g., `CHALK_ROLE`)
+- Database name (e.g., `CHALK`)
+- Schema name (e.g., `OFFLINE_STORE`)
+- Warehouse name (e.g., `CHALK_WAREHOUSE`)
+
+### From Storage Integration Setup
+- Storage integration name (e.g., `s3-integration-chalk-{organization}-data-bucket`)
+- `STORAGE_AWS_IAM_USER_ARN` (AWS) **or** `STORAGE_GCP_SERVICE_ACCOUNT` (GCP)
+- `STORAGE_AWS_EXTERNAL_ID` (AWS only)
+- `STORAGE_AWS_ROLE_ARN` (AWS only)
+
+### Parameter Documentation Template
+
+```
+Environment: [dev/stage/prod]
+Environment ID: [from Chalk platform]
+
+# Cloud
+Cloud Provider: [AWS/GCP]
+Account/Project ID:
+Bucket Name:
+
+# Snowflake
+Account Name:
+Organization Name:
+Database:
+Schema:
+Warehouse:
+Role:
+User:
+RSA Private Key: [stored securely]
+
+# Storage Integration
+Integration Name:
+IAM User ARN / Service Account:
+External ID (AWS):
+Role ARN (AWS):
+```
+
+---
+
+## Step 7: Verify Storage Integration Setup
+
+Validate that the customer completed all setup steps before proceeding.
+
+### Verification Checklist
+
+#### Snowflake Objects Created
+- [ ] Database exists
+- [ ] Schema exists within database
+- [ ] Warehouse exists
+- [ ] Role exists with OWNER on database
+- [ ] User exists with role assigned
+
+#### Storage Integration (AWS)
+- [ ] AWS IAM policy created: `chalk-{organization}-offline-store-access-policy`
+- [ ] AWS IAM role created: `chalk-{organization}-offline-store-access-role`
+- [ ] IAM policy attached to role
+- [ ] Storage integration created in Snowflake
+- [ ] Trust policy updated with actual Snowflake credentials (not placeholders)
+- [ ] `STORAGE_AWS_IAM_USER_ARN` recorded
+- [ ] `STORAGE_AWS_EXTERNAL_ID` recorded (not "0000")
+
+#### Storage Integration (GCP)
+- [ ] Custom IAM role created: `ChalkSnowflakeGCSAccess`
+- [ ] Storage integration created in Snowflake
+- [ ] Service account granted custom role on bucket
+- [ ] `STORAGE_GCP_SERVICE_ACCOUNT` recorded
+
+### Verification Queries
+
+```sql
+-- List all storage integrations
+SHOW INTEGRATIONS;
+
+-- Describe the specific integration
+-- AWS:
+DESCRIBE INTEGRATION "s3-integration-chalk-{organization}-data-bucket";
+-- GCP:
+DESCRIBE INTEGRATION "gcs-integration-chalk-{organization}-offline-store-bulk-insert";
+
+-- Test all operations
+-- AWS:
+SELECT SYSTEM$VALIDATE_STORAGE_INTEGRATION(
+  's3-integration-chalk-{organization}-data-bucket',
+  's3://chalk-{organization}-data-bucket/',
+  'validation_test.txt',
+  'all'
+);
+-- GCP:
+SELECT SYSTEM$VALIDATE_STORAGE_INTEGRATION(
+  'gcs-integration-chalk-{organization}-offline-store-bulk-insert',
+  'gcs://chalk-{organization}-offline-store-bulk-insert/',
+  'validation_test.txt',
+  'all'
+);
+```
+
+Expected result: JSON with `"status": "success"` for each action.
+
+---
+
+## Step 8: Create Secret
+
+Create the Snowflake connection secret in the cloud secret manager.
+
+### Snowflake Connection URI Format
+
+```
+snowflake://<user>@<account>.<region>.snowflakecomputing.com/<database>?warehouse=<warehouse>&role=<role>&schema=<schema>&private_key=<base64_encoded_key>
+```
+
+| Component | Example | Notes |
+|-----------|---------|-------|
+| `user` | `CHALK_USER` | Snowflake user name |
+| `account` | `xy12345` | From `SELECT CURRENT_ACCOUNT_NAME();` |
+| `region` | `us-west-2.aws` | Account region (check Snowflake URL) |
+| `database` | `CHALK` | Database name |
+| `warehouse` | `CHALK_WAREHOUSE` | Warehouse name |
+| `role` | `CHALK_ROLE` | Role name |
+| `schema` | `OFFLINE_STORE` | Schema name |
+| `private_key` | `<base64>` | Base64-encoded RSA private key |
+
+### Steps
+
+1. **Build Secret Value** using the Snowflake Offline Secret URI Builder tool (`chalk-terraform/tooling/snowflake-offline-secret/`)
+
+2. **Test the Connection** using the Snowflake Connection Test Utility (`chalk-terraform/tooling/snowflake-connection-test/`)
+
+3. **Store the Secret**
+
+   For AWS:
+   ```bash
+   aws secretsmanager create-secret \
+     --name "chalk/{organization}/snowflake-offline-store" \
+     --secret-string "<connection-uri>"
+   ```
+
+   For GCP:
+   ```bash
+   gcloud secrets create "chalk-{organization}-snowflake-offline-store" \
+     --data-file=- <<< "<connection-uri>"
+   ```
+
+4. **Update Environment Configuration** - Set the Environment table's `feature_store_secret` field to reference the cloud secret name.
+
+---
+
+## Step 9: Configure Environment Variables
+
+Configure environment variables in the Chalk UI.
+
+> **Important**: Do NOT add these to global environment variables. These should be configured specifically on the **query server** via the Resources pane.
+
+### Actions
+
+1. Navigate to **Settings** → **Resources** → **Query Server** → **Environment Variable Overrides**
+
+2. Add the following key-value pairs:
+
+| Key | Value |
+|-----|-------|
+| `CHALK_PLANNER_PERSIST_VALUES_OFFLINE_STORE` | `1` |
+
+### Additional Variables (if needed)
+
+| Key | Value | Purpose |
+|-----|-------|---------|
+| `CHALK_PERSIST_TO_OFFLINE_STORE_QUERY_LOG` | `1` | Query logging for offline store operations |
+| `CHALK_PLANNER_PERSIST_VALUES_PARQUET` | `1` | Parquet file format support for offline data |
+
+---
+
+## Step 10: Configure Background Persistence
+
+Configure the storage integration name in the Chalk UI Background Persistence settings.
+
+### Actions
+
+1. Navigate to **Settings** → **Shared Resources** → **Background Persistence** → **General Configuration** → **Advanced**
+
+2. Enter the **Snowflake Storage Integration Name** in the provided field
+   - Example: `s3-integration-chalk-{organization}-data-bucket`
+   - Example (GCP): `gcs-integration-chalk-{organization}-offline-store-bulk-insert`
+
+3. Click **Save and Apply Changes**
+
+> **Warning**: Clicking **Save and Apply Changes** will re-deploy Background Persistence workers. This may temporarily affect offline store access.
+
+---
+
+## Step 11: Configure Writers
+
+Configure the Background Persistence writers in the Chalk UI.
+
+Navigate to **Settings** → **Shared Resources** → **Background Persistence** → **Writers**
+
+### 1. Offline Writer
+
+Set the **Bq Upload Bucket** field:
+- AWS: `s3://chalk-{organization}-data-bucket`
+- GCP: `gcs://chalk-{organization}-offline-store-bulk-insert`
+
+### 2. Offline Store Bulk Insert
+
+1. Select **Offline Store Bulk Insert** from the Writers menu
+2. Set **Offline Store Inserter DB Type** to `snowflake`
+3. Verify the **Snowflake Storage Integration Name** is pre-filled from Step 10
+
+### 3. Offline Store Streaming Insert (Beta)
+
+1. Select **Offline Store Streaming Insert (Beta)** from the Writers menu
+2. Set **Offline Store Inserter DB Type** to `snowflake`
+3. Verify the **Snowflake Storage Integration Name** is pre-filled from Step 10
+
+After configuring all writers, click **Save and Apply Changes**.
+
+---
+
+## Step 12: Run Offline Store Migration
+
+Run the offline store migration workflow to complete the setup.
+
+### Action
+
+Run the [Offline Store migration workflow](https://github.com/chalk-ai/chalk-private/actions/workflows/migrate-offline-store-db.yaml):
+
+1. Navigate to the GitHub Actions workflow page
+2. Click **Run workflow**
+3. Select the appropriate branch (usually `main`)
+4. Enter the **Environment ID** for the environment being configured
+5. Click **Run workflow**
+6. Wait for completion and verify success
+
+The migration will create necessary tables in the Snowflake schema and verify connectivity.
+
+---
+
+## Troubleshooting
+
+### Issue: "Access Denied" When Querying Data in Snowflake
+
+This is typically caused by incomplete IAM configuration.
+
+#### For AWS
+
+**Troubleshooting Steps:**
+
+1. Verify the AWS role ARN matches:
+   ```sql
+   DESCRIBE INTEGRATION "s3-integration-chalk-{organization}-data-bucket";
+   ```
+
+2. Confirm IAM policy is attached to the role in AWS IAM console
+
+3. Check S3 bucket names match exactly in AWS and Snowflake
+
+4. **Most common issue**: Verify trust policy has actual Snowflake credentials:
+   - Navigate to AWS IAM → Roles → `chalk-{organization}-offline-store-access-role`
+   - Click "Trust relationships" tab
+   - Confirm Principal shows actual `STORAGE_AWS_IAM_USER_ARN` (not placeholder)
+   - Confirm External ID shows actual `STORAGE_AWS_EXTERNAL_ID` (not "0000")
+
+#### For GCP
+
+**Troubleshooting Steps:**
+
+1. Verify the storage integration service account:
+   ```sql
+   DESCRIBE INTEGRATION "gcs-integration-chalk-{organization}-offline-store-bulk-insert";
+   ```
+   Note the `STORAGE_GCP_SERVICE_ACCOUNT` value.
+
+2. Confirm the service account has the custom IAM role on the bucket:
+   - Navigate to Cloud Storage → Buckets → `chalk-{organization}-offline-store-bulk-insert`
+   - Check Permissions tab for the Snowflake service account
+   - Verify it has the `ChalkSnowflakeGCSAccess` role (or equivalent)
+
+3. Check GCS bucket names match exactly in GCP and Snowflake
+
+4. For orgs created after May 2024, check domain restriction policies
+
+### Issue: DESCRIBE INTEGRATION Returns an Error
+
+1. Ensure connected with ACCOUNTADMIN or equivalent privileges
+2. Verify integration name spelling (case-sensitive)
+3. Grant usage if missing:
+   ```sql
+   -- AWS:
+   GRANT USAGE ON INTEGRATION "s3-integration-chalk-{organization}-data-bucket" TO ROLE "CHALK_ROLE";
+   -- GCP:
+   GRANT USAGE ON INTEGRATION "gcs-integration-chalk-{organization}-offline-store-bulk-insert" TO ROLE "CHALK_ROLE";
+   ```
+
+### Issue: Connection Secret Test Fails
+
+1. Verify connection URI format
+2. Check private key is properly base64-encoded
+3. Verify account identifier format (new vs legacy)
+4. Test manually via SnowSQL with same credentials
+
+### Issue: Background Persistence Writers Not Starting
+
+1. Check pod logs: `kubectl logs -n background-persistence <pod-name>`
+2. Verify storage integration name is configured
+3. Check DB type is set to `snowflake`
+
+### Issue: Migration Workflow Fails
+
+1. Check workflow logs for specific errors
+2. Verify `feature_store_secret` is set correctly in Environment
+3. Verify secret exists and contains valid connection URI
+4. Verify Snowflake user has OWNER on schema
+
+### Validation Test
+
+#### AWS
+```sql
+-- Create a test stage
+CREATE OR REPLACE STAGE test_stage
+  URL = 's3://chalk-{organization}-data-bucket/test/'
+  STORAGE_INTEGRATION = "s3-integration-chalk-{organization}-data-bucket";
+
+-- List files (should work without errors)
+LIST @test_stage;
+
+-- Clean up
+DROP STAGE test_stage;
+```
+
+#### GCP
+```sql
+-- Create a test stage
+CREATE OR REPLACE STAGE test_stage
+  URL = 'gcs://chalk-{organization}-offline-store-bulk-insert/test/'
+  STORAGE_INTEGRATION = "gcs-integration-chalk-{organization}-offline-store-bulk-insert";
+
+-- List files (should work without errors)
+LIST @test_stage;
+
+-- Clean up
+DROP STAGE test_stage;
+```
+
+---
+
+## Definition of Done
+
+The Snowflake offline store setup is complete when:
+
+1. ✅ Snowflake URI stored in cloud secret
+2. ✅ Cloud secret listed in Environment `feature_store_secret`
+3. ✅ Successful run of Offline Store migration workflow
+4. ✅ Storage Integration validated
+5. ✅ Environment variables configured (`CHALK_PLANNER_PERSIST_VALUES_OFFLINE_STORE`)
+6. ✅ Storage integration name configured in Background Persistence
+7. ✅ Background Persistence workers re-deployed and running
+8. ✅ End-to-end offline store query test passed
+9. ✅ Customer confirmation that offline store is accessible

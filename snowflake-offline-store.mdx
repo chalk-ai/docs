@@ -1,0 +1,195 @@
+---
+title: Snowflake Offline Store Overview
+description: Understanding Snowflake offline store architecture and multi-environment deployments.
+published: true
+---
+
+Chalk supports Snowflake as an offline store for persisting feature values, enabling historical data access
+for training set generation and batch inference. This guide explains the architecture, component hierarchy,
+and how to plan your Snowflake offline store setup—especially for deployments with multiple environments.
+
+---
+
+## Architecture Overview
+
+When using Snowflake as your offline store, components are organized at two levels: **cluster-level** (shared)
+and **environment-level** (per environment). Understanding this hierarchy is essential for planning your setup.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     SNOWFLAKE ACCOUNT                           │
+│  (One per cluster, OR shared across clusters)                   │
+│  (Cannot have multiple accounts per cluster)                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              KUBERNETES CLUSTER                          │   │
+│  │                                                          │   │
+│  │  ┌────────────────────────────────────────────────────┐ │   │
+│  │  │   BACKGROUND PERSISTENCE CONFIG (cluster-level)    │ │   │
+│  │  │   ════════════════════════════════════════════════ │ │   │
+│  │  │   SHARED BY ALL ENVIRONMENTS:                      │ │   │
+│  │  │   • Storage Integration                            │ │   │
+│  │  │   • Storage Bucket (S3/GCS)                        │ │   │
+│  │  │   • IAM Policy + Role                              │ │   │
+│  │  └────────────────────────────────────────────────────┘ │   │
+│  │                         │                                │   │
+│  │         ┌───────────────┼───────────────┐               │   │
+│  │         ▼               ▼               ▼               │   │
+│  │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐    │   │
+│  │  │  ENV: dev    │ │  ENV: stage  │ │  ENV: prod   │    │   │
+│  │  │              │ │              │ │              │    │   │
+│  │  │ Schema: dev  │ │ Schema: stg  │ │ Schema: prod │    │   │
+│  │  │ (MUST BE     │ │ (MUST BE     │ │ (MUST BE     │    │   │
+│  │  │  UNIQUE)     │ │  UNIQUE)     │ │  UNIQUE)     │    │   │
+│  │  │              │ │              │ │              │    │   │
+│  │  │ Role/User/   │ │ Role/User/   │ │ Role/User/   │    │   │
+│  │  │ Creds: opt   │ │ Creds: opt   │ │ Creds: opt   │    │   │
+│  │  └──────────────┘ └──────────────┘ └──────────────┘    │   │
+│  │                                                          │   │
+│  │  OPTIONALLY SHARED ACROSS ENVS:                         │   │
+│  │  • Database, Warehouse                                   │   │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+Chalk uses fully-qualified names (FQNs) to route data through the shared storage integration,
+ensuring data isolation between environments without contamination.
+
+---
+
+## Component Sharing Rules
+
+### Must Be Unique Per Environment
+
+| Component | Notes |
+|-----------|-------|
+| **Schema** | Each environment must have its own schema (e.g., `OFFLINE_STORE_DEV`, `OFFLINE_STORE_PROD`) |
+| Role | Recommended: separate roles for security isolation |
+| User | Recommended: separate users with separate credentials |
+
+### Must Be Shared (Cluster-Level)
+
+| Component | Notes |
+|-----------|-------|
+| **Storage Integration** | One per cluster—all environments share it |
+| **Storage Bucket** | One per cluster (S3 or GCS) |
+| **IAM Policy/Role** | Tied to storage integration |
+
+### Your Choice: Share or Separate
+
+| Component | Shared | Separated | When to Separate |
+|-----------|--------|-----------|------------------|
+| Database | `CHALK` for all envs | `CHALK_DEV`, `CHALK_PROD` | Regulatory requirements, separate billing |
+| Warehouse | `CHALK_WAREHOUSE` for all | `CHALK_WH_DEV`, `CHALK_WH_PROD` | Independent scaling, separate cost tracking |
+| Snowflake Account | One account for cluster | Separate accounts | Cannot have multiple per cluster |
+
+### Key Takeaways
+
+- **Schema is the critical isolation boundary**—each environment must have its own unique schema
+- **Storage integration is cluster-wide**—you create it once and all environments use it
+- **Database and Warehouse are flexible**—share them for simplicity, or separate them for independent scaling/billing
+- **Chalk handles routing**—data flows through the shared storage integration but is isolated by environment using fully-qualified paths
+
+---
+
+## Multi-Environment Deployment Options
+
+When setting up multiple Chalk environments (e.g., dev, staging, production), you have two approaches:
+
+### Option 1: Full Separation (Recommended for Strict Isolation)
+
+Create completely separate resources for each environment:
+
+| Resource | Dev | Stage | Prod |
+|----------|-----|-------|------|
+| Database | `CHALK_DEV` | `CHALK_STAGE` | `CHALK_PROD` |
+| Schema | `OFFLINE_STORE` | `OFFLINE_STORE` | `OFFLINE_STORE` |
+| Role | `CHALK_ROLE_DEV` | `CHALK_ROLE_STAGE` | `CHALK_ROLE_PROD` |
+| User | `CHALK_USER_DEV` | `CHALK_USER_STAGE` | `CHALK_USER_PROD` |
+| Warehouse | `CHALK_WH_DEV` | `CHALK_WH_STAGE` | `CHALK_WH_PROD` |
+
+**Benefits:**
+- Maximum isolation between environments
+- Independent resource management and billing
+- Easier audit trails
+
+### Option 2: Minimal Separation (Simpler Setup)
+
+Share what you can, separate only what you must:
+
+| Resource | Dev | Stage | Prod |
+|----------|-----|-------|------|
+| Database | `CHALK` (shared) | `CHALK` (shared) | `CHALK` (shared) |
+| Schema | `OFFLINE_STORE_DEV` | `OFFLINE_STORE_STAGE` | `OFFLINE_STORE_PROD` |
+| Role | `CHALK_ROLE_DEV` | `CHALK_ROLE_STAGE` | `CHALK_ROLE_PROD` |
+| User | `CHALK_USER_DEV` | `CHALK_USER_STAGE` | `CHALK_USER_PROD` |
+| Warehouse | `CHALK_WAREHOUSE` (shared) | `CHALK_WAREHOUSE` (shared) | `CHALK_WAREHOUSE` (shared) |
+
+> **Note on naming**: The suffixes `_DEV`, `_STAGE`, `_PROD` are examples. Use suffixes that fit your
+> use case—other common patterns include `_UAT`, `_SANDBOX`, `_QA`, `_TEAM1`, or environment-specific identifiers.
+
+**Benefits:**
+- Fewer resources to manage
+- Simpler credential management
+- Lower administrative overhead
+
+### Recommendation
+
+Use **Option 2 (Minimal Separation)** for most deployments. The schema-level isolation provides
+sufficient separation for feature data, and Chalk's FQN-based routing ensures data integrity.
+
+Use **Option 1 (Full Separation)** when:
+- Regulatory requirements mandate complete resource isolation
+- Different environments need different warehouse sizes or configurations
+- You need separate billing or resource quotas per environment
+
+---
+
+## Setup Checklist
+
+Before starting your Snowflake offline store setup, gather the following:
+
+### From Your Cloud Environment
+- [ ] AWS Account ID (where Chalk is deployed) **or** GCP Project ID
+- [ ] S3 bucket name **or** GCS bucket name (typically `chalk-{organization}-data-bucket`)
+
+### From Snowflake
+- [ ] Snowflake account name (`SELECT CURRENT_ACCOUNT_NAME();`)
+- [ ] Snowflake organization name (`SELECT CURRENT_ORGANIZATION_NAME();`)
+
+### Permissions Required
+- [ ] **AWS**: Permissions to create IAM policies, roles, and update trust relationships
+- [ ] **GCP**: Permissions to create IAM custom roles and assign roles to service accounts
+- [ ] **Snowflake**: `ACCOUNTADMIN` role or equivalent with `CREATE DATABASE`, `CREATE WAREHOUSE`, `CREATE INTEGRATION`, and `SECURITYADMIN` privileges
+
+---
+
+## Cloud-Specific Setup Guides
+
+Choose the guide that matches your cloud provider:
+
+- **[Snowflake Setup for AWS](/docs/snowflake-deployment)** — S3 storage integration with IAM roles
+- **[Snowflake Setup for GCP](/docs/snowflake-gcp-deployment)** — GCS storage integration with service accounts
+
+---
+
+## What to Share with Chalk
+
+After completing the setup, securely share the following with Chalk:
+
+### Credentials (via [GPG encryption](/docs/public-key))
+- RSA private key for Snowflake authentication
+- Snowflake user name
+
+### Configuration Details
+- Snowflake account name and organization name
+- Database name, schema name(s), warehouse name
+- Role name(s)
+- Storage integration name
+- AWS Account ID or GCP Project ID
+- S3/GCS bucket name
+
+For multi-environment setups, provide these details for each environment, clearly labeled
+(e.g., "Dev Environment", "Stage Environment", "Prod Environment").

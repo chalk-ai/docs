@@ -1,6 +1,6 @@
 ---
-title: Snowflake Setup Requirements
-description: Setting up Snowflake as your offline store.
+title: Snowflake Setup Requirements (AWS)
+description: Setting up Snowflake as your offline store with AWS S3.
 published: true
 llms: hidden
 ---
@@ -9,21 +9,9 @@ import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
 
 ---
 
-Chalk's feature platform enables
-machine learning teams to focus on building the unique products and models
-that make their business stand out. Chalk provides a feature store so that
-you can deploy production machine learning pipelines for real time data
-in minutes.
+This guide covers setting up Snowflake as your offline store for AWS deployments using S3 storage integration.
 
-Chalk is both a framework and a platform — developers can write code
-using familiar Python packages, and deploy their feature and data pipeline definitions
-to Chalk’s platform. In the Customer Cloud deployment, Chalk runs &
-administers its platform on the customer’s cloud account. Chalk's managed
-infrastructure then executes the customer defined pipelines to compute
-[feature](/docs/features)
-data for machine learning applications. Chalk then serves this data
-back to customer applications for online inference and to customer
-data teams for training set generation.
+For architecture overview, component hierarchy, and multi-environment planning, see [Snowflake Offline Store Overview](/docs/snowflake-offline-store).
 
 ---
 
@@ -35,25 +23,38 @@ data teams for training set generation.
 
 ## Database Setup
 
-To use Snowflake as your offline store, we require
-a warehouse, a database, a schema within that database, and a user with a role that
-has `OWNER` on that database. To provision all of these, you can run the following
-commands in a Snowflake worksheet or console. 
+To use Snowflake as your offline store, you need a warehouse, database, schema, and a user with a role that
+has `OWNER` on the database.
 
-Please follow the instructions [here](https://docs.snowflake.com/en/user-guide/key-pair-auth#generate-the-private-keys) 
-to generate your private and public keys for key-pair authentication in Snowflake. 
-Once you have generated your public and private keys, you can continue. 
+### Step 0: Generate Key Pair
 
-Then, in SnowSQL, run the following commands, replacing the variables at the top:
+Follow the [Snowflake key-pair authentication guide](https://docs.snowflake.com/en/user-guide/key-pair-auth#generate-the-private-keys)
+to generate your private and public keys.
+
+### Step 1: Create Database Objects
+
+Run the following commands in SnowSQL, replacing the variables at the top.
+
+**For multi-environment deployments**, see the annotations and the [Additional Environments](#additional-environments) section below.
 
 ```sql
--- input variables (feel free to change these)
-SET WAREHOUSE_NAME='CHALK_WAREHOUSE';
+-- ═══════════════════════════════════════════════════════════════
+-- CLUSTER-LEVEL RESOURCES (can be shared or separated per env)
+-- These CAN be shared across environments, or you can create
+-- separate databases/warehouses per environment if desired
+-- ═══════════════════════════════════════════════════════════════
+SET WAREHOUSE_NAME='CHALK_WAREHOUSE';    -- Can share across envs OR use CHALK_WAREHOUSE_DEV, etc.
 SET WAREHOUSE_SIZE='XSMALL';
-SET ROLE_NAME='CHALK_ROLE';
-SET USER_NAME='CHALK_USER';
-SET DB_NAME='CHALK';
-SET SCHEMA_NAME='OFFLINE_STORE';
+SET DB_NAME='CHALK';                      -- Can share across envs OR use CHALK_DEV, etc.
+
+-- ═══════════════════════════════════════════════════════════════
+-- ENVIRONMENT-LEVEL RESOURCES (unique per environment)
+-- For multi-env deployments, use suffixes that fit your use case
+-- Examples: _DEV, _STAGE, _PROD, _UAT, _SANDBOX, _TEAM1, etc.
+-- ═══════════════════════════════════════════════════════════════
+SET SCHEMA_NAME='OFFLINE_STORE';          -- ⚠️ MUST be unique per env
+SET ROLE_NAME='CHALK_ROLE';               -- Recommended: unique per env
+SET USER_NAME='CHALK_USER';               -- Recommended: unique per env
 
 -- Create the database + schema + warehouse
 CREATE DATABASE IF NOT EXISTS IDENTIFIER($DB_NAME);
@@ -91,29 +92,33 @@ GRANT OWNERSHIP ON DATABASE IDENTIFIER($DB_NAME) TO IDENTIFIER($ROLE_NAME);
 GRANT ROLE IDENTIFIER($ROLE_NAME) TO USER IDENTIFIER($USER_NAME);
 ```
 
-Please share:
+### What to Share with Chalk
 
-- The `USER_NAME` and RSA private key with us securely via an encrypted message following [using GPG](/docs/public-key).
-- The `WAREHOUSE_NAME`, `DB_NAME`, `SCHEMA_NAME`, and `ROLE_NAME` so that we can configure the Chalk platform to use them.
-- Your Snowflake account name (`select current_account_name();`) and organization name (`select current_organization_name();`).
+Share the following securely via [GPG encryption](/docs/public-key):
+- The `USER_NAME` and RSA private key
+- The `WAREHOUSE_NAME`, `DB_NAME`, `SCHEMA_NAME`, and `ROLE_NAME`
+- Your Snowflake account name (`SELECT CURRENT_ACCOUNT_NAME();`)
+- Your Snowflake organization name (`SELECT CURRENT_ORGANIZATION_NAME();`)
 
 ---
 
 ## Storage Integration Setup
 
-Once you have created the warehouse, database, schema, user, and role, the next step is to create storage integration(s).
+> **Cluster-Level Resource**: The storage integration is created **once per cluster** and shared by all environments.
+> All environments in the cluster will use this single storage integration—Chalk routes data using fully-qualified
+> paths to ensure isolation between environments.
 
 The storage integration creates an IAM entity with allowed storage locations, enabling Chalk to securely load and unload data from the offline store.
 
 ### Required Information
 
-Before setting up the storage integration, gather the following from your Chalk deployment:
+Before setting up the storage integration, gather the following:
 
 - **AWS Account ID**: The AWS account where your Chalk environment is deployed
 - **S3 Bucket Name**: Typically `chalk-{organization}-data-bucket` (confirm with Chalk if different)
-- **Snowflake Role Name**: The role name created in the Database Setup step (typically `CHALK_ROLE`)
+- **Snowflake Role Name**: The role name created in Database Setup (e.g., `CHALK_ROLE`)
 
-You'll also need appropriate AWS and Snowflake permissions:
+**Permissions required:**
 - **AWS**: Permissions to create IAM policies, roles, and update trust relationships
 - **Snowflake**: `ACCOUNTADMIN` role or equivalent permissions for `CREATE INTEGRATION`
 
@@ -205,16 +210,124 @@ For more details on this validation function, see the [Snowflake documentation](
 
 ---
 
-### Next Steps
+## Additional Environments
 
-After completing this setup:
+If you have multiple Chalk environments (e.g., dev, staging, production) in the same cluster, follow these steps for each additional environment.
 
-1. Share the following values with Chalk:
-   - Storage Integration Name (e.g., `s3-integration-chalk-{organization}-data-bucket`)
-   - `STORAGE_AWS_IAM_USER_ARN`
-   - `STORAGE_AWS_ROLE_ARN`
-   - `STORAGE_AWS_EXTERNAL_ID`
-   - AWS Account ID
-   - S3 Bucket Name
+### What to Reuse (Cluster-Level)
+
+These resources are already created and **must be shared** across all environments:
+- Storage Integration (created once in the steps above)
+- S3 Bucket
+- IAM Policy and Role
+
+These resources **can be shared or separated** per environment (your choice):
+- Database — share one database, or create `CHALK_DEV`, `CHALK_STAGE`, `CHALK_PROD`
+- Warehouse — share one warehouse, or create separate warehouses per environment for independent scaling/billing
+
+### What to Create New (Per Environment)
+
+For each additional environment, create:
+
+1. **New Schema** (required—must be unique per environment)
+2. **New Role** (recommended)
+3. **New User with new key pair** (recommended)
+
+### SQL for Additional Environment
+
+```sql
+-- ═══════════════════════════════════════════════════════════════
+-- ADDITIONAL ENVIRONMENT SETUP
+-- Replace _STAGE with your environment suffix
+-- Use suffixes that fit your use case: _DEV, _PROD, _UAT, _SANDBOX, etc.
+-- ═══════════════════════════════════════════════════════════════
+
+-- Database and Warehouse: share existing OR create new per environment
+-- Option A: Share (simpler)
+SET DB_NAME='CHALK';                      -- Same database (shared)
+SET WAREHOUSE_NAME='CHALK_WAREHOUSE';     -- Same warehouse (shared)
+-- Option B: Separate (for independent scaling/billing)
+-- SET DB_NAME='CHALK_STAGE';             -- Separate database per env
+-- SET WAREHOUSE_NAME='CHALK_WH_STAGE';   -- Separate warehouse per env
+
+-- New environment-specific resources
+SET SCHEMA_NAME='OFFLINE_STORE_STAGE';    -- ⚠️ MUST be unique
+SET ROLE_NAME='CHALK_ROLE_STAGE';
+SET USER_NAME='CHALK_USER_STAGE';
+
+-- Create the new schema
+USE DATABASE IDENTIFIER($DB_NAME);
+CREATE SCHEMA IF NOT EXISTS IDENTIFIER($SCHEMA_NAME);
+
+-- Create a new role for this environment
+CREATE ROLE IF NOT EXISTS IDENTIFIER($ROLE_NAME);
+GRANT USAGE ON WAREHOUSE IDENTIFIER($WAREHOUSE_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+
+-- Create a new user for this environment
+CREATE USER IF NOT EXISTS IDENTIFIER($USER_NAME)
+    RSA_PUBLIC_KEY=`<your-new-public-key-here>`
+    DEFAULT_ROLE=IDENTIFIER($ROLE_NAME)
+    DEFAULT_WAREHOUSE=IDENTIFIER($WAREHOUSE_NAME)
+    DEFAULT_NAMESPACE=IDENTIFIER(concat($DB_NAME, '.', $SCHEMA_NAME));
+
+-- Grant permissions
+SET QUALIFIED_SCHEMA_NAME=concat($DB_NAME, '.', $SCHEMA_NAME);
+GRANT OWNERSHIP ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO ROLE IDENTIFIER($ROLE_NAME) REVOKE CURRENT GRANTS;
+GRANT CREATE STAGE ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+GRANT ROLE IDENTIFIER($ROLE_NAME) TO USER IDENTIFIER($USER_NAME);
+
+-- Grant access to the SHARED storage integration
+GRANT USAGE ON INTEGRATION "s3-integration-chalk-{organization}-data-bucket" TO ROLE IDENTIFIER($ROLE_NAME);
+```
+
+### Example Multi-Environment Naming
+
+> **Note**: The suffixes below (`_DEV`, `_STAGE`, `_PROD`) are examples. Use suffixes that fit your
+> use case—other common patterns include `_UAT`, `_SANDBOX`, `_QA`, `_TEAM1`, or environment-specific identifiers.
+
+**Must be unique per environment:**
+
+| Resource | Dev | Stage | Prod |
+|----------|-----|-------|------|
+| Schema | `OFFLINE_STORE_DEV` | `OFFLINE_STORE_STAGE` | `OFFLINE_STORE_PROD` |
+| Role | `CHALK_ROLE_DEV` | `CHALK_ROLE_STAGE` | `CHALK_ROLE_PROD` |
+| User | `CHALK_USER_DEV` | `CHALK_USER_STAGE` | `CHALK_USER_PROD` |
+
+**Can be shared OR separated (your choice):**
+
+| Resource | Shared Option | Separated Option |
+|----------|---------------|------------------|
+| Database | `CHALK` for all envs | `CHALK_DEV`, `CHALK_STAGE`, `CHALK_PROD` |
+| Warehouse | `CHALK_WAREHOUSE` for all envs | `CHALK_WH_DEV`, `CHALK_WH_STAGE`, `CHALK_WH_PROD` |
+
+**Must be shared (cluster-level):**
+
+| Resource | All Environments |
+|----------|------------------|
+| Storage Integration | `s3-integration-chalk-{organization}-data-bucket` |
+| S3 Bucket | `chalk-{organization}-data-bucket` |
+| IAM Policy/Role | `chalk-{organization}-offline-store-access-*` |
+
+---
+
+## Summary: What to Share with Chalk
+
+After completing this setup, share the following with Chalk:
+
+### Per Environment
+- User name and RSA private key (via [GPG encryption](/docs/public-key))
+- Schema name
+- Role name
+- Database name
+- Warehouse name
+
+### Cluster-Wide (Once)
+- Storage Integration Name (e.g., `s3-integration-chalk-{organization}-data-bucket`)
+- `STORAGE_AWS_IAM_USER_ARN`
+- `STORAGE_AWS_ROLE_ARN`
+- `STORAGE_AWS_EXTERNAL_ID`
+- AWS Account ID
+- S3 Bucket Name
+- Snowflake account name and organization name
 
 Chalk will use these values to configure your offline store in the platform.
