@@ -66,12 +66,16 @@ ON u.id = t.user_id;
 ```
 
 
-## View offline store ETL of an operation
+## Views into online and offline query results
 
-When making a query that writes result values to the offline store, it can be hard to determine the table in the
-offline store that corresponds to the results of the qu
-ery. Chalk SQL provides a table-valued function
-`query_values_from_operation_ids()` that performs this resolution in-house.
+When making queries to Chalk with persistence turned on, these values will be ingested into the offline store, where
+they can be re-used for analytical queries. Chalk SQL provides many useful views into the offline store.
+
+The query log, which is accessible via the `chalk.query_log.data` table, consists of information about each query
+
+It can be hard to determine the table in the table within in the offline store that corresponds
+to the results of the query. Chalk SQL provides a table-valued function `query_values_from_operation_ids()`
+that performs this resolution in-house.
 
 ```py
 from chalk.client import ChalkClient
@@ -91,9 +95,9 @@ FROM query_values_from_operation_ids('c012345678901234567890123')
 WHERE "user.id" = 1
 ```
 
-You can also directly query the offline store via the `offline_store` external catalog.
+You can also directly query the offline store via the `offline_store` catalog.
 
 ```sql
 SELECT *
-FROM offline_store.dataset_name.feat_0123456789;
+FROM offline_store.schema_name.feat_0123456789;
 ```
