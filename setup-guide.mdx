@@ -71,7 +71,7 @@ chalkpy[runtime]
 ```
 This contains your project dependencies.
 You can add a file `.chalkignore` which will act just like a `.gitignore` file, and exclude the specified files from
-deploys when you run `chalk apply` (more on this later).
+deploys when you run [`chalk apply`](/cli/apply) (more on this later).
 
 7. Within your virtual environment, install the project requirements.
 ```bash Terminal
@@ -92,7 +92,7 @@ compute our features. We can do so in the Chalk dashboard.
 [`chalk login`](/cli/login) command will open your browser and create an
 API token for your local development, as well as redirect you to your dashboard. If you are not
 redirected you can also find the dashboard at [https://chalk.ai/projects](https://chalk.ai/projects)
-or run the `chalk dashboard` command.
+or run the [`chalk dashboard`](/cli/dashboard) command.
 You will automatically see all the environments in which the email you used to log in has been
 provisioned as a user.
  2. Within the dashboard, navigate to `Data Sources` in the sidebar and add all data sources that you will
@@ -156,7 +156,7 @@ guidance on how to structure your feature classes and resolvers, please reach ou
 
 Now, you can deploy the features and resolvers that you wrote! You can deploy to production by
 using the [`chalk apply`](/cli/apply) command. During development, we recommend that you use
-`chalk apply --branch {BRANCH_NAME}` to deploy to the [branch server](/docs/branches), which allows
+[`chalk apply --branch {BRANCH_NAME}`](/cli/apply#branch) to deploy to the [branch server](/docs/branches), which allows
 multiple people to work concurrently in one environment, and also enables more performant deploys.
 
 Once you have deployed your code, then you can query your features directly from the command line using the

@@ -68,7 +68,7 @@ let steps: Step[] = [
         Deploy your feature pipeline to production. After you've written some features and
         resolvers, use the{' '}
         <code>
-          <a href={'/cli?command=login'}>chalk apply</a>
+          <a href={'/cli?command=apply'}>chalk apply</a>
         </code>{' '}
         command to deploy your feature pipelines.
       </p>
@@ -85,7 +85,7 @@ let steps: Step[] = [
       <p>
         Query your features directly from the command line with{' '}
         <code>
-          <a href={'/cli?command=login'}>chalk query</a>
+          <a href={'/cli?command=query'}>chalk query</a>
         </code>{' '}
         to see that they're live and available.
       </p>
@@ -108,7 +108,7 @@ export default function ChalkCli({ code }) {
         {/*<h3 className="sr-only">Installing Chalk CLI</h3>*/}
         <p>
           It only takes a few minutes to setup a project with{' '}
-          <a href={'/cli?command=login'}>Chalk's command line tool</a>. This guide will walk you through how
+          <a href={'/cli'}>Chalk's command line tool</a>. This guide will walk you through how
           to start a project from a template.
         </p>
       </div>

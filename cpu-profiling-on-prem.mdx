@@ -21,7 +21,7 @@ you need to profile CPU usage.
 This guide will walk you through the process of profiling the CPU usage of your Chalk deployment. No sensitive
 information will be shared with Chalk during this process.
 
-1. Run `chalk apply --enable-profiling`
+1. Run [`chalk apply --enable-profiling`](/cli/apply)
 2. Wait until your new deployment is complete
 3. Run `kubectl exec -it <the-name-of-a-query-server-pod> /bin/bash`
 4. Run `perf record -F 99 -g -p 7 --call-graph dwarf`
