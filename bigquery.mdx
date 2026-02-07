@@ -48,6 +48,11 @@ Using BigQuery's predefined IAM roles, you can get these permissions by ensuring
 
 You can learn more about the various BigQuery IAM roles and permissions [here](https://docs.cloud.google.com/bigquery/docs/access-control).
 
+The temporary project & dataset is used for scratch tables during unload operations and filter pushdown.
+It's recommended to configure the temporary table dataset with a TTL (Time To Live) on all tables,
+such as 6 hours, which should be bounded by your maximum job lifetime to ensure automatic cleanup of
+temporary resources.
+
 
 ## Integrations Setup
 
