@@ -31,7 +31,6 @@ class SearchQuery:
         lambda: SearchQuery.embedding.is_near(
             FAQDocument.question_embedding
         ) & (SearchQuery.topic == FAQDocument.topic) # Additional filters can optionally be added to the join
-
     )
 
 @features

@@ -79,6 +79,7 @@ a `rooms` field:
 + @features
 + class Room:
 +     id: str
++     home_id: "Home.id"
 +     name: str
 
 @features
@@ -87,9 +88,7 @@ class Home:
     address: str
     price: int
     sq_ft: int
-+   rooms: DataFrame[Room] = has_many(
-+       lambda: Room.home_id == Home.id
-+   )
++   rooms: DataFrame[Room]
 +   num_bedrooms: int
 +
 + @online
@@ -204,5 +203,3 @@ with freeze_time(at=NOW - timedelta(days_ago=15)):
 ```
 
 Note that the `at=` parameter must be timezone-aware.
-
-

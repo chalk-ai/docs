@@ -2463,14 +2463,13 @@ a house to only the bedrooms:
 @features
 class Room:
     id: str
+    home_id: "Home.id"
     name: str
 
 @features
 class Home:
     id: str
-    rooms: DataFrame[Room] = has_many(
-        lambda: Room.home_id == Home.id
-    )
+    rooms: DataFrame[Room]
     num_bedrooms: int
 
 @online

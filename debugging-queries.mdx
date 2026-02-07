@@ -23,12 +23,12 @@ in its definition, and explore various ways to debug that issue.
 
 ```python
 from datetime import datetime
-from chalk.features import features, has_many, DataFrame
+from chalk.features import features, DataFrame
 
 @features
 class Transaction:
     id: int
-    user_id: int
+    user_id: "User.id"
     amount: float
     ts: datetime
 
@@ -36,7 +36,7 @@ class Transaction:
 class User:
     id: int
     sum_transaction_amount: float
-    transactions: DataFrame[Transaction] = has_many(lambda: Transaction.user_id == User.id)
+    transactions: DataFrame[Transaction]
 ```
 
 Then, we'll define simple online resolvers to ingest user and transaction data from a Postgres database:
