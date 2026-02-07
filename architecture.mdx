@@ -207,6 +207,25 @@ your instance service would continue running indefinitely without disruption.
 
 ---
 
+## Data Plane Architecture
+
+Chalk has a few tiers of concepts within the Data Plane that are important to understand when thinking
+about how to structure your deployment, such as how many environments you should set up. Each customer
+is associated with a **team**. Each team is tied to one or more **projects**, and each project
+can have one or more **environments**. The team, project, and environment concepts are all logical groupings
+for the underlying Kubernetes resources of [Data Plane components](/docs/kube-resources-drilldown#data-plane).
+Each environment has at least one resource group, which is one set of Data Plane components, as well as a
+metrics database deployment. Then, each resource group is deployed to a Kubernetes cluster, and every
+Chalk-managed Kubernetes cluster has a set of background processes that can be shared across environments
+deployed to that cluster. These background processes include load balancers, background persistence workers,
+a Clickhouse deployment for tracing, and a cluster manager.
+
+Most customers have a team, a project, and one or more environments deployed across one or more Kubernetes clusters,
+however the exact structure of your deployment is flexible within the constraints outlined in the previous
+paragraph.
+
+---
+
 ## Monitoring
 
 Native integrations with PagerDuty and Slack ensure teams are immediately alerted to any issues
@@ -254,3 +273,5 @@ downstream analytical workflows
 Together, these architectural choices enable enterprises to build future-proof ML and AI systems
 that scale with their needs, maintain interoperability, and seamlessly integrate with their
 existing technology stack.
+
+
