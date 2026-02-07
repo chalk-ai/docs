@@ -57,19 +57,27 @@ Offline queries can be run with one of our API Clients:
 
 ```python
 from chalk.client import ChalkClient
-from datetime import datetime
 
 client = ChalkClient()
 client.offline_query(
-  input={'user.id': [1,2,3,4]},
-  output=['user.name']
-  # branch='test',                      # run against a branch
-  # recompute_features=True,            # recompute features
-  # run_asynchronously=True,            # run in separate pod from active deployment
-  # max_samples = 10,                   # max of 10 samples
-  # lower_bound=datetime(2024, 10, 12), # sample computed after 10.12.2024
-  # upper_bound=datetime(2024, 10, 20), # sample computed before 10.20.2024
-)
+    input_sql='''
+      select
+          user_id as "user.id",
+          created_at as __ts__
+      from "datasources.postgres.fraud_events"
+      order by created_at desc
+      limit 30
+    ''',
+    output=[
+        User.name,
+        User.denylisted,
+        User.name_email_match_score,
+        User.domain_name,
+        User.email_username,
+        User.credit_report.percent_past_due,
+    ],
+    recompute_features=True,
+).to_pandas()
 ```
 
 ### Running queries using gRPC

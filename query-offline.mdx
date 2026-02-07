@@ -40,21 +40,28 @@ As mentioned earlier, offline queries can be made through one of Chalk's API cli
 
 ```python
 from chalk.client import ChalkClient
-from datetime import datetime
 
 client = ChalkClient()
 dataset = client.offline_query(
-  input={'user.id': [1,2,3,4]},         # Input
-  output=['user.name'],                 # Output
-  # tags=['test'],                      # Environment
-  # branch='branch',
-  # recompute_features=True,            # Run Resolvers
-  # run_asynchronously=True,            # Run Configuration
-  # max_samples = 10,
-  # lower_bound=datetime(2024, 10, 12), # Bounds
-  # upper_bound=datetime(2024, 10, 20),
+    input_sql='''
+      select
+          user_id as "user.id",
+          created_at as __ts__
+      from "datasources.postgres.fraud_events"
+      order by created_at desc
+      limit 30
+    ''',
+    output=[
+        User.name,
+        User.denylisted,
+        User.name_email_match_score,
+        User.domain_name,
+        User.email_username,
+        User.credit_report.percent_past_due,
+    ],
+    recompute_features=True,
 )
-df = dataset.get_data_as_pandas()
+df = dataset.to_pandas()
 ```
 
 Offline queries return Chalk [Datasets](/api-docs#Dataset), which we cover in more detail in the
@@ -64,15 +71,60 @@ in downstream ML tasks.
 
 ### Input
 
-[Offline queries](/api-docs#ChalkClient.offline_query) can receive input from a DataFrame, mapping, or SQL query.
-Regardless of the format, the primary key feature of the feature class must be included in the input.
+[Offline queries](/api-docs#ChalkClient.offline_query) support multiple input formats.
+For most workflows, we recommend using Chalk SQL with `input_sql`.
+Regardless of format, the primary key feature must be included in the input.
 
-#### DataFrames and mappings as input
+#### Recommended: Chalk SQL as input
+`offline_query` can take [input_sql](/api-docs#ChalkClient.offline_query.input_sql) as an input
+parameter, using Chalk SQL to construct the query spine directly from your offline data sources.
 
-The [input](/api-docs#ChalkClient.offline_query.input) parameter accepts [chalk.DataFrame](/docs/dataframe),
-[pandas.DataFrame](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html), or a mapping (like a Python dictionary).
-DataFrames should include one column for each known feature in the input.
-Mappings should map from each feature to a list of its values:
+`input_sql` is recommended in the following scenarios:
+
+1. You want to retrieve data for multiple rows at once. Chalk will compute an efficient query plan for loading multiple
+rows of data at once. Chalk will also reuse data between rows where appropriate.
+2. You want to query from Chalk as your offline data store. You can reduce unnecessary back-and-forth requests by having
+Chalk execute the SQL query and handle the result rows directly.
+3. You want to request features from multiple [feature namespaces](/docs/features#namespacing) for each row of output.
+
+`input_sql` can return features from multiple feature namespaces as columns of the result.
+Each column must either correspond to an existing feature or be included in the
+[output](/api-docs#ChalkClient.offline_query.output) list. For each referenced feature
+namespace, that namespace's primary key must be included as a column.
+
+The `__ts__` column is interpreted as the query execution time for each row. See our
+documentation on [temporal consistency](/docs/temporal-consistency) for more details.
+
+```python
+dataset = client.offline_query(
+    input_sql='''
+      select
+          user_id as "user.id",
+          created_at as __ts__
+      from "datasources.postgres.fraud_events"
+      order by created_at desc
+      limit 30
+    ''',
+    output=[
+        User.name,
+        User.denylisted,
+        User.name_email_match_score,
+        User.domain_name,
+        User.email_username,
+        User.credit_report.percent_past_due,
+    ],
+    recompute_features=True,
+)
+df = dataset.to_pandas()
+```
+
+#### Other input options
+
+If needed, you can pass [input](/api-docs#ChalkClient.offline_query.input) directly as:
+
+- [chalk.DataFrame](/docs/dataframe)
+- [pandas.DataFrame](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html)
+- a mapping from features to value lists
 
 ```python
 input={
@@ -83,7 +135,8 @@ input={
 
 ### Input times
 
-Timestamps can be passed in the [input_times](/api-docs#ChalkClient.offline_query.input_times) argument.
+For `input_sql`, include a `__ts__` column in the SQL to set row-level query time.
+For DataFrame or mapping inputs, pass [input_times](/api-docs#ChalkClient.offline_query.input_times).
 If none are provided, Chalk will use the current time.
 
 ```py
@@ -91,55 +144,6 @@ input={
     User.id: ['id1', 'id1'],
 }
 input_times=[datetime.now() - timedelta(days=1), datetime.now() - timedelta(days=2)]
-```
-
-
-#### SQL queries as input
-`offline_query` can also take [spine_sql_query](/api-docs#ChalkClient.offline_query.spine_sql_query) as an alternative
-input parameter for retrieving feature values from your offline data store.
-
-Spine SQL queries are recommended in the following scenarios:
-
-1. You want to retrieve data for multiple rows at once. Chalk will compute an efficient query plan for loading multiple
-rows of data at once. Chalk will also reuse data between rows where appropriate.
-2. You want to query from Chalk as your offline data store. You can reduce unnecessary back-and-forth requests by having
-Chalk execute the SQL query and handle the result rows directly.
-3. You want to request features from multiple [feature namespaces](/docs/features#namespacing) for each row of output.
-
-Spine SQL queries accept features from multiple feature namespaces as columns of the result. Each column must either
-correspond to an existing feature or be included in the [output](/api-docs#ChalkClient.offline_query.output) list. For
-each referenced feature namespace, the feature namespace's primary key must be included as a column.
-
-The "ts" column is always interpreted as the query execution time for the row. See our documentation on [temporal
-consistency](/docs/temporal-consistency) for more details.
-
-```python
-# This spine_sql_query queries the table `transactions` in the Snowflake offline store instance.
-output = chalk_client.offline_query(
-    spine_sql_query=f"""
-        SELECT
-            t.txn_time AS ts,
-            t.seller_id AS "seller.id",
-            t.buyer_id AS "buyer.id",
-            t.amount AS "txn.amount",
-            t.payment_type AS "txn.payment_type"
-        FROM transactions AS t
-        WHERE t.update_at >= {now - timedelta(days=30)}
-    """,
-    output=[
-        Seller.id,
-        Buyer.id,
-        Buyer.account_created_date,
-        Txn.payment_type,
-        # Computed in the seller namespace from the 'seller.id' spine feature.
-        Seller.recent_transactions_volume,
-        # Computed in the buyer namespace from the 'buyer.id' spine feature.
-        Buyer.total_spent_last_30d,
-        # Passed through from the SQL query
-        Txn.amount,
-    ],
-)
-
 ```
 
 ### Output
