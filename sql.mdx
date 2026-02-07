@@ -17,6 +17,8 @@ import {RequestUrl} from '@/components/RequestUrl'
 Chalk can ingest data using a SQL interface from any of our supported SQL data source integrations. The full list of
 supported SQL data sources can be found [in our API reference](/api-docs#BaseSQLSourceProtocol).
 
+---
+
 ## Basic queries
 
 Chalk supports running SQL from files or from strings. When you run queries that invoke your SQL resolver, Chalk
@@ -177,6 +179,8 @@ def get_user(uid: User.id) -> Features[User.full_name, User.email]:
 Auto-mapping of column name to feature name also applies for
 the `query_sql_file` method. Parameterization also works the same way.
 
+---
+
 ## Push-down filtering
 
 Chalk automatically adds query inputs to the `WHERE` clause of your SQL
@@ -241,6 +245,8 @@ FROM
 
 If your database column names differ from your feature names, the column name must be aliased in the `SELECT` clause of
 your query, as shown above with the `merchant_category` column.
+
+---
 
 ## Configuration
 
@@ -449,6 +455,8 @@ make_sql_file_resolver(
     """,
 )
 ```
+
+---
 
 ## Incremental queries
 
@@ -666,6 +674,8 @@ If your resolver returns a [`FeatureTime`](/docs/time) feature, Chalk will updat
 to the "max" `FeatureTime` value that is returned instead. This allows you to control the incremental
 behavior more precisely.
 
+---
+
 ## Tagged SQL sources
 
 Chalk supports applying [tags](/docs/resolver-tags) to SQL sources. This allows you to define a single resolver that routes traffic
@@ -711,6 +721,8 @@ client.query(input={User.id: 1}, output=[User.name], tags=['analytics'])
 # This query uses the default datasource
 client.query(input={User.id: 1}, output=[User.name])
 ```
+
+---
 
 ## Additional query options
 

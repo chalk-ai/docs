@@ -219,6 +219,8 @@ def kafka_stream_resolver(message: ParsedMessage) -> Features[StreamFeature.id, 
     return StreamFeature(id=message.id, value=message.value, event_timestamp=message.event_timestamp)
 ```
 
+---
+
 ## Testing Stream Resolvers
 
 Testing stream resolvers can be difficult:
@@ -305,6 +307,8 @@ resp = client.test_streaming_resolver(
 )
 print(resp.features)
 ```
+
+---
 
 ## Online / Offline Storage
 

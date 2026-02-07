@@ -17,9 +17,13 @@ needs and cloud architectures, so the specific details of the deployment will ne
 This document is intended as a blueprint for how the deployment process can work, and to scope the types of
 resources that must be provisioned.
 
+---
+
 ## Overall Architecture
 
 <ServiceDiagramSwitcher default_option={"GCP"} />
+
+---
 
 ## Major Components
 
@@ -29,6 +33,8 @@ resources that must be provisioned.
 - **Online Storage** -- a low-latency data store that is used to serve cached features for online queries. On GCP, Chalk supports [Memorystore](https://cloud.google.com/memorystore), [Bigtable](https://cloud.google.com/bigtable), or Postgres 15 (via [Cloud SQL](https://cloud.google.com/sql/docs/postgres) or otherwise). These options have different performance characteristics, and we will help you make the right choice for your use case.
 - **Offline Storage** -- a data warehouse that is used to store historical feature data for offline analysis and training set generation. On GCP, Chalk supports [Bigquery](https://cloud.google.com/bigquery).
 - **Docker Image Storage** -- Chalk requires a Docker image registry to store images for the Chalk Compute Cluster. On Google Cloud, we recommend [Google Artifact Registry](https://cloud.google.com/artifact-registry).
+
+---
 
 ## Cloud Resources
 
@@ -41,6 +47,8 @@ resources that must be provisioned.
 - **Google Cloud Scheduler**: Chalk uses [Google Cloud Scheduler](https://cloud.google.com/scheduler) in order to coordinate offline feature derivation jobs.
 - **Google Cloud Build**: Chalk uses [Google Cloud Build](https://cloud.google.com/build) in order to construct Docker images containing your feature engineering pipelines.
 - **Google Cloud Storage**: Chalk uses [Google Cloud Storage](https://cloud.google.com/storage) to store computed datasets and for bulk upload jobs into the BigQuery offline store.
+
+---
 
 ## Kubernetes Resources
 
@@ -55,6 +63,8 @@ Chalk's API Server is responsible for managing the majority of the Kubernetes re
 Optionally, Chalk's API server can manage:
 
 - API Ingress: Kubernetes Ingress or Gateway & HTTPRoutes objects that expose the Chalk API Server to end-users
+
+---
 
 ## Deployment Management
 

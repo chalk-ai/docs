@@ -12,6 +12,8 @@ trigger tests which verify that code changes have not caused feature distributio
 
 In this section, we'll walk through the process of creating snapshot tests using Pytest and GitHub Actions.
 
+---
+
 ## Overview
 
 To set up snapshot testing, we'll write a couple Pytest fixtures, a test, and a helper script. The fixtures will pull
@@ -47,6 +49,8 @@ Though this is a rather trivial example, lets set some expectations for our feat
 - We expect a User's birthday to never change,
 - We expect a User's full_name to change in a maximum of 0.001% of our users (1/100,000),
 - We expect a User's age to change by a maximum amount of 2 years (in reality, average age will increase by precisely the amount of time between invocations of our snapshot test).
+
+---
 
 ## Writing the Test and Helper Script
 
@@ -119,6 +123,8 @@ dataset = client.get_dataset(dataset_name="user_snapshot")
 
 dataset.recompute_features(branch=branch, wait=True, run_asynchronously=True)
 ```
+
+---
 
 ## Writing the GitHub Action
 
@@ -194,6 +200,8 @@ jobs:
       - name: Update snapshot
         run: python3 scripts/update_user_snapshot.py
 ```
+
+---
 
 ## Bootstrapping the GitHub Action
 

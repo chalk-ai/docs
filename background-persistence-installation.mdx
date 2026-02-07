@@ -14,6 +14,8 @@ import {
 Chalk uses background writers hosted in the ("Customer Cloud") Kubernetes cluster
 to write information about queries to various storage locations.
 
+---
+
 ## Prerequisites
 In order to install Chalk persistence writers, you need to have the following:
 
@@ -30,11 +32,15 @@ If using Pubsub:
 - Topics for each bus
 - Subscriptions for each bus
 
+---
+
 ## Creating a Background Persistence Writers
 Navigate to the `Settings/Team/Shared Resources/Background Persistence` page in the Chalk UI
 to view the background persistence configuration. If no background persistence is configured,
 you will see a message indicating that no background persistence is currently present, and the
 first save and apply will create background persistence writers.
+
+---
 
 ## Writer Types
 
@@ -59,10 +65,14 @@ Chalk supports different types of background persistence writers, each designed 
 
 Each writer type requires specific subscription IDs and topics to be configured in the common persistence specifications.
 
+---
+
 ## Pubsub vs Kafka
 When using pubsub, topics and subscriptions are 2 separate entities, but for Kafka, we use the same
 topic for both publishing and subscribing. Additionally, we need to provide Kafka authentication
 credential, whereas pubsub uses its google identity to authenticate.
+
+---
 
 ## Configuration Options (Common)
 
@@ -86,6 +96,8 @@ The topic to use for Kafka dead letter queue.
 </Attribute>
 </AttributeTable>
 
+
+---
 
 ## Configuration Options (Other)
 <AttributeTable>
@@ -115,6 +127,8 @@ The metadata provider to use ("GRPC_SERVER")
 </Attribute>
 </AttributeTable>
 
+---
+
 ## Configuration Options (Writers)
 <AttributeTable>
   <Attribute field={'name'} kind={'string'}>
@@ -136,6 +150,8 @@ The metadata provider to use ("GRPC_SERVER")
     The default number of replicas to create for the writer.
   </Attribute>
 </AttributeTable>
+
+---
 
 ## Configuration Options (Shared Writer Fields)
 
@@ -186,6 +202,8 @@ In each writer's specification form, a writer will ask for its required fields a
   </Attribute>
 
 </AttributeTable>
+
+---
 
 ## Example Configuration
 The following is an example configuration for background persistence writers:

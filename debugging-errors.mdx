@@ -7,6 +7,8 @@ published: true
 We've compiled some common errors that people come across, as well as some approaches to debug these errors
 and their most common root causes. If you are still struggling to debug, please reach out in your support channel!
 
+---
+
 ## Query Errors
 
 These are errors you would encounter when running queries, either manual or orchestrated.
@@ -59,6 +61,8 @@ The first thing to check is whether there actually are duplicate resolvers by th
 error message can also sometimes be an indicator of a missing import. If you are unable to determine if your recent
 changes required an import, you can use a linting tool to find out, such as [pylint](https://pypi.org/project/pylint/).
 
+---
+
 ## `chalk apply` Errors
 
 These are errors you would encounter when running [`chalk apply`](/cli/apply) or [`chalk apply --branch`](/cli/apply#branch).
@@ -73,6 +77,8 @@ queries, by stopping and restarting the branch server in the dashboard.
 
 If you've verified that you have a token and are properly authenticated, then you should also verify what role you
 have within the Chalk environment. The `developer` role can only run [`chalk apply --branch`](/cli/apply#branch) rather than [`chalk apply`](/cli/apply).
+
+---
 
 ## Deployed Errors
 

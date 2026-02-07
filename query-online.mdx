@@ -19,6 +19,8 @@ long-term tracking into the features you are generating. In this section,
 we provide a high level overview of how online queries compute and record
 their outputs.
 
+---
+
 ## How Do Online Queries Work?
 
 Chalk responds to online queries by getting and executing a query plan.
@@ -133,6 +135,8 @@ curl -X POST {YOUR_ENGINE_URL}/v1/query/online \
   -d '{"inputs": {"user.id": 1}, "outputs":["user.organization", "user.name""]}'
 ```
 
+
+---
 
 ## Caching and Writing
 

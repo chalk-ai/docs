@@ -22,6 +22,8 @@ after a given query time will never be returned for those queries, in online or 
 Feature time is returned in the `__observed_at__` column in Chalk query results. Query time is returned in the `__ts__`
 column.
 
+---
+
 ## Feature time
 
 Feature time is the time at which a feature was observed. By default, Chalk sets a feature's time to the feature's
@@ -299,6 +301,8 @@ time the query treats as "now" during query execution. <code>ts</code> is a comm
 <code>FeatureTime</code>, the time at which a feature was observed.
 </TipInfo>
 
+
+---
 
 ## Timezone handling for naive datetimes
 Chalk stores UTC as the timezone for naive datetime objects. Additionally, Chalk assumes UTC if retrieving naive

@@ -9,12 +9,16 @@ published: false
 When running Chalk in your own cloud environment, you may want to profile the CPU usage of your Chalk deployment in order
 to diagnose performance issues or optimize resource usage. Chalk supports CPU profiling using Linux [perf](https://perf.wiki.kernel.org/index.php/Main_Page).
 
+---
+
 ## Deploying a Profile-enabled Chalk Deployment
 
 By default, Chalk's platform is compiled with debug symbols stripped & high optimization levels. To enable profiling,
 you'll need to deploy an alternate build of Chalk with debug symbols and lower optimization levels. This
 may slightly impact the performance of your Chalk deployment, so it's recommended to only deploy this build when
 you need to profile CPU usage.
+
+---
 
 ## Guide
 
@@ -32,6 +36,8 @@ information will be shared with Chalk during this process.
 9. Submit `out.perf` to Chalk
 
 Note that `-p 7` means "profile process 7". You may need to use `htop` to find the process ID of the query server.
+
+---
 
 ## Analyzing the Profile
 

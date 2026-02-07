@@ -10,6 +10,8 @@ Some workloads require GPUs, some perform blocking IO, and some are purely CPU-b
 Chalk allows you to specify the hardware and execution pool requirements for your queries,
 so that they can be scheduled on the most appropriate resources.
 
+---
+
 ## Executing on Hardware with GPUs
 
 Chalk allows you to execute specific resolvers on hardware with GPUs. To do this, you can use the `"gpu"` resource
@@ -45,6 +47,8 @@ cloud.google.com/machine-family: a2-highgpu
 Chalk's query planner will execute the primary query plan on your Query Server service, and will transmit
 row data to the GPU resolver service for processing in compressed Arrow format. Response data will be
 transmitted back to the Query Server service, which will then return the final result to the client.
+
+---
 
 ## CPU vs IO Pools
 
