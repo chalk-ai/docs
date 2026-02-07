@@ -120,7 +120,7 @@ aggregations](/docs/aggregations) useful.
 
 ### Interaction with the online store
 
-Features with overriden observation timestamps are treated specially when inserted into the online store.
+Features with overridden observation timestamps are treated specially when inserted into the online store.
 In particular, Chalk will always check for existing "newer" feature values in the online store
 before inserting historically dated feature values. This means that you can safely ingest large quantities
 of backdated features without accidentally ingesting stale data into the online store.
@@ -131,7 +131,7 @@ to compute the "feature staleness" metric. Staleness in this context is defined 
 
 ### Interaction with the offline store
 
-Features with overriden observation timestamps are inserted into the offline store with the timestamp that you
+Features with overridden observation timestamps are inserted into the offline store with the timestamp that you
 specify. The observation timestamp works like an "effective as of" timestamp, so if you insert something like this:
 
 ```

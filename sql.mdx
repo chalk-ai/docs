@@ -497,7 +497,7 @@ To use incremental mode with SQL string resolvers, use `.incremental` along with
 pg = PostgreSQLSource(name='PG')
 
 @offline
-def fn() -> DataFrame[Login.attemped_at, Login.user_id, Login.status]:
+def fn() -> DataFrame[Login.attempted_at, Login.user_id, Login.status]:
     return (
         pg.query_string("select attempted_at, status, user_id from logins")
           .incremental(incremental_column="attempted_at")
@@ -743,7 +743,7 @@ column mapped to [`FeatureTime`](/docs/features#feature-time).
 pg = PostgreSQLSource(name='PG')
 
 @offline
-def fn() -> DataFrame[Login.ts, Login.attemped_at, Login.user_id, Login.status]:
+def fn() -> DataFrame[Login.ts, Login.attempted_at, Login.user_id, Login.status]:
     return pg.query(
         Login(
             ts=LoginHistorySQL.created_at,
@@ -753,4 +753,3 @@ def fn() -> DataFrame[Login.ts, Login.attemped_at, Login.user_id, Login.status]:
         )
     ).incremental()
 ```
-

@@ -92,7 +92,7 @@ Next, we will use those snapshots in a test:
 ```python
 # Note, we skip this test locally since we only want to run it in CI
 @pytest.mark.skipif(os.getenv("CI") is None, reason="Skipping on local machine")
-def test_snapshot__user_feature_drift(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]):
+def test_snapshot__user_feature_drift(snapshot_dfs: tuple[pd.DataFrame, pd.DataFrame]):
     main_snapshot, branch_snapshot = snapshot_dfs
 
     # Birthdays should not change
@@ -113,11 +113,11 @@ import os
 from chalk.client import ChalkClient
 
 branch = os.environ["GITHUB_REF_NAME"]
-client = ChalkeClient(branch=branch)
+client = ChalkClient(branch=branch)
 
 dataset = client.get_dataset(dataset_name="user_snapshot")
 
-dataset.recompute_features(branch=branch, wait=True, run_asynchrounously=True)
+dataset.recompute_features(branch=branch, wait=True, run_asynchronously=True)
 ```
 
 ## Writing the GitHub Action
@@ -210,7 +210,7 @@ client.offline_query(
      # This can be however many you want to include in your snapshot
     max_samples=200_000,
     recompute_features=True,
-    run_asynchrounously=True,
+    run_asynchronously=True,
     dataset_name="user_snapshot"
 )
 ```

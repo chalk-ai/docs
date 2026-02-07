@@ -63,7 +63,7 @@ All Chalk environments will have a `Default` resource group. If you have a speci
 require more resource groups, please reach out to the Chalk Team.
 
 In a resource group, you can specify the default resource requests, pod instances, instance types, and
-nodepools for each service. The resource configurations for thr Query Server, gRPC Query Server, and the
+nodepools for each service. The resource configurations for the Query Server, gRPC Query Server, and the
 Branch Server will be used to spin up pods during deployments. The Job Queue Server configuration
 specifies a pool of workers that are used to process asynchronous offline query jobs, scheduled queries,
 and aggregation backfills. The worker pool will automatically scale up and down based on the number of jobs
@@ -210,6 +210,5 @@ When configuring feature-level RBAC, you can use either denylisting or allowlist
 
 
 ![datasource and feature level rbac](/img/datasource-feature-rbac-allowlist.png)
-
 
 

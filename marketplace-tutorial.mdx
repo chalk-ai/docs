@@ -58,7 +58,7 @@ Chalk knows to first fetch the `first_name` and `last_name` from the underlying 
 This is all handled automatically!
 Chalk at it's core is a feature orchestration engine that dynamically builds query plans for fetching and computing features on-demand.
 
-In otherwards, requesting `first_name` instead of `full_name` with `chalk query --in user.id=50 --out first_name` produces a totally different query plan than when we requested just `full_name`.
+In other words, requesting `first_name` instead of `full_name` with `chalk query --in user.id=50 --out first_name` produces a totally different query plan than when we requested just `full_name`.
 
 ### Data resolution
 
@@ -141,8 +141,8 @@ We overload the type annotations of the function parameters to indicate explicit
 
 Notice how instead of typing `average_rating_across_all_items` as a float, we type hint it as `Review.item.average_rating`.
 
-The return type is also explictly hinted as `Review.normalized_rating`.
-Setting up the type hints in this way enables us to (necessarily) build the dependency graph of of your features (that we leverage for query planning) while preserving as much developer experience as possible--we want to minimize boilerplate and the cognitive load required to express complicated feature logic.
+The return type is also explicitly hinted as `Review.normalized_rating`.
+Setting up the type hints in this way enables us to (necessarily) build the dependency graph of your features (that we leverage for query planning) while preserving as much developer experience as possible--we want to minimize boilerplate and the cognitive load required to express complicated feature logic.
 
 *If you manage your company's Airflow DAGs, you know exactly how painful this actually is*
 
@@ -192,7 +192,7 @@ Chalk extends this functionality further by enabling windowed aggregations, whic
 
 We can inject the `chalk_window` variable into our query to dynamically adjust the time window for our aggregations.
 
-Whenever we want to explictly reference a specific window within a Python resolver, we can index the `Windowed` feature like so: `User.review_count["30d"]`.
+Whenever we want to explicitly reference a specific window within a Python resolver, we can index the `Windowed` feature like so: `User.review_count["30d"]`.
 
 In our `normalized_rating` example from earlier, we could easily modify it to use a windowed review count instead of the all-time review count.
 
@@ -210,7 +210,7 @@ We can quickly express complex relationships and also compute features that span
 
 ### Optimizing for real-time performance
 
-Computing heavy aggregations at high QPS can be extremely load-bearing on your underlying data infrastructure, especially since real-time use-cases (by definition) necesitate fetching features directly from your raw data sources, for maximum freshness.
+Computing heavy aggregations at high QPS can be extremely load-bearing on your underlying data infrastructure, especially since real-time use-cases (by definition) necessitate fetching features directly from your raw data sources, for maximum freshness.
 
 Chalk offers robust [caching and materialization strategies](https://docs.chalk.ai/docs/feature-caching) to help alleviate this load, while still ensuring that your features remain fresh and accurate.
 
@@ -288,9 +288,9 @@ class Item:
 ```
 
 We can model pricing dynamics with a separate `ItemPrice` feature class that tracks price changes over time across all sellers.
-We'll leverage this to get a sense of whether this item is currently discounted, the most recent price (across all sellers), and how many times its been purchased (which we can easily make windowed).
+We'll leverage this to get a sense of whether this item is currently discounted, the most recent price (across all sellers), and how many times it's been purchased (which we can easily make windowed).
 
-Notice how we can filter the DataFrame with `_.type == "purchase"` beforing applying the aggregation function to guarantee we're only counting actual purchase events.
+Notice how we can filter the DataFrame with `_.type == "purchase"` before applying the aggregation function to guarantee we're only counting actual purchase events.
 
 ### Computing User-Item pairs with Chalk's bulk queries
 

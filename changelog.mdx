@@ -448,7 +448,7 @@ The function signatures are identical, making for a seamless transition with min
 Currently, the gRPC client supports `query()`, `queryBulk()`, and `multiQuery()` operations, covering the most common query use cases.
 
 ```js
-import { ChalkGRPCCLient } from "@chalk-ai/client"
+import { ChalkGRPCClient } from "@chalk-ai/client"
 import { FeaturesType } from "local/generated_types";
 
 interface FeaturesType {
@@ -456,7 +456,7 @@ interface FeaturesType {
   "user.fraud_score": number;
 }
 
-const client = new ChalkGRPCCLient<FeaturesType>();
+const client = new ChalkGRPCClient<FeaturesType>();
 const result = await client.query({
   inputs: {
     "user.id": "1",
@@ -629,7 +629,7 @@ Chalk's Data Explorer now displays the source of each feature e.g. "Live Resolve
 
 Released [v1.2.0 of the Chalk Go Client](https://github.com/chalk-ai/chalk-go/releases/tag/v1.2.0) which introduces some breaking changes, most notably:
 
-- The [gRPC implementation of Client](https://docs.chalk.ai/docs/query-overview#running-queries-using-g-rpc) is removed and replaced with a consolidated NewGRPCClient constructor--onfiguration remains mostly unchanged.
+- The [gRPC implementation of Client](https://docs.chalk.ai/docs/query-overview#running-queries-using-g-rpc) is removed and replaced with a consolidated NewGRPCClient constructor--configuration remains mostly unchanged.
 - `OnlineQueryBulk removed to prevent inefficient data conversions, migrate to `OnlineQueryBulk`.
   - Use `GRPCOnlineQueryBulkResult.UnmarshalInto` for structured responses.
 - Most `GRPCClient` methods now return user-friendly wrappers around proto responses, exposing raw responses via RawResponse. Errors are now lifted properly.
@@ -1821,7 +1821,7 @@ GKE.
 
 - Our feature catalog now lets you filter features by their context (online or offline). Additionally, you can now search
   features by their name, description, and owner.
-- We fixed an issue where some underscore experessions had incorrect typechecking.
+- We fixed an issue where some underscore expressions had incorrect typechecking.
 
 ## July 10, 2024
 
@@ -2485,7 +2485,7 @@ Deployments now offer the ability to view their source code. By clicking the "Vi
 
 ### Improved Deployment Utilities
 
-Users can now "redeploy" any historical deployement with a UI button on the deployment details page. This enables useful workflows including rollbacks.
+Users can now "redeploy" any historical deployment with a UI button on the deployment details page. This enables useful workflows including rollbacks.
 The "download source" button downloads a tarball containing the deployed source to your local machine.
 ![Deploy UI Enhancements](/img/DeploymentButtons.png)
 

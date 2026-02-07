@@ -113,7 +113,7 @@ The following message types are supported:
 ```
 
 <TipBad>
-Note: Not all pydantic or protobuf types are supported. The message type needs to be converted into a well-defined PyArrow schema. Types that are recursive and can be arbitrariliy nested will fail to be parsed. Similarly, Pydantic types with type annotations such as <code>Any</code> or complex union types are also not supported. To process these types in a native streaming resolver, use a custom parse function to only extract specific fields with well-known datatypes.
+Note: Not all pydantic or protobuf types are supported. The message type needs to be converted into a well-defined PyArrow schema. Types that are recursive and can be arbitrarily nested will fail to be parsed. Similarly, Pydantic types with type annotations such as <code>Any</code> or complex union types are also not supported. To process these types in a native streaming resolver, use a custom parse function to only extract specific fields with well-known datatypes.
 </TipBad>
 
 ```python
@@ -180,7 +180,7 @@ from chalk.features.resolver import make_stream_resolver
 
 # Strip first 6 bytes, then parse the protobuf message
 parsed_message = F.proto_deserialize(F.substr(_, 6, None), UserMessage)
-# Exlude any UserMessages whos user_type == GUEST
+# Exclude any UserMessages whose user_type == GUEST
 parse_expression = F.if_then_else(
     parsed_message.user_type == UserMessage.UserType.GUEST, None, parsed_message
 )
