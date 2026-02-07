@@ -1,0 +1,170 @@
+---
+title: Chalk Catalog Components
+metaDescription: Integrate with
+published: true
+---
+
+import { TipInfo } from '@/components/Tip'
+
+The Chalk Catalog is an umbrella term encompassing all things Chalk. This page describes how various concepts within
+Chalk are translated into the Catalog and made available to [Chalk SQL](/chalksql/what-is-chalk-sql).
+
+Like traditional relational databases, the Catalog is organized under a three-tiered namespace system of
+*catalogs*, *schemas*, and *tables*.
+
+## The `chalk` catalog
+
+Most concepts in Chalk will be exposed as tables under the `chalk` database catalog.
+
+
+### `chalk.datasets` schema
+
+The `chalk.datasets` schema contains a view for each named [dataset](/docs/datasets) created within the last 60 days,
+and the view's name is the dataset's name. Note that if two offline queries reference the same named dataset,
+only the latest dataset revision is available in this schema.
+
+To reference dataset revisions that are not the most
+recent or were created without a name, consider using the `get_dataset_revision()` table-valued function.
+
+<TipInfo>This schema is available in all Chalk deployments.</TipInfo>
+
+
+### `chalk.historical_values` schema
+
+The `chalk.historical_values` schema contains a view for each feature, as well as a view for each feature namespace
+within the deployment.
+
+- For each feature, a view with the same name as the feature's fully-qualified name is available in the Catalog
+(i.e. `chalk.historical_values.user.name`). This view contains information about all observations of the feature, with
+the following schema:
+
+  - `observation_id`, string, non-nullable: The unique identifier for the observation of the feature value.
+  - `pkey`, (type of feature namespace's pkey), non-nullable: The value of the primary feature associated with this
+observation
+  - `value`, (type of feature namespace's value): The observed value of the feature.
+  - `value_json`, string, DEPRECATED: The observed value of the feature, as JSON, for backwards compatibility.
+  - `observed_at`, timestamp, non-nullable: The time at which the feature value was observed.
+  - `inserted_at`, timestamp, non-nullable: The time at which the feature value was inserted into the offline store.
+  - `resolver_fqn`, string, nullable: The resolver that computed this feature.
+  - `deployment_id`, string, nullable: The deployment id where the observation was made
+
+- For each feature namespace, a view with the same name as the namespace is available in the Catalog
+(i.e. `chalk.historical_values`). This view contains the freshest values of each feature for each primary key
+at the current point in time, and has the following schema:
+
+  - `__pkey__`: (type of feature namespace's pkey), non-nullable: The value of the primary feature associated with this row
+  - `<feature-name>`, (type of feature), for each feature in the namespace: The freshest observed value of the feature for the primary key.
+  - `<feature-name>.__observed_at__`, timestamp, for each feature in the namespace: The time at which the freshest value was observed.
+
+<TipInfo>
+    This schema is available in Chalk deployments with an
+    [offline store](/docs/choosing-online-offline-stores#offline-store-options)
+    configured.
+</TipInfo>
+
+
+### `chalk.query_log` schema
+
+The `chalk.query_log` schema consists of exactly one table, `data`, which is the query log table.
+This table provides a list of query metadata for each operation id, including which tables in the offline store
+correspond to values queried in that operation id. The `data` table has the following schema:
+
+- `operation_id`, string, non-nullable: The unique identifier for the operation.
+- `environment_id`, string, non-nullable: The environment id where the operation was run.
+- `deployment_id`, string: The deployment id where the operation was run.
+- `operation_kind`, string, The kind of operation that was run (inference, streaming, etc.).
+- `query_timestamp`, timestamp: The value of `now()` that was used by the query.
+- `execution_started_at`, timestamp: The time at which the operation started executing. Null if there were errors during planning.
+- `execution_finished_at`, timestamp: The time at which the operation finished executing. Null if there were errors during execution.
+- `query_status`, string: The status of the query (success, error, running, etc.).
+- `query_name`, string: The query name for named queries, null otherwise.
+- `query_name_version`, string: The version of the query for named queries, null otherwise.
+- `branch_name`: string: The branch the query was run on, null if the query was not run on a branch.
+- `correlation_id`, string: The correlation id for the query, null if the query was not run with a correlation id.
+- `value_tables`: array of strings: The list of tables in the offline store that correspond to result values from this query.
+
+<TipInfo>
+    This schema is available in Chalk deployments with an
+    [offline store](/docs/choosing-online-offline-stores#offline-store-options)
+    configured.
+</TipInfo>
+
+
+### `chalk.resolvers` schema
+
+The `chalk.resolvers` schema contains a view for each dataframe-returning [resolver](docs/resolver-overview) that
+takes in no inputs. When querying this view, a resolver run will be triggered and have the resolver's outputs as the
+view's contents.
+
+<TipInfo>This schema is available in all Chalk deployments.</TipInfo>
+
+
+### `chalk.online_store` schema
+
+The `chalk.online_store` schema contains a fixed view `keys`, which contains different information depending on which
+online store is configured for your environment.
+
+- For Redis online stores, information about the keys' type (Scalar, HasMany, TimeSeries, etc.),
+memory usage, TTL, and feature fqn are available in this view.
+- For DynamoDB online stores, information about the keys' namespace and value are available in this view.
+
+Additionally, for each feature namespace, a view with the same name (i.e. `chalk.online_store.user`) is available,
+consisting of the following schema:
+
+- `__id__`
+- `<feature_namespace>.<feature>` for each feature
+- `<feature_namespace>.<feature>_ts` for each feature
+
+<TipInfo>This schema is available in Chalk deployments with a Redis or DynamoDB online store configured.</TipInfo>
+
+
+
+
+
+## The `offline_store` catalog
+
+The offline store is available as a catalog. Similar to data sources as catalogs, this catalog works as a direct
+interface to querying the underlying database that powers it.
+
+## Data Sources as Catalogs
+
+Each data source that you register with Chalk will be automatically registered in the Chalk Catalog as
+a database catalog. The catalog shares the same name as the data source and provides a more direct interface
+into querying that data source.
+
+<TipInfo>Data sources that are not named will not be registered in the Chalk Catalog.</TipInfo>
+
+As an example, if you define a Postgres source and a BigQuery source in your code:
+
+```python
+from chalk.sql import PostgresSource
+from chalk.sql import BigquerySource
+pg = PostgresSource(name='pg_source')
+bq = BigquerySource(name='bq_source')
+```
+
+You can write a federated query in Chalk SQL to join a `transactions` table in `pg` with a `users` table in `bq`:
+
+```sql
+SELECT
+  bq_users.user_id AS user_id,
+  bq_users.full_name AS full_name,
+  pg_transactions.transaction_id AS transaction_id,
+  pg_transactions.amount AS transaction_amount
+FROM bq_source.my_dataset.users AS bq_users
+OUTER JOIN pg.public.transactions AS pg_transactions
+ON user_id = pg_transactions.user_id
+/* pg_source and bq_source are the name of the datasources
+ and therefore also the name of their respective catalogs */
+```
+
+The following data source types will be registered to the Chalk Catalog, and will be able to be queried in Chalk SQL:
+
+  - PostgreSQL
+  - Spanner
+  - MySQL
+  - Clickhouse
+  - BigQuery
+  - Redshift
+  - Snowflake
+  - Databricks

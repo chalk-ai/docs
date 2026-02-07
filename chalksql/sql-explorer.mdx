@@ -1,0 +1,41 @@
+---
+title: The SQL Explorer
+description: Chalk's built-in console for Chalk SQL
+published: true
+---
+
+import { TipInfo } from '@/components/Tip'
+
+The SQL Explorer is an interface built into Chalk's web dashboard, which provides an easy-to-use interface for
+making exploratory and experimental queries.
+
+![SQL Explorer Example](/img/sql_explorer_example.png)
+
+
+## Database Explorer
+
+The Database Explorer is a direct overview of the various catalogs, schemas, and tables that Chalk SQL can integrate with.
+This catalog of items is determined by your deployment, meaning that it will change as you make deployments to your
+environment.
+
+
+## Worksheets
+
+Chalk SQL worksheets can be created in the SQL explorer via the Worksheets tab. You can create a "New Sheet" or choose
+to use "Save Sheet" on an existing worksheet. Worksheets are tied to users and will be persisted across sessions,
+providing an easy way to revisit queries within the explorer.
+
+
+## Synchronous vs. Asynchronous Queries
+
+Chalk SQL can be run in synchronous and asynchronous modes, which are tailored for transactional and
+analytical workloads, respectively. Synchronous queries will hit the GRPC query servers directly, whereas async
+queries will create an isolated environment but will take some time to provision.
+
+<TipInfo header="Warning about synchronous queries">
+    Running synchronous Chalk SQL queries that are larger in nature can cause gRPC query servers to
+    go out-of-memory, which can impact any production traffic running on that engine.
+    Clients provide the ability to set memory limits for queries to mitigate this.
+</TipInfo>
+
+
