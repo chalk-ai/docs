@@ -212,6 +212,8 @@ scaling your feature pipelines.
 
 Alright, enough with the intro. Let's get started building!
 
+---
+
 ## Fraud Detection Pipeline
 
 This tutorial walks through the process of building a feature pipeline for fraud detection.
@@ -476,6 +478,8 @@ postgres = PostgreSQLSource(name="snowflake")
 Now that we've defined our data sources, we can use them to create root SQL resolvers.
 
 --
+
+---
 
 ## Online data
 
@@ -982,6 +986,8 @@ Note, this allows really precise and granular trade-offs between staleness, late
 In addition, by specifying an incremental resolver, we are telling Chalk to remember the high ingest time from the previous run and only pull data that is fresher than that high water mark.
 Again Chalk is processing the minimum amount of information it requires to calculate the `average_time_between_transactions_30d`.
 
+---
+
 ## API Calls
 
 Any Python function can be used as a resolver.
@@ -1035,6 +1041,8 @@ Here, we are returning two features of the user, `User.fico_score` and `User.cre
 We use the [`Features`](/api-docs#Features) type to indicate which feature we expect to return.
 Also note that we are initializing the `User` class with only the features that we want to update.
 This partial initialization is the primary difference between Python's [`@dataclass`](https://docs.python.org/3/library/dataclasses.html) and Chalk's [`@features`](/api-docs#features).
+
+---
 
 ## Setting up a Materialized Windowed Aggregation
 

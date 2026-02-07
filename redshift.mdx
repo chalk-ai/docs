@@ -17,6 +17,8 @@ options using the `RedshiftSource` **init** args,
 or configure the source through your dashboard, and
 reference the source in your code.
 
+---
+
 ## Adding Redshift
 
 On the dashboard, you can plug in the configuration for your
@@ -29,6 +31,8 @@ S3 bucket. The IAM role would be assumed by Redshift to do basic operations (get
 in the S3 bucket provided. The S3 bucket itself does not require versioning, but you can 
 set a retention policy on the bucket. The retention policy should be somewhere from 1 - 14 days,
 to balance storage efficiency with history that can be useful in debugging.
+
+---
 
 ## Integrations Setup
 

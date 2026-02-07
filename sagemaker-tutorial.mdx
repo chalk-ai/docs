@@ -17,6 +17,8 @@ SageMaker](https://aws.amazon.com/sagemaker/) is a popular service for building,
 and SageMaker fit together naturally to create a streamlined machine learning architecture that uses the best aspects of
 each system.
 
+---
+
 ## Why use Chalk?
 
 There are several advantages to using Chalk in your ML architecture alongside SageMaker.
@@ -30,6 +32,8 @@ SageMaker Feature Store require you to precompute features from batch data. We b
 limiting because this style prevents users from relying on real-time data. For example, precomputation prevents users
 from writing features reliant on recency (such as the number of failed logins in the past minute) or third-party APIs
 (which may be costly to exhaustively pre-fetch).
+
+---
 
 ## What you'll learn
 
@@ -193,6 +197,8 @@ $ chalk query --branch sagemaker_tutorial  \
 ```
 
 Once you're satisfied with your feature pipeline, you can move on to setting up SageMaker.
+
+---
 
 ## Set up SageMaker
 There are many ways to set up SageMaker. In this tutorial, we'll use [SageMaker
@@ -433,11 +439,15 @@ if __name__ == "__main__":
 +    )
 ```
 
+---
+
 ## Deploy your model with SageMaker
 
 There are a number of different ways to deploy the model that you trained on SageMaker. We recommend deploying your
 model to an endpoint, which is documented
 [here](https://docs.aws.amazon.com/sagemaker/latest/dg/realtime-endpoints-deploy-models.html).
+
+---
 
 ## Efficient SageMaker inference with Chalk underscores
 
@@ -468,6 +478,8 @@ class Transaction:
 def get_encoded_features(amount: Transaction.amount, customer_fico: Transaction.customer.fico, ...) -> Transaction.encoded_features:
     return f"{amount},{customer_fico},..."
 ```
+
+---
 
 ## Conclusion
 In this tutorial, you got a look at how Chalk accelerates your feature engineering workflows by making it easy to

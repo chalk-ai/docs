@@ -13,6 +13,8 @@ or API vendor for you to include it in your feature pipelines.
 Chalk has a mechanism for initializing objects at boot time,
 and then you can use those objects within your resolver.
 
+---
+
 ## Initializing
 
 To initialize your custom data source, use the `@before_all`
@@ -123,6 +125,8 @@ def fn(...) -> ...:
     vendor_client.api_call(...)            # Error! vendor_client is None
     myproject.vendor_client.api_call(...)  # Correct!
 ```
+
+---
 
 ## Cleaning up
 

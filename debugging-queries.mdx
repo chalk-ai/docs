@@ -158,6 +158,8 @@ using your IDE (VS Code, PyCharm, or even pdb):
 You can edit the definition of the resolver locally, and re-run `resolver_replay` to see the results of your changes
 in your terminal or by stepping through with a debugger.
 
+---
+
 ## Using logs to debug
 
 If you're not able to use the query plan visualizer or resolver replay, you can also use the logs to debug your query.
@@ -176,6 +178,8 @@ def sum_transaction_amount(txns: User.transaction[Transaction.amount]) -> User.s
 You can also view these logs using `resolver_replay`, where they will be emitted to your terminal:
 
 ![Logs output example](/img/debugging/logs.png)
+
+---
 
 ## Query Error Categories
 

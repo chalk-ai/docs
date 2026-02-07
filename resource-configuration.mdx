@@ -11,6 +11,8 @@ The `Settings` page of the dashboard exposes many useful configurations that you
 tune your Chalk environments appropriately to handle your specific workload and latency requirements.
 
 
+---
+
 ## Kubernetes
 
 Under `Settings > Kubernetes`, you can view all the pods in your Kubernetes cluster under the namespace
@@ -19,6 +21,8 @@ you can also view the Kubernetes Pod View. This will include data about the pod,
 request, IP address, and resource group, as well as data about the node on which the pod is scheduled.
 In the Pod View, you can also see the logs for the pod, which can be useful for debugging errors on
 branch deployments or job pods.
+
+---
 
 ## Nodepools
 
@@ -52,6 +56,8 @@ More details about these labels can be found in the [Billing Documentation](/doc
 Once you have configured your Nodepools, under `Settings > Resources`, you can select the Nodepool
 to use for each service in each resource group in your environment, as well as the Pod Disruption
 Budget.
+
+---
 
 ## Resources
 
@@ -150,6 +156,8 @@ time and end time are defined using standard cron syntax.
 
 ![scheduled autoscaling](/img/schedule_based_scaling.png)
 
+---
+
 ## Shared Resources
 
 Under `Settings > Shared Resources`, environment admins can view and manage shared resources across
@@ -166,6 +174,8 @@ Persistence Configuration tab. In order to enable autoscaling, it is required to
 * Target average value (the approximate target undelivered message count in queue per replica)
 * Pubsub Subscription ID
 
+---
+
 ## Connections
 
 Under `Settings > Connections`, you can view all the connections that your environment has to external
@@ -173,11 +183,15 @@ resources, such as your online and offline stores, and the branch server. This i
 the health of the different services in your environment, as well as to verify the types of connections
 configured.
 
+---
+
 ## Environment Variables
 
 Under `Settings > Environment > Variables`, you can view and edit global environment variables for
 your environment. Please reach out to the Chalk team if you have any questions about which environment variables
 to set for your use case.
+
+---
 
 ## User Permissions and RBAC
 

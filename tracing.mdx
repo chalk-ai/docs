@@ -14,6 +14,8 @@ future extensibility. Traces are stored in a ClickHouse database deployed within
 viewable via the query pages in the Chalk dashboard. Chalk, by default, sets a TTL of 7 days for trace data, but
 will adjust this automatically as storage limits are approached.
 
+---
+
 ## Enabling Traces
 
 Tracing is typically enabled by default in Chalk environments. In order to fetch a trace for an online query,
@@ -53,6 +55,8 @@ ChalkClient().query(
 Once you have run a traced query, you can view the trace in the `Trace` tab of the Online Query page.
 
 ![Trace Tab](/img/online_query_trace_tab.png)
+
+---
 
 ## Environment Configuration
 

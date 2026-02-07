@@ -19,6 +19,8 @@ In this tutorial, we'll walkthrough setting up a marketplace recommendation syst
 **Want to dive right into the code?**
 Check out this [GitHub repo](https://github.com/chalk-ai/examples/blob/main/marketplace/models.py)!
 
+---
+
 ## Core data modeling
 
 Let's first set the stage by modeling some of our core entities and their relationships.
@@ -259,6 +261,8 @@ class Review:
 ```
 
 Some features are static in nature and only ever need to be computed once (e.g. sentiment classification) while others may need to be recomputed periodically to capture shifts in market dynamics or user behavior (e.g. 30-day credit scores).
+
+---
 
 ## Recommendation system overview
 

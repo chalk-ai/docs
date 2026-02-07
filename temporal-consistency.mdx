@@ -22,6 +22,8 @@ not perform consistently in production.
 Chalk performs point-in-time lookups on your training data so you can train your models knowing they won't receive data
 from the future, even across complex [relationships](/docs/has-one).
 
+---
+
 ## Scenario 1: Historical loan decisions
 
 In this scenario, we will consider a machine learning model for determining whether to issue loans to businesses based
@@ -93,6 +95,8 @@ dataset = ChalkClient().offline_query(
 ```
 
 This query will return a [Dataset](/docs/datasets) with temporally consistent values for each input time.
+
+---
 
 ## Scenario 2: Backfilling new features
 

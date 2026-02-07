@@ -12,6 +12,8 @@ Chalk supports downloading Python packages from private AWS CodeArtifact reposit
 you must provide a Chalk IAM principal access to your repository so that Chalk can authenticate with the CodeArtifact
 pip registry.
 
+---
+
 ## Grant access to Chalk
 
 Chalk will authenticate to your CodeArtifact repository using an IAM principal. You can view the IAM principal
@@ -72,6 +74,8 @@ aws codeartifact put-repository-permissions-policy --domain my_domain --domain-o
           --repository my_repo --policy-document file:///PATH/TO/policy.json
 ```
 
+
+---
 
 ## Configure Chalk
 
