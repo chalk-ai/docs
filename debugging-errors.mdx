@@ -21,7 +21,7 @@ tricks, such as using `store_plan_stages` and stepping through the query plan.
 ### Unexpected Chalk server error with status code 401
 
 The 401 status code means `unauthenticated`. We'd recommend verifying that the token you're using to run the query is
-correct. To refresh your token, you can run `chalk login` from the terminal using our CLI and then `chalk config`
+correct. To refresh your token, you can run [`chalk login`](/cli/login) from the terminal using our CLI and then [`chalk config`](/cli/config)
 to verify that your token has been provisioned for the right environment.
 
 ### Unexpected Chalk server error with status code 500
@@ -61,18 +61,18 @@ changes required an import, you can use a linting tool to find out, such as [pyl
 
 ## `chalk apply` Errors
 
-These are errors you would encounter when running `chalk apply` or `chalk apply --branch`.
+These are errors you would encounter when running [`chalk apply`](/cli/apply) or [`chalk apply --branch`](/cli/apply#branch).
 
 ### Branch server might still be starting
 
-You would usually encounter this error when running `chalk apply --branch`. In the Chalk dashboard under `Branches`, you
+You would usually encounter this error when running [`chalk apply --branch`](/cli/apply#branch). In the Chalk dashboard under `Branches`, you
 can check the status of the branch server. You can also kill lingering processes on branches, such as long-running
 queries, by stopping and restarting the branch server in the dashboard.
 
 ### Could not connect to server when running `chalk apply`
 
 If you've verified that you have a token and are properly authenticated, then you should also verify what role you
-have within the Chalk environment. The `developer` role can only run `chalk apply --branch` rather than `chalk apply`.
+have within the Chalk environment. The `developer` role can only run [`chalk apply --branch`](/cli/apply#branch) rather than [`chalk apply`](/cli/apply).
 
 ## Deployed Errors
 

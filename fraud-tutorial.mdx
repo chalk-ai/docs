@@ -509,7 +509,7 @@ If the names match after stripping underscores and lower-casing, the select targ
 In the example above, we aliased the `full_name` column to `name`, so it will be mapped to the `name` attribute on the `User` feature class.
 
 Chalk validates your SQL file resolvers when you run [`chalk apply`](/cli/apply).
-If you want to validate your code without deploying, you can run the `chalk lint` command.
+If you want to validate your code without deploying, you can run the [`chalk lint`](/cli/lint) command.
 
 The `source` key (`-- source: postgres`) tells Chalk which [integration](/docs/integrations) to use to connect to the database.
 
@@ -547,7 +547,7 @@ from transactions
 ## Deploying!
 
 Now that we've written a few resolvers, we can deploy our feature pipeline and query our data in realtime.
-To deploy you'll want to run `chalk apply`.
+To deploy you'll want to run [`chalk apply`](/cli/apply).
 You will be shown the changes that you've made since your last deployment and prompted for confirmation
 
 ```bash
@@ -1081,8 +1081,8 @@ to define more performant aggregations over high-cardinality datasets, such as t
 aggregation could be computationally expensive by materializing the aggregations in buckets.
 
 Because the materialized windowed aggregation relies on the materialized buckets in the online store, and branch
-deployments do not persist data to the online store, we would need to run a full deploy with `chalk apply` to use
-this new feature. After running a `chalk apply`, we can run `chalk aggregate backfill --feature account.num_transactions`
+deployments do not persist data to the online store, we would need to run a full deploy with [`chalk apply`](/cli/apply) to use
+this new feature. After running a [`chalk apply`](/cli/apply), we can run [`chalk aggregate backfill --feature account.num_transactions`](/cli/aggregate_backfill)
 to populate the buckets, and then we can query the feature as normal.
 
 In production, you could also set up a schedule to periodically backfill the buckets, or stream the data into the
