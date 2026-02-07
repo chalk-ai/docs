@@ -59,7 +59,7 @@ The first thing to check is whether there actually are duplicate resolvers by th
 error message can also sometimes be an indicator of a missing import. If you are unable to determine if your recent
 changes required an import, you can use a linting tool to find out, such as [pylint](https://pypi.org/project/pylint/).
 
-## [`chalk apply`](/cli/apply) Errors
+## `chalk apply` Errors
 
 These are errors you would encounter when running [`chalk apply`](/cli/apply) or [`chalk apply --branch`](/cli/apply#branch).
 
@@ -69,7 +69,7 @@ You would usually encounter this error when running [`chalk apply --branch`](/cl
 can check the status of the branch server. You can also kill lingering processes on branches, such as long-running
 queries, by stopping and restarting the branch server in the dashboard.
 
-### Could not connect to server when running [`chalk apply`](/cli/apply)
+### Could not connect to server when running `chalk apply`
 
 If you've verified that you have a token and are properly authenticated, then you should also verify what role you
 have within the Chalk environment. The `developer` role can only run [`chalk apply --branch`](/cli/apply#branch) rather than [`chalk apply`](/cli/apply).
