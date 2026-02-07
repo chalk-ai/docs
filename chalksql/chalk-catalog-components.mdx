@@ -7,7 +7,7 @@ published: true
 import { TipInfo } from '@/components/Tip'
 
 The Chalk Catalog is an umbrella term encompassing all things Chalk. This page describes how various concepts within
-Chalk are translated into the Catalog and made available to [Chalk SQL](/chalksql/what-is-chalk-sql).
+Chalk are translated into the Catalog and made available to [Chalk SQL](/docs/chalksql/what-is-chalk-sql).
 
 Like traditional relational databases, the Catalog is organized under a three-tiered namespace system of
 *catalogs*, *schemas*, and *tables*.
@@ -92,7 +92,7 @@ correspond to values queried in that operation id. The `data` table has the foll
 
 ### `chalk.resolvers` schema
 
-The `chalk.resolvers` schema contains a view for each dataframe-returning [resolver](docs/resolver-overview) that
+The `chalk.resolvers` schema contains a view for each dataframe-returning [resolver](/docs/resolver-overview) that
 takes in no inputs. When querying this view, a resolver run will be triggered and have the resolver's outputs as the
 view's contents.
 
