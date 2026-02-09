@@ -15,44 +15,7 @@ and how to plan your Snowflake offline store setup—especially for deployments 
 When using Snowflake as your offline store, components are organized at two levels: **cluster-level** (shared)
 and **environment-level** (per environment). Understanding this hierarchy is essential for planning your setup.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     SNOWFLAKE ACCOUNT                           │
-│  (One per cluster, OR shared across clusters)                   │
-│  (Cannot have multiple accounts per cluster)                    │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │              KUBERNETES CLUSTER                          │   │
-│  │                                                          │   │
-│  │  ┌────────────────────────────────────────────────────┐ │   │
-│  │  │   BACKGROUND PERSISTENCE CONFIG (cluster-level)    │ │   │
-│  │  │   ════════════════════════════════════════════════ │ │   │
-│  │  │   SHARED BY ALL ENVIRONMENTS:                      │ │   │
-│  │  │   • Storage Integration                            │ │   │
-│  │  │   • Storage Bucket (S3/GCS)                        │ │   │
-│  │  │   • IAM Policy + Role                              │ │   │
-│  │  └────────────────────────────────────────────────────┘ │   │
-│  │                         │                                │   │
-│  │         ┌───────────────┼───────────────┐               │   │
-│  │         ▼               ▼               ▼               │   │
-│  │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐    │   │
-│  │  │  ENV: dev    │ │  ENV: stage  │ │  ENV: prod   │    │   │
-│  │  │              │ │              │ │              │    │   │
-│  │  │ Schema: dev  │ │ Schema: stg  │ │ Schema: prod │    │   │
-│  │  │ (MUST BE     │ │ (MUST BE     │ │ (MUST BE     │    │   │
-│  │  │  UNIQUE)     │ │  UNIQUE)     │ │  UNIQUE)     │    │   │
-│  │  │              │ │              │ │              │    │   │
-│  │  │ Role/User/   │ │ Role/User/   │ │ Role/User/   │    │   │
-│  │  │ Creds: opt   │ │ Creds: opt   │ │ Creds: opt   │    │   │
-│  │  └──────────────┘ └──────────────┘ └──────────────┘    │   │
-│  │                                                          │   │
-│  │  OPTIONALLY SHARED ACROSS ENVS:                         │   │
-│  │  • Database, Warehouse                                   │   │
-│  └──────────────────────────────────────────────────────────┘  │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+![Snowflake Offline Store Architecture](/img/snowflake-offline-store-architecture.png)
 
 Chalk uses fully-qualified names (FQNs) to route data through the shared storage integration,
 ensuring data isolation between environments without contamination.
@@ -179,7 +142,8 @@ Choose the guide that matches your cloud provider:
 
 After completing the setup, securely share the following with Chalk:
 
-### Credentials (via [GPG encryption](/docs/public-key))
+### Credentials
+Share the following via [GPG encryption](/docs/public-key):
 - RSA private key for Snowflake authentication
 - Snowflake user name
 
