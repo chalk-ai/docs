@@ -55,27 +55,29 @@ class User:
     )
 ```
 
-Now, set up your streaming resolvers referencing these features.
+Now, set up your streaming resolvers referencing these features using a [native streaming resolver](/docs/native-streaming):
 
 ```python
 from pydantic import BaseModel
-from chalk import features, has_many, DataFrame, Features, _
-from chalk.streams import stream, KafkaSource
+from chalk.features import _
+from chalk.features.resolver import make_stream_resolver
+from chalk.streams import KafkaSource
 
 class TransactionMsg(BaseModel):
     id: str
     user_id: str
     amount: float
 
-@stream(source=KafkaSource(name='...'))
-def process_transaction_topic(
-    value: TransactionMsg,
-) -> Features[Transaction.id, Transaction.user_id, Transaction.amount]:
-    return Transaction(
-        id=value.id,
-        user_id=value.user_id,
-        amount=value.amount,
-    )
+process_transaction_topic = make_stream_resolver(
+    name="process_transaction_topic",
+    source=KafkaSource(name="transactions"),
+    message_type=TransactionMsg,
+    output_features={
+        Transaction.id: _.id,
+        Transaction.user_id: _.user_id,
+        Transaction.amount: _.amount,
+    },
+)
 ```
 
 That's it! Now, when messages are received on the streams, Chalk will infer whether the output features
@@ -83,15 +85,17 @@ of the stream resolver are relevant to materialized aggregations, and if so, wil
 in the existing materialized aggregations.
 
 The resolver `process_transaction_topic` returns `Transaction.id`, `Transaction.user_id`, and `Transaction.amount`.
-These features are impact the materialized aggregate features `User.sum_transaction_amount` and
+These features impact the materialized aggregate features `User.sum_transaction_amount` and
 `User.mean_transaction_amount`. Both require two features on transaction:
 `Transaction.user_id` (referenced through the join from `_.transactions`) and
 `Transaction.amount` (referenced by `_.amount` in the aggregation expression).
-When a streaming messages comes through, the resolver `process_transaction_topic` will update
+When a streaming message comes through, the resolver `process_transaction_topic` will update
 the materialized aggregations with the new values for `User.sum_transaction_amount` and
 `User.mean_transaction_amount`.
 
 To opt out of updating materialized aggregations, set `updates_materialized_aggregations=False` on the stream resolver.
+
+---
 
 ## Online Storage
 

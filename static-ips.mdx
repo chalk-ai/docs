@@ -1,0 +1,68 @@
+---
+title: Chalk Static IP Addresses
+metaTitle: Chalk Static IP Addresses
+metaDescription: IP addresses and CIDR blocks for Chalk infrastructure that should be whitelisted in firewalls and security tools.
+description: IP addresses for firewall and security configuration.
+published: true
+llms: hidden
+---
+
+## Overview
+
+Chalk infrastructure operates from a set of static IP addresses and CIDR blocks. If you need to configure firewall rules, IP allowlists, or security policies (such as in Okta or other corporate security tools), you can use this page as a reference for all Chalk infrastructure IP addresses.
+
+This list is organized by category to help you identify which addresses you need to allow based on your security requirements.
+
+---
+
+## Chalk Routing
+
+These IP addresses are used for Chalk's routing infrastructure.
+
+| Chalk Label | Address |
+|---|---|
+| ip-addr1 | 34.86.77.81 |
+| ip-addr2 | 34.86.150.83 |
+| ip-addr5 | 104.56.115.58 |
+| ip-addr8 | 50.189.125.6 |
+| ip-addr6 | 34.68.204.90 |
+| ip-addr7 | 209.178.211.22 |
+
+---
+
+## Chalk Control Plane
+
+These IP addresses are used by Chalk's control plane infrastructure.
+
+| Chalk Label | Address |
+|---|---|
+| ip-addr3 | 34.145.158.73 |
+| ip-addr4 | 34.21.11.174 |
+| ip-addr9 | 35.245.90.187 |
+| ip-addr10 | 34.85.196.8 |
+| ip-addr11 | 34.11.78.30 |
+| ip-addr12 | 35.245.154.222 |
+
+---
+
+## Tailscale Routing
+
+Chalk uses Tailscale for network connectivity in some environments. In order to use Tailscale routing, the Tailscale control plane may need to be whitelisted. Please see the vendor documentation for details. This entry is optional, but recommended at this time.
+
+| Chalk Label | CIDR Block |
+|---|---|---|
+| cidr-block-1 | 192.200.0.0/24 |
+
+For additional information about Tailscale firewall ports and configuration, see the [Tailscale firewall documentation](https://tailscale.com/kb/1082/firewall-ports).
+
+---
+
+## Subject to Change
+
+These addresses are current as of publishing and are composed of static IP addresses and long-lived address assignments. Please note that whitelist entries may change in the future as the platform evolves. Chalk will update this page and communicate updates when needed.
+
+---
+
+## Support
+
+If you have questions about these IP addresses, need clarification on which addresses to allowlist for your use case, or need to report issues with IP-based access, please contact Chalk through your support channel.

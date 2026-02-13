@@ -1,10 +1,11 @@
 ---
-title: Features overview
+title: Features Overview
 shortTitle: Overview
 metaTitle: Features - Define features for training and inference.
 metaDescription: Features are properties of your data you want to train your model on. With Chalk, you can define your features in Python.
 description: Define features for training and inference.
 published: true
+llms: short
 ---
 
 import { PyDiffEditor } from '@/components/Editor'
@@ -20,6 +21,8 @@ decorator to a Python class with typed attributes.
 A `FeatureSet` is constructed and functions much like
 Python's own
 [dataclass](https://docs.python.org/3/library/dataclasses.html).
+
+---
 
 ## Example
 
@@ -37,6 +40,8 @@ class User:
     birthday: datetime
     fraud_score: float
 ```
+
+---
 
 ## Namespacing
 
@@ -64,7 +69,16 @@ the `name` keyword argument to the `feature` function or the `@features` decorat
 This practice allows us to evolve our variable names without
 losing the past history of this feature.
 
-<PyDiffEditor html={highlightedCode} />
+```diff-py
+- @features
++ @features(name="prince")
+- class Prince:
++ class TheArtistFormerlyKnownAsPrince:
+-   birthday: datetime
++   date_of_birth: datetime = feature(name="**birthday**")
+```
+
+---
 
 ## Primary keys
 
@@ -107,6 +121,8 @@ class User:
     user_id: str = feature(primary=True)
 ```
 
+---
+
 ## Versions
 
 Chalk versions all of your features with every deployment.
@@ -120,6 +136,8 @@ class User:
     email_domain: str = feature(version=2)
 ```
 
+---
+
 ## Feature time
 
 By default, Chalk marks the time a feature was created as the time that
@@ -128,8 +146,8 @@ However, you may want to provide a custom value for this time
 for data sources like events tables.
 
 You can inspect the time a feature was created and set the time
-for when a feature was created by creating a feature assigned to the
-`feature_time()` function.
+for when a feature was created by creating a feature of type
+`FeatureTime`.
 
 <PyDiffEditor html={featureTimeCode} />
 
@@ -148,6 +166,8 @@ def fn(uid: User.uuid) -> Features[User.name, User.ts]:
 Then, when you [sample offline data](/docs/temporal-consistency),
 the name feature will be treated as having been created at
 the provided date.
+
+---
 
 ## Constructing feature classes
 
@@ -179,6 +199,7 @@ Note that all fields have a default `MISSING` value.
 Therefore, you can construct feature classes with any subset
 of the fields you would like to use.
 
+---
 
 ## Refactoring
 
@@ -204,14 +225,18 @@ and the name provided to `feature(name=...)` differ,
 IDs are [auto-assigned](/docs/features#primary-keys) based
 on the name provided to `feature(name=...)`.
 
+---
+
 ## Default feature values
 
 For features that can't always be computed, you can pass `default` to
-[`feature`](/api-docs#feature.default), or assign a default directly:
+[`feature`](/api-docs#feature.default) or assign a default directly:
 
-```python
+```diff-py
 from chalk.features import features
 @features
 class User:
-    num_purchases: int = 0
+    id: int
++   num_purchases: int = 0
++   count_logins: int = feature(default=0)
 ```

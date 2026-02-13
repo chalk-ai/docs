@@ -30,6 +30,8 @@ been compromised.
 
 Once you have generated your `client_id` and `client_secret`, you can make authenticated requests to Chalk.
 
+---
+
 ## Authenticating an API client
 
 Chalk has published API client libraries for several languages. These libraries handle exchanging a `client_id`
@@ -37,15 +39,19 @@ and `client_secret` for an `access_token` which can be used to access Chalk.
 
 <CreatingAClient />
 
+---
+
 ## Authenticating CURL
 
-We recommend using the chalk cli tool to authenticate a curl request. You can use `chalk token` to acquire an
+We recommend using the chalk cli tool to authenticate a curl request. You can use [`chalk token`](/cli/token) to acquire an
 `access_token` that is suitable for use as a `Bearer token`:
 
 ```
 curl -H "Authorization: Bearer $(chalk token)" \
   https://api.chalk.ai/v1/who-am-i
 ```
+
+---
 
 ## Fetching an Access Token
 
@@ -109,6 +115,8 @@ curl -H "Authorization: Bearer <ACCESS_TOKEN>" https://api.chalk.ai/v1/who-am-i
 
 will return a 200 response and a JSON object containing a short description of the requesting user. This is
 convenient for verifying that you are using a valid `access_token`.
+
+---
 
 ## Role-based access control (RBAC)
 

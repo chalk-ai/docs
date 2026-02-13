@@ -17,6 +17,8 @@ import {RequestUrl} from '@/components/RequestUrl'
 Chalk can ingest data using a SQL interface from any of our supported SQL data source integrations. The full list of
 supported SQL data sources can be found [in our API reference](/api-docs#BaseSQLSourceProtocol).
 
+---
+
 ## Basic queries
 
 Chalk supports running SQL from files or from strings. When you run queries that invoke your SQL resolver, Chalk
@@ -177,6 +179,8 @@ def get_user(uid: User.id) -> Features[User.full_name, User.email]:
 Auto-mapping of column name to feature name also applies for
 the `query_sql_file` method. Parameterization also works the same way.
 
+---
+
 ## Push-down filtering
 
 Chalk automatically adds query inputs to the `WHERE` clause of your SQL
@@ -241,6 +245,8 @@ FROM
 
 If your database column names differ from your feature names, the column name must be aliased in the `SELECT` clause of
 your query, as shown above with the `merchant_category` column.
+
+---
 
 ## Configuration
 
@@ -324,7 +330,7 @@ The following are supported keys that may be included in `.chalk.sql` file comme
     A list of features that correspond to partition keys in the data source.
     This field indicates that this resolver executes its query against a data storage system that is
     partitioned by a particular set of columns.
-    This is most common with data-warehouse sources like Snowflake, BigQuery or Databricks.
+    This is most common with data-warehouse sources like Snowflake, BigQuery, Databricks, or Iceberg.
 </Attribute>
 <Attribute field='total' kind='bool'>
     Whether this resolver returns all ids of a given namespace.
@@ -450,6 +456,8 @@ make_sql_file_resolver(
 )
 ```
 
+---
+
 ## Incremental queries
 
 ### Overview
@@ -497,7 +505,7 @@ To use incremental mode with SQL string resolvers, use `.incremental` along with
 pg = PostgreSQLSource(name='PG')
 
 @offline
-def fn() -> DataFrame[Login.attemped_at, Login.user_id, Login.status]:
+def fn() -> DataFrame[Login.attempted_at, Login.user_id, Login.status]:
     return (
         pg.query_string("select attempted_at, status, user_id from logins")
           .incremental(incremental_column="attempted_at")
@@ -666,6 +674,8 @@ If your resolver returns a [`FeatureTime`](/docs/time) feature, Chalk will updat
 to the "max" `FeatureTime` value that is returned instead. This allows you to control the incremental
 behavior more precisely.
 
+---
+
 ## Tagged SQL sources
 
 Chalk supports applying [tags](/docs/resolver-tags) to SQL sources. This allows you to define a single resolver that routes traffic
@@ -712,6 +722,8 @@ client.query(input={User.id: 1}, output=[User.name], tags=['analytics'])
 client.query(input={User.id: 1}, output=[User.name])
 ```
 
+---
+
 ## Additional query options
 
 ### SQLAlchemy
@@ -743,7 +755,7 @@ column mapped to [`FeatureTime`](/docs/features#feature-time).
 pg = PostgreSQLSource(name='PG')
 
 @offline
-def fn() -> DataFrame[Login.ts, Login.attemped_at, Login.user_id, Login.status]:
+def fn() -> DataFrame[Login.ts, Login.attempted_at, Login.user_id, Login.status]:
     return pg.query(
         Login(
             ts=LoginHistorySQL.created_at,
@@ -753,4 +765,3 @@ def fn() -> DataFrame[Login.ts, Login.attemped_at, Login.user_id, Login.status]:
         )
     ).incremental()
 ```
-

@@ -1,7 +1,8 @@
 ---
 title: File Structure
-description: Configure your Chalk project.
+description: Configure your Chalk project and organize your features and resolvers.
 published: true
+llms: short
 ---
 
 import {
@@ -49,7 +50,8 @@ When you're first getting started, we recommend putting all your features in a s
 file. Keeping the features in a single file makes circular references easier to reason
 about, as they can just be quoted.
 
-If you do want to split your features across multiple files, you'll need to use the `if TYPE_CHECKING` block from the `typing` module`.
+If you do want to split your features across multiple files,
+you'll need to use the `if TYPE_CHECKING` block from the `typing` module.
 
 ### Organizing Feature Definitions Across Files
 
@@ -185,15 +187,15 @@ features and resolvers.
                         The Python version for the Chalk project.
                     </SubAttribute>
                     <SubAttribute field='requirements' kind='str'>
-                        Python requirements file to install with <code>pip</code>. This can either be a `requirements.txt` file or
-                        a `pyproject.toml` file.
+                        Python requirements file to install with <code>pip</code>. This can either be a <code>requirements.txt</code> file or
+                        a <code>pyproject.toml</code> file.
                     </SubAttribute>
                     <SubAttribute field='dockerfile' kind='str'>
                         Path to an alternative Dockerfile that will be used to build a base image for your Chalk deploys.
                     </SubAttribute>
                     <SubAttribute field='platform_version' kind='str'>
                         Reference a version of the Chalk runtime that you want to use for this environment. Can be either a version
-                        tag, like `v3.0.0`, or a release stream like `stable`. If not specified, defaults to `stable`.
+                        tag, like <code>v3.0.0</code>, or a release stream like <code>stable</code>. If not specified, defaults to <code>stable</code>.
                         Releases are documented in the <a href="/release-notes">Platform Release Notes</a>.
                     </SubAttribute>
                 </SubAttributeTable>
@@ -216,7 +218,7 @@ features and resolvers.
                             </SubAttribute>
                             <SubAttribute field='missing' kind='"info" | "warning" | "error"'>
                                 The level of severity to use when a feature is missing this metadata property. Deploys are permitted for
-                                <code>info</code> and <code>warning</code> levels, but disallowed for `error` level.
+                                <code>info</code> and <code>warning</code> levels, but disallowed for <code>error</code> level.
                             </SubAttribute>
                         </SubAttributeTable>
                     </SubAttribute>
@@ -234,7 +236,7 @@ features and resolvers.
                             </SubAttribute>
                             <SubAttribute field='missing' kind='"info" | "warning" | "error"'>
                                 The level of severity to use when a feature is missing this metadata property. Deploys are permitted for
-                                <code>info</code> and <code>warning</code> levels, but disallowed for `error` level.
+                                <code>info</code> and <code>warning</code> levels, but disallowed for <code>error</code> level.
                             </SubAttribute>
                         </SubAttributeTable>
                     </SubAttribute>
@@ -272,7 +274,6 @@ validation:
       - name: owner
         missing: error
 ```
-
 
 ---
 
@@ -398,7 +399,7 @@ def get_user_risk_score_2(
 ## Pinning Chalk Platform Versions
 
 By default, when you deploy in your Chalk environment, Chalk will pull the latest version of the Chalk platform.
-You can choose to pin a [Chalk platform version](/release-notes)  for each environment such that your deploys
+You can choose to pin a [Chalk platform version](/release-notes)  for each environment such that your deployments
 will only update your Chalk code, and will use the same platform image until you deploy a new pinned platform
 version.
 
@@ -408,13 +409,13 @@ environments:
   dev:
     runtime: python312
     requirements: requirements-dev.txt
-    platform_version: v3.24.6
+    platform_version: v3.27.30
   staging:
     runtime: python312
     requirements: requirements-staging.txt
-    platform_version: v3.24.6
+    platform_version: v3.27.30
   prod:
     runtime: python312
     requirements: requirements.txt
-    platform_version: v3.24.6
+    platform_version: v3.27.30
 ```

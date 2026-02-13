@@ -2,6 +2,7 @@
 title: MySQL
 description: Integrate with MySQL data sources.
 published: true
+llms: hidden
 ---
 
 import { AddMySQLIntegration } from '@/components/shared/mysql'
@@ -16,6 +17,8 @@ options using the `MySQLSource` **init** args,
 or configure the source through your dashboard, and
 reference the source in your code.
 
+---
+
 ## Adding MySQL
 
 On the dashboard, you can plug in the configuration for your
@@ -23,63 +26,35 @@ MySQL database:
 
 <AddMySQLIntegration onSubmit={(e) => e.preventDefault()} />
 
+---
 
-## Single Integration
+## Integrations Setup
 
-If you have only one MySQL connection that you'd like
-to add to Chalk, you do not need to specify any arguments
-to construct the source in your code.
+After configuring your MySQL integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import MySQLSource
 
-mysql = MySQLSource()
-
-@online
-def fn(...) -> ...:
-    return mysql.query(...).first()
+risk = MySQLSource(name="RISK")
+marketing = MySQLSource(name="MARKETING")
 ```
 
-## Multiple Integrations
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `RISK` source:
 
-<span>{getNamedIntegrationText()}</span>
+```sql
+-- type: online
+-- resolves: User
+-- source: RISK
+SELECT id, credit_score FROM users
+```
 
-```py
-from chalk.sql import MySQLSource
+And to query from the `MARKETING` source:
 
-risk = MySQLSource(name="**RISK**")
-marketing = MySQLSource(name="**MARKETING**")
-
-@online
-def risk_resolver(...) -> ...:
-    return risk.query(...).first()
-
-@online
-def marketing_resolver(...) -> ...:
-    return marketing.query(...).first()
+```sql
+-- type: online
+-- resolves: User
+-- source: MARKETING
+SELECT id, email, campaign_status FROM users
 ```
 
 <span>{getEnvironmentVariableText("RISK", "MYSQL_HOST")}</span>
-
-## Environment Variables
-
-You can also configure the integration directly using environment variables
-on your local machine or from those added through the
-[generic environment variable](/docs/env-vars) support.
-
-```py
-import os
-from chalk.sql import MySQLSource
-
-mysql = MySQLSource(
-    host=os.getenv(...),
-    port=os.getenv(...),
-    db=os.getenv(...),
-    user=os.getenv(...),
-    password=os.getenv(...),
-)
-
-@online
-def fn(...) -> ...:
-    return mysql.query(...).first()
-```

@@ -219,6 +219,8 @@ def kafka_stream_resolver(message: ParsedMessage) -> Features[StreamFeature.id, 
     return StreamFeature(id=message.id, value=message.value, event_timestamp=message.event_timestamp)
 ```
 
+---
+
 ## Testing Stream Resolvers
 
 Testing stream resolvers can be difficult:
@@ -263,7 +265,7 @@ assert result.id == "1"
 However, if you have a parse function,
 custom timestamps, or other advanced functionality you want to test,
 you may have to send messages to the streaming server.
-Streaming resolver updates require a full `chalk apply` to update the 
+Streaming resolver updates require a full [`chalk apply`](/cli/apply) to update the 
 streaming server for testing. 
 Read more on how to use the `ChalkClient` to test streaming resolvers
 [here](/api-docs#ChalkClient.test_streaming_resolver)). This will pass messages
@@ -306,6 +308,8 @@ resp = client.test_streaming_resolver(
 print(resp.features)
 ```
 
+---
+
 ## Online / Offline Storage
 
 With mapping streaming resolvers, as with Python and SQL resolvers, Chalk will persist values to the
@@ -321,6 +325,5 @@ to resolve features in a feature class with a materialized aggregation defined a
 you should apply the `max_staleness` specifically to the features for which you would like to [online query](/docs/query-online).
 Otherwise, the aggregation will return the last observed value based on the max_staleness, rather than the actual
 computed aggregation value.*
-
 
 

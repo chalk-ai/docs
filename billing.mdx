@@ -17,6 +17,8 @@ We charge for the node’s uptime, not based on the level of activity within the
 You can run unlimited queries or create multiple branches without incurring extra charges.
 Billing is based solely on the node’s active hours, not on how many features or branches are used.
 
+---
+
 ## Finding Chalk Credit Rates
 
 You can see the full list of credit utilization rates per hour for all machine types in the Chalk
@@ -30,7 +32,9 @@ terminal and use the Chalk CLI command to view usage rates.
 $ chalk login
 $ chalk usage rates
 ```
-cdc
+
+---
+
 ## Cost Optimization Tips
 
 There are two primary ways to optimize your resource configurations for cost optimization.
@@ -48,7 +52,10 @@ branch server will automatically spin back up.
 For the other nodes in your cluster, you can configure the resource configurations according to your needs
 in the dashboard under `Settings > Resources > Resource Configurations`. You can select the instance type
 for each server that is right for you, and set a scaling policy that ensures that you scale up when traffic
-is high, but notably that your nodes scale down when traffic is low.
+is high, but notably that your nodes scale down when traffic is low. The instance type selected should have
+enough capacity to support the resource request multiplied by the number of max instances, plus additional overhead.
+
+---
 
 ## Frequently Asked Questions
 
@@ -62,6 +69,26 @@ utilization.
 Chalk only applies charges to nodes labeled “Chalk Managed.” Other workloads on different nodes do not
 incur Chalk charges. You can also configure your cluster to have isolated nodepools to ensure that
 unrelated workloads are completely isolated from your Chalk Managed nodes.
+
+### What do these labels in the nodepool configuration pane mean?
+
+You may notice labels like `Chalk`, `Restricted`, and `Isolated` in the nodepools settings pane.
+
+![Different nodepool labels](/img/nodepool-labels.png)
+
+- `Chalk`: This label indicates that the nodepool makes Chalk-managed nodes, whose uptime contributes to credit usage. All nodepools 
+created through the Chalk dashboard automatically have this label, although the dashboard will also _display_ nodepools without it.
+- `Isolated`: This label indicates that the nodepool will not allow any workloads to schedule on its nodes 
+ unless they are explicitly configured to do so by setting the `Nodepool` field in the `Resources` settings pane. Controlled by the checkbox 
+ "Isolate this nodepool".
+- `Restricted`: This label indicates that the nodepool makes nodes that **only** allow Chalk workloads to schedule on them. This is
+useful in the case where Chalk is running in your cluster alongside other unrelated workloads, and it prevents those workloads from 
+inadvertently consuming Chalk credits. Controlled by the checkbox "Restrict to Chalk workloads only".
+
+Chalk workloads are **only** allowed to schedule on nodes from nodepools with the `Chalk` label. They will not schedule on an `Isolated` nodepool 
+unless configured to do so, and the `Restricted` label has no effect on whether Chalk workloads can schedule on the nodepool, but only affects 
+unrelated non-Chalk workloads.
+
 
 ### Do more branches cost more money?
 
@@ -77,6 +104,8 @@ your other workloads.
 
 Chalk only charges for compute resources (i.e., running nodes). If a staging environment is idle or shut
 down, it won’t incur costs.
+
+---
 
 ## Chalk Marketplace Billing
 

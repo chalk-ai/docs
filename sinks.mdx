@@ -10,6 +10,8 @@ You can export data from Chalk to other data warehouses or services using sinks.
 Sinks are declared with the decorator `@sink`, and take several keyword arguments,
 similar to resolvers.
 
+---
+
 ## Custom sinks
 
 Chalk has integrations that cover several common patterns for exporting data.
@@ -33,6 +35,8 @@ to your function using the type signature.
 In the body of your sink function, you can call arbitrary functions
 with the input values.
 
+---
+
 ## Batch custom sinks
 
 You can also use custom sinks to handle many events in bulk.
@@ -55,6 +59,8 @@ In this example, Chalk will wait at least 100ms for more events to hit the buffe
 before calling the sink function. However, using the `max_delay` argument,
 you can specify that the function will be called no more than `1s` after an
 event hit the buffer.
+
+---
 
 ## SQLAlchemy integration
 

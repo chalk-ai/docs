@@ -1,0 +1,107 @@
+---
+title: Chalk SQL
+metaTitle: What is Chalk SQL?
+metaDescription: 'Chalk SQL is a powerful, familiar, and expressive language to make federated queries against all things Chalk.'
+published: true
+---
+
+Chalk SQL is dialect of SQL developed within Chalk built to create **federated queries** across a
+Chalk environment. Chalk SQL is a highly efficient, easy-to-write, and expressive language that enable:
+
+- Querying across multiple [SQL sources](/docs/sql) seamlessly
+- Introspecting the [online and offline store](/docs/choosing-online-offline-stores), [datasets](/docs/datasets) from
+offline queries, and many other entities across the Chalk ecosystem
+- Applying functions from the Chalk Function registry in ad-hoc contexts.
+- Integrating with existing [online](/docs/query-online) and [offline query](/docs/query-offline) paths
+as a new form of input.
+
+```sql
+WITH total_spending AS (
+    SELECT
+        u.user_id AS user_id,
+        SUM(t.amount) AS user_spending,
+    FROM "my_postgres.public.user" u  -- Query against a data source named "my_postgres"
+    LEFT JOIN "my_bigquery.my_dataset.transactions" t -- Query against a data source named "my_bigquery"
+    ON u.user_id = t.user_id
+    GROUP BY u.user_id
+)
+SELECT
+    u.user_id AS user_id,
+    u.embedding AS user_embedding,
+    array_normalize(u.embedding, 2) AS l2_normalized_embedding,
+    json_extract(ts.random_transaction_data, '$.timestamp') AS txn_timestamp,
+    json_extract(ts.random_transaction_data, '$.metadata.country') AS country,
+    ts.user_spending AS user_spending,
+FROM "my_postgres.public.users" u
+LEFT JOIN total_spending ts
+ON u.user_id = ts.user_id
+```
+
+## The Basics
+
+Chalk SQL comprises three main components to both plan and run queries:
+
+1. A custom-built transpiler from a dialect of SQL to Chalk's internal planning system.
+
+2. Chalk's existing infrastructure to execute plans at blazing speeds, which allows Chalk SQL to benefit from
+as [Native SQL drivers](/docs/integrations#sql-data-sources-and-data-warehouses), [static compilation](/docs/static-resolver-optimization) of expressions, and integration with [Velox](/docs/architecture#high-performance-execution-engine),
+the open-source low-latency execution engine.
+
+3. The **Chalk Catalog**, which is a culmination of various objects within a Chalk deployment. This includes
+[features](/docs/features), [resolvers](/docs/resolver-overview),
+[datasets](/docs/datasets), the [online and offline store](/docs/choosing-online-offline-stores),
+and registered [SQL sources](/docs/sql).
+
+A Chalk Catalog exists per deployment, meaning that as an environment changes over time through feature engineering,
+the Chalk Catalog will also update to reflect the newest changes. This means there's no additional work to sync the
+catalog to pick up changes: if an additional resolver is added to a deployment, the Chalk Catalog will automatically
+know about it, and Chalk SQL can make queries against it.
+
+
+## Referencing the Chalk Catalog
+
+The Chalk Catalog is organized much like a traditional relational database. Primarily, objects are classified
+under the three-level namespacing of `CATALOG.SCHEMA.TABLE`. Chalk Catalog tables are primarily **views**, meaning
+that they are not materialized in memory like a conventional database table. These views exist over the various
+components of the Chalk Catalog
+
+When referencing these tables in your queries to Chalk SQL, you must **fully qualify their name**.
+For example, if you wish to query the `keys` table in the `online_store` schema within the `chalk` catalog,
+you should make queries like the following.
+
+```sql
+SELECT * FROM "chalk.online_store.keys";
+```
+
+You can learn more about available catalogs, schemas, and tables via the
+[Database Explorer](/docs/chalksql/sql-explorer#database-explorer),
+or by making queries to Chalk's `INFORMATION_SCHEMA`.
+
+```sql
+-- Example query to find all schemas available in the "chalk" catalog
+SELECT * FROM chalk.information_schema.schemas WHERE catalog_name = 'chalk';
+```
+
+
+## Running Chalk SQL
+
+Chalk SQL is automatically enabled and available for use in any environment that has at least one
+gRPC query server running. Both new and existing environments can start running Chalk SQL queries with no additional
+setup.
+
+Chalk SQL is primarily run in two different contexts:
+
+- Ad-hoc Chalk SQL queries stand alone and are useful for introspection or workflows that aren't directly adjacent
+to the main query path. These can be run via the CLI, via the Python
+SDK's [GRPC Client](/api-docs#ChalkGRPCClient.run_sql), or via the [SQL Explorer](/docs/chalksql/sql-explorer), Chalk's
+built-in SQL console on the dashboard.
+
+- Chalk SQL can be used as a replacement to the `inputs` field in online and offline query. Learn more about using
+Chalk SQL as inputs to traditional chalk queries [here](/docs/chalksql/sql-as-input).
+
+
+
+## Further Readings
+- [Example workflows](/docs/chalksql/example-workflows)
+- [Chalk Catalog Components](/docs/chalksql/chalk-catalog-components)
+- [Chalk SQL as query inputs](/docs/chalksql/sql-as-input)

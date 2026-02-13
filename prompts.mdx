@@ -10,6 +10,8 @@ You can define named prompts in Chalk to help maintain consistency in your LLM w
 maintainable and reusable across your application. You can parameterize prompts using Jinja templating to inject
 feature values.
 
+---
+
 ## Prompt Definition Approaches
 
 Chalk supports two primary methods for defining and managing prompts: direct prompt definitions and named prompts.
@@ -45,7 +47,7 @@ class User:
     comment: str
     actual_sentiment: str
     response: P.PromptResponse = P.completion(
-        model="gpt-4o",
+        model="gpt-5.1",
         messages=[
             P.message(role="system", content=system_message),
             P.message(role="user", content=F.jinja(user_message)),
@@ -65,14 +67,14 @@ While this approach provides fine-grained control over the prompt configuration,
 ### Multimodal Prompts
 
 Chalk's chat completion API extends beyond text-only interactions by supporting multimodal inputs, enabling you to process images alongside text in your LLM workflows.
-This capability opens up new possibilities for visual content analysis, allowing you to pass images directly to vision-capable models like GPT-4o, combine text and image inputs in a single prompt, and extract structured information from visual content. Here's how you can process a receipt image to extract structured data:
+This capability opens up new possibilities for visual content analysis, allowing you to pass images directly to vision-capable models like GPT-5.1, combine text and image inputs in a single prompt, and extract structured information from visual content. Here's how you can process a receipt image to extract structured data:
 
 ```py
 @features
 class Receipt:
     image_url: str
     image_response: P.MultimodalPromptResponse = P.completion(
-        model="gpt-4o",
+        model="gpt-5.1",
         messages=[
             P.message(
                 "user",
@@ -114,6 +116,8 @@ Named prompts function as microservices within your ML pipeline, allowing you to
 requiring code deployments. This architecture is particularly valuable for teams that need to iterate rapidly on prompt
 engineering or maintain multiple prompt variants.
 
+---
+
 ## Prompt Evaluation
 
 The Chalk evaluation platform provides comprehensive tooling for testing and comparing prompt performance. This
@@ -150,7 +154,7 @@ eval_run = chalk_client.prompt_evaluation(
         "analyze_sentiment-v1",
         "analyze_sentiment-v2",
         P.completion(
-            model="gpt-4o",
+            model="gpt-5.1",
             messages=[
                 P.message(role="system", content=system_message),
                 P.message(role="user", content=user_message),

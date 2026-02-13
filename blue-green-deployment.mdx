@@ -32,9 +32,9 @@ there are a few ways that you can start to use blue-green deployments.
 #### Full rollouts using Blue-Green Deployments
 
 The simplest way to start to use blue-green deployments is to use the `--bluegreen` tag when deploying your code.
-When you run a `chalk apply --bluegreen`, that will automatically tag your latest deployment with either `blue`
+When you run [`chalk apply --bluegreen`](/cli/apply), that will automatically tag your latest deployment with either `blue`
 if the latest deployment was tagged `green`, or `green` if the latest deployment was tagged `blue`. Then, when you're
-ready to migrate traffic to your new deployment, you can run `chalk traffic promote`, which will migrate traffic from
+ready to migrate traffic to your new deployment, you can run [`chalk traffic promote`](/cli/traffic_promote), which will migrate traffic from
 the deployment currently in use to the other tagged deployment. The following example demonstrates how to use
 these blue-green deployments.
 
@@ -53,7 +53,7 @@ $ chalk traffic promote
 
 If previous deployment was tagged `blue` and the latest deployment was tagged `green`, this command migrates 100%
 of the traffic from the `blue` deployment to the `green` deployment. You can then monitor the `green` deployment
-traffic. If you encounter any errors with your new deployment, then you can once again run `chalk traffic promote` and
+traffic. If you encounter any errors with your new deployment, then you can once again run [`chalk traffic promote`](/cli/traffic_promote) and
 it will migrate traffic from the `green` deployment back to the `blue` deployment. This allows you to easily rollback
 during releases.
 
@@ -78,7 +78,7 @@ $ chalk traffic set --tags blue=90,green=10
 ```
 
 This will direct 90% of traffic to the `blue` deployment and 10% of traffic to the `green` deployment. You can
-verify the traffic distribution by running `chalk traffic get`.
+verify the traffic distribution by running [`chalk traffic get`](/cli/traffic_get).
 
 ```bash
 $ chalk traffic get
@@ -96,7 +96,7 @@ Then, you can gradually increase traffic to the `green` deployment until it is a
 you release, you can tag the latest deployment with `blue` and migrate traffic from the `green` deployment to the
 even newer `blue` deployment. This workflow enables you to have fine-tuned control over the traffic distribution
 between your deployments. Furthermore, Chalk will automatically scale down unused deployments to minimize unnecessary
-resource usage. If you run the command `chalk traffic set` and do not specify some amount of traffic for a
+resource usage. If you run the command [`chalk traffic set`](/cli/traffic_set) and do not specify some amount of traffic for a
 tagged deployment, then Chalk will recognize that the deployment is no longer in use and will scale it down.
 
 ---
@@ -104,10 +104,10 @@ tagged deployment, then Chalk will recognize that the deployment is no longer in
 ## Managing your Blue-Green Deployments
 
 In order to create a new tagged deployment in Chalk, you can either specify a `--deployment-tag` when
-running `chalk apply`, or you can use the `--blue-green` flag to automatically target the inactive
+running [`chalk apply`](/cli/apply), or you can use the `--blue-green` flag to automatically target the inactive
 tag for the new deployment. In addition to creating new tagged deployments, you can also use the
-Chalk CLI command `chalk traffic` to manage your blue-green deployments. To view all available
-commands, you can run `chalk traffic --help`.
+Chalk CLI command [`chalk traffic`](/cli/traffic) to manage your blue-green deployments. To view all available
+commands, you can run [`chalk traffic --help`](/cli/traffic).
 
 To view the current traffic distribution between your blue and green deployments, you can run:
 
@@ -124,7 +124,7 @@ To view the current traffic distribution between your blue and green deployments
        mirror_weight: 0
 ```
 
-To mirror a percentage of traffic to a tagged deployment, you can use the `chalk mirror` command:
+To mirror a percentage of traffic to a tagged deployment, you can use the [`chalk traffic mirror`](/cli/traffic_mirror) command:
 
 ```bash
 $ chalk traffic --mirror blue=15,green=5   
@@ -137,12 +137,12 @@ $ chalk traffic --mirror blue=15,green=5
         mirror_weight: 5    
 ```
 
-As shown above, you can you `chalk traffic promote` and `chalk traffic set` to configure the
+As shown above, you can you [`chalk traffic promote`](/cli/traffic_promote) and [`chalk traffic set`](/cli/traffic_set) to configure the
 distribution of traffic between your blue and green deployments.
 
 Once you roll out your new deployment, by default we would still keep pods up for your inactive
 deployment to enable a fast rollback. However, if you would like to spin down pods for any
-inactive deployment, you can also use the `chalk traffic suspend` to essentially set the
+inactive deployment, you can also use [`chalk traffic suspend`](/cli/traffic_suspend) to essentially set the
 traffic weight to `nil`, which will scale down the pods for that deployment.
 
 ```bash

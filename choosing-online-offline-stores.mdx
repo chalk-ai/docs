@@ -8,6 +8,8 @@ When setting up a new environment, Chalk provides several options for choosing a
 for your online and offline store. The DBMS (Database Management System) that you choose will depend on your
 specific requirements, as well as your cloud deployment provider.
 
+---
+
 ## Online Store Options
 
 The Chalk online store is used for low-latency serving of real-time feature values. Although Chalk's query engine
@@ -16,43 +18,43 @@ caching computed values in the online store can further improve performance.
 
 ### GCP Online Store Options
 
-There are three options for online stores for customers on GCP (Google Cloud Platform):
 
-| Store       | Description                              | Performance  | Scaling    |
-|-------------|------------------------------------------|--------------|------------|
-| Cloud SQL   | Postgres (relational database)           | milliseconds | vertical   |
-| Memorystore | Redis (in-memory key-value NoSQL store)  | microseconds | vertical   |
-| Bigtable    | Distributed wide-column NoSQL database   | milliseconds | horizontal |
+There are two options for online stores for customers on GCP (Google Cloud Platform):
 
-Generally, customers will choose the data store that they already use within their data platform. However,
-we would generally recommend Memorystore for low-latency queries, Cloud SQL for general query caching and
-costs, and Bigtable for huge storage needs.
+| Store                  | Description                               | Performance  | Scaling    |
+|------------------------|-------------------------------------------|--------------|------------|
+| Memorystore for Valkey | Valkey (in-memory key-value NoSQL store)  | microseconds | vertical   |
+| Bigtable               | Distributed wide-column NoSQL database    | milliseconds | horizontal |
+
+Generally, customers will choose the data store that they already use within their data platform.
+However, we would generally recommend Memorystore for Valkey, as it is optimized for low-latency and high
+throughput, and Bigtable for huge storage needs.
 
 ### AWS
 
-There are three options for customers on AWS (Amazon Web Services):
+There are two options for customers on AWS (Amazon Web Services):
 
-| Store       | Description                    | Performance  | Scaling     |
-|-------------|--------------------------------|--------------|-------------|
-| RDS         | Postgres (relational database) | milliseconds | vertical    |
-| ElastiCache | Redis (in-memory store)        | microseconds | vertical    |
-| DynamoDB    | Key-Value NoSQL database       | milliseconds | auto-scales |
+| Store                  | Description                    | Performance  | Scaling     |
+|------------------------|--------------------------------|--------------|-------------|
+| ElastiCache for Valkey | Redis (in-memory store)        | microseconds | vertical    |
+| DynamoDB               | Key-Value NoSQL database       | milliseconds | auto-scales |
 
-We generally recommend DynamoDB for its performance optimizations and ElastiCache for its low-latency and greater
+We generally recommend DynamoDB for its performance optimizations and ElastiCache for Valkey for its low-latency and greater
 storage capacity for large rows. However, some customers may choose to use RDS depending on their existing
 data platform.
 
 ### Azure
 
-There are two options for customers on Azure:
+For customers on Azure, we offer Azure Cache for Redis for the online store.
 
 | Store                          | Description                       | Performance  | Scaling     |
 |--------------------------------|-----------------------------------|--------------|-------------|
-| Azure Database for PostgreSQL  | Postgres (relational database)    | milliseconds | vertical    |
 | Azure Cache for Redis          | Redis (key-value in-memory store) | microseconds | horizontal  |
 
-We generally recommend the Azure Cache for Redis for a low-latency and scalable database with storage based
-pricing, but some customers may choose to use Azure Database for PostgreSQL depending on their existing data platform.
+We generally recommend the Azure Cache for Redis to customers on Azure for a low-latency and scalable database with storage based
+pricing.
+
+---
 
 ## Offline Store Options
 
@@ -66,6 +68,7 @@ We offer four options for offline stores:
 | Amazon Redshift       | Columnar (Parquet)          |
 | Snowflake             | Columnar (Micro-partitions) |
 | Databricks Delta Lake | Columnar (Parquet)          |
+| Iceberg               | Columnar (Parquet)          |
 
 For customers with GCP cloud deployments, we generally recommend Google Big Query for its performance with
 analytical queries. However, generally, customers will choose the data store that they already use within

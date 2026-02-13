@@ -18,6 +18,8 @@ offline store as well as data sources in your environment.
 
 Additionally, you can use the [GRPC client's run_sql() endpoint](/api-docs#ChalkGRPCClient.run_sql).
 
+---
+
 ## Query Syntax
 
 Chalk's SQL interface uses a standard SQL dialect, and all queries are processed through a parser that expects 
@@ -47,12 +49,14 @@ Currently, Chalk SQL only supports making `SELECT` queries, with the following r
 - `ORDER BY` clause:
     - At present, you may only use direct column references in the `ORDER BY` clause.
 
+---
+
 ## SQL Interface Sources
 
 In the SQL Interface, there exist various schema providers, which all exist under the `chalk` catalog:
 
 - `chalk.datasources`: directly query against the [data sources](/docs/integrations) configured in your
-  environment (e.g. Postgres, Snowflake, BigQuery, etc.). Table names are tables within the data sources themselves.
+  environment (e.g. Postgres, Snowflake, BigQuery, Iceberg, etc.). Table names are tables within the data sources themselves.
 
   **Schema**: Exactly that of the table in the data source.
 - `chalk.historical_values`: query against historically observed feature values with table names of the form
@@ -99,6 +103,8 @@ In the SQL Interface, there exist various schema providers, which all exist unde
 
 Chalk also offers a `chalk.information_schema` that you can query (similar to many other database offerings), and queries such as `SHOW TABLES` and `SHOW SCHEMAS` can also be used.
 
+
+---
 
 ## Examples
 If you had the following feature class:

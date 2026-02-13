@@ -28,9 +28,22 @@ Generally running inference on models in Chalk involves three steps:
 
 To add a model to the Chalk model registry, you can either register an existing model or run training code to create a new model. Once registered, models can be versioned and tracked over time. Registering models through training jobs is covered in the [Chalk model training docs](/docs/model_training).
 
+To add a new model namespace to the registry, you can use the `client.register_model_namespace` method. This namespace can then be used when registering a model version to assign it to this namespace.
+
+```python
+from chalk.client import ChalkClient
+
+client = ChalkClient()
+
+client.register_model_namespace(
+    name="RiskScoreModel",
+    description="Risk score model developed in pytorch"
+)
+```
+
 ### Registering Existing Models
 
-Existing machine learning models can be registered in Chalk using the `ChalkClient` class. You can register models from local files, cloud storage, or directly from Python objects. All of these are supported through the `client.register_model` method.
+Existing machine learning models can be registered in Chalk using the `ChalkClient` class. You can register models from local files, cloud storage, or directly from Python objects. All of these are supported through the `client.register_model_version` method.
 
 #### Registering From Local Files
 
@@ -38,23 +51,20 @@ To register a model from local files, provide the path to the model files and an
 You'll also want to specify the input and output schema for the model, which helps with validation and integration in your Chalk deployment.
 
 When registering a new model, you can specify a description which will be shown for the `Model` object in the Chalk dashboard. To register a new
-model, you should use the `client.register_model` method. This will create a new model in the registry and add a new model version.
+model, you should use the `client.register_model_version` method. This will create a new model in the registry and add a new model version.
 
 ```python
 from chalk.client import ChalkClient
 
 client = ChalkClient()
 
-client.register_model(
+client.register_model_version(
     name="RiskScoreModel",
     aliases=["v1.0"],
     model_paths=["./risk_score_model.pth"],
     additional_files=[
         "./tokenizer.json"
     ],
-    description="Model for predicting user risk scores",
-    model_type="pytorch",
-    model_format="pytorch",
     metadata={
         "framework": "pytorch",
         "training_date": "2025-07-29",
@@ -85,17 +95,14 @@ client.register_model_version(
     name="RiskScoreModel",
     aliases=["v1.0.0"],
     model=rfc,  # Directly pass the model object
-    description="Model for predicting user risk scores",
-    model_type="sklearn",
-    model_format="pickle",
     metadata={
         "framework": "sklearn",
         "training_date": "2025-07-29",
-        "performance_metrics": {
-            "accuracy": 0.89,
-            "precision": 0.91
-        }
-    }
+        "accuracy": 0.89,
+        "precision": 0.91
+    },
+    input_features=[User.age, User.income],
+    output_features=[User.churn_risk],
 )
 ```
 
@@ -125,9 +132,10 @@ print(f"Performance: {model_v1.metadata['training_metrics']}")
 To include models in your Chalk deployment, use `ModelReference` objects. `ModelReference`s are code-defined objects which should be included in your Chalk code: they are used to connect model versions to model deployments.
 
 ```python
+from chalk.features import features, _
 from chalk.ml import ModelReference
 from chalk import functions as F
-from chalk.features import features
+from chalk import make_model_resolver
 
 # Load a model into the deployment
 churn_risk = ModelReference.from_version(
@@ -135,17 +143,20 @@ churn_risk = ModelReference.from_version(
     version=2,
 )
 
-# Reference the loaded model in inference
 @features
 class User:
     id: int
     age: int
     income: float
-    churn_risk: float = F.inference(
-        churn_risk, inputs=[
-        _.age,
-        _.income
-    ])
+
+    churn_risk: float # define the prediction feature
+
+resolver = make_model_resolver(
+    name="churn_model_prediction",
+    model=churn_risk,
+    inputs=[User.age, User.income],
+    output=[User.churn_risk],
+)
 ```
 
 Once the model is deployed, metrics for the model will be tracked in the Chalk dashboard, including feature distributions and
@@ -158,9 +169,10 @@ performance over time.
 Once models are registered and loaded into your deployment, you can run inference on your models:
 
 ```python
+from chalk.features import feature, features, _
 from chalk.ml import ModelReference
 from chalk import functions as F
-from datetime import datetime
+from chalk import make_model_resolver
 
 # Load a model into the deployment using alias
 risk_model_latest = ModelReference.from_alias(
@@ -180,10 +192,19 @@ class User:
     id: int
     age: int
     income: float
-    risk_score: float = feature(versions={
-        1: feature(description="Version 1.0.0", expression=F.inference(risk_model_v1_0_0, inputs=[_.age, 10, _.income]))
-        2: feature(description="Latest model version", expression=F.inference(risk_model_latest, inputs=[_.age, 10, _.income])),
-    })
+    risk_score: float = feature(versions=2) 
+
+make_model_resolver(
+    name="user_risk_score_v1_prediction",
+    input=[User.age, User.income],
+    output=[User.risk_score@1]
+)
+
+make_model_resolver(
+    name="user_risk_score_v2_prediction",
+    input=[User.age, User.income],
+    output=[User.risk_score@2]
+)
 ```
 
 ---

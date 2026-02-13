@@ -7,6 +7,8 @@ Snowflake is a fantastic database for analytics. Snowflake is not a fantastic da
 traffic when latency or request volume is a concern. Chalk's reverse-ETL functionality makes it trivial to make
 Snowflake data available for latency-sensitive production use-cases.
 
+---
+
 ## Schema Setup
 
 First, we'll need to set up a Snowflake schema. If you already have one, you can skip this step. Here, we'll define
@@ -42,6 +44,8 @@ Note the two parameters to `@features`.
 - `max_staleness` tells Chalk to cache all computed `BusinessFacts` features for one day.
 - `etl_offline_to_online` tells Chalk to reverse-ETL data from `@offline` resolvers into the online store.
 
+---
+
 ## Loading the data
 
 Finally, we'll define a SQL resolver that loads this data into Chalk's online store:
@@ -66,6 +70,8 @@ chalk trigger --resolver business_facts
 ```
 
 or you can trigger the resolver via the web interface with the "Run" button.
+
+---
 
 ## Querying the data
 

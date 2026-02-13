@@ -5,6 +5,7 @@ metaDescription: 'Chalk is the data platform for inference that enables innovati
 titleHidden: true
 hideToc: true
 published: true
+llms: short
 ---
 
 import { DocsHero } from '@/components/home/DocsHero'
@@ -111,7 +112,7 @@ class User:
 
 Chalk queries allow you to explicitly express the features you want returned:
 
-```shell
+```bash
 chalk query --in user.id=241 --out name_match --out transactions
 ```
 
@@ -210,7 +211,7 @@ Add a caching policy with one line of code in our feature definition:
 
 After defining pipelines, deploy features to a branch in < 100ms with:
 
-```shell
+```bash
 chalk apply --branch
 ```
 
@@ -224,7 +225,7 @@ Chalk scans through resolvers, lints features, and deploys them to this separate
 Chalk automatically detects and uses your current Git branch name without requiring you to explicitly specify it.
 Query for features against this branch to test changes independently before merging them into the production environment.
 
-```shell
+```bash
 chalk query --branch --in user.id=47
 ```
 
@@ -253,7 +254,7 @@ Environment: devx
 
 Once you validate the deployment, promote it to production with a single CLI command and no downtime (blue-green deployments).
 
-```shell
+```bash
 chalk apply
 ```
 
@@ -362,7 +363,7 @@ class Transaction:
     receipt: Receipt
 
     llm: P.PromptResponse = P.completion(
-        model="gpt-4o-mini-2024-07-18",
+        model="gpt-5.1-2025-11-13",
         messages=[P.message(
                 role="user",
                 content=F.jinja(

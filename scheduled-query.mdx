@@ -62,8 +62,8 @@ ScheduledQuery(
     name="enrich-transactions",
     schedule="0 0 * * *",
     output=[Transaction.clean_name, Transaction.category],
-    online=True,
-    offline=True,
+    store_online=True,
+    store_offline=True,
     incremental_resolvers="transactions",
 )
 ```
@@ -86,3 +86,13 @@ Additionally, you can export metrics about scheduled query executions to your ob
 The `cron_run_request` metric (see [metrics export documentation](/docs/metricexport)) tracks the number of times a scheduled
 query was executed, with tags for success/failure status. This allows you to monitor scheduled query reliability
 and alert when executions fall below expected thresholds in your preferred monitoring system.
+
+---
+
+## Resources
+
+By default, scheduled query runs are picked up by the Job Queue Server. To see your
+Job Queue Server resource configurations, check the `Job Queue Server` service under
+`Resources` in the dashboard. To customize the resources allocated to runs for a specific
+scheduled query, you can set the resource configuration under the `Scheduled Query Configuration`
+tab in the dashboard.

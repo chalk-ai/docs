@@ -4,6 +4,7 @@ metaTitle: FAQs
 metaDescription: A collection of questions frequently asked by customers.
 description: A collection of questions frequently asked by customers
 published: true
+llms: short
 ---
 
 import {RBACDiagram} from '@/components/ArchitectureDiagram'
@@ -22,11 +23,11 @@ and we will be happy to help!
 ### What is the difference between the online store and the offline store?
 
 The online store is intended to store features for low-latency retrieval in online query.
-Typically, the online store is implemented using Redis, DynamoDB, or (in some cases) Postgres.
+Typically, the online store is implemented using Redis or DynamoDB.
 
 The offline store is intended to store historical logs of all previously ingested or computed
 features. It is used to compute large historical training sets. It is typically implemented using
-BigQuery, Snowflake, or other data warehouses.
+BigQuery, Snowflake, Iceberg, or other data warehouses.
 
 ### Can we do RBAC (Role Based Access Control) within Chalk?
 
@@ -152,23 +153,16 @@ if need "customer" and "business" features for a transaction fraud model, you mi
 ```py
 @features
 class AuthQuery:
+    # A unique ID that represents this interaction; may be randomly generated if you have
+    # no natural ID in your system.
     id: str
-    """
-    A unique ID that represents this interaction; may be randomly generated if you have
-    no natural ID in your system.
-    """
 
-    customer_id: str
-    customer: Customer = has_one(lambda: Customer.id == AuthQuery.customer_id)
-    """
-    A reference to the relevant customer.
-    """
-
-    business_id: str
-    business: Business = has_one(lambda: Business.id == AuthQuery.business_id)
-    """
-    A reference to the relevant business.
-    """
+    # A reference to the relevant customer.
+    customer_id: "Customer.id"
+    customer: Customer
+    # A reference to the relevant business.
+    business_id: "Business.id"
+    business: Business
 ```
 
 Then, queries can be submitted using:
@@ -176,9 +170,14 @@ Then, queries can be submitted using:
 ```py
 ChalkClient().query(
     input={
-        AuthQuery.id: ..., AuthQuery.customer_id: ..., AuthQuery.business_id: ...
+        AuthQuery.id: ...,
+        AuthQuery.customer_id: ...,
+        AuthQuery.business_id: ...,
     },
-    output=[AuthQuery.customer, AuthQuery.business]
+    output=[
+        AuthQuery.customer, 
+        AuthQuery.business,
+    ]
 )
 ```
 

@@ -12,6 +12,8 @@ trigger tests which verify that code changes have not caused feature distributio
 
 In this section, we'll walk through the process of creating snapshot tests using Pytest and GitHub Actions.
 
+---
+
 ## Overview
 
 To set up snapshot testing, we'll write a couple Pytest fixtures, a test, and a helper script. The fixtures will pull
@@ -47,6 +49,8 @@ Though this is a rather trivial example, lets set some expectations for our feat
 - We expect a User's birthday to never change,
 - We expect a User's full_name to change in a maximum of 0.001% of our users (1/100,000),
 - We expect a User's age to change by a maximum amount of 2 years (in reality, average age will increase by precisely the amount of time between invocations of our snapshot test).
+
+---
 
 ## Writing the Test and Helper Script
 
@@ -92,7 +96,7 @@ Next, we will use those snapshots in a test:
 ```python
 # Note, we skip this test locally since we only want to run it in CI
 @pytest.mark.skipif(os.getenv("CI") is None, reason="Skipping on local machine")
-def test_snapshot__user_feature_drift(snaphot_dfs: tuple[pd.DataFrame, pd.DataFrame]):
+def test_snapshot__user_feature_drift(snapshot_dfs: tuple[pd.DataFrame, pd.DataFrame]):
     main_snapshot, branch_snapshot = snapshot_dfs
 
     # Birthdays should not change
@@ -113,12 +117,14 @@ import os
 from chalk.client import ChalkClient
 
 branch = os.environ["GITHUB_REF_NAME"]
-client = ChalkeClient(branch=branch)
+client = ChalkClient(branch=branch)
 
 dataset = client.get_dataset(dataset_name="user_snapshot")
 
-dataset.recompute_features(branch=branch, wait=True, run_asynchrounously=True)
+dataset.recompute_features(branch=branch, wait=True, run_asynchronously=True)
 ```
+
+---
 
 ## Writing the GitHub Action
 
@@ -195,6 +201,8 @@ jobs:
         run: python3 scripts/update_user_snapshot.py
 ```
 
+---
+
 ## Bootstrapping the GitHub Action
 
 Before this works fully, we need to bootstrap the snapshot test. If you tried
@@ -210,7 +218,7 @@ client.offline_query(
      # This can be however many you want to include in your snapshot
     max_samples=200_000,
     recompute_features=True,
-    run_asynchrounously=True,
+    run_asynchronously=True,
     dataset_name="user_snapshot"
 )
 ```

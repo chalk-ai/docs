@@ -1,0 +1,103 @@
+---
+title: Example Chalk SQL Workflows
+metaDescription: 'A description of the various ways to run Chalk SQL queries.'
+published: true
+---
+
+This page summarizes some workflows that are commonly used in Chalk SQL.
+
+
+## Introspecting datasets
+
+In Chalk SQL, you can query named datasets within the `chalk.datasets` schema. Note that only datasets created within
+the last 60 days will be available to Chalk SQL.
+
+```py
+from chalk.client import ChalkClient
+client = ChalkClient()
+client.offline_query(
+    input={
+        "user.id": [i for i in range(1, 10)]
+    },
+    output=["user.name", "user.sum_amt_txns", "user.cnt_txns"],
+    recompute_features=True,
+    dataset_name="my_users_dataset"
+).get_data_as_polars()
+```
+
+```sql
+SELECT
+    "user.id" AS id,
+    "user.sum_txns" / "user.cnt_txns" AS avg_txn_amt,
+    "__ts__" AS created_at
+FROM chalk.datasets.my_user_dataset
+WHERE "user.id" >= 5 AND "user.id" <= 8;
+```
+
+
+## Federating SQL over multiple data sources
+
+If you define named data sources in your Chalk environment, you can reference schemas and tables within them in Chalk
+SQL queries. This means Chalk SQL can be used to create queries that join across these data sources.
+
+```py
+# In your Chalk project
+from chalk.sql import PostgreSQLSource, BigquerySource
+
+pg = PostgreSQLSource(name="my_postgres")
+bq = PostgreSQLSource(name="my_bigquery")
+```
+
+```sql
+WITH txn_sum AS (
+    SELECT
+        user_id,
+        SUM(amount) AS total
+    FROM my_bigquery.my_dataset.transactions  -- Table "transactions" in dataset "my_dataset"
+    GROUP BY user_id
+)
+SELECT
+    u.id AS user_id,
+    u.name AS user_name,
+    t.total AS user_spending
+FROM my_postgres.my_schema.users u -- Table "users" in schema "my_schema"
+JOIN txn_sum t
+ON u.id = t.user_id;
+```
+
+
+## Views into online and offline query results
+
+When making queries to Chalk with persistence turned on, these values will be ingested into the offline store, where
+they can be re-used for analytical queries. Chalk SQL provides many useful views into the offline store.
+
+The query log, which is accessible via the `chalk.query_log.data` table, consists of information about each query
+
+It can be hard to determine the table in the table within in the offline store that corresponds
+to the results of the query. Chalk SQL provides a table-valued function `query_values_from_operation_ids()`
+that performs this resolution in-house.
+
+```py
+from chalk.client import ChalkClient
+client = ChalkClient()
+result = client.query_bulk(
+    input={
+        "user.id": [i for i in range(1, 100)]
+    },
+    output=["user.name", "user.favorite_color"],
+)
+# In the UI or in the query meta information, an operation id will be set.
+```
+
+```sql
+SELECT *
+FROM query_values_from_operation_ids('c012345678901234567890123')
+WHERE "user.id" = 1
+```
+
+You can also directly query the offline store via the `offline_store` catalog.
+
+```sql
+SELECT *
+FROM offline_store.schema_name.feat_0123456789;
+```

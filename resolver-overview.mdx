@@ -1,13 +1,14 @@
 ---
-title: Resolvers overview
+title: Resolvers Overview
 shortTitle: Overview
 metaTitle: Resolvers - Create resolvers to compute feature values.
 metaDescription: Resolvers define how your feature values are computed. Resolvers can be written in Python or SQL.
 description: Create resolvers to compute feature values.
 published: true
+llms: short
 ---
 
-import {TipInfo} from '@/components/Tip'
+import { TipInfo } from '@/components/Tip'
 
 ---
 
@@ -16,8 +17,8 @@ their relationships, and their properties), resolvers define how your feature va
 are computed.
 
 <TipInfo>
-    If you haven't read the section on feature classes, you are strongly encouraged to do so.
-    Understanding feature classes will help you understand resolvers.
+  If you haven't read the section on feature classes, you are strongly encouraged to do so.
+  Understanding feature classes will help you understand resolvers.
 </TipInfo>
 
 Resolvers have four main components: inputs, outputs, code, and run conditions.
@@ -39,9 +40,12 @@ about what this means in the [next section where we talk about run conditions](/
 but for now it is important to note that: 1). every resolver is either online or offline, and 2). different
 resolvers run depending on how you are requesting data from Chalk.
 
+---
+
 ## Writing Resolvers
 
 Chalk allows you to write resolvers in three different ways:
+
 - as SQL queries, with comments specifying data sources and output features.
 - as python functions, with type annotations specifying the input and output features.
 - as an [expression](/docs/expression), inline in your feature definitions.
@@ -118,6 +122,7 @@ def get_is_runner(
     return num_athletic_hobbies / len(hobbies)
 ```
 
+---
 
 ## When Do Resolvers Run
 
@@ -130,9 +135,9 @@ only in response to a request for the features that they are responsible for com
 practice, this means that they run in response to "queries".
 
 <TipInfo>
-    Resolvers can also be run on a schedule or triggered. Either approach causes them
-    to 1). execute, in batch-job fashion, across all data they find in your upstream
-    data sources, and 2). write computed features to your offline store.
+  Resolvers can also be run on a schedule or triggered. Either approach causes them to 1). execute,
+  in batch-job fashion, across all data they find in your upstream data sources, and 2). write
+  computed features to your offline store.
 </TipInfo>
 
 A query is just a request for data. Chalk takes a query and determines which resolvers it
