@@ -5,6 +5,7 @@ metaTitle: Queries - Fetch feature values via queries.
 metaDescription: Chalk computes features through online queries, which return real-time data as fast as possible, and offline queries, which are best for batch processing large amounts of data.
 description: Fetch feature values via queries.
 published: true
+llms: short
 ---
 
 ---
@@ -21,6 +22,8 @@ advantage of caching and distributed execution.
 The latter use cases are accomplished through **offline queries** which use
 the offline store and can return multiple instances of a feature class
 for multiple primary keys or timepoints.
+
+---
 
 ## Running queries
 
@@ -91,6 +94,8 @@ pipelines like Airflow). Specific queries can also be scheduled with
 [`ScheduledQuery`](/api-docs#ScheduledQuery). Triggers and schedules are useful for pulling data from "slow" data
 sources into your offline and online store.
 
+---
+
 ## Query side effects
 
 Chalk queries can also write data. This is an essential part of
@@ -104,6 +109,8 @@ Though not the default, offline queries can write data to both the offline store
 [`etl_offline_to_online`](/api-docs#features.etl_offline_to_online). This can be useful when backfilling data from slow
 data sources or when performing expensive feature computation that would otherwise significantly impact the latency of
 your online queries.
+
+---
 
 ## Online and offline query differences
 

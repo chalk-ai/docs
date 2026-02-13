@@ -23,13 +23,15 @@ performance, without compromising on flexibility, with just a single line of cod
 ```py
 from chalk.features import features, Vector, _
 from chalk import DataFrame, Windowed, windowed
+from datetime import datetime
 
 @features
 class Transaction:
     id: int
     amount: float
-    category: str
+    category: int
     user_id: "User.id"
+    timestamp: datetime
     embedding: Vector[384]
 
 @features
@@ -39,22 +41,34 @@ class User:
     total_transaction_amount: Windowed[float] = windowed(
         "1d", "7d", "30d",
         materialization={"bucket_duration": "1d"},
-        expression=_.transactions[_.amount].sum(),
+        expression=_.transactions[
+            _.amount,
+            _.timestamp <= _.chalk_now,
+            _.timestamp > _.chalk_window
+        ].sum(),
     )
-    most_active_users: Windowed[list[int]] = windowed(
+    most_active_categories: Windowed[list[int]] = windowed(
         "30d", "60d", "all",
         materialization={"bucket_duration": "1h"},
         # The approximate top 10 categories that the user has
         # spent at in each of the windowed buckets.
-        expression=_.transactions[_.category].approx_top_k(k=10)
+        expression=_.transactions[
+            _.category,
+            _.timestamp <= _.chalk_now,
+            _.timestamp > _.chalk_window
+        ].approx_top_k(k=10)
     )
     avg_embedding: Windowed[Vector[384]] = windowed(
         "30d", "60d", "all",
         materialization={"bucket_duration": "1h"},
         # Vector mean will be computed as the element-wise
         # mean for each component of the vector
-        expression=_.transactions[_.embedding].mean(),
-        default=Vector(np.zeros(384, dtype=np.float16)),
+        expression=_.transactions[
+            _.embedding,
+            _.timestamp <= _.chalk_now,
+            _.timestamp > _.chalk_window
+        ].mean(),
+        default=[0.0] * 384
     )
 ```
 
@@ -74,7 +88,8 @@ Buckets that become stale i.e. no longer relevant to any of your active time win
 For each bucket, Chalk stores the minimal required data to compute the aggregation, and at query time, the aggregation
 is computed by merging the partial aggregate states for all buckets within the requested time window.
 
-Chalk aligns buckets on Unix epoch (ignoring leap seconds).
+Chalk aligns buckets on Unix epoch (ignoring leap seconds) by default. However, if you would like to customize 
+the bucket starts, you can use the `bucket_start` field on the `MaterializationWindowConfig` in your definition.
 When serving windowed queries, Chalk uses all buckets containing any overlap with the requested time window.
 
 ![Materialized Windowed Aggregations](/img/mat_windowed_aggs/mat_window_agg.png)
@@ -106,13 +121,15 @@ These aggregations can be applied to DataFrame features that represent a [has-ma
 between two feature classes. Typically, these joins can be defined using a join key, like in our previous example:
 
 ```py
-from chalk.features import features
+from chalk.features import features, _
 from chalk import DataFrame, Windowed, windowed
+from datetime import datetime
 
 @features
 class Transaction:
     id: int
     amount: float
+    timestamp: datetime
     user_id: "User.id"
 
 @features
@@ -123,7 +140,11 @@ class User:
         "1d", "7d", "30d",
         # materialize your features in a single line
         materialization={"bucket_duration": "1d"},
-        expression=_.transactions[_.amount].sum(),
+        expression=_.transactions[
+            _.amount,
+            _.timestamp <= _.chalk_now,
+            _.timestamp > _.chalk_window
+        ].sum(),
     )
 
 ```
@@ -131,14 +152,16 @@ class User:
 Materialized aggregations can also be applied to DataFrame features that are defined using a composite join key.
 
 ```py
-from chalk.features import features, has_many
+from chalk.features import features, has_many, _
 from chalk import DataFrame, Windowed, windowed
+from datetime import datetime
 
 @features
 class Transaction:
     id: int
     bank: str
     user_id: str
+    timestamp: datetime
 
     amount: float
 
@@ -151,19 +174,31 @@ class User:
         "1d", "7d", "30d",
         # materialize your features in a single line
         materialization={"bucket_duration": "1d"},
-        expression=_.transactions[_.amount].sum(),
+        expression=_.transactions[
+            _.amount,
+            _.timestamp <= _.chalk_now,
+            _.timestamp > _.chalk_window
+        ].sum(),
     )
 
     top_5_bank_amounts: Windowed[list[str]] = windowed(
         "7d", "14d",
         materialization={"bucket_duration": "1d"},
-        expression=_.transactions[_.bank].max_by_n(_.amount, 5),
+        expression=_.transactions[
+            _.bank,
+            _.timestamp <= _.chalk_now,
+            _.timestamp > _.chalk_window
+        ].max_by_n(_.amount, 5),
     )
 
     lowest_5_bank_amounts: Windowed[list[str]] = windowed(
         "7d", "14d",
         materialization={"bucket_duration": "1d"},
-        expression=_.transactions[_.bank].min_by_n(_.amount, 5),
+        expression=_.transactions[
+            _.bank,
+            _.timestamp <= _.chalk_now,
+            _.timestamp > _.chalk_window
+        ].min_by_n(_.amount, 5),
     )
 
 
@@ -208,23 +243,25 @@ If you want to use one bucket size for all of your window intervals, you can jus
 If your window intervals have a wide discrepancy (say, 1d and 365d), you can use the `bucket_durations` parameter to
 explicitly map bucket durations to each window interval. Selecting the right bucket duration is a tradeoff between
 accuracy and storage. Shorter bucket durations will yield more accurate results, but will also require more storage.
-To optimize for accuracy given a storage constraint, you can compute the approximate storage costs by computing the 
-number of buckets needed for your materialized aggregation (for a materialized aggregation, buckets of the same size 
-will be reused across all relevant window interval calculations, but each distinct bucket duration requires a distinct 
-set of buckets), and then computing the storage per bucket. The storage used per bucket is the sum of the size of the online 
-storage key representation for the primary key, as well as the size of the bucket state (which ranges from approximately 
-9 bytes for simple aggregations such as sum, min, and max, 18 bytes for mean, and then approximately 50-200 bytes for 
-more complex aggregations like approx_count_distinct). For more details on determining the tradeoff between accuracy 
-and storage space, please reach out to the Chalk team. 
+To optimize for accuracy given a storage constraint, you can compute the approximate storage costs by computing the
+number of buckets needed for your materialized aggregation (for a materialized aggregation, buckets of the same size
+will be reused across all relevant window interval calculations, but each distinct bucket duration requires a distinct
+set of buckets), and then computing the storage per bucket. The storage used per bucket is the sum of the size of the online
+storage key representation for the primary key, as well as the size of the bucket state (which ranges from approximately
+9 bytes for simple aggregations such as sum, min, and max, 18 bytes for mean, and then approximately 50-200 bytes for
+more complex aggregations like approx_count_distinct). For more details on determining the tradeoff between accuracy
+and storage space, please reach out to the Chalk team.
 
-When you query for a specific window_interval, Chalk will aggregate over all the complete buckets that intersect with
-the window interval. If a bucket is only partially filled, it will not be included in that aggregation. If you have a
-continuous buffer duration configured, then if the continuous buffer duration does not intersect with a filled bucket,
-then online resolvers will bs used to compute the aggregation for the buffer duration time window. If the continuous
+When you query for a specific window_interval, Chalk will aggregate over all buckets that intersect with the window interval
+If you are backfilling the materialized buckets on a schedule, and would like to directly query for the leading edge of data
+from a different source, then you can set a continuous buffer duration, which will run online resolvers to compute the aggregation
+for the buffer duration time window. If the continuous
 buffer duration intersects with a filled bucket that starts at time `t`, then Chalk will run online resolvers to
 compute the aggregation from `t` to the current time. Chalk will only ever include filled buckets in the aggregation
 computation.
 
+
+---
 
 ## Backfilling data and managing aggregation
 
@@ -239,13 +276,15 @@ You can control how your aggregations are backfilled by:
 ### Cron Schedule Expression
 
 ```python
-from chalk.features import features
+from chalk.features import features, _
 from chalk import DataFrame, Windowed, windowed
+from datetime import datetime
 
 @features
 class Transaction:
     id: int
     amount: float
+    timestamp: datetime
     user_id: "User.id"
 
 @features
@@ -259,7 +298,11 @@ class User:
             "backfill_schedule": "0 0 * * *",
             "continuous_buffer_duration": "36h",
         },
-        expression=_.transactions[_.amount].sum(),
+        expression=_.transactions[
+            _.amount,
+            _.timestamp <= _.chalk_now,
+            _.timestamp > _.chalk_window
+        ].sum(),
     )
 ```
 
@@ -321,3 +364,16 @@ The `Dependent Features` column lists the features that are served by the given 
 
 For information on updating materialized aggregations with streaming data, see the example in the streaming
 documentation [here](/docs/windowed-streaming).
+
+### Materialization with Offline Queries 
+
+The aggregated buckets in the online store can currently only be accessed via an online query. 
+By default, if you specify a materialized windowed aggregation as output in an offline query, the engine will run resolvers,
+with a preference for offline resolvers over online resolvers, to compute the expression in the materialized windowed 
+aggregation. There are also a few configurations that you can use to optimize your offline queries, or reproduce the 
+results of online queries for materialized aggregations. If you set `align_offline_chalk_window_with_materialization`, 
+this means that the lower bound of each query will round down to the next bucket boundary, to perfectly simulate the 
+results of the online query. To optimize offline queries for the materialized aggregation features, you can set 
+`use_materialized_offline_query` which will bucket the input times and events, and aggregate across all complete buckets 
+that intersect with the window interval. 
+

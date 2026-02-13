@@ -1,7 +1,8 @@
 ---
 title: Iceberg Setup Requirements
 description: Setting up Iceberg as your offline store.
-published: true 
+published: true
+llms: hidden
 ---
 
 Chalk's feature platform enables
@@ -79,6 +80,8 @@ that you provided in the Required Information section above (typically
 `s3://chalk-{organization}-data-bucket`). The database within the Glue catalog should 
 be named `offline-store`. This ensures that Chalk can properly write and
 manage your offline store data within your designated storage location.
+
+---
 
 ## Querying against the Iceberg Offline Store
 

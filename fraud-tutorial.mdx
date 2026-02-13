@@ -39,11 +39,11 @@ class User:
 
 <TipInfo>
   Features are the abstract underlying attributes of your data.
-  In the example above `id`, `birthday`, `name`, `email`, `username`, `age`, and `is_adult` are all features.
+  In the example above <code>id</code>, <code>birthday</code>, <code>name</code>, <code>email</code>, <code>username</code>, <code>age</code>, and <code>is_adult</code> are all features.
   Features are grouped together (namespaced) in what are called feature
   classes.
-  For instance, the `User` class is a **feature class** (also sometimes referred to as a **feature set**).
-  Specific instances of a feature class are **feature class instances**.
+  For instance, the <code>User</code> class is a <strong>feature class</strong> (also sometimes referred to as a <strong>feature set</strong>).
+  Specific instances of a feature class are <strong>feature class instances</strong>.
 </TipInfo>
 
 Note, you define your features before defining how they will be computed.
@@ -75,7 +75,7 @@ resolved from the online store.
 
 <TipInfo>
   We'll talk more about deploying code to Chalk later, but, if you'd like to, you're welcome to
-  skip ahead to get a better sense of [deploying code to Chalk] and [running queries].
+  skip ahead to get a better sense of <a href="#deploying">deploying code to Chalk</a> and <a href="#querying">running queries</a>.
 </TipInfo>
 
 This should not be surprising.
@@ -211,6 +211,8 @@ Chalk handles tracking your features for [temporal consistency](/docs/temporal-c
 scaling your feature pipelines.
 
 Alright, enough with the intro. Let's get started building!
+
+---
 
 ## Fraud Detection Pipeline
 
@@ -475,7 +477,7 @@ postgres = PostgreSQLSource(name="snowflake")
 
 Now that we've defined our data sources, we can use them to create root SQL resolvers.
 
---
+---
 
 ## Online data
 
@@ -509,14 +511,14 @@ If the names match after stripping underscores and lower-casing, the select targ
 In the example above, we aliased the `full_name` column to `name`, so it will be mapped to the `name` attribute on the `User` feature class.
 
 Chalk validates your SQL file resolvers when you run [`chalk apply`](/cli/apply).
-If you want to validate your code without deploying, you can run the `chalk lint` command.
+If you want to validate your code without deploying, you can run the [`chalk lint`](/cli/lint) command.
 
 The `source` key (`-- source: postgres`) tells Chalk which [integration](/docs/integrations) to use to connect to the database.
 
 Other comments in the SQL file resolver are indexed by Chalk and can be searched in the [Chalk dashboard](https://chalk.ai/projects).
 In the example resolver above, the comment `get users from postgres` becomes the description of the resolver in the dashboard.
 
-Lets also add our `get_accounts`  and `get_transactions` SQL file resolvers:
+Let's also add our `get_accounts`  and `get_transactions` SQL file resolvers:
 
 ```sql src/get_accounts.chalk.sql
 -- get accounts from postgres.
@@ -547,7 +549,7 @@ from transactions
 ## Deploying!
 
 Now that we've written a few resolvers, we can deploy our feature pipeline and query our data in realtime.
-To deploy you'll want to run `chalk apply`.
+To deploy you'll want to run [`chalk apply`](/cli/apply).
 You will be shown the changes that you've made since your last deployment and prompted for confirmation
 
 ```bash
@@ -579,7 +581,7 @@ Added Features
   Would you like to deploy?  [y/n]
 ```
 
-If you accept, chalk will build and deploy you're new code. Once that's done, you can start querying your date in realtime!
+If you accept, chalk will build and deploy your new code. Once that's done, you can start querying your data in realtime!
 
 ---
 
@@ -982,6 +984,8 @@ Note, this allows really precise and granular trade-offs between staleness, late
 In addition, by specifying an incremental resolver, we are telling Chalk to remember the high ingest time from the previous run and only pull data that is fresher than that high water mark.
 Again Chalk is processing the minimum amount of information it requires to calculate the `average_time_between_transactions_30d`.
 
+---
+
 ## API Calls
 
 Any Python function can be used as a resolver.
@@ -1036,6 +1040,8 @@ We use the [`Features`](/api-docs#Features) type to indicate which feature we ex
 Also note that we are initializing the `User` class with only the features that we want to update.
 This partial initialization is the primary difference between Python's [`@dataclass`](https://docs.python.org/3/library/dataclasses.html) and Chalk's [`@features`](/api-docs#features).
 
+---
+
 ## Setting up a Materialized Windowed Aggregation
 
 When defining aggregations, it is often useful to compute a [windowed aggregation](/docs/aggregations) to define the
@@ -1081,8 +1087,8 @@ to define more performant aggregations over high-cardinality datasets, such as t
 aggregation could be computationally expensive by materializing the aggregations in buckets.
 
 Because the materialized windowed aggregation relies on the materialized buckets in the online store, and branch
-deployments do not persist data to the online store, we would need to run a full deploy with `chalk apply` to use
-this new feature. After running a `chalk apply`, we can run `chalk aggregate backfill --feature account.num_transactions`
+deployments do not persist data to the online store, we would need to run a full deploy with [`chalk apply`](/cli/apply) to use
+this new feature. After running a [`chalk apply`](/cli/apply), we can run [`chalk aggregate backfill --feature account.num_transactions`](/cli/aggregate_backfill)
 to populate the buckets, and then we can query the feature as normal.
 
 In production, you could also set up a schedule to periodically backfill the buckets, or stream the data into the

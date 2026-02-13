@@ -2,6 +2,7 @@
 title: Kubernetes Resources Overview
 description: A description of each kind of Kubernetes resource used by Chalk
 published: true
+llms: hidden
 ---
 
 import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
@@ -149,6 +150,8 @@ Error logs from this component can be useful for diagnosing issues with query pe
 do immediately impact online query performance, but can impact the ability to generate training sets or certain caching
 workflows.
 
+---
+
 ## Concrete Scaling Choices
 
 ### Production Environments
@@ -164,6 +167,8 @@ In production environments, we recommend the following scaling choices:
 - `streaming`:
   - use >= 1 replica, with a low cpu request (i.e. 1-2)
   - set a cpu target of 80%
+
+---
 
 ## Performance Under Load
 
@@ -211,6 +216,8 @@ these environment variables to establish concrete rate limits:
 Typically, we recommend that using the `qps` rate limiting option for standard workloads, and `concurrency` for
 latency-sensitive workloads.
 
+---
+
 ## Node pools:
 
 - Configure isolated node pools for online query workloads and offline query workloads
@@ -218,6 +225,8 @@ latency-sensitive workloads.
 
 Node pool isolation means that you can run offline queries concurrently with latency sensitive workloads without
 impacting the performance of the online query workload.
+
+---
 
 ## Select a machine type:
 
@@ -242,6 +251,8 @@ workloads on a nodepool called `chalk-c3d-standard-4-nodepool`, use the node sel
 
 GKE nodepools cannot currently be configured in the Chalk dashboard, so they must be configured via the GCP console.
 
+
+---
 
 ## Advanced configuration via JSON
 

@@ -2,6 +2,7 @@
 title: Snowflake
 description: Integrate with Snowflake.
 published: true
+llms: hidden
 ---
 
 import { getEnvironmentVariableText, getNamedIntegrationText } from "@/components/NamedIntegration";
@@ -12,6 +13,8 @@ import { AddSnowflakeIntegration } from '@/components/shared/snowflake'
 Chalk supports [Snowflake](https://www.snowflake.com/) as a [SQL source](/docs/sql).
 You can configure the Snowflake-specific options using the `SnowflakeSource.__init__` args.
 Alternately, you can configure the source through your dashboard.
+
+---
 
 ## From the dashboard
 
@@ -55,6 +58,8 @@ SELECT id, email, campaign_status FROM users
 ```
 
 <span>{getEnvironmentVariableText("RISK", "SNOWSQL_SCHEMA")}</span>
+
+---
 
 ## Configuring Your Snowflake Integration
 

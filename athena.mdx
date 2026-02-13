@@ -2,6 +2,7 @@
 title: AWS Athena
 description: Integrate with Athena
 published: true
+llms: hidden
 ---
 
 import { AddAthenaIntegration } from '@/components/shared/athena';
@@ -12,12 +13,16 @@ import { getNamedIntegrationText } from "@/components/NamedIntegration";
 Chalk supports [AWS Athena](https://aws.amazon.com/athena/) as a [SQL source](/docs/sql). This allows users to load data from
 AWS Glue and other AWS data sources (Hive, DocumentDB, Iceberg, etc.) directly into Chalk features.
 
+---
+
 ## Adding Athena
 
 In the settings page, you'll find a form for adding your credentials. Note that we will perform data unload operations
 to the provided staging directory in S3: these intermediate results will appear under the `chalk-unload` folder.
 
 <AddAthenaIntegration onSubmit={(e) => e.preventDefault()} />
+
+---
 
 ## Integrations Setup
 

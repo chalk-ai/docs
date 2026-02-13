@@ -2,6 +2,7 @@
 title: AWS Cloud Deployment IAM Requirements
 description: Deploying Chalk to your AWS account.
 published: true
+llms: hidden
 ---
 
 import { ServiceDiagramSwitcher } from '@/components/ArchitectureDiagram'
@@ -46,9 +47,11 @@ storage)
 - Online storage ([RDS](https://aws.amazon.com/rds/), or [Elasticache](https://aws.amazon.com/elasticache/), or [Dynamo](https://aws.amazon.com/dynamodb/))
 - Offline storage (typically Snowflake, Iceberg, or Redshift)
 
+---
+
 ## Setup Instructions
 
-We typically recommend the following steps for enabling Chalk to manage AWS
+We typically recommend the following steps for enabling Chalk to provision and manage AWS
 infrastructure in your cloud account:
 
 - Create a new account in your AWS organization.
@@ -216,7 +219,97 @@ configurations such as autoscaling, the Chalk team can use an execution role tha
 resources that Chalk manages. It is also possible to restrict the management policy described above using
 [IAM conditions](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html).
 However, in order for the Chalk team to provide the best possible support, we recommend collaborating to
-scope the permissions appropriately. 
+scope the permissions appropriately.
+
+The IAM policy for the execution role is as follows.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ChalkCorePermissions",
+      "Effect": "Allow",
+      "Action": [
+        "eks:*",
+        "ecr:*",
+        "cloudwatch:*",
+        "ec2:*",
+        "secretsmanager:*",
+        "dynamodb:*",
+        "kms:*",
+        "s3:*",
+        "logs:*",
+        "kafka:*",
+        "elasticloadbalancing:*",
+        "sqs:*",
+        "rds:*",
+        "elasticache:*",
+        "acm:*",
+        "application-autoscaling:*",
+        "glue:*"
+      ],
+      "Resource": [
+        "arn:aws:eks:${AWS_REGION}:${AWS_ACCOUNT_ID}:*",
+        "arn:aws:ecr:*",
+        "arn:aws:cloudwatch:${AWS_REGION}:${AWS_ACCOUNT_ID}:chalk*",
+        "arn:aws:ec2:${AWS_REGION}:${AWS_ACCOUNT_ID}:*",
+        "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:*",
+        "arn:aws:dynamodb:${AWS_REGION}:${AWS_ACCOUNT_ID}:table/chalk*",
+        "arn:aws:kms:${AWS_REGION}:${AWS_ACCOUNT_ID}:*",
+        "arn:aws:s3:::chalk-*",
+        "arn:aws:logs:${AWS_REGION}:${AWS_ACCOUNT_ID}:log-group:*",
+        "arn:aws:kafka:${AWS_REGION}:${AWS_ACCOUNT_ID}:cluster/chalk*",
+        "arn:aws:kafka:${AWS_REGION}:${AWS_ACCOUNT_ID}:configuration/chalk*",
+        "arn:aws:elasticloadbalancing:${AWS_REGION}:${AWS_ACCOUNT_ID}:k8s-*",
+        "arn:aws:rds:${AWS_REGION}:${AWS_ACCOUNT_ID}:*:chalk*",
+        "arn:aws:sqs:${AWS_REGION}:${AWS_ACCOUNT_ID}:chalk*",
+        "arn:aws:elasticache:${AWS_REGION}:${AWS_ACCOUNT_ID}:*:chalk*",
+        "arn:aws:acm:${AWS_REGION}:${AWS_ACCOUNT_ID}:*",
+        "arn:aws:application-autoscaling:${AWS_REGION}:${AWS_ACCOUNT_ID}:*",
+        "arn:aws:glue:${AWS_REGION}:${AWS_ACCOUNT_ID}:*"
+      ]
+    },
+    {
+      "Sid": "ChalkIAMReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion",
+        "iam:GetRole",
+        "iam:GetRolePolicy",
+        "iam:ListRolePolicies",
+        "iam:ListAttachedRolePolicies",
+        "iam:ListPolicyVersions",
+        "iam:GetOpenIDConnectProvider",
+        "iam:ListInstanceProfilesForRole"
+      ],
+      "Resource": [
+        "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/*",
+        "arn:aws:iam::aws:policy/*",
+        "arn:aws:iam::${AWS_ACCOUNT_ID}:role/*",
+        "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/*"
+      ]
+    },
+    {
+      "Sid": "ChalkDescribeResources",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Describe*",
+        "eks:Describe*",
+        "dynamodb:Describe*",
+        "dynamodb:ListTables*",
+        "elasticache:Describe*",
+        "acm:Describe*",
+        "ecr:GetAuthorizationToken",
+        "route53:List*",
+        "route53:Get*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
 
 
 ### Kubernetes

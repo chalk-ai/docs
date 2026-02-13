@@ -3,6 +3,7 @@ title: Time Overview
 shortTitle: Overview
 description: Manage feature timestamps and point-in-time query timestamps.
 published: true
+llms: short
 ---
 
 import { TipInfo } from '@/components/Tip'
@@ -20,6 +21,8 @@ after a given query time will never be returned for those queries, in online or 
 
 Feature time is returned in the `__observed_at__` column in Chalk query results. Query time is returned in the `__ts__`
 column.
+
+---
 
 ## Feature time
 
@@ -119,7 +122,7 @@ aggregations](/docs/aggregations) useful.
 
 ### Interaction with the online store
 
-Features with overriden observation timestamps are treated specially when inserted into the online store.
+Features with overridden observation timestamps are treated specially when inserted into the online store.
 In particular, Chalk will always check for existing "newer" feature values in the online store
 before inserting historically dated feature values. This means that you can safely ingest large quantities
 of backdated features without accidentally ingesting stale data into the online store.
@@ -130,7 +133,7 @@ to compute the "feature staleness" metric. Staleness in this context is defined 
 
 ### Interaction with the offline store
 
-Features with overriden observation timestamps are inserted into the offline store with the timestamp that you
+Features with overridden observation timestamps are inserted into the offline store with the timestamp that you
 specify. The observation timestamp works like an "effective as of" timestamp, so if you insert something like this:
 
 ```
@@ -298,6 +301,8 @@ time the query treats as "now" during query execution. <code>ts</code> is a comm
 <code>FeatureTime</code>, the time at which a feature was observed.
 </TipInfo>
 
+
+---
 
 ## Timezone handling for naive datetimes
 Chalk stores UTC as the timezone for naive datetime objects. Additionally, Chalk assumes UTC if retrieving naive

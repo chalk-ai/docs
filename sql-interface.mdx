@@ -18,6 +18,8 @@ offline store as well as data sources in your environment.
 
 Additionally, you can use the [GRPC client's run_sql() endpoint](/api-docs#ChalkGRPCClient.run_sql).
 
+---
+
 ## Query Syntax
 
 Chalk's SQL interface uses a standard SQL dialect, and all queries are processed through a parser that expects 
@@ -46,6 +48,8 @@ Currently, Chalk SQL only supports making `SELECT` queries, with the following r
     - You may use the LIMIT clause to limit the number of rows returned by your query. The value must be a literal integer.
 - `ORDER BY` clause:
     - At present, you may only use direct column references in the `ORDER BY` clause.
+
+---
 
 ## SQL Interface Sources
 
@@ -99,6 +103,8 @@ In the SQL Interface, there exist various schema providers, which all exist unde
 
 Chalk also offers a `chalk.information_schema` that you can query (similar to many other database offerings), and queries such as `SHOW TABLES` and `SHOW SCHEMAS` can also be used.
 
+
+---
 
 ## Examples
 If you had the following feature class:

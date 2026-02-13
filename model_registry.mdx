@@ -100,7 +100,9 @@ client.register_model_version(
         "training_date": "2025-07-29",
         "accuracy": 0.89,
         "precision": 0.91
-    }
+    },
+    input_features=[User.age, User.income],
+    output_features=[User.churn_risk],
 )
 ```
 
@@ -133,6 +135,7 @@ To include models in your Chalk deployment, use `ModelReference` objects. `Model
 from chalk.features import features, _
 from chalk.ml import ModelReference
 from chalk import functions as F
+from chalk import make_model_resolver
 
 # Load a model into the deployment
 churn_risk = ModelReference.from_version(
@@ -140,17 +143,20 @@ churn_risk = ModelReference.from_version(
     version=2,
 )
 
-# Reference the loaded model in inference
 @features
 class User:
     id: int
     age: int
     income: float
-    churn_risk: float = F.inference(
-        churn_risk, inputs=[
-        _.age,
-        _.income
-    ])
+
+    churn_risk: float # define the prediction feature
+
+resolver = make_model_resolver(
+    name="churn_model_prediction",
+    model=churn_risk,
+    inputs=[User.age, User.income],
+    output=[User.churn_risk],
+)
 ```
 
 Once the model is deployed, metrics for the model will be tracked in the Chalk dashboard, including feature distributions and
@@ -166,6 +172,7 @@ Once models are registered and loaded into your deployment, you can run inferenc
 from chalk.features import feature, features, _
 from chalk.ml import ModelReference
 from chalk import functions as F
+from chalk import make_model_resolver
 
 # Load a model into the deployment using alias
 risk_model_latest = ModelReference.from_alias(
@@ -185,10 +192,19 @@ class User:
     id: int
     age: int
     income: float
-    risk_score: float = feature(versions={
-        1: feature(description="Version 1.0.0", expression=F.inference(risk_model_v1_0_0, inputs=[_.age, 10, _.income])),
-        2: feature(description="Latest model version", expression=F.inference(risk_model_latest, inputs=[_.age, 10, _.income])),
-    })
+    risk_score: float = feature(versions=2) 
+
+make_model_resolver(
+    name="user_risk_score_v1_prediction",
+    input=[User.age, User.income],
+    output=[User.risk_score@1]
+)
+
+make_model_resolver(
+    name="user_risk_score_v2_prediction",
+    input=[User.age, User.income],
+    output=[User.risk_score@2]
+)
 ```
 
 ---

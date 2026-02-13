@@ -2,6 +2,7 @@
 title: Spanner
 description: Integrate with Spanner.
 published: true
+llms: hidden
 ---
 
 import { AddSpannerIntegration } from '@/components/shared/spanner';
@@ -11,6 +12,8 @@ import { getNamedIntegrationText } from "@/components/NamedIntegration";
 
 Chalk supports [Spanner](https://cloud.google.com/spanner/?hl=en) as a natively accelerated [SQL source](/docs/sql).
 
+---
+
 ## Adding Spanner
 
 Follow the [GCP instructions](/docs/gcp) to give Chalk access to application credentials for your GCP account. Chalk
@@ -18,6 +21,8 @@ will use these credentials to access Spanner. On the dashboard, you can plug in 
 Spanner database:
 
 <AddSpannerIntegration onSubmit={(e) => e.preventDefault()} />
+
+---
 
 ## Integrations Setup
 

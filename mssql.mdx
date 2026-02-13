@@ -2,6 +2,7 @@
 title: Microsoft SQL Server
 description: Integrate with Microsoft SQL Server data sources.
 published: true
+llms: hidden
 ---
 
 import { AddMSSQLIntegration } from '@/components/shared/mssql'
@@ -17,6 +18,8 @@ options using the `MSSQLSource` **init** args,
 or configure the source through your dashboard, and
 reference the source in your code.
 
+---
+
 ## Prerequisites
 
 For local development, you'll need to install ODBC drivers:
@@ -28,6 +31,8 @@ For local development, you'll need to install ODBC drivers:
 Then install the Python package: `pip install 'chalkpy[mssql]'`
 
 Production deployments on Chalk handle ODBC drivers automatically.
+
+---
 
 ## Adding Microsoft SQL Server
 
@@ -45,6 +50,8 @@ Chalk supports three authentication methods:
 **Azure AD Managed Identity** - When running in Azure (such as in AKS or Azure VMs), Chalk can automatically authenticate using [Managed Identity](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview). Simply omit authentication credentials when configuring your source.
 
 **Azure AD Service Principal** - For authentication using an Azure AD application, provide `client_id`, `client_secret`, and `tenant_id`.
+
+---
 
 ## Integrations Setup
 

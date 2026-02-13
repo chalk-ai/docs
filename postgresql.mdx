@@ -2,6 +2,7 @@
 title: PostgreSQL
 description: Integrate with SQL data sources.
 published: true
+llms: hidden
 ---
 
 import { AddPostgresIntegration } from '@/components/shared/postgres'
@@ -16,12 +17,16 @@ options using the `PostgreSQLSource` **init** args,
 or configure the source through your dashboard, and
 reference the source in your code.
 
+---
+
 ## Adding PostgreSQL
 
 On the dashboard, you can plug in the configuration for your
 PostgreSQL database:
 
 <AddPostgresIntegration onSubmit={(e) => e.preventDefault()} />
+
+---
 
 ## Integrations Setup
 

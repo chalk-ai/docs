@@ -48,7 +48,7 @@ Click the link to see your script's output, status, and execution metrics.
 
 ### Basic Usage
 
-The `chalk task run` command executes Python scripts in your deployment:
+The [`chalk task run`](/cli/task_run) command executes Python scripts in your deployment:
 
 ```bash
 chalk task run [target] [flags]
@@ -171,7 +171,7 @@ Execute the same script multiple times with different parameters using a JSONL f
 
 Each line is a JSON object with `kwargs` (and optionally `args`):
 
-```jsonl
+```json
 {"kwargs": {"learning_rate": "0.001", "batch_size": "32", "epochs": "10"}}
 {"kwargs": {"learning_rate": "0.005", "batch_size": "64", "epochs": "10"}}
 {"kwargs": {"learning_rate": "0.01", "batch_size": "128", "epochs": "5"}}
@@ -230,7 +230,7 @@ chalk task run scripts.py --branch feature/new-algorithm
 ```
 
 This automatically:
-1. Runs `chalk apply --branch feature/new-algorithm`
+1. Runs [`chalk apply --branch feature/new-algorithm`](/cli/apply#branch)
 2. Waits for the branch deployment to be ready
 3. Submits the task to the branch environment
 
@@ -258,7 +258,7 @@ chalk task run -m mypackage.analytics.report
 
 `--branch BRANCH_NAME` - Execute code from a specific git branch. See [Branch Execution](#branch-execution).
 
-`--skip-apply` - Skip the automatic `chalk apply` when running with `--branch`. Use this if the branch is already deployed.
+`--skip-apply` - Skip the automatic [`chalk apply`](/cli/apply) when running with `--branch`. Use this if the branch is already deployed.
 
 
 ### Argument flags

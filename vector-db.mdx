@@ -2,13 +2,18 @@
 title: Vector Databases
 description: Configure and use vector databases for efficient nearest neighbor search
 published: true
+llms: hidden
 ---
 
 Vector databases enable efficient storage and retrieval of high-dimensional vectors for nearest neighbor search operations. Chalk integrates with vector databases to provide scalable vector search capabilities for your feature pipelines.
 
+---
+
 ## Configuration
 
-Vector databases can be configured through your Chalk dashboard at **Integrations -> Vector DB**. Once configured, your vector database becomes available for use with [vector search](/docs/vector-search) operations.
+Vector databases can be configured through your Chalk dashboard at **Data Sources > Vector DB**. Once configured, your vector database becomes available for use with [vector search](/docs/vector-search) operations.
+
+---
 
 ## Vector Search
 
@@ -26,7 +31,6 @@ class SearchQuery:
         lambda: SearchQuery.embedding.is_near(
             FAQDocument.question_embedding
         ) & (SearchQuery.topic == FAQDocument.topic) # Additional filters can optionally be added to the join
-
     )
 
 @features
@@ -38,6 +42,8 @@ class FAQDocument:
 ```
 
 In this example, the `has_many` response from the join will be delegated to the configured vector database which performs the efficient nearest neighbor search. The `FAQDocument.question_embedding` is stored in the vector store: the following section discusses how the embeddings are loaded into the vector store.
+
+---
 
 ## Persisting Vector Features
 
@@ -118,6 +124,8 @@ ScheduledQuery(
 ```
 
 The scheduled query will load newly calculated embeddings into the vector database, making them queryable through nearest neighbor operations.
+
+---
 
 ## Query Flow
 

@@ -1,0 +1,83 @@
+---
+title: Java Client
+description: Query features with Chalk's Java client library
+published: true
+---
+
+The Chalk Java client library provides a convenient way to query features from your Java applications.
+- [chalk-java GitHub Repository](https://github.com/chalk-ai/chalk-java)
+
+---
+
+## Installation
+
+Add the Chalk Java client to your project using Maven or Gradle:
+
+### Maven
+
+```xml
+<dependency>
+    <groupId>ai.chalk</groupId>
+    <artifactId>chalk-java</artifactId>
+    <version>latest</version>
+</dependency>
+```
+
+### Gradle
+
+```groovy
+dependencies {
+    implementation 'ai.chalk:chalk-java:latest'
+}
+```
+
+
+---
+
+## Basic Usage
+
+Here's a quick example of how to use the Chalk Java client:
+
+```java
+import ai.chalk.ChalkClient;
+import ai.chalk.models.QueryParams;
+import ai.chalk.models.QueryResult;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class Main {
+    public static void main(String[] args) {
+        // Initialize the client
+        ChalkClient client = ChalkClient.builder()
+            .clientId("your-client-id")
+            .clientSecret("your-client-secret")
+            .environmentId("your-environment-id")
+            .build();
+
+        // Query features
+        Map<String, Object> inputs = new HashMap<>();
+        inputs.put("user.id", "user123");
+
+        QueryParams params = QueryParams.builder()
+            .inputs(inputs)
+            .outputs(List.of(
+                "user.credit_score",
+                "user.account_age_days"
+            ))
+            .build();
+
+        QueryResult result = client.query(params);
+        System.out.println(result);
+    }
+}
+```
+
+---
+
+## Next Steps
+
+- [Query Basics](/docs/query-basics) - Learn how to query features
+- [Authentication](/docs/online-authentication) - Set up authentication for your client
+- [Online Query API](/docs/query-online) - Explore the online query API

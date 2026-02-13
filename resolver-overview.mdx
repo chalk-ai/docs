@@ -5,6 +5,7 @@ metaTitle: Resolvers - Create resolvers to compute feature values.
 metaDescription: Resolvers define how your feature values are computed. Resolvers can be written in Python or SQL.
 description: Create resolvers to compute feature values.
 published: true
+llms: short
 ---
 
 import { TipInfo } from '@/components/Tip'
@@ -38,6 +39,8 @@ Resolvers are always specified as either online or offline. We go into more deta
 about what this means in the [next section where we talk about run conditions](/docs/resolver-online-offline),
 but for now it is important to note that: 1). every resolver is either online or offline, and 2). different
 resolvers run depending on how you are requesting data from Chalk.
+
+---
 
 ## Writing Resolvers
 
@@ -118,6 +121,8 @@ def get_is_runner(
     num_athletic_hobbies = sum([is_athletic(hobby) for hobby in hobbies])
     return num_athletic_hobbies / len(hobbies)
 ```
+
+---
 
 ## When Do Resolvers Run
 

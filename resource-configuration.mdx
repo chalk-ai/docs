@@ -2,6 +2,7 @@
 title: Resource Configuration
 description: Configure your Chalk Kubernetes cluster
 published: true
+llms: hidden
 ---
 
 ## Overview
@@ -9,6 +10,8 @@ published: true
 The `Settings` page of the dashboard exposes many useful configurations that you can use to
 tune your Chalk environments appropriately to handle your specific workload and latency requirements.
 
+
+---
 
 ## Kubernetes
 
@@ -18,6 +21,8 @@ you can also view the Kubernetes Pod View. This will include data about the pod,
 request, IP address, and resource group, as well as data about the node on which the pod is scheduled.
 In the Pod View, you can also see the logs for the pod, which can be useful for debugging errors on
 branch deployments or job pods.
+
+---
 
 ## Nodepools
 
@@ -52,6 +57,8 @@ Once you have configured your Nodepools, under `Settings > Resources`, you can s
 to use for each service in each resource group in your environment, as well as the Pod Disruption
 Budget.
 
+---
+
 ## Resources
 
 Under `Settings > Resources`, you will find the Cloud Resource Configuration page, which enables you
@@ -62,7 +69,7 @@ All Chalk environments will have a `Default` resource group. If you have a speci
 require more resource groups, please reach out to the Chalk Team.
 
 In a resource group, you can specify the default resource requests, pod instances, instance types, and
-nodepools for each service. The resource configurations for thr Query Server, gRPC Query Server, and the
+nodepools for each service. The resource configurations for the Query Server, gRPC Query Server, and the
 Branch Server will be used to spin up pods during deployments. The Job Queue Server configuration
 specifies a pool of workers that are used to process asynchronous offline query jobs, scheduled queries,
 and aggregation backfills. The worker pool will automatically scale up and down based on the number of jobs
@@ -149,6 +156,8 @@ time and end time are defined using standard cron syntax.
 
 ![scheduled autoscaling](/img/schedule_based_scaling.png)
 
+---
+
 ## Shared Resources
 
 Under `Settings > Shared Resources`, environment admins can view and manage shared resources across
@@ -165,6 +174,8 @@ Persistence Configuration tab. In order to enable autoscaling, it is required to
 * Target average value (the approximate target undelivered message count in queue per replica)
 * Pubsub Subscription ID
 
+---
+
 ## Connections
 
 Under `Settings > Connections`, you can view all the connections that your environment has to external
@@ -172,11 +183,15 @@ resources, such as your online and offline stores, and the branch server. This i
 the health of the different services in your environment, as well as to verify the types of connections
 configured.
 
+---
+
 ## Environment Variables
 
 Under `Settings > Environment > Variables`, you can view and edit global environment variables for
 your environment. Please reach out to the Chalk team if you have any questions about which environment variables
 to set for your use case.
+
+---
 
 ## User Permissions and RBAC
 
@@ -209,6 +224,5 @@ When configuring feature-level RBAC, you can use either denylisting or allowlist
 
 
 ![datasource and feature level rbac](/img/datasource-feature-rbac-allowlist.png)
-
 
 

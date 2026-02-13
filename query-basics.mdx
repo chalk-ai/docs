@@ -2,6 +2,7 @@
 title: Chalk Clients
 description: Fetch feature values via online query.
 published: true
+llms: short
 ---
 
 import {ClientLibraries} from "@/components/HighlightsGrid";
@@ -50,6 +51,8 @@ For information on how to authenticate the `ChalkClient`, check out the section 
 Read more about the parameters to this method [here](/api-docs#ChalkClient.query).
 
 
+---
+
 ## Request
 
 <RequestUrl url="https://api.chalk.ai/v1/query/online" type="POST" />
@@ -63,7 +66,7 @@ Read more about the parameters to this method [here](/api-docs#ChalkClient.query
   are input as lists, and <a href={'/docs/feature-types#dataclass'}>struct features</a> are input as JSON.
 
   An example of passing a user with two credit cards as input:
-  ```{user.id: '1', user.cards: [Card(id='xyz'), Card(id='abc')]}```
+  <code>{"{user.id: '1', user.cards: [Card(id='xyz'), Card(id='abc')]}"}</code>
 </Attribute>
 
 <Attribute field={'outputs'} kind={'string[]'}>
@@ -125,6 +128,8 @@ the request.
 </AttributeTable>
 
 More information on parameters is available [here](/api-docs#ChalkClient.query)
+
+---
 
 ## Response
 
@@ -245,6 +250,361 @@ This will dramatically slow things down, so use wisely!
 These results are visible in the dashboard under the "Queries" page.
 
 For more information, read the `ChalkClient` docs [here](/api-docs#ChalkClient.query).
+
+---
+
+## Online Query Bulk
+
+Compute feature values for many rows of inputs using online resolvers. This endpoint is similar to the
+online query endpoint, but takes in lists of inputs and produces one output per row of inputs.
+This is appropriate when you want to fetch the same set of features for many different input primary keys.
+
+The following endpoint can be accessed with the Python [ChalkClient](/api-docs#ChalkClient) by using its `query_bulk` method.
+
+### Request
+
+<RequestUrl url="https://api.chalk.ai/v1/query/feather" type="POST" />
+
+The request body should be a binary payload containing:
+1. A magic string identifier
+2. Serialized query metadata
+3. Feature data in Apache Feather format
+
+When using the ChalkClient, this serialization is handled automatically. For direct HTTP usage, the structure is:
+- Request inputs are provided as mappings of feature names to **lists** of values
+- Each list should have the same length, representing multiple rows of data
+
+<AttributeTable>
+
+<Attribute field={'inputs'} kind={'map[string, JSON[]]'}>
+  Input features and **lists** of values. Each key is a feature name (e.g., `"user.id"`) and
+  each value is a list of values for that feature. All lists must have the same length, where
+  each element represents one row.
+
+  <a href={'/docs/has-many'}>Has-many features</a> are input as lists within each row element,
+  and <a href={'/docs/feature-types#dataclass'}>struct features</a> (has-one) are input as JSON objects within each row element.
+
+  Example with simple, has-one, and has-many features:
+  ```json
+  {
+    "user.id": [1, 2],
+    "user.name": ["Alice", "Bob"],
+    "user.profile": [
+      {"age": 30, "city": "NYC"},
+      {"age": 25, "city": "SF"}
+    ],
+    "user.cards": [
+      [{"id": "card1"}, {"id": "card2"}],
+      [{"id": "card3"}]
+    ]
+  }
+  ```
+</Attribute>
+
+<Attribute field={'outputs'} kind={'string[]'}>
+  The features that you'd like to compute from the inputs. Same as online query.
+</Attribute>
+
+<Attribute field={'now'} kind={'string[]?'}>
+  List of timestamps (ISO format) for each row. If provided, the list must match the length
+  of the input value lists. Each timestamp represents the query time for the corresponding row.
+</Attribute>
+
+<Attribute field={'staleness'} kind={
+  <span>
+    map[string, <a href={'/docs/duration'}>duration</a>]
+  </span>
+}>
+  Maximum staleness overrides for any output features or intermediate features.
+  See <a href={'/docs/query-caching'}>query caching</a> for more information.
+</Attribute>
+
+<Attribute field={"context"} kind={"QueryContext?"}>
+The context object controls the environment and tags under which requests execute:
+
+<SubAttributeTable title={"QueryContext"}>
+
+<SubAttribute field={'environment'} kind={'string?'}>
+The <a href={'/docs/resolver-environments'}>environment</a> in which to run the resolvers.
+</SubAttribute>
+
+<SubAttribute field={'tags'} kind={'string[]?'}>
+The <a href={'/docs/resolver-tags'}>tags</a> used to scope the resolvers.
+</SubAttribute>
+
+<SubAttribute field={'required_resolver_tags'} kind={'string[]?'}>
+If specified, all required_resolver_tags must be present on a resolver for it to be eligible to execute.
+</SubAttribute>
+
+</SubAttributeTable>
+
+</Attribute>
+
+<Attribute field={'query_name'} kind={'string?'}>
+  The semantic name for the query, e.g., `"loan_application_model"`. See <a href={'/api-docs#NamedQuery'}>NamedQuery</a>.
+</Attribute>
+
+<Attribute field={'query_name_version'} kind={'string?'}>
+  The version of the named query to execute.
+</Attribute>
+
+<Attribute field={'correlation_id'} kind={'string?'}>
+  A globally unique ID for the query, used in logs and web interfaces.
+</Attribute>
+
+<Attribute field={'branch_id'} kind={'string?'}>
+  If specified, routes to the relevant <a href={'/docs/branches'}>branch</a>.
+</Attribute>
+
+<Attribute field={'preview_deployment_id'} kind={'string?'}>
+  If specified, routes to the relevant <a href={'/docs/integration-tests#branch-deployments'}>preview deployment</a>.
+</Attribute>
+
+<Attribute field={'explain'} kind={'bool?'}>
+  If true, returns query execution plan in the response metadata. Makes the query slower.
+</Attribute>
+
+<Attribute field={'store_plan_stages'} kind={'bool?'}>
+  If true, stores intermediate outputs at all query plan stages. Dramatically impacts performance.
+</Attribute>
+
+<Attribute field={'meta'} kind={'map[string, string]?'}>
+  Arbitrary key-value pairs to associate with the query.
+</Attribute>
+
+<Attribute field={'query_context'} kind={'map[string, JSON] | string?'}>
+  An immutable context accessible from Python resolvers. See <a href={'/api-docs#ChalkContext'}>ChalkContext</a>.
+</Attribute>
+
+</AttributeTable>
+
+### Response
+
+The response is a binary payload in Apache Feather format containing the results.
+
+<AttributeTable>
+
+<Attribute field={'results'} kind={'BulkOnlineQueryResult[]'}>
+A list of query results, where each result contains:
+
+<SubAttributeTable title={"BulkOnlineQueryResult"}>
+
+<SubAttribute field={'scalars_df'} kind={'DataFrame?'}>
+A DataFrame containing the scalar feature values for all rows. Each row corresponds to an input row.
+Columns are feature names, and values are the computed feature values.
+</SubAttribute>
+
+<SubAttribute field={'groups_dfs'} kind={'map[string, DataFrame]?'}>
+A map of feature names to DataFrames for has-many features.
+</SubAttribute>
+
+<SubAttribute field={'errors'} kind={<a href={'/docs/query-errors#chalk-error'}>ChalkError[]?</a>}>
+Errors encountered while running the resolvers.
+</SubAttribute>
+
+<SubAttribute field={'meta'} kind={'QueryMeta?'}>
+Metadata about query execution including execution duration, deployment ID, query ID, etc.
+See the online query response documentation for QueryMeta details.
+</SubAttribute>
+
+</SubAttributeTable>
+
+</Attribute>
+
+</AttributeTable>
+
+---
+
+## Offline Query
+
+Submit an offline query to compute feature values from the offline store or by running offline/online resolvers.
+Offline queries are typically used for generating training datasets and run asynchronously.
+
+The following endpoint can be accessed with the Python [ChalkClient](/api-docs#ChalkClient) by using its `offline_query` method.
+See the [offline query documentation](/docs/query-offline) for more information.
+
+### Request
+
+<RequestUrl url="https://api.chalk.ai/v1/query/run" type="POST" />
+
+The request body is a binary payload containing:
+1. Serialized query plan (protobuf)
+2. Query metadata (JSON)
+3. Input data (Apache Feather format)
+
+When using the ChalkClient, this serialization is handled automatically.
+
+<AttributeTable>
+
+<Attribute field={'input'} kind={'map[string, JSON[]] | DataFrame | URI'}>
+  The features for which there are known values. Can be:
+  - A mapping of feature names to lists of values (similar to bulk query format)
+  - A DataFrame with input data
+  - A URI pointing to input data in cloud storage
+
+  When using a mapping, <a href={'/docs/has-many'}>has-many features</a> are input as lists within each row,
+  and <a href={'/docs/feature-types#dataclass'}>struct features</a> (has-one) are input as JSON objects within each row.
+  See the bulk query input format above for examples.
+</Attribute>
+
+<Attribute field={'input_times'} kind={'datetime[] | datetime?'}>
+  Timestamps for point-in-time correctness. If a list, must match the length of input rows.
+  See <a href={'/docs/temporal-consistency'}>temporal consistency</a>.
+</Attribute>
+
+<Attribute field={'output'} kind={'string[]'}>
+  The features to compute or sample. If a feature was never computed for a sample, its value will be null.
+</Attribute>
+
+<Attribute field={'required_output'} kind={'string[]?'}>
+  Features that must exist in each row. Rows where a required output was never stored will be skipped.
+</Attribute>
+
+<Attribute field={'recompute_features'} kind={'bool | string[]?'}>
+  Controls whether resolvers run to compute features:
+  - If `true`, all output features are recomputed by resolvers
+  - If `false`, all output features are sampled from the offline store
+  - If a list, features in the list are recomputed, others are sampled
+</Attribute>
+
+<Attribute field={'environment'} kind={'string?'}>
+  The <a href={'/docs/resolver-environments'}>environment</a> in which to run resolvers.
+</Attribute>
+
+<Attribute field={'dataset_name'} kind={'string?'}>
+  A unique name for the dataset. If provided, the dataset will be saved and can be retrieved later.
+</Attribute>
+
+<Attribute field={'max_samples'} kind={'int?'}>
+  Maximum number of samples to include in the result. If not specified, all samples are returned.
+</Attribute>
+
+<Attribute field={'lower_bound'} kind={'datetime | duration | string?'}>
+  Only query data observed after this timestamp. Accepts ISO 8601 format strings.
+</Attribute>
+
+<Attribute field={'upper_bound'} kind={'datetime | duration | string?'}>
+  Only query data observed before this timestamp. Accepts ISO 8601 format strings.
+</Attribute>
+
+<Attribute field={'tags'} kind={'string[]?'}>
+  The <a href={'/docs/resolver-tags'}>tags</a> used to scope the resolvers.
+</Attribute>
+
+<Attribute field={'branch_id'} kind={'string?'}>
+  If specified, routes to the relevant <a href={'/docs/branches'}>branch</a>.
+</Attribute>
+
+<Attribute field={'correlation_id'} kind={'string?'}>
+  A globally unique ID for the query, used in logs and web interfaces.
+</Attribute>
+
+<Attribute field={'query_name'} kind={'string?'}>
+  The name of the query. If provided, creates a named query or fills in missing parameters from a preexisting execution.
+</Attribute>
+
+<Attribute field={'run_asynchronously'} kind={'bool?'}>
+  If true, runs the query in separate Kubernetes pods. Useful for large datasets and long-running jobs.
+</Attribute>
+
+<Attribute field={'store_online'} kind={'bool?'}>
+  If true, stores the query output in the online store.
+</Attribute>
+
+<Attribute field={'store_offline'} kind={'bool?'}>
+  If true, stores the query output in the offline store.
+</Attribute>
+
+<Attribute field={'num_shards'} kind={'int?'}>
+  If specified, splits the input across this many shards for parallel processing.
+</Attribute>
+
+<Attribute field={'resources'} kind={'ResourceRequests?'}>
+  Override resource requests (CPU, memory) for the offline query job.
+</Attribute>
+
+</AttributeTable>
+
+### Response
+
+The response contains information about the submitted offline query job.
+
+<AttributeTable>
+
+<Attribute field={'job_id'} kind={'string'}>
+  A unique identifier for the offline query job. Use this to check the job status.
+</Attribute>
+
+<Attribute field={'dataset_id'} kind={'string?'}>
+  If a dataset_name was provided, this is the ID of the created dataset.
+</Attribute>
+
+</AttributeTable>
+
+---
+
+## Check Offline Query Status
+
+Check the status of an offline query job. Offline queries run asynchronously, so you need to poll
+this endpoint to determine when the job is complete and the results are ready.
+
+### Request
+
+<RequestUrl url="https://api.chalk.ai/v4/offline_query/status" type="POST" />
+
+<AttributeTable>
+
+<Attribute field={'job_id'} kind={'string?'}>
+  The job ID returned from the offline query request (also called revision_id).
+</Attribute>
+
+<Attribute field={'dataset_name'} kind={'string?'}>
+  The name of the dataset, if one was provided in the offline query request.
+</Attribute>
+
+<Attribute field={'dataset_id'} kind={'string?'}>
+  The ID of the dataset.
+</Attribute>
+
+<Attribute field={'ignore_errors'} kind={'bool?'}>
+  If true, returns results even if some errors occurred during execution. Default is false.
+</Attribute>
+
+<Attribute field={'skip_failed_shards'} kind={'bool?'}>
+  If true, skips failed shards and returns results from successful shards only. Default is false.
+</Attribute>
+
+</AttributeTable>
+
+You must provide at least one of: `job_id`, `dataset_name`, or `dataset_id`.
+
+### Response
+
+<AttributeTable>
+
+<Attribute field={'is_finished'} kind={'bool'}>
+  Whether the offline query job has completed. Poll this endpoint until this field is true.
+</Attribute>
+
+<Attribute field={'urls'} kind={'string[]'}>
+  A list of short-lived, authenticated URLs to download the query results. These URLs point to
+  data files in cloud storage (S3 or GCS) containing the feature values in a columnar format.
+  Only populated when `is_finished` is true.
+</Attribute>
+
+<Attribute field={'errors'} kind={<a href={'/docs/query-errors#chalk-error'}>ChalkError[]?</a>}>
+  Errors encountered during query execution, if any.
+</Attribute>
+
+<Attribute field={'version'} kind={'int'}>
+  Version number representing the format of the data. The client uses this to properly decode
+  and load the query results into DataFrames. Current version is 1.
+</Attribute>
+
+</AttributeTable>
+
+Once `is_finished` is true, you can download the data from the provided URLs and load it into a DataFrame.
+The ChalkClient's `Dataset` object handles this automatically.
 
 ---
 

@@ -17,6 +17,8 @@ We charge for the node’s uptime, not based on the level of activity within the
 You can run unlimited queries or create multiple branches without incurring extra charges.
 Billing is based solely on the node’s active hours, not on how many features or branches are used.
 
+---
+
 ## Finding Chalk Credit Rates
 
 You can see the full list of credit utilization rates per hour for all machine types in the Chalk
@@ -30,6 +32,8 @@ terminal and use the Chalk CLI command to view usage rates.
 $ chalk login
 $ chalk usage rates
 ```
+
+---
 
 ## Cost Optimization Tips
 
@@ -48,7 +52,10 @@ branch server will automatically spin back up.
 For the other nodes in your cluster, you can configure the resource configurations according to your needs
 in the dashboard under `Settings > Resources > Resource Configurations`. You can select the instance type
 for each server that is right for you, and set a scaling policy that ensures that you scale up when traffic
-is high, but notably that your nodes scale down when traffic is low.
+is high, but notably that your nodes scale down when traffic is low. The instance type selected should have
+enough capacity to support the resource request multiplied by the number of max instances, plus additional overhead.
+
+---
 
 ## Frequently Asked Questions
 
@@ -97,6 +104,8 @@ your other workloads.
 
 Chalk only charges for compute resources (i.e., running nodes). If a staging environment is idle or shut
 down, it won’t incur costs.
+
+---
 
 ## Chalk Marketplace Billing
 

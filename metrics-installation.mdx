@@ -13,6 +13,8 @@ Chalk uses a database hosted in the ("Customer Cloud") Kubernetes cluster
 to store metrics data. This database is part of the environment dataplane,
 and stores information and metrics about queries run in a Chalk environment.
 
+---
+
 ## Prerequisites
 In order to install a Chalk metrics database, you need to have the following:
 
@@ -22,12 +24,16 @@ In order to install a Chalk metrics database, you need to have the following:
 - Namespace to deploy the database into
 - Storage class to back the metrics database PVC
 
+---
+
 ## Creating a Metrics Database
 Navigate to the `Settings/Team/Shared Resources/Metrics Database` page in the Chalk UI
 to view the current metrics database configuration. If no metrics database is configured,
 you will see a message indicating that no metrics database is currently present, and the
 first save and apply will create a new database. This will also automatically create a cloud
 secret that is used by your Chalk deployment to talk to the metrics database.
+
+---
 
 ## Example Configuration
 The following is an example configuration for a metrics database:
@@ -61,6 +67,8 @@ The following is an example configuration for a metrics database:
 }
 ```
 
+---
+
 ## Database Routing Between Clusters
 In order for Chalk to properly function, all metrics databases must be routable from the Chalk Metadata Server.
 For metrics servers in the same cluster as the metadata server this is trivial, as all the Kubernetes services are
@@ -71,6 +79,8 @@ two ways:
    must have public subnets attached to your VPC and an internet gateway etc.
 2. Set up VPC peering to allow the clusters to route to one another, while still keeping the traffic internal.
 Note that if the clusters are in the same VPC, simply setting the `service-type` to `load-balancer` will be sufficient.
+
+---
 
 ## Configuration Options
 <AttributeTable>
@@ -124,14 +134,18 @@ The IAM role to use for backups to access the S3 bucket.
 The name of the AWS secret to store the database URI in.
 </Attribute>
 <Attribute field={'internal'} kind={'bool'}>
-    Whether the connection pool load balancer attaches to interal or external subnets. Not used if the service type is "cluster-ip".
+    Whether the connection pool load balancer attaches to internal or external subnets. Not used if the service type is "cluster-ip".
 </Attribute>
 </AttributeTable>
+
+---
 
 ## Backups
 Backups are done by streaming the WAL log to an S3 bucket using Barman.
 The IAM role provided must have access to the S3 bucket to perform backups,
 trust the oidc provider for the cluster containing the Chalk Deployment.
+
+---
 
 ## Example Backup IAM Role Policy Document
 ```json
@@ -157,6 +171,8 @@ trust the oidc provider for the cluster containing the Chalk Deployment.
 }
 ```
 
+---
+
 ## Example Backup IAM Role Policy Document
 ```json
 {
@@ -178,5 +194,4 @@ trust the oidc provider for the cluster containing the Chalk Deployment.
     ]
 }
 ```
-
 

@@ -12,6 +12,8 @@ For example, you may wish to interact with a vendor via an API call
 in the `production` environment, and opt to return a constant value
 in a `staging` environment.
 
+---
+
 ## Specifying environments
 
 You can choose to scope resolvers to a restricted set of environments.
@@ -21,6 +23,8 @@ that can take one of three types:
 - **Unassigned (default)** - The resolver will be a candidate to run in _every_ environment.
 - **String value** - The resolver will run _only_ in this environment.
 - **List of strings** - The resolver will run in _any_ of the specified environments and no other environments.
+
+---
 
 ## Example
 
