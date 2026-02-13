@@ -2,6 +2,7 @@
 title: Redshift
 description: Integrate with SQL data sources.
 published: true
+llms: hidden
 ---
 
 import { getEnvironmentVariableText, getNamedIntegrationText } from "@/components/NamedIntegration";
@@ -16,6 +17,8 @@ options using the `RedshiftSource` **init** args,
 or configure the source through your dashboard, and
 reference the source in your code.
 
+---
+
 ## Adding Redshift
 
 On the dashboard, you can plug in the configuration for your
@@ -26,64 +29,38 @@ Redshift database:
 As part of the Redshift configuration, you will be prompted to also provide an IAM role and a 
 S3 bucket. The IAM role would be assumed by Redshift to do basic operations (get, put, list objects) 
 in the S3 bucket provided. The S3 bucket itself does not require versioning, but you can 
-set a retention policy on the bucket. The retention policy should be somewhere from 1 - 14 days, 
-to balance storage efficiency with history that can be useful in debugging. 
+set a retention policy on the bucket. The retention policy should be somewhere from 1 - 14 days,
+to balance storage efficiency with history that can be useful in debugging.
 
-## Single Integration
+---
 
-If you have only one Redshift connection that you'd like
-to add to Chalk, you do not need to specify any arguments
-to construct the source in your code.
+## Integrations Setup
+
+After configuring your Redshift integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import RedshiftSource
 
-redshift = RedshiftSource()
-
-@online
-def fn(...) -> ...:
-    return redshift.query(...).first()
+risk = RedshiftSource(name="RISK")
+marketing = RedshiftSource(name="MARKETING")
 ```
 
-## Multiple Integrations
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `RISK` source:
 
-<span>{getNamedIntegrationText()}</span>
+```sql
+-- type: online
+-- resolves: User
+-- source: RISK
+SELECT id, credit_score FROM users
+```
 
-```py
-from chalk.sql import RedshiftSource
+And to query from the `MARKETING` source:
 
-risk = RedshiftSource(name="**RISK**")
-marketing = RedshiftSource(name="**MARKETING**")
-
-@online
-def risk_resolver(...) -> ...:
-    return risk.query(...).first()
-
-@online
-def marketing_resolver(...) -> ...:
-    return marketing.query(...).first()
+```sql
+-- type: online
+-- resolves: User
+-- source: MARKETING
+SELECT id, email, campaign_status FROM users
 ```
 
 <span>{getEnvironmentVariableText("RISK", "REDSHIFT_DB")}</span>
-
-## Environment Variables
-
-You can also configure the integration directly using environment variables
-on your local machine or from those added through the
-[generic environment variable](/docs/env-vars) support.
-
-```py
-import os
-from chalk.sql import RedshiftSource
-
-redshift = RedshiftSource(
-    host=os.getenv("REDSHIFT_HOST"),
-    db=os.getenv("REDSHIFT_DB"),
-    user=os.getenv("REDSHIFT_USER"),
-    password=os.getenv("REDSHIFT_PASSWORD"),
-)
-
-@online
-def resolver_fn(...) -> ...:
-    return redshift.query(...).first()
-```

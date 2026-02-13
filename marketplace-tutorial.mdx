@@ -1,0 +1,415 @@
+---
+title: "A Marketplace Tutorial"
+metaTitle: "Tutorial: Building a marketplace recommendation system"
+metaDescription: Learn how to build a recommendation system for matching users with items in a marketplace with Chalk.
+description: How to build a marketplace recommendation system with Chalk.
+published: false
+---
+
+import { TipInfo } from '@/components/Tip'
+
+---
+
+## Introduction
+
+Whether you're building a content platform, or a multi-sided marketplace, giving your users the best recommendations possible and in a timely fashion can make or break customer satisfaction and revenue.
+
+In this tutorial, we'll walkthrough setting up a marketplace recommendation system and dive into how Chalk abstracts away the complexity of deploying high-throughput low-latency production infrastructure.
+
+**Want to dive right into the code?**
+Check out this [GitHub repo](https://github.com/chalk-ai/examples/blob/main/marketplace/models.py)!
+
+---
+
+## Core data modeling
+
+Let's first set the stage by modeling some of our core entities and their relationships.
+
+Our demo marketplace has a few core entities with many interdependent relationships (primarily through interactions between users and sellers over a particular item):
+
+- Users
+- Sellers
+- Items
+- Interactions
+- Reviews
+
+Entities are represented with a Pythonic data class-esque syntax.
+Each set of features is decorated with `@features` which is a decorator imported from [Chalk's SDK](https://docs.chalk.ai/api-docs).
+
+Note: Keyword arguments can be passed into our `@features` decorator to define [metadata](https://docs.chalk.ai/api-docs#features) like feature ownership, tags, cache-policies, etc.
+
+```py
+@features(owner="ml-core@chalk.ai")
+class User:
+    id: str
+    first_name: str
+    last_name: str
+
+    full_name: str = _.first_name + " " + _.last_name
+    # computed after we've fetched first and last name
+```
+
+Whenever we request features for a User, with a command like:
+
+`chalk query --in user.id=50 --out full_name`
+
+Chalk knows to first fetch the `first_name` and `last_name` from the underlying data source, before computing the `full_name` using the provided [Chalk expression](https://docs.chalk.ai/docs/expression):
+
+`full_name: str = _.first_name + " " + _.last_name`
+
+This is all handled automatically!
+Chalk at it's core is a feature orchestration engine that dynamically builds query plans for fetching and computing features on-demand.
+
+In other words, requesting `first_name` instead of `full_name` with `chalk query --in user.id=50 --out first_name` produces a totally different query plan than when we requested just `full_name`.
+
+### Data resolution
+
+Chalk knows where to fetch the data to hydrate this User class with [SQL Resolvers.](https://docs.chalk.ai/docs/sql-resolvers)
+
+These are ordinary SQL files that live in your project alongside your feature definitions.
+
+```sql
+-- resolves: User
+-- source: postgres
+select
+    hid as id,
+    created_at,
+    first_name,
+    last_name,
+    email,
+    birthday
+from marketplace_users
+```
+
+Chalk automatically maps the SQL result to the User feature class and passes in any input predicates and filters as needed (e.g. `user.id=50`).
+
+We annotate the SQL file with special comments to indicate which feature class it resolves and also which data source it should run against.
+Chalk can connect to an arbitrary number of data sources when fulfilling a request.
+
+Some customers end up fetching thousands of features from a heterogeneous mix of data sources in < 5ms for a single request (fraud detection tends to be very feature rich).
+
+### Relationships and entity connections
+
+Let's define another core entity, Reviews, to illustrate how we build relationships and connect feature classes.
+
+```py
+@features
+class Review:
+    id: int
+    created_at: datetime
+
+    review_headline: str
+    review_body: str
+
+    star_rating: int = feature(min=1, max=5)
+
+    normalized_rating: float
+
+    # user_id: str
+    user_id: User.id
+    user: User
+```
+
+Instead of `user_id` being a simple `str`, we can explicitly point it to `User.id`, communicating to Chalk that this is a foreign key relationship.
+
+This let's us easily establish a has-many relationship between Users and Reviews.
+Where a `User` can have **many** reviews and each `Review` has a single User.
+
+This enables us to easily compute complex features in the namespace of `Review`, like `normalized_rating` which requires access to aggregations like `average_rating_given` which is defined in the `User` namespace i.e. `User.average_rating_given`.
+
+We can define complex features using Python Resolvers. 
+
+### Computed features with Python Resolvers
+
+[Python resolvers](https://docs.chalk.ai/docs/python-resolvers) are ordinary Python functions that take in feature inputs and return computed feature outputs.
+
+```py
+@online
+def get_normalized_rating(
+    review_rating: Review.star_rating,
+    review_count_across_all_items: Review.item.total_reviews,
+    average_rating_across_all_items: Review.item.average_rating,
+) -> Review.normalized_rating:
+    minimum_reviews: float = review_count_across_all_items / 10
+    return (
+            review_count_across_all_items
+            / (review_count_across_all_items + minimum_reviews)
+    ) * review_rating + (
+        minimum_reviews / (review_count_across_all_items + minimum_reviews)
+    ) * average_rating_across_all_items
+```
+
+We overload the type annotations of the function parameters to indicate explicitly which features we want to be passed into the function.
+
+Notice how instead of typing `average_rating_across_all_items` as a float, we type hint it as `Review.item.average_rating`.
+
+The return type is also explicitly hinted as `Review.normalized_rating`.
+Setting up the type hints in this way enables us to (necessarily) build the dependency graph of your features (that we leverage for query planning) while preserving as much developer experience as possible--we want to minimize boilerplate and the cognitive load required to express complicated feature logic.
+
+*If you manage your company's Airflow DAGs, you know exactly how painful this actually is*
+
+In addition to referencing features across entity boundaries to compute new features, we can also query for them directly, in this case we can easily fetch the `User` that wrote a particular Review.
+
+```bash
+chalk query --in review.id=241 --out user
+```
+
+### Has-many relationships and aggregations
+
+The inverse relationship is also automatically established, enabling us to easily query (a has-many) for **all** the Reviews that belong to a one particular User.
+
+```bash
+chalk query --in user.id=50 --out reviews
+```
+
+This sets the foundation for building aggregations over these (has-many) relationships, which we'll model by leveraging the `DataFrame` type from Chalk's SDK:
+
+`reviews: DataFrame[Review]`
+
+After setting up our reviews dataframe, we can compute aggregations like `average_rating_given` and `review_count` by projecting columns and applying aggregation functions, like `sum`, `count`, and `mean`.
+
+```py
+@features(owner="ml-core@chalk.ai")
+class User:
+    id: str
+    first_name: str
+    last_name: str
+
+    full_name: str = _.first_name + " " + _.last_name
+    # computed after we've fetched first and last name
+
+    reviews: DataFrame[Review]  # has-many relationship
+
+    average_rating_given: float = _.reviews.star_rating.mean()
+
+    review_count: Windowed[int] = windowed(
+        "7d",
+        "30d",
+        "60d",
+        expression=_.reviews[_.created_at > _.chalk_window].count(),
+    )
+```
+
+Chalk extends this functionality further by enabling windowed aggregations, which are essential for capturing temporal trends in user behavior.
+
+We can inject the `chalk_window` variable into our query to dynamically adjust the time window for our aggregations.
+
+Whenever we want to explicitly reference a specific window within a Python resolver, we can index the `Windowed` feature like so: `User.review_count["30d"]`.
+
+In our `normalized_rating` example from earlier, we could easily modify it to use a windowed review count instead of the all-time review count.
+
+```py
+@online
+def get_normalized_rating(
+    review_rating: Review.star_rating,
+    review_count_past_month: Review.item.review_count["30d"],
+    average_rating_across_all_items: Review.item.average_rating,
+) -> Review.normalized_rating:
+```
+
+Putting it all together, we have a powerful and flexible way to build semantic models that capture the complexity of real-world data.
+We can quickly express complex relationships and also compute features that span across not only multiple entities but also time windows.
+
+### Optimizing for real-time performance
+
+Computing heavy aggregations at high QPS can be extremely load-bearing on your underlying data infrastructure, especially since real-time use-cases (by definition) necessitate fetching features directly from your raw data sources, for maximum freshness.
+
+Chalk offers robust [caching and materialization strategies](https://docs.chalk.ai/docs/feature-caching) to help alleviate this load, while still ensuring that your features remain fresh and accurate.
+
+Most notably, Chalk offers **materialized feature views** that let you [cache windowed aggregations](https://docs.chalk.ai/docs/materialized_aggregations) and other compute-heavy features with `MaterializationWindowConfig` and `max_staleness`.
+
+```py
+@features
+class User:
+    id: str
+    ... # other features
+    
+    reviews: DataFrame[Review]
+    review_count: Windowed[int] = windowed(
+        "7d",
+        "30d",
+        "60d",
+        expression=_.reviews[_.created_at > _.chalk_window].count(),
+        materialization=MaterializationWindowConfig(
+            bucket_duration="3d",
+            backfill_schedule="0 0 * * *",
+        )
+    )
+```
+
+More granular bucket durations can be configured per window to optimize for storage and compute costs:
+
+```py
+bucket_durations={
+    # 10-minute buckets for the 1d window
+    "10m": "1d",
+    # 5-day buckets for 60d and 365d windows
+    "5d": ["60d", "365d"],
+}
+```
+
+Traditional features can be cached with `max_staleness`, which is particularly useful for features that are expensive with regards to time (3rd-party API), compute, or even monetary costs (e.g. LLM-based features).
+
+```py
+@features
+class Review:
+    id: int
+    ...
+
+    body: str
+    sentiment_from_llm: str = feature(max_staleness="infinity") # or 30d for a credit score
+```
+
+Some features are static in nature and only ever need to be computed once (e.g. sentiment classification) while others may need to be recomputed periodically to capture shifts in market dynamics or user behavior (e.g. 30-day credit scores).
+
+---
+
+## Recommendation system overview
+
+Now that we've covered the core data modeling concepts, let's dive into building out a simple recommendation system.
+
+We'll showcase how to build out user-item affinity features, leveraging both traditional feature engineering techniques as well as LLM-powered features.
+
+Let's introduce a new entity, `Item`, to represent a product being sold in our Marketplace.
+A typical production environment would also incorporate features from the other entities like `Seller` that's responsible for posting this item, but for brevity we'll focus on just `User` and `Item` pairs.
+
+```py
+@features
+class Item:
+    id: str
+    title: str
+    genre_from_llm: str = feature(max_staleness="infinity")
+
+    price: float
+
+    prices: "DataFrame[ItemPrice]"
+
+    times_purchased: int = _.prices[_.type == "purchase"].count()
+    average_price: float | None = _.prices[_.value].mean()
+    most_recent_price: float | None = _.prices[_.value].max_by(_.created_at)
+
+    is_discounted: bool = _.price < _.average_price
+```
+
+We can model pricing dynamics with a separate `ItemPrice` feature class that tracks price changes over time across all sellers.
+We'll leverage this to get a sense of whether this item is currently discounted, the most recent price (across all sellers), and how many times it's been purchased (which we can easily make windowed).
+
+Notice how we can filter the DataFrame with `_.type == "purchase"` before applying the aggregation function to guarantee we're only counting actual purchase events.
+
+### Computing User-Item pairs with Chalk's bulk queries
+
+Our final piece of the puzzle is to compute user-item affinity features that capture the relationship between a particular user and item.
+
+```py
+@features
+class UserItem:
+    id: str = _.user_id + "-" + _.item_id
+
+    user_id: "User.id"
+    user: "User"
+
+    item_id: "Item.id"
+    item: "Item"
+
+    # import chalk.functions as F
+    price_diff: float = F.abs(_.item.most_recent_price - _.user.average_purchase_price)
+    price_diff_ratio: float = _.price_diff / _.user.average_purchase_price
+    affordability_cap: float = F.sigmoid(_.price_diff_ratio)
+    price_fit: float = 1 / (1 + _.price_diff_ratio**2)
+```
+
+Whenever we query for this user-item pair, we'll pass in both a `User.id` and `Item.id` and then compute pricing features that capture how well this item fits within the user's typical purchasing behavior.
+
+`chalk query --in user_item.user_id=50 --in user_item.item_id=200`
+
+```
+Using '--out=user_item'
+Results                                                                  
+https://chalk.ai/environments/dvxenv/query-runs/cmgv4x37k0dly0u0ocwx0ck9d
+                                                                         
+ Name                         Hit?  Value                                
+────────────────────────────────────────────────────────                 
+ user_item.affordability_cap        0.531067620635202                    
+ user_item.id                       "50-200"                             
+ user_item.item_id                  "200"                                
+ user_item.price_diff               3.4404545454545428                   
+ user_item.price_diff_ratio         0.12443078137072767                  
+ user_item.price_fit                0.9847530494774773                   
+ user_item.user_id                  "50"                                 
+```
+
+This returns the computed `UserItem` features for user 50 and item 200 and gives us back insights into how affordable this item is for this user.
+
+In a production recommendation system, we'd query in bulk for a bunch of user-item pairs and also include other features from the `User` and `Item` namespaces (in practice many other namespaces as well) to power our ranking model.
+
+```py
+bulk_query: BulkOnlineQueryResponse = client.query_bulk(
+    input={
+        UserItem.user_id: [50] * 10,
+        UserItem.item_id: [201, 47, 39, ...]
+    },
+    output=[
+        # Item details
+        UserItem.item.title,
+        # Joint features
+        UserItem.price_diff,
+        UserItem.price_diff_ratio,
+        UserItem.affordability_cap,
+        UserItem.price_fit,
+        # Item pricing
+        UserItem.item.times_purchased,
+        UserItem.item.most_recent_price,
+        UserItem.item.average_price,
+         # Item ratings
+        UserItem.item.average_rating,
+        UserItem.item.total_reviews,
+        # User details
+        UserItem.user.id,
+        UserItem.user.created_at,
+    ],
+)
+```
+
+This bulk query returns a matrix of features for each user-item pair that can be fed directly into your ranking model.
+
+Chalk provides a number of clients in various languages (Python, Go, Java, JS, etc.) to make it easy to integrate into your existing stack.
+This also enables teams across the organization to easily share and reuse features without having to reimplement them in multiple places.
+This also streamlines deploying serving infrastructure, since Chalk handles all the complexity of scaling and optimizing feature serving for you.
+
+### Dynamic feature computations
+
+Features can also be computed dynamically, by passing in [arbitrary expressions](https://docs.chalk.ai/docs/expression#dynamic-expressions) at query time.
+
+This makes it easy to experiment with new features without having to redeploy any code and also enables advanced use-cases like user-defined features in your product.
+
+```py
+result = client.query(
+    input={
+        User.id: 1,
+    },
+    output=[
+        User.full_name,
+        User.username,
+        (F.jaccard_similarity(
+                a=F.lower(_.full_name),
+                b=F.lower(_.email)
+        )).alias("user.name_email_sim"),
+    ],
+)
+```
+
+We can leverage [Chalk's built-in functions](https://docs.chalk.ai/api-docs#section-chalk-functions) to compute dynamic features on-the-fly.
+
+Chalk offers hundreds of functions that can be composed together to build complex feature logic and that are guaranteed to run efficiently at scale.
+
+### Conclusion
+
+Chalk offers a powerful and flexible way to build recommendation systems that can scale to millions of users and items.
+
+With automatic query planning, flexible caching strategies, and support for both batch and real-time feature computation make it possible to serve thousands of features with sub-millisecond latency while maintaining data freshness.
+
+With Chalk, teams can focus on building great models and products instead of worrying about the underlying infrastructure.
+
+P.S. We have extensive primitives for also building out other use cases and workflows around Context Engineering, Search, Personalization, Fraud Detection, and more.
+
+Check out our [LLM Toolchain](https://docs.chalk.ai/docs/chalk-for-ai-engineers) to learn about the full suite of tools we offer for building with LLMs.

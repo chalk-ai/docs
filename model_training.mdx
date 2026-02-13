@@ -12,6 +12,8 @@ import { TipInfo } from '@/components/Tip'
 Chalk provides single node and distributed training capabilities that leverage your existing feature infrastructure
 and generate [Model Artifacts](/docs/model_registry). These Model Artifacts can be registered into the [Model Registry](/docs/model_registry)
 
+---
+
 ## Training Overview
 
 Chalk supports two primary training approaches:
@@ -30,9 +32,8 @@ Single-node training is ideal for smaller datasets that can fit comfortably in m
 
 ### Basic Training Setup
 
-Here's a complete example of single-node training with PyTorch.
-Define your training code using `chalk_train` and `chalk_logger` for logging,
-checkpointing, and dataset loading.
+Here's a complete example of single-node training with PyTorch. Use the`chalk_train` module for checkpointing and
+accessing Chalk datasets.
 
 ```python
 import torch
@@ -41,7 +42,6 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 import chalk.ml.train as chalk_train
-from chalk import chalk_logger
 
 
 class SpamClassifier(nn.Module):
@@ -72,8 +72,8 @@ def preprocess_data(dataset_name: str, config: dict):
 
 
 # Define the training code for the model
-def train(dataset_name: str, config: dict):
-    dataloader, input_size = preprocess_data(dataset_name=dataset_name, config=config)
+def train(config: dict):
+    dataloader, input_size = preprocess_data(dataset_name=config['dataset_name'], config=config)
     model = SpamClassifier(input_size)
 
     criterion = nn.CrossEntropyLoss()
@@ -100,7 +100,7 @@ def train(dataset_name: str, config: dict):
         if epoch % 5 == 0:
             accuracy = correct / total
 
-            chalk_logger.info(f'Epoch {epoch}: Loss={total_loss/len(dataloader):.3f}, Acc={accuracy:.3f}')
+            print(f"Epoch {epoch}: Loss={total_loss/len(dataloader):.3f}, Acc={accuracy:.3f}")
 
             chalk_train.checkpoint(
                 model,
@@ -118,13 +118,13 @@ from chalk import ResourceRequests
 
 # Create a training run
 training_run = client.train_model(
+    experiment_name="spam_model",
     train_fn=train,
-    dataset_name=dataset.dataset_name,
-    model_name="spam_model",
     config=dict(
         lr=0.01,
         num_epochs=50,
-        batch_size=32
+        batch_size=32,
+        dataset_name="sms_spam_dataset"
     ),
     resources=ResourceRequests(
         cpu=15,

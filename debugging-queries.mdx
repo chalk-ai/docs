@@ -23,12 +23,12 @@ in its definition, and explore various ways to debug that issue.
 
 ```python
 from datetime import datetime
-from chalk.features import features, has_many, DataFrame
+from chalk.features import features, DataFrame
 
 @features
 class Transaction:
     id: int
-    user_id: int
+    user_id: "User.id"
     amount: float
     ts: datetime
 
@@ -36,21 +36,19 @@ class Transaction:
 class User:
     id: int
     sum_transaction_amount: float
-    transactions: DataFrame[Transaction] = has_many(lambda: Transaction.user_id == User.id)
+    transactions: DataFrame[Transaction]
 ```
 
 Then, we'll define simple online resolvers to ingest user and transaction data from a Postgres database:
 
-```sql
--- (users.chalk.sql)
+```sql users.chalk.sql
 -- resolves: User
 -- source: postgres
 
 select id from users
 ```
 
-```sql
--- (transactions.chalk.sql)
+```sql transactions.chalk.sql
 -- resolves: Transaction
 -- source: postgres
 
@@ -160,6 +158,8 @@ using your IDE (VS Code, PyCharm, or even pdb):
 You can edit the definition of the resolver locally, and re-run `resolver_replay` to see the results of your changes
 in your terminal or by stepping through with a debugger.
 
+---
+
 ## Using logs to debug
 
 If you're not able to use the query plan visualizer or resolver replay, you can also use the logs to debug your query.
@@ -178,6 +178,8 @@ def sum_transaction_amount(txns: User.transaction[Transaction.amount]) -> User.s
 You can also view these logs using `resolver_replay`, where they will be emitted to your terminal:
 
 ![Logs output example](/img/debugging/logs.png)
+
+---
 
 ## Query Error Categories
 
@@ -276,7 +278,7 @@ The online query interface for resolvers returns the following schema:
         The query is invalid. All supplied features need to be rooted in the same top-level entity.
     </Attribute>
     <Attribute field={'VALIDATION_FAILED'} kind={<a href={'#field-error'}>FIELD</a>}>
-        A feature value did not match the expected schema (eg. `incompatible type "int"; expected "str"`)
+        A feature value did not match the expected schema (eg. <code>incompatible type "int"; expected "str"</code>)
     </Attribute>
     <Attribute field={'RESOLVER_FAILED'} kind={<a href={'#field-error'}>FIELD</a>}>
         The resolver for a feature errored.

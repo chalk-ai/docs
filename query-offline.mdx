@@ -9,21 +9,30 @@ import {TipInfo} from '@/components/Tip'
 
 ---
 
-Offline queries pull data from the offline store or calculate features through
-[resolvers that are marked as offline](/docs/resolver-online-offline).
+Offline queries can pull data from the offline store, or run offline and online 
+resolvers to compute feature datasets, that can be used for model training, backfilling, 
+and experimentation. 
 
-<TipInfo>
-    Offline queries can also execute online resolvers if no offline resolver is available for a
-    requested feature.
-</TipInfo>
+Offline queries are highly configurable, and can be used for most offline workflows. 
+In an offline query, you can guarantee temporal consistency by providing `input_times`, 
+to fetch the latest values for each feature observed before the input time. You can also 
+set `recompute_features` to compute the freshest feature values for some or all output 
+features, running offline and online resolvers. For offline queries, the query planner 
+will preference an offline resolver if present, but otherwise will still run online resolvers 
+to compute feature values.
 
-In an offline query, you can request features for multiple entities at distinct time points.
-By default, an offline query returns a row for each primary key containing the most recent
-computed value for each requested output feature. The main use case for offline queries is
-creating datasets.
+Offline queries can be used directly for computing feature values to be stored in the online 
+or offline store, as well as creating datasets that can be used for model training. Providing
+a `dataset_name` in an offline query creates versioned revisions of [Datasets](/docs/datasets), including 
+metadata about each offline query used to create each revision of a dataset. If an offline 
+query should be run on a schedule, then the same query can be defined and deployed in code 
+as a [Scheduled Query](/docs/scheduled-query). 
+
 
 Chalk supports a number of clients for offline queries. In this section, our examples
-use our Python client, which integrates nicely with Jupyter notebooks.
+use our Python client, which integrates with Jupyter notebooks.
+
+---
 
 ## Making offline queries
 
@@ -218,6 +227,8 @@ client.offline_query(
 If you'd like to adjust the compute or memory resources for the job,
 set the `resources` parameter to a custom [`ResourceRequests`](/api-docs#ResourceRequests) object.
 Ensure that the request values are compatible with the resources available on Kubernetes cluster.
+By default, asynchronous offline queries will be picked up by a Job Queue Server worker, so the
+resource requests can override the Job Queue server configurations.
 
 Another option to consider is to parallelize the computation of the offline query by dividing the input into shards.
 If the `num_shards` parameter is set,
@@ -258,3 +269,33 @@ dataset = client.get_dataset(revision_id="21d9ceb7-c1ef-4c08-a39c-f8381e825a66")
 df = dataset.get_data_as_pandas()
 ```
 
+### Optimizing aggregations in offline queries
+
+When computing aggregations over large datasets in offline queries, your offline query may have to perform
+computationally expensive joins. To optimize these joins, Chalk provides a planner option `use_materialized_offline_query`
+that you can specify that follows similar bucketing logic to [Materialized Windowed Aggregations](/docs/materialized_aggregations)
+used in online queries. When this option is specified, the Chalk engine will bin the events over which you
+are aggregating into appropriately sized buckets based on timestamps and feature groupings, compute the
+bucket-level aggregations, and then merge the bucket-level aggregations to produce the final result. This
+approach can significantly reduce the amount of data that needs to be processed during joins, leading to faster
+offline query execution times, but the performance gain is a tradeoff with some loss of precision in the
+calculation of the aggregation.
+
+```python
+from chalk.client import ChalkClient
+
+client = ChalkClient()
+
+ds = client.offline_query(
+    inputs={'user.id': big_input_list},
+    input_times=big_input_time_list,
+    output=[
+        User.recent_transactions,
+        User.total_spent_last_30d,
+        User.recent_spending_score
+    ],
+    planner_options={
+        'use_materialized_offline_query': '1'
+    },
+)
+```

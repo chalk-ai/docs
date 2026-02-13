@@ -2,6 +2,7 @@
 title: Databricks Offline Store Setup
 description: Using Databricks as your offline store.
 published: true
+llms: hidden
 ---
 
 ## Databricks Workspace Prerequisites
@@ -21,6 +22,8 @@ After this phase of setup is complete, Chalk needs the following information:
 2. HTTP path (accessible from the connection details page)
 3. The name of the Unity Catalog.
 4. Schema name (within the catalog above)
+
+---
 
 ## Service Principal
 
@@ -46,6 +49,8 @@ use the Databricks SQL CLI and give the service principal the `CAN_MANAGE` permi
 actually corresponds to the service principal’s unique ID, not the name displayed in the console (these names
 are not necessarily unique and the permissions cannot be ambiguous). This apparently can be done from the web
 portal on AWS but not GCP.
+
+---
 
 ## Storage Credential and External Location
 

@@ -6,13 +6,16 @@ published: true
 import { TipInfo, TipGood, TipBad } from '@/components/Tip'
 
 
-# Native Streaming
 
-Native streaming resolvers provide a way to process streaming data using statically-defined expressions instead of Python functions. Similar to Chalk's expression-based [feature definitions](/docs/expression), these expressions are compiled and executed as vectorized C++, enabling high-throughput processing of stream messages. 
+Native streaming resolvers provide a way to process streaming data using statically-defined expressions instead of Python functions. Similar to Chalk's expression-based [feature definitions](/docs/expression), these expressions are compiled and executed as vectorized C++, enabling high-throughput processing of stream messages.
+
+---
 
 ## Overview
 
-Native streaming resolvers can be defined using the `make_stream_resolver()` function. The definition takes a message type and a mapping from Chalk features to expressions. In production, raw streaming messages are first converted into the given message type. Then, the output features of the resolver are computed based on the given expressions. 
+Native streaming resolvers can be defined using the `make_stream_resolver()` function. The definition takes a message type and a mapping from Chalk features to expressions. In production, raw streaming messages are first converted into the given message type. Then, the output features of the resolver are computed based on the given expressions.
+
+---
 
 ## Basic Example
 
@@ -28,10 +31,7 @@ import pyarrow as pa
 import datetime as dt
 
 # Define the Kafka stream source
-kafka_source = KafkaSource(
-    bootstrap_server='kafka.website.com:9092',
-    topic='user_updates_topic'
-)
+kafka_source = KafkaSource(name="user_updates")
 
 # Define the feature class
 @features(max_staleness="30d", etl_offline_to_online=True)
@@ -70,7 +70,7 @@ users_streaming_resolver = make_stream_resolver(
 Here, stream messages will come in as JSON strings whose structure matches the definition of the UserMessage model. The output features are defined as simple field accesses into the JSON struct. Note that nested access, such as `_.contact_info.email_address`, works as expected. Similar to feature definitions, [scalar functions](/docs/expression#scalar-functions) can be used to process the raw message fields. Here, we convert a raw integer timestamp in microseconds into a UTC datetime.
 
 <TipInfo>
-Note that the expressions here are are essentially the same as those used in feature definitions. However, the semantics are slightly different: The "root" here (`_`), refers not to a namespace of features, but rather a table column whose datatype is based on the stream resolver's `message_type`. Thus, `_.amount` does not mean "get me Chalk feature `amount` in the current namespace" but rather "access struct field `amount` on this column." In addition, since these expressions represent projections on single columns, dataframe operations such as `_.transactions[_.amount, _.amount &gt; 100].sum()` don't apply here.
+Note that the expressions here are are essentially the same as those used in feature definitions. However, the semantics are slightly different: The "root" here (<code>_</code>), refers not to a namespace of features, but rather a table column whose datatype is based on the stream resolver's <code>message_type</code>. Thus, <code>_.amount</code> does not mean "get me Chalk feature <code>amount</code> in the current namespace" but rather "access struct field <code>amount</code> on this column." In addition, since these expressions represent projections on single columns, dataframe operations such as <code>_.transactions[_.amount, _.amount &gt; 100].sum()</code> don't apply here.
 </TipInfo>
 
 ### Example Stream Messages
@@ -89,44 +89,46 @@ Here's what an incoming message might look like:
 }
 ```
 
-This message will get parsed into the following data: 
+This message will get parsed into the following data:
 
 ```python
 User(
-    id=123, 
+    id=123,
     full_name="John Smith",
     email_address="john.smith@gmail.com",
     updated_at=datetime.datetime(2023, 11, 14, 22, 13, 20, tzinfo=datetime.timezone.utc)
 )
 ```
 
+---
+
 ## Supported message types
 
-The following message types are supported: 
+The following message types are supported:
 
-* Pydantic `BaseModel`s or python `@dataclass`es: Incoming string messages will be deserialized from JSON into structs. 
-* Protocol buffer messages:  The incoming binary messages will be deserialized into structs with the various fields. 
-* `str` or `bytes`: The incoming messages can also be treated as simple strings or bytes. In this case, your feature expressions can't access struct fields on the message, but they can use scalar [string/binary](/api-docs#section-string-functions) functions: 
+* Pydantic `BaseModel`s or python `@dataclass`es: Incoming string messages will be deserialized from JSON into structs.
+* Protocol buffer messages:  The incoming binary messages will be deserialized into structs with the various fields.
+* `str` or `bytes`: The incoming messages can also be treated as simple strings or bytes. In this case, your feature expressions can't access struct fields on the message, but they can use scalar [string/binary](/api-docs#section-string-functions) functions:
 
 ```python
 {
     Event.timestamp: _.timestamp #  INVALID -- strings don't have an 'age' field
-    Event.raw_data_cleaned:  F.trim(F.lower(_)) # Here, `_` refers to the string message as whole. 
+    Event.raw_data_cleaned:  F.trim(F.lower(_)) # Here, `_` refers to the string message as whole.
     Event.timestamp: F.json_value(_, "$.metadata.timestamp") # This parses the input string as JSON and extracts a single field.
 }
 ```
 
 <TipBad>
-Note: Not all pydantic or protobuf types are supported. The message type needs to be converted into a well-defined PyArrow schema. Types that are recursive and can be arbitrariliy nested will fail to be parsed. Similarly, Pydantic types with type annotations such as `Any` or complex union types are also not supported. To process these types in a native streaming resolver, use a custom parse function to only extract specific fields with well-known datatypes. 
+Note: Not all pydantic or protobuf types are supported. The message type needs to be converted into a well-defined PyArrow schema. Types that are recursive and can be arbitrarily nested will fail to be parsed. Similarly, Pydantic types with type annotations such as <code>Any</code> or complex union types are also not supported. To process these types in a native streaming resolver, use a custom parse function to only extract specific fields with well-known datatypes.
 </TipBad>
 
 ```python
 
-class PhoneInfo(BaseModel): 
+class PhoneInfo(BaseModel):
     number: str
     area_code: str
 
-class EmailInfo(BaseModel): 
+class EmailInfo(BaseModel):
     address: str
 
 class Parent(BaseModel):
@@ -143,14 +145,16 @@ class UsersMessage(BaseModel):
 ```
 
 
+---
+
 ## Custom Parse Functions
 
-By default, the message parsing logic is inferred automatically from the message_type. For Pydantic types or dataclasses, JSON parsing is used. For protobuf message classes, 
-these are parsed from the protobuf's binary representation. However, it is also possible to provide customer parsing logic. In addition to handling custom message formats, this also allows the stream resolver to skip a subset of messages. For instance, one might have multiple message types on the same kafka topic, or perhaps a stream of events where only events of type "CREATE" are relevant. 
+By default, the message parsing logic is inferred automatically from the message_type. For Pydantic types or dataclasses, JSON parsing is used. For protobuf message classes,
+these are parsed from the protobuf's binary representation. However, it is also possible to provide customer parsing logic. In addition to handling custom message formats, this also allows the stream resolver to skip a subset of messages. For instance, one might have multiple message types on the same kafka topic, or perhaps a stream of events where only events of type "CREATE" are relevant.
 
 The `make_stream_resolver()` function has an optional `parse` argument that takes an expression. If provided, this expression will be used to convert raw message bytes into the expected message type. If the expression returns None, that message will be skipped.
 
-For example, consider the following protobuf definition: 
+For example, consider the following protobuf definition:
 
 ```protobuf
 message User {
@@ -165,7 +169,7 @@ message User {
     optional string email_address = 1;
   }
 
-  uint32 id = 1; 
+  uint32 id = 1;
   string name = 2;
   UserType user_type = 3;
   optional ContactInfo contact_info = 4;
@@ -173,15 +177,18 @@ message User {
 }
 ```
 
-Let's say our system produces protobuf messages w/ an unusual format (a 6-byte prefix is added). We would like to strip the prefix before parsing and also ignore messages 
+Let's say our system produces protobuf messages w/ an unusual format (a 6-byte prefix is added). We would like to strip the prefix before parsing and also ignore messages
 for users of type "GUEST". We can use a custom parse expression to do this:
 
 ```python
 from messages.user_pb2 import UserMessage # Import the generated protobuf classes
+from chalk import functions as F 
+from chalk.features.resolver import make_stream_resolver
+
 
 # Strip first 6 bytes, then parse the protobuf message
 parsed_message = F.proto_deserialize(F.substr(_, 6, None), UserMessage)
-# Exlude any UserMessages whos user_type == GUEST
+# Exclude any UserMessages whose user_type == GUEST
 parse_expression = F.if_then_else(
     parsed_message.user_type == UserMessage.UserType.GUEST, None, parsed_message
 )
@@ -200,12 +207,14 @@ users_streaming_resolver = make_stream_resolver(
 )
 ```
 
-## Testing Native Streaming Resolvers 
+---
 
-Running native streaming resolvers locally is currently not supported. However, native streaming resolvers can be tested with sample messages from a notebook or client against the branch server or a production streaming server. In addition, native streaming resolvers defined in notebooks can be uploaded to Chalk servers for testing, without affecting the production deployment. 
+## Testing Native Streaming Resolvers
+
+Running native streaming resolvers locally is currently not supported. However, native streaming resolvers can be tested with sample messages from a notebook or client against the branch server or a production streaming server. In addition, native streaming resolvers defined in notebooks can be uploaded to Chalk servers for testing, without affecting the production deployment.
 
 ```python
-from chalk.client import ChalkClient 
+from chalk.client import ChalkClient
 
 sample_messages = [
     '{"id": 123, "name": "John Smith"}',
@@ -216,7 +225,7 @@ client = ChalkClient()
 
 # 1. Test messages against production resolver:
 result = client.test_streaming_resolver(resolver="get_users_streaming", message_bodies=sample_messages)
-# 'test_streaming_resolver' returns a signed URL to a parquet file in cloud storage -- `result.features` downloads this and extracts the table. 
+# 'test_streaming_resolver' returns a signed URL to a parquet file in cloud storage -- `result.features` downloads this and extracts the table.
 print(result.features)
 
 # 2. Test messages against a stream resolver on a branch:
@@ -226,13 +235,15 @@ print(result.features)
 # 3. Create a new resolver and test it:
 new_users_resolver = make_stream_resolver(
     source=...,
-    name="get_users_streaming_new", 
+    name="get_users_streaming_new",
     message_type=...,
     output_features={...},
 )
 result = client.test_streaming_resolver(resolver=new_users_resolver, message_bodies=sample_messages)
 print(result.features)
 ```
+
+---
 
 ## Performance Considerations
 
@@ -247,7 +258,7 @@ print(result.features)
 
 Native streaming is ideal for:
 - High-volume data ingestion (>1000 messages/second)
-- Low-latency feature computation (<10ms)
+- Low-latency feature computation (&lt;10ms)
 - Simple to moderate transformations
 - Stateless processing
 
@@ -256,11 +267,18 @@ Consider traditional Python resolvers for:
 - Complex error handling and recovery logic
 
 
+---
+
 ## Migration from Traditional Streaming
 
 If you have an existing Python streaming resolver, you can create an equivalent native version:
 
 ```python
+from chalk.features.resolver import make_stream_resolver
+from chalk import stream, Features
+
+
+
 # Traditional Python resolver
 @stream(source=user_stream)
 def process_users(message: UsersMessage) -> Features[Users]:
@@ -286,3 +304,142 @@ process_users_native = make_stream_resolver(
 ```
 
 Both resolvers produce identical results, but the native version offers significantly better performance for high-throughput scenarios.
+
+---
+
+## Writing to a Sink
+
+Native streaming resolvers can write computed features to downstream Kafka topics using the `Sink` parameter. This enables chaining of stream processing stages, where one resolver's output becomes another resolver's input. This pattern is particularly useful for:
+
+- **Multi-stage processing pipelines**: Break complex transformations into discrete stages
+- **Feature routing**: Direct specific features to specialized processing streams
+- **Model inference workflows**: Send features to GPU-accelerated resolvers for heavy computation
+
+The sink specifies which output features should be written to the destination stream. These features are computed by the resolver or by downstream resolvers that depend on the initial resolver's outputs.
+
+### Example: Item Embedding Pipeline
+
+This example demonstrates a two-stage pipeline where items are first processed through a native streaming resolver, then routed to a GPU-accelerated resolver for embedding generation:
+
+```python
+from chalk.streams import KafkaSource
+from chalk.features.resolver import Sink, make_stream_resolver
+from chalk.features import _
+from chalk import online
+from pydantic import BaseModel
+from src.models import Item
+import numpy as np
+
+
+class ItemMessage(BaseModel):
+    id: int
+    name: str
+    price: float
+    description: str
+    image_url: str
+
+
+new_items = KafkaSource(
+    name="new_items",
+)
+
+embedding_stream = KafkaSource(
+    name="item_embeddings",
+)
+
+make_stream_resolver(
+    name="process_new_items",
+    source=new_items,
+    message_type=ItemMessage,
+    output_features={
+        Item.id: _.id,
+        Item.name: _.name,
+        Item.price: _.price,
+        Item.description: _.description,
+        Item.image_url: _.image_url,
+    },
+    sink=Sink(
+        send_to=embedding_stream,
+        output_features=[Item.id, Item.embedding],
+    ),
+)
+
+@online(resource_hint="gpu")
+def run_item_embedding_model(
+    price: Item.price,
+    description: Item.description,
+    state: Item.state,
+    image_url: Item.image_url,
+) -> Item.embedding:
+    """Mock generate item embedding using a pre-trained model."""
+    # In a real implementation, this function would load a pre-trained model
+    # and generate an embedding based on the input features or make an API
+    # call to an external service.
+    return np.random.rand(128).tolist()
+```
+
+In this example:
+
+1. The `process_new_items` resolver consumes messages from the `new_items` Kafka source and extracts basic item features
+2. The sink configuration specifies that `Item.id` and `Item.embedding` should be written to the `item_embeddings` stream
+3. When a message is processed, Chalk computes `Item.item_embedding` by calling the `run_item_embedding_model` resolver, which runs on a GPU-enabled instance
+4. The computed features are then written to the `item_embeddings` topic
+
+This pattern allows the lightweight native streaming resolver to handle high-throughput message parsing while delegating compute-intensive embedding generation to specialized GPU resources. The sink acts as a bridge, automatically triggering the downstream computation and routing results to the appropriate stream.
+
+Messages can be encoded as either arrow IPC streams or as JSON. The fully qualified feature names are used as the column names in the output stream or as the JSON keys.
+
+
+---
+
+## Skip Writing to the Offline Store
+
+If you already store a historical log of your stream messages in a data warehouse, you can disable stream persistence to the Chalk offline store. This can be done by setting the [`skip_offline`](/api-docs#make_stream_resolver.skip_offline) parameter of `make_stream_resolver`:
+
+```python
+users_streaming_resolver = make_stream_resolver(
+    name="get_users_stream",
+    source=kafka_source,
+    message_type=UsersMessage,
+    output_features={
+        User.user_id: _.id,
+        User.full_name: _.name,
+        User.email_address: _.contact_info.email_address,
+        User.updated_at: F.from_unix_seconds(_.updated_at / 1_000_000),
+    },
+    skip_offline=True, # don't write resolved events from stream to offline store
+)
+```
+
+---
+
+## Environment-specific Stream Resolvers
+
+A stream resolver can be restricted to a specific environment through the [`environment`](/api-docs#make_stream_resolver.environment) parameter of `make_stream_resolver`:
+
+```python
+
+@features(max_staleness="30d", etl_offline_to_online=True)
+class Transaction:
+    transaction_id: Primary[int]
+    submitted: dt.datetime
+    amount: int
+
+class TransactionMessage(BaseModel):
+    id: int # maps to transaction_id
+    submitted: int # epoch microseconds
+    amount: int
+
+# new resolver to experiment with new Transaction class
+experimental_streaming_resolver = make_stream_resolver(
+    name="new_transaction_stream_resolver",
+    source=kafka_source,
+    message_type=UsersMessage,
+    output_features={
+        Transaction.transaction_id: _.id,
+        Transaction.timestamp: F.from_unix_seconds(_.submitted / 1_000_000),
+        Transaction.amount: int
+    },
+    environments=["dev"], # only deploy resolver in "dev" environment
+)
+```

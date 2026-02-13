@@ -1,0 +1,438 @@
+---
+title: Snowflake Setup Requirements (GCP)
+description: Setting up Snowflake as your offline store with Google Cloud Storage.
+published: true
+llms: hidden
+---
+
+---
+
+This guide covers setting up Snowflake as your offline store for GCP deployments using GCS storage integration.
+
+For architecture overview, component hierarchy, and multi-environment planning, see [Snowflake Offline Store Overview](/docs/snowflake-offline-store).
+
+---
+
+## Database Setup
+
+To use Snowflake as your offline store, you need a warehouse, database, schema, and a user with a role that
+has `OWNER` on the database.
+
+### Step 0: Generate Key Pair
+
+Follow the [Snowflake key-pair authentication guide](https://docs.snowflake.com/en/user-guide/key-pair-auth#generate-the-private-keys)
+to generate your private and public keys.
+
+### Step 1: Create Database Objects
+
+Run the following commands in SnowSQL, replacing the variables at the top.
+
+**For multi-environment deployments**, see the annotations and the [Additional Environments](#additional-environments) section below.
+
+```sql
+-- ═══════════════════════════════════════════════════════════════
+-- CLUSTER-LEVEL RESOURCES (can be shared or separated per env)
+-- These CAN be shared across environments, or you can create
+-- separate databases/warehouses per environment if desired
+-- ═══════════════════════════════════════════════════════════════
+SET WAREHOUSE_NAME='CHALK_WAREHOUSE';    -- Can share across envs OR use CHALK_WAREHOUSE_DEV, etc.
+SET WAREHOUSE_SIZE='XSMALL';
+SET DB_NAME='CHALK';                      -- Can share across envs OR use CHALK_DEV, etc.
+
+-- ═══════════════════════════════════════════════════════════════
+-- ENVIRONMENT-LEVEL RESOURCES (unique per environment)
+-- For multi-env deployments, use suffixes that fit your use case
+-- Examples: _DEV, _STAGE, _PROD, _UAT, _SANDBOX, _TEAM1, etc.
+-- ═══════════════════════════════════════════════════════════════
+SET SCHEMA_NAME='OFFLINE_STORE';          -- ⚠️ MUST be unique per env
+SET ROLE_NAME='CHALK_ROLE';               -- Recommended: unique per env
+SET USER_NAME='CHALK_USER';               -- Recommended: unique per env
+
+-- Create the database + schema + warehouse
+CREATE DATABASE IF NOT EXISTS IDENTIFIER($DB_NAME);
+USE DATABASE IDENTIFIER($DB_NAME);
+CREATE SCHEMA IF NOT EXISTS IDENTIFIER($SCHEMA_NAME);
+CREATE WAREHOUSE IF NOT EXISTS IDENTIFIER($WAREHOUSE_NAME) WITH WAREHOUSE_SIZE=$WAREHOUSE_SIZE;
+
+-- Create a role for Chalk
+CREATE ROLE IF NOT EXISTS IDENTIFIER($ROLE_NAME);
+GRANT OWNERSHIP ON DATABASE IDENTIFIER($DB_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+GRANT USAGE ON WAREHOUSE IDENTIFIER($WAREHOUSE_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+
+-- Create a user for Chalk
+CREATE USER IF NOT EXISTS IDENTIFIER($USER_NAME)
+    RSA_PUBLIC_KEY=`<your-public-key-here-without-BEGIN/END-lines>`
+    DEFAULT_ROLE=IDENTIFIER($ROLE_NAME)
+    DEFAULT_WAREHOUSE=IDENTIFIER($WAREHOUSE_NAME)
+    DEFAULT_NAMESPACE=IDENTIFIER(concat($DB_NAME, '.', $SCHEMA_NAME));
+
+-- derived variables
+SET QUALIFIED_SCHEMA_NAME=concat($DB_NAME, '.', $SCHEMA_NAME);
+
+-- Allow Chalk to create storage integrations for bulk loads from cloud object storage
+GRANT CREATE INTEGRATION ON ACCOUNT TO IDENTIFIER($ROLE_NAME);
+
+-- Allow Chalk to create internal/external stages for bulk loading
+GRANT CREATE STAGE ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO IDENTIFIER($ROLE_NAME);
+
+-- Grant Chalk owner on the db/schema and usage on the warehouse
+GRANT OWNERSHIP ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO IDENTIFIER($ROLE_NAME) REVOKE CURRENT GRANTS;
+GRANT USAGE ON WAREHOUSE IDENTIFIER($WAREHOUSE_NAME) TO IDENTIFIER($ROLE_NAME);
+GRANT OWNERSHIP ON DATABASE IDENTIFIER($DB_NAME) TO IDENTIFIER($ROLE_NAME);
+
+-- Grant the Chalk role to the Chalk user
+GRANT ROLE IDENTIFIER($ROLE_NAME) TO USER IDENTIFIER($USER_NAME);
+```
+
+### What to Share with Chalk
+
+Share the following securely via [GPG encryption](/docs/public-key):
+- The `USER_NAME` and RSA private key
+- The `WAREHOUSE_NAME`, `DB_NAME`, `SCHEMA_NAME`, and `ROLE_NAME`
+- Your Snowflake account name (`SELECT CURRENT_ACCOUNT_NAME();`)
+- Your Snowflake organization name (`SELECT CURRENT_ORGANIZATION_NAME();`)
+
+---
+
+## Storage Integration Setup
+
+> **Cluster-Level Resource**: The storage integration is created **once per cluster** and shared by all environments.
+> All environments in the cluster will use this single storage integration—Chalk routes data using fully-qualified
+> paths to ensure isolation between environments.
+
+The storage integration creates a GCS service account with allowed storage locations, enabling Chalk to securely load and unload data from the offline store.
+
+### Required Information
+
+Before setting up the storage integration, gather the following:
+
+- **GCP Project ID**: The GCP project where your Chalk environment is deployed
+- **GCS Bucket Name**: This is subject to custom naming, but may resemble `chalk-{organization}-offline-store-bulk-insert` (confirm with Chalk if different)
+- **Snowflake Role Name**: The role name created in Database Setup (e.g., `CHALK_ROLE`)
+
+**Permissions required:**
+- **GCP**: Permissions to create IAM custom roles and assign roles to service accounts
+- **Snowflake**: `ACCOUNTADMIN` role or equivalent permissions for `CREATE INTEGRATION`
+
+---
+
+### Step 1: Create Snowflake Storage Integration
+
+This creates the storage integration object in Snowflake that links to your GCS bucket.
+
+Follow the [Snowflake GCS Storage Integration documentation](https://docs.snowflake.com/en/user-guide/data-load-gcs-config#step-1-create-a-cloud-storage-integration-in-snowflake) and execute the following SQL commands (replace placeholders with actual values):
+
+```sql
+-- Create the storage integration pointing to your GCS bucket
+CREATE STORAGE INTEGRATION "gcs-integration-chalk-{organization}-offline-store-bulk-insert"
+TYPE = EXTERNAL_STAGE
+STORAGE_PROVIDER = 'GCS'
+ENABLED = true
+STORAGE_ALLOWED_LOCATIONS = ('gcs://chalk-{organization}-offline-store-bulk-insert/');
+
+-- Grant usage permissions to the Chalk role
+GRANT USAGE ON INTEGRATION "gcs-integration-chalk-{organization}-offline-store-bulk-insert" TO ROLE "CHALK_ROLE";
+
+-- Verify the integration was created successfully and retrieve the service account
+DESCRIBE INTEGRATION "gcs-integration-chalk-{organization}-offline-store-bulk-insert";
+```
+
+From the `DESCRIBE INTEGRATION` output, record the `STORAGE_GCP_SERVICE_ACCOUNT` value. This is the service account that Snowflake will use to access your GCS bucket.
+
+**Note**: Snowflake creates a single service account that is referenced by all GCS storage integrations in your Snowflake account. The service account identifier will look like: `service-account@<id>.iam.gserviceaccount.com`
+
+---
+
+### Step 2: Create Custom IAM Role in GCP
+
+This custom role will grant Snowflake the minimum permissions needed to read and write objects to your GCS bucket.
+
+Follow the [Snowflake GCS IAM configuration documentation](https://docs.snowflake.com/en/user-guide/data-load-gcs-config#step-3-grant-the-service-account-permissions-to-access-bucket-objects) to create a custom IAM role with the following permissions:
+
+**For data loading only:**
+- `storage.buckets.get`
+- `storage.objects.get`
+- `storage.objects.list`
+
+**For data loading and unloading (recommended):**
+- `storage.buckets.get`
+- `storage.objects.get`
+- `storage.objects.list`
+- `storage.objects.create`
+- `storage.objects.delete`
+
+**If using Cloud KMS encryption:**
+Additionally grant the service account the "Cloud KMS CryptoKey Encryptor/Decryptor" role on your key ring.
+
+#### Create the Custom Role
+
+In your GCP Console or using `gcloud`:
+
+```bash
+# Create a custom role definition file: chalk-snowflake-gcs-role.yaml
+cat > chalk-snowflake-gcs-role.yaml <<EOF
+title: "Chalk Snowflake GCS Access"
+description: "Custom role for Snowflake to access Chalk GCS bucket"
+stage: "GA"
+includedPermissions:
+- storage.buckets.get
+- storage.objects.get
+- storage.objects.list
+- storage.objects.create
+- storage.objects.delete
+EOF
+
+# Create the custom role
+gcloud iam roles create ChalkSnowflakeGCSAccess \
+    --project=<your-gcp-project-id> \
+    --file=chalk-snowflake-gcs-role.yaml
+```
+
+---
+
+### Step 3: Grant IAM Role to Service Account
+
+Assign the custom IAM role to the Snowflake service account at the bucket level.
+
+Follow the [Snowflake IAM role assignment documentation](https://docs.snowflake.com/en/user-guide/data-load-gcs-config#assigning-the-custom-role-to-the-cloud-storage-service-account) to grant the role.
+
+#### Using GCP Console:
+
+1. Navigate to Cloud Storage > Buckets
+2. Select your bucket: `chalk-{organization}-offline-store-bulk-insert`
+3. Go to the "Permissions" tab
+4. Click "Grant Access"
+5. Add the service account from Step 1: `service-account@<id>.iam.gserviceaccount.com`
+6. Select the custom role: `ChalkSnowflakeGCSAccess`
+7. Save the changes
+
+#### Using gcloud:
+
+```bash
+# Grant the custom role to the Snowflake service account
+gsutil iam ch serviceAccount:<service-account>@<id>.iam.gserviceaccount.com:projects/<your-gcp-project-id>/roles/ChalkSnowflakeGCSAccess \
+    gs://chalk-{organization}-offline-store-bulk-insert
+```
+
+**Important**: The service account must have access to the bucket before Snowflake can load or unload data.
+
+---
+
+### Step 4: Test Storage Integration
+
+Before proceeding, validate that your storage integration is properly configured using Snowflake's built-in validation function.
+
+Run the following SQL command to test all operations (read, write, list, delete):
+
+```sql
+-- Test the storage integration
+SELECT SYSTEM$VALIDATE_STORAGE_INTEGRATION(
+  'gcs-integration-chalk-{organization}-offline-store-bulk-insert',
+  'gcs://chalk-{organization}-offline-store-bulk-insert/',
+  'validation_test.txt',
+  'all'
+);
+```
+
+A successful result will return a JSON object with `"status": "success"` for each action.
+
+For more details on this validation function, see the [Snowflake documentation](https://docs.snowflake.com/en/sql-reference/functions/system_validate_storage_integration).
+
+---
+
+### Step 5: Configure Domain Restrictions (if applicable)
+
+For organizations created after May 3, 2024, Snowflake enforces domain restrictions that may require additional configuration.
+
+If you encounter access issues related to domain restrictions:
+
+1. Review your organization's domain restriction policy in GCP
+2. Ensure the Snowflake service account is authorized
+3. Contact Chalk support if you need assistance with domain configuration
+
+---
+
+### Step 6: Create External Stage (Optional)
+
+You can optionally create an external stage in Snowflake that references your storage integration for easier data access:
+
+```sql
+-- Create an external stage pointing to your GCS bucket
+CREATE STAGE IF NOT EXISTS CHALK_GCS_STAGE
+  URL = 'gcs://chalk-{organization}-offline-store-bulk-insert/'
+  STORAGE_INTEGRATION = "gcs-integration-chalk-{organization}-offline-store-bulk-insert";
+
+-- Grant usage permissions to the Chalk role
+GRANT USAGE ON STAGE CHALK_GCS_STAGE TO ROLE "CHALK_ROLE";
+
+-- List files in the stage to verify it works
+LIST @CHALK_GCS_STAGE;
+```
+
+---
+
+## Additional Environments
+
+If you have multiple Chalk environments (e.g., dev, staging, production) in the same cluster, follow these steps for each additional environment.
+
+### What to Reuse (Cluster-Level)
+
+These resources are already created and **must be shared** across all environments:
+- Storage Integration (created once in the steps above)
+- GCS Bucket
+- GCP IAM custom role and service account binding
+
+These resources **can be shared or separated** per environment (your choice):
+- Database — share one database, or create `CHALK_DEV`, `CHALK_STAGE`, `CHALK_PROD`
+- Warehouse — share one warehouse, or create separate warehouses per environment for independent scaling/billing
+
+### What to Create New (Per Environment)
+
+For each additional environment, create:
+
+1. **New Schema** (required—must be unique per environment)
+2. **New Role** (recommended)
+3. **New User with new key pair** (recommended)
+
+### SQL for Additional Environment
+
+```sql
+-- ═══════════════════════════════════════════════════════════════
+-- ADDITIONAL ENVIRONMENT SETUP
+-- Replace _STAGE with your environment suffix
+-- Use suffixes that fit your use case: _DEV, _PROD, _UAT, _SANDBOX, etc.
+-- ═══════════════════════════════════════════════════════════════
+
+-- Database and Warehouse: share existing OR create new per environment
+-- Option A: Share (simpler)
+SET DB_NAME='CHALK';                      -- Same database (shared)
+SET WAREHOUSE_NAME='CHALK_WAREHOUSE';     -- Same warehouse (shared)
+-- Option B: Separate (for independent scaling/billing)
+-- SET DB_NAME='CHALK_STAGE';             -- Separate database per env
+-- SET WAREHOUSE_NAME='CHALK_WH_STAGE';   -- Separate warehouse per env
+
+-- New environment-specific resources
+SET SCHEMA_NAME='OFFLINE_STORE_STAGE';    -- ⚠️ MUST be unique
+SET ROLE_NAME='CHALK_ROLE_STAGE';
+SET USER_NAME='CHALK_USER_STAGE';
+
+-- Create the new schema
+USE DATABASE IDENTIFIER($DB_NAME);
+CREATE SCHEMA IF NOT EXISTS IDENTIFIER($SCHEMA_NAME);
+
+-- Create a new role for this environment
+CREATE ROLE IF NOT EXISTS IDENTIFIER($ROLE_NAME);
+GRANT USAGE ON WAREHOUSE IDENTIFIER($WAREHOUSE_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+
+-- Create a new user for this environment
+CREATE USER IF NOT EXISTS IDENTIFIER($USER_NAME)
+    RSA_PUBLIC_KEY=`<your-new-public-key-here>`
+    DEFAULT_ROLE=IDENTIFIER($ROLE_NAME)
+    DEFAULT_WAREHOUSE=IDENTIFIER($WAREHOUSE_NAME)
+    DEFAULT_NAMESPACE=IDENTIFIER(concat($DB_NAME, '.', $SCHEMA_NAME));
+
+-- Grant permissions
+SET QUALIFIED_SCHEMA_NAME=concat($DB_NAME, '.', $SCHEMA_NAME);
+GRANT OWNERSHIP ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO ROLE IDENTIFIER($ROLE_NAME) REVOKE CURRENT GRANTS;
+GRANT CREATE STAGE ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+GRANT ROLE IDENTIFIER($ROLE_NAME) TO USER IDENTIFIER($USER_NAME);
+
+-- Grant access to the SHARED storage integration
+GRANT USAGE ON INTEGRATION "gcs-integration-chalk-{organization}-offline-store-bulk-insert" TO ROLE IDENTIFIER($ROLE_NAME);
+```
+
+### Example Multi-Environment Naming
+
+> **Note**: The suffixes below (`_DEV`, `_STAGE`, `_PROD`) are examples. Use suffixes that fit your
+> use case—other common patterns include `_UAT`, `_SANDBOX`, `_QA`, `_TEAM1`, or environment-specific identifiers.
+
+**Must be unique per environment:**
+
+| Resource | Dev | Stage | Prod |
+|----------|-----|-------|------|
+| Schema | `OFFLINE_STORE_DEV` | `OFFLINE_STORE_STAGE` | `OFFLINE_STORE_PROD` |
+| Role | `CHALK_ROLE_DEV` | `CHALK_ROLE_STAGE` | `CHALK_ROLE_PROD` |
+| User | `CHALK_USER_DEV` | `CHALK_USER_STAGE` | `CHALK_USER_PROD` |
+
+**Can be shared OR separated (your choice):**
+
+| Resource | Shared Option | Separated Option |
+|----------|---------------|------------------|
+| Database | `CHALK` for all envs | `CHALK_DEV`, `CHALK_STAGE`, `CHALK_PROD` |
+| Warehouse | `CHALK_WAREHOUSE` for all envs | `CHALK_WH_DEV`, `CHALK_WH_STAGE`, `CHALK_WH_PROD` |
+
+**Must be shared (cluster-level):**
+
+| Resource | All Environments |
+|----------|------------------|
+| Storage Integration | `gcs-integration-chalk-{organization}-offline-store-bulk-insert` |
+| GCS Bucket | `chalk-{organization}-offline-store-bulk-insert` |
+| GCP IAM Role/Binding | `ChalkSnowflakeGCSAccess` |
+
+---
+
+## Summary: What to Share with Chalk
+
+After completing this setup, share the following with Chalk:
+
+### Per Environment
+- User name and RSA private key (via [GPG encryption](/docs/public-key))
+- Schema name
+- Role name
+- Database name
+- Warehouse name
+
+### Cluster-Wide (Once)
+- Storage Integration Name (e.g., `gcs-integration-chalk-{organization}-offline-store-bulk-insert`)
+- `STORAGE_GCP_SERVICE_ACCOUNT` (from Step 1)
+- GCP Project ID
+- GCS Bucket Name
+- External Stage Name (if created in Step 6)
+- Snowflake account name and organization name
+
+Chalk will use these values to configure your offline store in the platform.
+
+---
+
+## Additional Considerations
+
+### Lifecycle Management
+
+Configure GCS lifecycle rules to automatically clean up incomplete multipart uploads:
+
+```bash
+# Create a lifecycle rule to delete incomplete uploads after 7 days
+gsutil lifecycle set lifecycle-config.json gs://chalk-{organization}-offline-store-bulk-insert
+```
+
+Example `lifecycle-config.json`:
+```json
+{
+  "lifecycle": {
+    "rule": [
+      {
+        "action": {"type": "Delete"},
+        "condition": {
+          "age": 7,
+          "matchesPrefix": [""]
+        }
+      }
+    ]
+  }
+}
+```
+
+### Monitoring and Auditing
+
+Enable Cloud Audit Logs for your GCS bucket to monitor Snowflake's access:
+
+1. Go to IAM & Admin > Audit Logs
+2. Enable "Admin Read", "Data Read", and "Data Write" logs for Cloud Storage
+3. Review logs in Cloud Logging to track access patterns
+
+### Performance Optimization
+
+- Use appropriate warehouse sizes based on your data volume
+- Consider using clustering keys for frequently queried tables
+- Monitor warehouse usage and adjust AUTO_SUSPEND and AUTO_RESUME settings
+- Use folder structures in GCS with trailing slashes in stage URLs for better organization

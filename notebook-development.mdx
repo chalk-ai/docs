@@ -16,6 +16,8 @@ this involves two steps:
 
 We provide specific setup instructions for [Deepnote](/docs/notebook-setup#deepnote), [Hex](/docs/notebook-setup#hex) and [Vertex](/docs/notebook-setup#vertex-and-google-colab-enterprise), but the process should be similar for other notebook environments.
 
+---
+
 ## Installing the Chalk Python Dependency
 
 To install dependencies, run the `!pip install "chalkpy[runtime]"` bash command directly in a cell. Alternatively,
@@ -46,6 +48,8 @@ client = ChalkClient(
 )
 ```
 
+---
+
 ## Verifying the Setup
 
 To verify that everything is properly set up, you can run the following code in a cell:
@@ -58,6 +62,8 @@ If everything is properly configured, you should see your `user_id`, `team_id` a
 ```python
 WhoAmIResponse(user='<user_id>', environment_id=<environment_id>, team_id='<team_id>')
 ```
+
+---
 
 ## Loading Features
 
@@ -129,6 +135,8 @@ This command will:
 
 If the branch already exists, your client will just be updated to point to that branch (no new branch deployment will be created).
 
+---
+
 ## Building New Features
 
 Lets say we want to write a new "exclaimed name" feature, which is a director's name with an exclamation mark tacked on.
@@ -141,6 +149,8 @@ Director.name_exclaimed = _.name + "!"
 In this example, the underscore acts as a reference to the `Director` feature class`.
 
 We have now created a new feature in our notebook and can query for it in either an online or offline context.
+
+---
 
 ## Querying for features
 
@@ -191,8 +201,10 @@ Any historical dataset can be accessed using the `ChalkClient`. Named datasets c
 ```python notebook.ipynb
 client = ChalkClient()
 
-dataset = client.get_dataset(name="<datset_name>")
+dataset = client.get_dataset(name="<dataset_name>")
 ```
+
+---
 
 ## Building Out More Complex Features
 
@@ -273,6 +285,8 @@ For instance, you can define the `Director.makes_movies_that_are_too_long` featu
 ```python notebook.ipynb
 Director.makes_movies_that_are_too_long = _.average_movie_runtime > 150
 ```
+
+---
 
 ## Translating this Code into Production Code
 

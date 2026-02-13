@@ -2,6 +2,7 @@
 title: Python Resolvers
 description: Specify dependencies and results of feature resolvers.
 published: true
+llms: short
 ---
 
 import { TipBad, TipGood } from '@/components/Tip'
@@ -524,7 +525,12 @@ resolver definition.
 
 ```python
 @online
-def get_user_employer_information(id: User.id) -> Dataframe[User.id, User.name, User.employer.name, User.employer.category]:
+def get_user_employer_information(id: User.id) -> DataFrame[
+    User.id,
+    User.name,
+    User.employer.name,
+    User.employer.category
+]:
     return DataFrame([
         User(
             id="1",
@@ -566,8 +572,9 @@ vectorized handling.
 ```py
 @offline
 def get_new_feature_as_dataframe(
-    df: DataFrame[Transaction.id, ...]
-) -> DataFrame[Transaction.id, Transaction.new_feature]:
+    df: DataFrame[Transaction.id, Transaction.amount]
+) -> DataFrame[Transaction.id, Transaction.is_large]:
+    return df.with_column(...)
 ```
 
 The above resolver runs faster on a thousand rows
@@ -582,6 +589,7 @@ def relationship_returning_resolver(
     df: User.transactions[Transaction.id, Transaction.amount, Transaction.description],
     user_type: User.type
 ) -> User.transactions[Transaction.id, Transaction.transaction_type]:
+    return ...
 ```
 
 Just make sure that the return `DataFrame`s do not have duplicate rows.
@@ -594,6 +602,8 @@ feature time is also returned.
 
 To test your Python resolvers, you can set up [unit tests](/docs/unit-tests), construct
 [integration tests](/docs/integration-tests) or iterate on a branch.
+
+---
 
 ## Examples
 
@@ -614,22 +624,18 @@ import ExampleModelClass
 
 model: ExampleModelClass | None = None
 
-
 @before_all
 def load_model():
-  mlflow.set_registry_uri("EXAMPLE_REGISTRY_URI")
-  mlflow.set_tracking_uri("EXAMPLE_TRACKING_URI")
+    mlflow.set_registry_uri("EXAMPLE_REGISTRY_URI")
+    mlflow.set_tracking_uri("EXAMPLE_TRACKING_URI")
 
-  global model
-  model = mlflow.load_model("models:/mymodel@production")
-
+    global model
+    model = mlflow.load_model("models:/mymodel@production")
 
 @online
 def get_prediction(
   model_input: FeatureClass.model_input,
 ) -> FeatureClass.model_output:
-
-  x_in = [model_input]
-
-  return model.predict(x_in)
+    x_in = [model_input]
+    return model.predict(x_in)
 ```

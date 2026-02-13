@@ -2,6 +2,7 @@
 title: Snowflake
 description: Integrate with Snowflake.
 published: true
+llms: hidden
 ---
 
 import { getEnvironmentVariableText, getNamedIntegrationText } from "@/components/NamedIntegration";
@@ -12,6 +13,8 @@ import { AddSnowflakeIntegration } from '@/components/shared/snowflake'
 Chalk supports [Snowflake](https://www.snowflake.com/) as a [SQL source](/docs/sql).
 You can configure the Snowflake-specific options using the `SnowflakeSource.__init__` args.
 Alternately, you can configure the source through your dashboard.
+
+---
 
 ## From the dashboard
 
@@ -25,65 +28,191 @@ defaults set in the data source definition.
 
 ---
 
-## Single Integration
+## Integrations Setup
 
-If you have only one Snowflake connection that you'd like
-to add to Chalk, you do not need to specify any arguments
-to construct the source in your code.
+After configuring your Snowflake integration in the dashboard, define your data sources in Python:
 
 ```py
 from chalk.sql import SnowflakeSource
 
-snowflake = SnowflakeSource()
-
-@online
-def fn(...) -> ...:
-    return snowflake.query(...).first()
+risk = SnowflakeSource(name="RISK")
+marketing = SnowflakeSource(name="MARKETING")
 ```
 
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `RISK` source:
 
-## Multiple Integrations
+```sql
+-- type: online
+-- resolves: User
+-- source: RISK
+SELECT id, credit_score FROM users
+```
 
-<span>{getNamedIntegrationText()}</span>
+And to query from the `MARKETING` source:
 
-```py
-from chalk.sql import SnowflakeSource
-
-risk = SnowflakeSource(name="**RISK**")
-marketing = SnowflakeSource(name="**MARKETING**")
-
-@online
-def risk_resolver(...) -> ...:
-    return risk.query(...).first()
-
-@online
-def marketing_resolver(...) -> ...:
-    return marketing.query(...).first()
+```sql
+-- type: online
+-- resolves: User
+-- source: MARKETING
+SELECT id, email, campaign_status FROM users
 ```
 
 <span>{getEnvironmentVariableText("RISK", "SNOWSQL_SCHEMA")}</span>
 
-## Environment Variables
+---
 
-You can also configure the integration directly using environment variables
-on your local machine or from those added through the
-[generic environment variable](/docs/env-vars) support.
+## Configuring Your Snowflake Integration
 
-```py
-import os
-from chalk.sql import SnowflakeSource
+If Chalk has helped you configure a Snowflake Offline Store already, then some of these commands my overlap with work that is already done. Please review your Snowflake configuration for existing objects matching the ones below before proceeding.
 
-snowflake = SnowflakeSource(
-    db=os.getenv("SNOWSQL_DATABASE"),
-    schema=os.getenv("SNOWSQL_SCHEMA"),
-    role=os.getenv("SNOWSQL_ROLE"),
-    warehouse=os.getenv("SNOWSQL_WAREHOUSE"),
-    user=os.getenv("SNOWSQL_USER"),
-    password=os.getenv("SNOWSQL_PWD"),
-    account_identifier=os.getenv("SNOWSQL_ACCOUNT_IDENTIFIER")
-)
+For detailed information about Snowflake storage integrations and external stages, refer to: 
 
-@online
-def resolver_fn(...) -> ...:
-    return snowflake.query(...).first()
+- [CREATE STORAGE INTEGRATION](https://docs.snowflake.com/en/sql-reference/sql/create-storage-integration) - Configure IAM-based authentication for S3 access
+- [CREATE STAGE](https://docs.snowflake.com/en/sql-reference/sql/create-stage) - Create external stages using storage integrations
+
+###  Required Permissions
+
+To use Snowflake as a Chalk datasource, the user or role specified in your integration must have the following permissions:
+
+- `USAGE` on the warehouse, database, schema, and stage 
+- `SELECT` on all tables and views being queried
+- `READ` on the stage 
+- `WRITE` on the stage 
+- `CREATE TEMPORARY TABLE` in the schema
+- `DROP` on temporary tables in the schema
+
+Chalk creates temporary tables during feature computation to push down filters to optimize your query loads. In addition, 
+Chalk uses the stages to optimize data unloading. 
+
+### Setup RBAC
+
+Here's an example of setting up a role with the appropriate permissions:
+
+```sql
+-- Set variables
+SET ROLE_NAME='CHALK_ROLE';
+SET WAREHOUSE_NAME='<warehouse_name>';
+SET DB_NAME='<database_name>';
+SET SCHEMA_NAME='<schema_name>';
+SET STAGE_NAME='<stage_name>';
+SET INTEGRATION_NAME='<integration_name>';
+SET USER_NAME='<chalk_user>';
+
+-- Derived variables
+SET QUALIFIED_SCHEMA_NAME=concat($DB_NAME, '.', $SCHEMA_NAME);
+
+-- Create a role for Chalk
+CREATE ROLE IF NOT EXISTS IDENTIFIER($ROLE_NAME);
+
+-- Grant warehouse permissions
+GRANT USAGE ON WAREHOUSE IDENTIFIER($WAREHOUSE_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+
+-- Grant database/schema permissions
+GRANT USAGE ON DATABASE IDENTIFIER($DB_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+GRANT USAGE ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+GRANT SELECT ON ALL TABLES IN SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+
+-- Grant temporary table permissions
+GRANT CREATE TEMPORARY TABLE ON SCHEMA IDENTIFIER($QUALIFIED_SCHEMA_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+
+-- Grant storage integration and stage permissions (if using data unloading)
+GRANT USAGE ON INTEGRATION IDENTIFIER($INTEGRATION_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+GRANT USAGE ON STAGE IDENTIFIER($STAGE_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+GRANT READ, WRITE ON STAGE IDENTIFIER($STAGE_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+
+-- Assign role to user
+GRANT ROLE IDENTIFIER($ROLE_NAME) TO USER IDENTIFIER($USER_NAME);
 ```
+
+### Setup Snowflake Integration with AWS 
+
+Chalk can optimize large query result transfers by unloading data to a Snowflake stage
+and reading it from cloud storage. This is particularly useful for large feature computations. Using 
+a storage integration with IAM authentication is the recommended approach as it avoids managing
+long-lived credentials. 
+
+#### 1. Create or Verify Storage Integration
+
+```sql
+-- Set variables (customize these for your environment)
+SET ROLE_NAME='CHALK_ROLE';
+SET INTEGRATION_NAME='s3-integration-chalk-data-bucket';
+SET AWS_ROLE_ARN='arn:aws:iam::<aws_account_id>:role/chalk-offline-store-access-role';
+SET S3_BUCKET='s3://chalk-data-bucket/';
+
+-- Create storage integration if it doesn't exist
+CREATE STORAGE INTEGRATION IF NOT EXISTS IDENTIFIER($INTEGRATION_NAME)
+  TYPE = EXTERNAL_STAGE
+  STORAGE_PROVIDER = 'S3'
+  STORAGE_AWS_ROLE_ARN = $AWS_ROLE_ARN
+  ENABLED = TRUE
+  STORAGE_ALLOWED_LOCATIONS = ($S3_BUCKET);
+
+-- Verify integration and get Snowflake credentials
+DESCRIBE INTEGRATION IDENTIFIER($INTEGRATION_NAME);
+```
+
+From the `DESCRIBE INTEGRATION` output, record these values for Step 4:
+- `STORAGE_AWS_IAM_USER_ARN` - The Snowflake IAM user ARN
+- `STORAGE_AWS_EXTERNAL_ID` - The external ID for AWS trust policy
+
+####  2. Create AWS IAM Role
+
+This role will be assumed by Snowflake to access the S3 bucket.
+
+Follow the [Snowflake IAM Role documentation](https://docs.snowflake.com/en/user-guide/data-load-s3-config-storage-integration#step-2-create-the-iam-role-in-aws) to create a role named `chalk-{organization}-offline-store-access-role`.
+
+When setting the trust policy, use a temporary placeholder with your AWS account ID and external ID `"0000"`. You will update this with actual Snowflake credentials in Step 4.
+
+Attach an IAM policy that grants S3 permissions to this role (see Snowflake documentation for policy details).
+
+#### 3. Create External Stage
+
+```sql
+-- Set variables (customize these for your environment)
+SET STAGE_NAME='CHALK_UNLOAD_STAGE';
+SET INTEGRATION_NAME='s3-integration-chalk-data-bucket';
+SET S3_URL='s3://chalk-data-bucket/unload/';
+
+-- Create external stage using storage integration
+CREATE STAGE IF NOT EXISTS IDENTIFIER($STAGE_NAME)
+  STORAGE_INTEGRATION = IDENTIFIER($INTEGRATION_NAME)
+  URL = $S3_URL;
+```
+
+#### 4. Update IAM Role Trust Policy
+
+Update the trust policy for the AWS IAM role `chalk-{organization}-offline-store-access-role` with the actual Snowflake credentials from Step 1:
+
+- Replace the Principal's AWS ARN with the `STORAGE_AWS_IAM_USER_ARN` value
+- Replace the External ID with the `STORAGE_AWS_EXTERNAL_ID` value
+
+See the [Snowflake trust policy documentation](https://docs.snowflake.com/en/user-guide/data-load-s3-config-storage-integration#step-5-grant-the-iam-user-permissions-to-access-bucket-objects) for detailed instructions.
+
+#### 5. Grant Permissions
+
+```sql
+-- Set variables
+SET ROLE_NAME='CHALK_ROLE';
+SET INTEGRATION_NAME='s3-integration-chalk-data-bucket';
+SET STAGE_NAME='CHALK_UNLOAD_STAGE';
+
+-- Grant usage on storage integration
+GRANT USAGE ON INTEGRATION IDENTIFIER($INTEGRATION_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+
+-- Grant stage permissions
+GRANT USAGE ON STAGE IDENTIFIER($STAGE_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+GRANT READ, WRITE ON STAGE IDENTIFIER($STAGE_NAME) TO ROLE IDENTIFIER($ROLE_NAME);
+```
+
+#### 6. Configure Chalk Environment Variable
+Add the stage reference to your environment variables
+in the Chalk dashboard. Go to **Settings >  Variables** and add:
+
+```
+CHALK_SNOWFLAKE_UNLOAD_STAGE={NAME_OF_YOUR_STAGE}
+```
+
+
+Chalk will use this stage to unload and transfer large result sets efficiently, improving performance
+for large feature computations.

@@ -1,6 +1,7 @@
 ---
 title: Integration with AWS Glue Catalog
 published: true
+llms: hidden
 ---
 
 ## Introduction
@@ -10,6 +11,8 @@ evolving datasets, providing features such as schema evolution and time travel.
 The [AWS Glue Catalog](https://docs.aws.amazon.com/glue/latest/dg/catalog-and-crawler.html),
 on the other hand, is a fully managed metadata catalog that simplifies data discovery and schema management for data
 lakes. Chalk provides functionality to query Iceberg-formatted data stored in an AWS Glue Catalog using the `scan_iceberg` function.
+
+---
 
 ## Scanning Iceberg Data from Glue
 
@@ -33,6 +36,8 @@ CustomPartitionOperation = Literal["date_trunc(day)"]
 
 This function is intended for use in resolvers marked with `static=True`, which indicates to the Chalk query planner
 that the resolver can be executed at query planning time, rather than query execution time.
+
+---
 
 ## Example
 
@@ -62,6 +67,8 @@ def read_data() -> DataFrame[Transaction.id, Transaction.amount, Transaction.tim
 
 Note that the column names in the `columns` argument must match the column names in the Iceberg table schema.
 The `target` argument specifies the Iceberg table to read from, and the `catalog` argument specifies the catalog to use for metadata.
+
+---
 
 ## Pushdown Filters and Projections
 
@@ -96,6 +103,8 @@ This has the same effect as adding a `event_date = day(event_timestamp)` partiti
 
 If the target Iceberg table already has a partition spec by e.g. `day(event_timestamp)` then the `custom_partitions` argument would not be necessary.
 
+---
+
 ## Permissions
 
 To successfully query Iceberg data through AWS Glue, ensure that the IAM role or user used in your AWS credentials has the following permissions:
@@ -123,6 +132,8 @@ s3:ListBucket
 
 Properly configuring these permissions is crucial to ensure that your queries can access both the Glue
 catalog metadata and the underlying data without encountering authorization issues.
+
+---
 
 ## Adding Chalk Datasets to Glue
 

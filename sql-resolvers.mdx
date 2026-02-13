@@ -2,11 +2,14 @@
 title: SQL Resolvers
 description: Define feature resolvers as a SQL query.
 published: true
+llms: short
 ---
 
 ---
 
 SQL resolvers enable you to load and transform data from your data sources as feature values.
+
+---
 
 ## Defining SQL Resolvers
 
@@ -20,12 +23,10 @@ To define a SQL resolver in a file, create a file with the `.chalk.sql` extensio
 the data source the SQL query will run on and the feature class whose features it will resolve, and write
 the SQL query.
 
-```sql src/get_user.chalk.sql
+```sql src/users.chalk.sql
 -- source: pg_users
 -- resolves: User
-
 select id, name, age, hobbies from users
-
 ```
 
 The output column names in the SQL query must match the feature names in the feature class specified in the
@@ -51,6 +52,8 @@ make_sql_file_resolver(
 )
 ```
 
+---
+
 ## SQL Resolver Configurations
 
 As with Python resolvers, SQL resolvers can be configured through many optional parameters. For generating SQL
@@ -74,14 +77,16 @@ function. For SQL file resolvers, these parameters are specified in the comments
 -- owner: 'helly@lumonindustries.com' <-- the email of the owner of the resolver. Alerts can be routed to owners.
 -- tags: ['user', 'profile'] <-- tags to help organize resolvers in the Chalk dashboard
 -- environment: 'production' <-- the environment in which the resolver should run
---total: True <-- whether this resolver returns all ID's of a given namespace.
+-- total: True <-- whether this resolver returns all ID's of a given namespace.
 
 select id, name, age, hobbies, updated_at from users
 ```
 
 For the full list of configurations, see [here](/docs/sql#configuration).
 
+---
+
 ## Testing
 
-To test your SQL resolvers, we recommend setting up [integration tests](/docs/integration-tests) or
-iterating on a branch.
+To test your SQL resolvers, we recommend setting up [integration tests](/docs/integration-tests)
+or iterating on a branch.

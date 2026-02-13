@@ -2,6 +2,7 @@
 title: AWS Athena
 description: Integrate with Athena
 published: true
+llms: hidden
 ---
 
 import { AddAthenaIntegration } from '@/components/shared/athena';
@@ -12,6 +13,8 @@ import { getNamedIntegrationText } from "@/components/NamedIntegration";
 Chalk supports [AWS Athena](https://aws.amazon.com/athena/) as a [SQL source](/docs/sql). This allows users to load data from
 AWS Glue and other AWS data sources (Hive, DocumentDB, Iceberg, etc.) directly into Chalk features.
 
+---
+
 ## Adding Athena
 
 In the settings page, you'll find a form for adding your credentials. Note that we will perform data unload operations
@@ -19,69 +22,37 @@ to the provided staging directory in S3: these intermediate results will appear 
 
 <AddAthenaIntegration onSubmit={(e) => e.preventDefault()} />
 
-## Single Integration
+---
 
-Add your Athena data source in a Python file and give it a `name`. This line is required for all Athena
-integrations. In this file, we'll also define a `User` feature class with a `transaction_volume` feature which will be
-resolved with Athena.
+## Integrations Setup
 
-If you have only one Athena connection that you'd like
-to add to Chalk, you do not need to specify any arguments
-to construct the source in your code.
+After configuring your Athena integration in the dashboard, define your data sources in Python:
 
 ```py
-from chalk.features import features
 from chalk.sql import AthenaSource
 
-athena_source = AthenaSource()
-
-@features
-class User:
-    id: str
-    transaction_volume: float
+athena_source_txns = AthenaSource(name="ATHENA_TRANSACTIONS")
+athena_source_marketing = AthenaSource(name="ATHENA_MARKETING")
 ```
 
-## Multiple Integrations
+Note that all queries to Athena will be run with [UNLOAD](https://docs.aws.amazon.com/athena/latest/ug/unload.html) to handle larger-than-memory datasets.
 
-<span>{getNamedIntegrationText()}</span>
+Then reference them in [SQL file resolvers](/docs/sql-resolvers) using the `name` parameter. For example, to query from the `ATHENA_TRANSACTIONS` source:
 
-```py
-from chalk.sql import AthenaSource
-
-athena_source_txns = AthenaSource(name="**ATHENA_TRANSACTIONS**")
-athena_source_marketing = AthenaSource(name="**ATHENA_MARKETING**")
+```sql
+-- type: online
+-- resolves: User
+-- source: ATHENA_TRANSACTIONS
+SELECT id, transaction_volume FROM transactions
 ```
 
-Then, access the Athena source in your resolvers. Note that all queries to Athena will be run with [UNLOAD](https://docs.aws.amazon.com/athena/latest/ug/unload.html) to handle
-larger-than-memory datasets.
+And to query from the `ATHENA_MARKETING` source:
 
-```py
-from chalk import offline, DataFrame
-from chalk.features import features
-from chalk.sql import AthenaSource
-
-athena_source = AthenaSource()
-
-@features
-class User:
-    id: str
-    transaction_volume: float
-
-@offline
-def get_transactions() -> DataFrame[User]:
-    return athena_source.query_string(
-        """
-        SELECT
-            id,
-            transaction_volume
-        FROM
-            transactions
-        """,
-        fields={
-            "id": User.id,
-            "transaction_volume": User.transaction_volume,
-        }
-    ).all()
+```sql
+-- type: online
+-- resolves: User
+-- source: ATHENA_MARKETING
+SELECT id, email, campaign_status FROM marketing_data
 ```
 
 

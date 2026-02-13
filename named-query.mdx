@@ -160,11 +160,14 @@ chalk query --in user.id=1 --query-name fraud --query-name-version 1.1.0
 
 ## Caching ad-hoc query plans
 
-Sometimes defining [`NamedQuery`](/api-docs#NamedQuery) objects is not ergonomic or possible. For example, if you are
+Defining [`NamedQuery`](/api-docs#NamedQuery) objects is the recommended way to ensure that your queries will be
+pre-planned, and that planning time will not impact your query latency. By default, the environment variable
+`CHALK_PRE_PLAN_NAMED_QUERIES=1` should be set to enable this. However, sometimes
+defining [`NamedQuery`](/api-docs#NamedQuery) objects is not ergonomic or possible. For example, if you are
 a platform team serving multiple teams, you may not want to define a [`NamedQuery`](/api-docs#NamedQuery) object for every
 query that your users run.
 
-In this case, you can use these environment variables:
+In this case, you cache ad-hoc query plans by setting the following environment variables:
 
 ```bash
 CHALK_STORE_ADHOC_QUERIES=true
@@ -173,4 +176,24 @@ CHALK_PLAN_ADHOC_QUERIES=3
 
 The first environment variable will cache the ad-hoc query requests in the database. The second
 environment variable will plan up to `3` of the most recent ad-hoc queries. These Ad-hoc queries
-are re-planned at boot so that code or platform changes can be reflected in the query plan.
+are re-planned at boot so that code or platform changes can be reflected in the query plan. With
+ad-hoc query caching enabled, you can cache the sketch of your most frequent queries without defining
+the queries in code.
+
+To fully cache query plans, you can use the Durable Plan Cache. With the Durable Plan Cache, your query plans
+are serialized and stored in a cache that persists across pods and deployments. Then, whenever a new pod
+spins up, you can configure the number of entries to pre-load into the pod cache from the Durable Plan Cache.
+You can configure the Durable Plan Cache with the following environment variables:
+
+```bash
+CHALK_PERSIST_DURABLE_PLAN_CACHE=true
+CHALK_PREPOPULATE_DURABLE_PLAN_CACHE=10
+CHALK_PREPOPULATE_DURABLE_PLAN_CACHE_DURATION=259200
+```
+
+`CHALK_PERSIST_DURABLE_PLAN_CACHE` enables the Durable Plan Cache. Then, you can choose how to load query plans on new
+pods using either `CHALK_PREPOPULATE_DURABLE_PLAN_CACHE=k` which will load the top k most recent query plans, or
+`CHALK_PREPOPULATE_DURABLE_PLAN_CACHE_DURATION={DURATION_IN_SECONDS}` which will load all query plans created within the
+duration of `now - timedelta`. Generally, the plans will stay consistent across pods and deployments, but if
+there are any changes in serialization / deserialization schemes between platform versions, then Chalk will still
+plan the named and ad-hoc queries and cache the new plans.

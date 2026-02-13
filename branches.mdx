@@ -4,6 +4,7 @@ metaTitle: Working with Branches
 metaDescription: Branch deployments allow users to iterate on feature pipelines in separate deployments mirroring production.
 description: Make rapid changes and explore features with branches.
 published: true
+llms: short
 ---
 
 ---
@@ -13,7 +14,7 @@ When working in a branch users have a number of useful capabilities, including:
 
 - Chalk can automatically watch your files and deploy any changes
 - Updates to your project are deployed in seconds
-- Adjust and create features and resolvers inside a JupyterNotebook
+- Adjust and create features and resolvers inside a Jupyter notebook
 - Quickly `recompute` datasets to see the effects of changes
 - Branches have a consistent name across deployments
 
@@ -24,7 +25,7 @@ so these changes would require a new non-branch deployment to take effect.
 
 ## Create a Branch Deployment
 
-To create a branch, simply run [`chalk apply --branch <branch_name>`](/cli/chalk#branch). Chalk will create a new branch in the environment that you can interact with. Now, you can make queries against your branch with `chalk query --branch`.  
+To create a branch, simply run [`chalk apply --branch <branch_name>`](/cli/chalk#branch). Chalk will create a new branch in the environment that you can interact with. Now, you can make queries against your branch with [`chalk query --branch`](/cli/query).  
 If you're using the Python API, you can set the branch when creating your [client](/api-docs#ChalkClient), and all subsequent commands will execute against your branch.
 
 ### Continuously Deploy Changes
@@ -57,7 +58,7 @@ def new_resolver(name: NewFeatures.name) -> NewFeatures.greeting:
 
 ## Recompute Datasets
 
-As you adjust features and resolvers, you can iteratively see how your changes affect the your feature values with the [`Dataset.recompute`](/api-docs#Dataset.recompute) method. Just pass any features you want to be re-computed as arguments to the `features` parameter, and Chalk will generate a new Dataset revision using the latest definitions of features and resolvers.
+As you adjust features and resolvers, you can iteratively see how your changes affect your feature values with the [`Dataset.recompute`](/api-docs#Dataset.recompute) method. Just pass any features you want to be re-computed as arguments to the `features` parameter, and Chalk will generate a new Dataset revision using the latest definitions of features and resolvers.
 
 When used in conjunction with the ability to adjust your features and resolvers in the notebook, this tool allows developers and data scientists to rapidly experiment and productionize their work.
 
@@ -89,7 +90,7 @@ shape: (786, 3)
 └───────────────┴──────────────┴─────────────────────────┘
 ```
 
-In our jupyter notebook, we can execute this in a cell to setup our notebook to point to our branch, then update our branch with the new feature and resolver.
+In our Jupyter notebook, we can execute this in a cell to set up our notebook to point to our branch, then update our branch with the new feature and resolver.
 
 ```python
 client = ChalkClient(branch="<our_branch>")

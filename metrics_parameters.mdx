@@ -7,15 +7,17 @@ Depending on your [deployment](/docs/deployment), you may need adjust the parame
 You can do this using the [Chalk CLI](/cli/introduction) tool. If you do not have the Chalk CLI
 installed, you can install it by following the instructions [here](/cli/install).
 
+---
+
 ## Change Metrics Parameters
 
 Follow along with the instructions below in your terminal.
 
 1. Select the correct env:
-`chalk env`
+[`chalk env`](/cli/environment)
 
 2. Get the metrics db configuration
-`chalk infra describe metrics --json > metrics.json`
+[`chalk infra describe metrics --json > metrics.json`](/cli/infra)
 
 `cat metrics.json`
 ```
@@ -61,7 +63,7 @@ Update the postgres parameters key in metrics.json to include the desired config
 4. Apply the update
 This should generate a diff that contains the changes to the postgres config
 
-`chalk infra apply metrics -f metrics.json`
+[`chalk infra apply metrics -f metrics.json`](/cli/infra)
 ```
 Changes to spec:
 @ ["postgres_parameters","max_parallel_workers"]
@@ -72,5 +74,4 @@ Changes to spec:
 + "32"
 ```
 If this looks correct, press `y` to apply. This may cause downtime as the database restarts.
-
 

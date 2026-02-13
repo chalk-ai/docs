@@ -6,12 +6,216 @@ description: Updates to Chalk!
 published: true
 ---
 
+## January 26, 2026
+
+### Faster Query Planning
+
+[Query planning](https://docs.chalk.ai/docs/query-online) is now even faster due to optimization work on the planner.
+Planning time improved by an average of 58%, reducing time-to-results and preventing online query timeouts for larger feature graphs.
+
+### ClickHouse for logs and tracing
+
+Logs and [tracing](https://docs.chalk.ai/docs/tracing) now run on ClickHouse, improving search performance. Facets—indexed attributes like service,
+environment, status, region, and user_id—help narrow searches and surface the most common values for easier production debugging.
+
+![Log Explorer Page with New Facets](/img/changelog-26_01_26-log-facets.png)
+
+### Enhanced query plan visualization
+
+The [query plan visualizer](https://docs.chalk.ai/docs/debugging-queries#query-plan-visualizer) now supports
+node-by-node navigation through query DAGs. View associations between plan nodes and see how data flows through
+each query. Async batch UDFs and conditional nodes display in the data flow, making query plans easier to read and understand.
+
+![Log Explorer Page with New Facets](/img/changelog-26_01_26-query-plan-nav.png)
+
+
+### Store plan stages for scheduled queries
+
+[Scheduled queries](https://docs.chalk.ai/docs/scheduled-query) now include a "Store plan stages" feature.
+This allows for improved query debugging.
+
+---
+
+## December 22, 2025 
+
+### Node monitoring improvements
+
+The `Nodes` tab on the `Kubernetes` page in the dashboard now supports filtering and sorting by node type, node pool, and CPU utilization. 
+
+### Expanded materialized aggregations
+
+Although previously supported as windowed aggregations, `approx_percentile` aggregations are now supported as materialized aggregations as well. Teams can compute windowed percentile statistics efficiently, improving latency for percentile-based monitoring and modeling. 
+
+### Native SQL driver for MS SQL 
+
+Chalk now provides a native drive for Microsoft SQL Server, enabling users to write SQL resolvers against their MS SQL data sources, and Chalk compiles and executes the queries using Rust and C++ for performance optimization. This expands Chalk's coverage across data ecosystems, allowing teams that store features or raw data in MS SQL to integrate directly without custom pipelines or data exports. 
+
+---
+
+## December 12, 2025
+
+### Preview messages when setting up stream sources
+
+You can now preview sample messages while configuring a new stream source. This makes it easier to verify that data is flowing correctly and that message formats (like JSON) are being parsed as expected before saving the connection.
+
+![Example of stream message preview interface](/img/changelog-25_12_12-stream-message-previews.png)
+
+### Updated navigation pane for faster workflows
+
+We refreshed the left-hand navigation pane to make Chalk easier to move through. Related concepts are now grouped more clearly, visual noise has been reduced, and high-frequency actions are easier to access. The result is a more predictable, friction-free workflow, especially in larger projects.
+
+![Optional new navigation pane layout example](/img/changelog-25_12_12-new-layout.png)
+
+---
+
+## November 25, 2025
+
+### Tracing for query performance diagnosis
+
+[Tracing](https://docs.chalk.ai/docs/tracing) now provides full visibility into how queries execute inside Chalk.
+
+Each resolver and model call is instrumented and timed, allowing teams to pinpoint slow spans, identify inefficient SQL,
+and understand query behavior end to end.
+
+Trace data is surfaced directly in the dashboard, so engineers can drill into individual spans to view execution time,
+rows returned, and linked data source details.
+
+Traces can be enabled per query using CLI, `ChalkClient()`, or configured to
+sample automatically in production for continuous monitoring.
+
+![Example Query Trace](/img/changelog-2025_11_25-query_trace.png)
+
+---
+
+## October 27, 2025
+
+### Stream consumption analytics
+
+Stream incidents now record failure events at one-minute granularity, up from five minutes previously.
+
+This provides finer visibility into where and when stream consumption fails, improving incident analysis and recovery time.
+Read more about Chalk’s [metrics monitoring](https://docs.chalk.ai/docs/metricmonitor).
+
+![Stream Monitoring Incident Graph](/img/changelog-2025_10_27-stream_metric_incident.png)
+
+### Method chaining for Chalk DataFrame
+
+The Chalk DataFrame library now supports method chaining, allowing expressions like
+
+```python
+tbl = pa.table(
+  {
+    "txns_last_hour": [[1, 2, 3, 4, 5], [100], [200, 201]],
+    "max_txns_allowed": [3, 5, 4],
+  }
+)
+df = DataFrame.from_arrow(tbl)
+out = df.project(
+  {
+    "velocity_score": _.txns_last_hour
+      .cardinality()
+      .cast(float)
+      .least(_.max_txns_allowed + 0.5)
+      .ceil()
+      .cast(int),
+    "velocity_score_2": F.cast(
+      F.ceil(
+        F.least(
+          F.cast(F.cardinality(_.txns_last_hour), float),
+          _.max_txns_allowed + 0.5
+        )
+      ),
+      int,
+    ),
+  }
+)
+```
+
+The underscore interface is now the recommended API — it’s cleaner, type-safe, and validated by the Chalk function registry.
+Discover more about [Chalk DataFrame](https://docs.chalk.ai/docs/dataframe) aggregations and filters.
+
+### Cron query tracking
+
+Scheduled (cron) queries now include detailed job-level status tracking, mirroring the system used for backfills.
+
+Teams can now see when jobs start, skip, or fail — and identify the exact cause directly in the UI.
+Learn more about [scheduling queries](https://docs.chalk.ai/docs/resolver-cron) for automated runs.
+
+![Stream Monitoring Incident Graph](/img/changelog-2025_10_27-scheduled_query.png)
+
+### Vector aggregates
+
+Chalk now supports materialized vector aggregates such as `sum` and `mean`.
+These precomputed embeddings accelerate workloads involving vector math and high-dimensional similarity features.
+
+### Velox integration in Query Plan Viewer
+
+The query plan viewer now links Velox physical execution data to individual plan nodes.
+This lets teams analyze operator-level performance, data flow, and throughput directly from plan output —
+helping diagnose slow or memory-heavy offline queries.
+
+---
+
+## October 23, 2025
+
+### Environment Visibility
+
+Pods now display their Kubernetes service account, namespace, and role ARN.
+This makes deployment and debugging more transparent for engineers from within Chalk.
+
+Check the pod view in your Chalk environment to confirm service account mappings.
+Learn more about environment visibility in our [docs](https://docs.chalk.ai/docs/resource-configuration#kubernetes).
+
+![Kubernetes Service Accounts](/img/changelog-2025_10_23-service_accounts.png)
+
+---
+
+## October 14, 2025
+
+### New Chalk expressions for retrieving the top and bottom N records
+
+Added new (materialize-able) [aggregations](https://docs.chalk.ai/docs/materialized_aggregations) (min_by_n/max_by_n) for computing the smallest/largest n elements based on any specified ordering column.
+
+Easily compute features like the 5 most recent transactions or the top 3 highest value purchases; combine them with windowed aggregations to compute these at various intervals – e.g., past day, week, month, etc.
+
+```py
+@features
+class Transaction:
+    id: int
+    user_id: "User.id"
+    timestamp: datetime
+    amount: float
+
+
+@features
+class User:
+    id: int
+
+    transactions: DataFrame[Transaction]
+    recent_transaction_amounts: list[int] | None = F.max_by_n(_.transactions[_.amount], _.timestamp, 3)
+```
+
+---
+
+## October 1, 2025
+
+### Chalk Dashboard Improvements
+
+- Custom role creation and assignment functionality, enabling specialized roles like "Machine Learning Scientist" and "Platform Engineer"
+- You can now search and filter environment variables in your Chalk dashboard
+- Added a connections pane to the overview section of Chalk dashboard that shows the health status of each underlying service in your Chalk deployment
+
+![Connections pane](/img/changelog-2025_10_13-connections_pane.png)
+
+---
+
 ## September 26, 2025
 
 ### Derive features at query time with Chalk's Dynamic Expressions
 
 [Dynamic expressions](https://docs.chalk.ai/docs/expression#dynamic-expressions) enable you to compute new features on-the-fly during online queries without needing to define them in advance.
 Leverage Chalk's extensive function library directly in an online query to build adaptive systems that respond to changing requirements without code changes or deployments; this enables:
+
 - Rapid experimentation, A/B testing, and hotfixes to feature logic
 - Customization and conditional logic based on user context, business rules, etc.
 - Seasonal or time-sensitive feature adjustments (e.g., holiday promotions)
@@ -108,7 +312,7 @@ Chalk's chat completion API now supports multimodal inputs, enabling you to proc
 class Receipt:
    image_url: str
    image_response: P.MultimodalPromptResponse = P.completion(
-       model="gpt-4o",
+       model="gpt-5.1",
        messages=[
            P.message(
                "system",
@@ -126,6 +330,7 @@ class Receipt:
 The audit log page provides comprehensive tracking of workspace changes, helping you maintain security compliance, troubleshoot issues, and understand your team's activity. Navigate to the audit logs page from the Chalk dashboard by going to Settings → Audit Logs.
 
 The audit log captures:
+
 - Timestamps
 - Users or service accounts that made changes
 - API endpoints accessed
@@ -156,10 +361,11 @@ We've added a new page to our docs that serves as a primer on how Chalk optimize
 You can verify if your resolvers are being accelerated by checking the query plan page—optimized resolvers are highlighted in yellow and marked as "accelerated".
 Python resolvers that cannot be optimized will show an error explaining why.
 We've extended support for accelerating Python expressions that
-* cast from strings to integers
-* contain enums that are inherited from other enums
-* use zip and enumerate built-ins
-* returns a list of another feature class
+
+- cast from strings to integers
+- contain enums that are inherited from other enums
+- use zip and enumerate built-ins
+- returns a list of another feature class
 
 ```py
 @online
@@ -191,6 +397,7 @@ def get_search_results_documents(
 
 We have added a new "All Charts" tab under the "Metric Charts" section of your Settings that displays all charts available in Chalk.
 The new tab shows:
+
 - A complete list of all the charts in your environment
 - Chart types and categories
 - The entities or features that each chart is attached to (for example, a link to view the chart)
@@ -212,7 +419,7 @@ This export, available from the User Permissions section in your Chalk Dashboard
 - Service isolation, which ensures your workloads run on dedicated infrastructure with 1:1 pod-to-node isolation, is now easily toggle-able using a checkbox in the configuration options.
 - The instance type selector is now a searchable dropdown that displays machine specifications and validates your resource requests in real-time. If you request more CPUs than the selected instance can provide, you'll see an immediate warning preventing deployment failures and reducing troubleshooting time.
 - Added a dropdown for selecting which node pools services should run on.
-When selected, services will be directed to the specified node pools with automatic toleration handling. This prevents services from being assigned to incompatible node types and ensures pods are scheduled correctly on tainted nodes.
+  When selected, services will be directed to the specified node pools with automatic toleration handling. This prevents services from being assigned to incompatible node types and ensures pods are scheduled correctly on tainted nodes.
 
 ![Resource configuration](/img/changelog-25_05_30-resource_configuration.png)
 
@@ -257,7 +464,7 @@ The function signatures are identical, making for a seamless transition with min
 Currently, the gRPC client supports `query()`, `queryBulk()`, and `multiQuery()` operations, covering the most common query use cases.
 
 ```js
-import { ChalkGRPCCLient } from "@chalk-ai/client"
+import { ChalkGRPCClient } from "@chalk-ai/client"
 import { FeaturesType } from "local/generated_types";
 
 interface FeaturesType {
@@ -265,7 +472,7 @@ interface FeaturesType {
   "user.fraud_score": number;
 }
 
-const client = new ChalkGRPCCLient<FeaturesType>();
+const client = new ChalkGRPCClient<FeaturesType>();
 const result = await client.query({
   inputs: {
     "user.id": "1",
@@ -437,9 +644,10 @@ Chalk's Data Explorer now displays the source of each feature e.g. "Live Resolve
 ### Breaking changes to Chalk Client's Go SDK (1.2.0)
 
 Released [v1.2.0 of the Chalk Go Client](https://github.com/chalk-ai/chalk-go/releases/tag/v1.2.0) which introduces some breaking changes, most notably:
-- The [gRPC implementation of Client](https://docs.chalk.ai/docs/query-overview#running-queries-using-g-rpc) is removed and replaced with a consolidated NewGRPCClient constructor--onfiguration remains mostly unchanged.
+
+- The [gRPC implementation of Client](https://docs.chalk.ai/docs/query-overview#running-queries-using-g-rpc) is removed and replaced with a consolidated NewGRPCClient constructor--configuration remains mostly unchanged.
 - `OnlineQueryBulk removed to prevent inefficient data conversions, migrate to `OnlineQueryBulk`.
-    - Use `GRPCOnlineQueryBulkResult.UnmarshalInto` for structured responses.
+  - Use `GRPCOnlineQueryBulkResult.UnmarshalInto` for structured responses.
 - Most `GRPCClient` methods now return user-friendly wrappers around proto responses, exposing raw responses via RawResponse. Errors are now lifted properly.
 
 ### Chalk developer experience improvements
@@ -467,6 +675,7 @@ With Chalk, Verisoul [iterates on fraud signals,](https://chalk.ai/customers/ver
 ### Easily import feature classes with Chalk Client when experimenting locally
 
 We have implemented two new functions for Chalk Client [to aid in local experimentation:](https://docs.chalk.ai/docs/notebook-development#loading-features) `client.load_features()` and `client.get_or_create_branch()`.
+
 - `client.load_features()` imports your environment's feature classes into the global namespace, making it easier to reference features when running queries with Chalk Client in a Jupyter notebook.
 - `client.get_or_create_branch()` enables programmatically creating branches or fetching branches for local experimentation.
 
@@ -513,7 +722,7 @@ dataset.write_to(destination="database.table_name", catalog=catalog)
 
 - The Resolvers page in the Chalk dashboard now has a Request Count column; quickly sort and see which resolvers are being called the most
 - The pages for [Named Queries](https://docs.chalk.ai/docs/named-query) and Resolvers [now also include errors,](https://docs.chalk.ai/docs/query-errors#chalkerror) use the "Logs and Errors" tab to switch to this filtered view
-    - Click and drag your mouse within the time series graph to zoom in into a time interval and filter down the errors table
+  - Click and drag your mouse within the time series graph to zoom in into a time interval and filter down the errors table
 
 ![Logs and Errors](/img/changelog-25_02_20-errors.png)
 
@@ -562,7 +771,7 @@ class Workspace:
 
 ### Chalk runtime improvements
 
-- Chalk attempts to convert each Python resolver into a chain of static expressions that can be accelerated using the function's AST.  We've expanded the parser with preliminary support for accelerating Python for loops.
+- Chalk attempts to convert each Python resolver into a chain of static expressions that can be accelerated using the function's AST. We've expanded the parser with preliminary support for accelerating Python for loops.
 - Improved how we incorporate traffic from Kafka Streams into our (KEDA) autoscaler
 
 ### Chalk dashboard improvements
@@ -598,6 +807,7 @@ We've expanded our native embed function to support [Vertex, Google Cloud's AI p
 
 `Now` is a Chalk built-in that enables us to incorporate the current time as a filter.
 Extending the support for `Now` unlocks [new design patterns](/docs/python-resolvers#time-dependencies); build resolvers and queries that take in
+
 - multiple ids at a single point in time
 - a single id at various points in time
 - multiple ids at various points in time
@@ -622,9 +832,10 @@ However, we can now lint branches remotely and show your validation errors in th
 ### Breaking change in the 1.0.0 major release of [Chalk's Java client](https://github.com/chalk-ai/chalk-java)
 
 This release introduces performance improvements to `OnlineQueryResult.unmarshal`, but with a few breaking changes:
+
 - Unrequested features are now left as null instead of being initialized as empty objects, similarly so for unrequested dataclass features (subclasses of `StructFeaturesClass`).
 - `OnlineQueryResult.unmarshal` now consumes scalarsTable, resulting in `getScalarsTable()` returning an empty table post unmarshaling.
-Please create a copy of your results if they need to be retained with `.copy()`.
+  Please create a copy of your results if they need to be retained with `.copy()`.
 
 ### Chalk dashboard improvements
 
@@ -826,9 +1037,9 @@ Read more about how to use configuration files [here](/docs/configuration).
 ```yaml
 project: no-fun-project-names
 environments:
-    default:
-        runtime: "python310"
-        requirements: pyproject.toml
+  default:
+    runtime: 'python310'
+    requirements: pyproject.toml
 ```
 
 ### Expressions now support more datetime, JSON, string, and math functions
@@ -1104,6 +1315,8 @@ From `chalkpy==2.55.0`, Chalk is dropping support for Python 3.8,
 which has reached [end-of-life](https://devguide.python.org/versions/).
 If you are still using Python 3.8, please upgrade to Python 3.9 or higher.
 
+---
+
 ## October 21, 2024
 
 ### Pub/Sub streaming source
@@ -1145,6 +1358,8 @@ in metrics graphs!
 
 ![Red for failures and green for successes](/img/10_2024_color_updates_dashboard.png)
 
+---
+
 ## October 14, 2024
 
 ### SQL explorer in dashboard for datasets
@@ -1175,6 +1390,8 @@ for GCP deployments. If you have any questions about how to use any of these set
 please reach out to the team.
 
 ![Cloud Resource Configurations Advanced Settings](/img/cloud_resource_configuration_advanced_10_2024.png)
+
+---
 
 ## October 7, 2024
 
@@ -1231,6 +1448,8 @@ running average and maximum of features observed. Please reach out if you'd like
 Additionally, the feature table in the dashboard has been updated to allow for customization of columns displayed,
 which enables viewing request counts over multiple time ranges in the same view.
 
+---
+
 ## September 30, 2024
 
 ### Compute cosine similarity between two vector features
@@ -1271,9 +1490,11 @@ and memory utilization.
 
 ### Configuration option for recomputing features on cache misses
 
-We have a new offline query configuration option for recomputing features *only* when they are not already available in
+We have a new offline query configuration option for recomputing features _only_ when they are not already available in
 the offline store. This option is useful for workloads with computationally expensive features that cannot easily be
 recomputed. Please reach out if you'd like to try this feature.
+
+---
 
 ## September 23, 2024
 
@@ -1379,6 +1600,8 @@ user, whether those roles are granted directly or via SCIM.
 
 ![An example user with admin and owner roles](/img/changelog_9_23_roles.png)
 
+---
+
 ## September 16, 2024
 
 ### New feature and resolver UI in the dashboard
@@ -1411,6 +1634,8 @@ You can now define features with `JSON` as the type after importing `JSON` from 
 reference the JSON feature in resolver and query definitions. You can also retrieve scalar values from JSON features
 using the [`json_value`](/api-docs#json_value) function.
 
+---
+
 ## September 9, 2024
 
 ### Configure Chalk to not cache null feature values
@@ -1421,7 +1646,7 @@ By default, Chalk caches all feature values, including null. To prevent Chalk fr
 ### More static execution of certain Python resolvers
 
 We built a way to statically interpret Python resolvers to identify ones that are eligible for C++ execution, which has
-faster performance.  For now, resolvers are eligible if they do simple arithmetic and logical expressions. If you're
+faster performance. For now, resolvers are eligible if they do simple arithmetic and logical expressions. If you're
 interested in learning more and seeing whether these new query planner options would apply to your codebase, please
 reach out!
 
@@ -1429,6 +1654,8 @@ reach out!
 
 We have a new [tutorial for using Chalk with SageMaker](/docs/sagemaker-tutorial) available now. In the tutorial, we
 show how to use Chalk to generate training datasets from within a SageMaker pipeline for model training and evaluation.
+
+---
 
 ## September 3, 2024
 
@@ -1443,16 +1670,19 @@ reference a given feature as input or output.
 
 ![Feature catalog showing links to named queries a feature is an input or output of](/img/feature_catalog_named_queries.png)
 
+---
+
 ## August 26, 2024
 
 ### View aggregation backfills in the dashboard
 
-We added a new Aggregations page to the dashboard where you can see the results of [`aggregate
-backfill`](/cli/aggregate_backfill) commands. Check it out to see what resolvers were run for a backfill, the backfill's
+We added a new Aggregations page to the dashboard where you can see the results of [`aggregate backfill`](/cli/aggregate_backfill) commands. Check it out to see what resolvers were run for a backfill, the backfill's
 status, and other details that will help you drill down to investigate performance.
 
 For more details on aggregate backfills, see our documentation on [managing windowed
 aggregations](/docs/materialized_aggregations).
+
+---
 
 ## August 19, 2024
 
@@ -1504,6 +1734,8 @@ by any other name would execute just as quickly."
 
 - The offline query page of the dashboard now shows which table in your offline store contains the query's output values.
 
+---
+
 ## August 12, 2024
 
 ### Queries can reference multiple feature namespaces
@@ -1529,8 +1761,11 @@ machine's stated resources to your system. Now, you can use the allocatable CPU 
 usage with more accuracy.
 
 ### Performance improvements
+
 We identified an improvement for our query planner’s handling of [temporal joins](/docs/temporal-consistency)! Our logic
 for finding the most recent observation for a requested timestamp is now more efficient. Happy time traveling!
+
+---
 
 ## August 5, 2024
 
@@ -1542,9 +1777,9 @@ Chalk automatically has access to your DynamoDB instance, which you can query wi
 ### Expressions support references to the target window duration
 
 [Expressions](/docs/expression) on [windowed](/docs/aggregations) features can now include the special
-  expression `_.chalk_window` to reference the target window duration. Use `_.chalk_window` in [windowed aggregation
-  expressions](/docs/aggregations#querying-by-windowed-time-range) to define aggregations across multiple window sizes
-  at once:
+expression `_.chalk_window` to reference the target window duration. Use `_.chalk_window` in [windowed aggregation
+expressions](/docs/aggregations#querying-by-windowed-time-range) to define aggregations across multiple window sizes
+at once:
 
 ```python
 @features
@@ -1567,18 +1802,22 @@ class User:
 
 ### Offline queries allow resource overriding
 
-* [`offline_query`](/api-docs#ChalkClient.offline_query.resources) now supports the `resources` parameter. `resources`
+- [`offline_query`](/api-docs#ChalkClient.offline_query.resources) now supports the `resources` parameter. `resources`
   allows you to override the default resource requests associated with offline queries and cron jobs so that you can
   control CPU, memory, ephemeral volume size, and ephemeral storage.
+
+---
 
 ## July 26, 2024
 
 ### Dashboard improvements
 
-* The offline query page of the dashboard now shows live query progress. After query completion, the query page will
+- The offline query page of the dashboard now shows live query progress. After query completion, the query page will
   also show how long each resolver took to run."
-* The Kubernetes resource page in the dashboard shows which kinds of hardware resources are currently running. It also
+- The Kubernetes resource page in the dashboard shows which kinds of hardware resources are currently running. It also
   allows you to group resources by application, component, and other common groupings.
+
+---
 
 ## July 19, 2024
 
@@ -1617,16 +1856,18 @@ GKE.
 
 ### Performance improvements
 
-* We've significantly improved SQL runtime in our query planner by executing eligible queries in C++ instead of
+- We've significantly improved SQL runtime in our query planner by executing eligible queries in C++ instead of
   SQLAlchemy. Chat with our support team if you'd like to update your query planner options.
-* We improved the performance of some expressions by executing `count()` operations as native dataframe
+- We improved the performance of some expressions by executing `count()` operations as native dataframe
   operations.
 
 ### Miscellaneous improvements
 
-* Our feature catalog now lets you filter features by their context (online or offline). Additionally, you can now search
+- Our feature catalog now lets you filter features by their context (online or offline). Additionally, you can now search
   features by their name, description, and owner.
-* We fixed an issue where some underscore experessions had incorrect typechecking.
+- We fixed an issue where some underscore expressions had incorrect typechecking.
+
+---
 
 ## July 10, 2024
 
@@ -1635,6 +1876,8 @@ GKE.
 You can now view and filter features in the feature catalog by their tags and owners.
 
 ![Feature catalog filtering by tag and owner](/img/feature_catalog_tag_owner.png)
+
+---
 
 ## July 1, 2024
 
@@ -1672,6 +1915,8 @@ class SampleFeatureSet:
     feature_1_2_equality: bool = _.feature_1 == _.feature_2
 ```
 
+---
+
 ## June 28, 2024
 
 ### Chalk deployment tags
@@ -1692,6 +1937,8 @@ values that aren't set, and allows you to easily adjust your cluster's resources
 
 ![resource configuration management](/img/cloud-resource-config.png)
 
+---
+
 ## June 19, 2024
 
 ### New data sources and native drivers
@@ -1699,12 +1946,16 @@ values that aren't set, and allows you to easily adjust your cluster's resources
 We added integrations for Trino and Spanner as new data sources. We've also added native drivers for Postgres and
 Spanner, which drastically improves performance for these data sources.
 
+---
+
 ## May 29, 2024
 
 ### Heartbeating
 
 We now have heartbeating to poll the status of long-running queries and resolvers, which will now mark any hanging
 runs that are no longer detected as "failed" after a certain period of time.
+
+---
 
 ## May 14, 2024
 
@@ -1717,6 +1968,8 @@ either by blocking the token from returning tagged features in any queries but a
 used in the computation of other features, or by blocking the token from accessing tagged features entirely.
 
 ![datasource and feature level rbac](/img/datasource-feature-rbac.png)
+
+---
 
 ## May 8, 2024
 
@@ -1733,27 +1986,35 @@ Query:                    run_this_query_daily
 Environment:              chalk12345
 Max Ingested Timestamp:   2024-07-01T16:01:46+00:00
 Last Execution Timestamp: 2024-07-01T00:01:27.421873+00:00
-````
+```
+
+---
 
 ## April 18, 2024
 
 ### Miscellaneous improvements
 
-* Windowed resolvers have expanded to allow for hourly cadences.
+- Windowed resolvers have expanded to allow for hourly cadences.
+
+---
 
 ## April 9, 2024
 
 ### Miscellaneous improvements
 
-* SQL resolvers have improved error reporting for failures related to type conversion (e.g., if your resolver selects
+- SQL resolvers have improved error reporting for failures related to type conversion (e.g., if your resolver selects
   an int column, but the feature's type is string)
+
+---
 
 ## March 29, 2024
 
 ### Miscellaneous improvements
 
-* SQL file resolvers have spellcheck (based on Levenshtein distance)
-* Failed annotation parsing raises a type error with a more helpful error message
+- SQL file resolvers have spellcheck (based on Levenshtein distance)
+- Failed annotation parsing raises a type error with a more helpful error message
+
+---
 
 ## March 19, 2024
 
@@ -1778,12 +2039,12 @@ ScheduledQuery(
 )
 ```
 
-[//]: # (Read more at [Schedule Query]&#40;/docs/scheduled-query&#41;.)
+[//]: # 'Read more at [Schedule Query](/docs/scheduled-query).'
 
 ### Bugfixes and improvements
 
 - `offline_query(...)` now accepts `sample_features: list[Feature]` as an argument. This works in conjunction
-with `recompute_features`, and allows you to write something like:
+  with `recompute_features`, and allows you to write something like:
 
 ```py
 ChalkClient().offline_query(
@@ -1802,19 +2063,23 @@ This is useful when you have a large number of features that you want to recompu
 - Dataset downloads no longer have any dependency on locally registered features, which resolves crashes for certain dataset management workflows.
 - `ChalkClient.query` now supports `request_timeout: float`, which is passed to the underlying `requests.request` call.
 
+---
+
 ## March 8, 2024
 
 ### Bugfixes and improvements
 
 - A persistent issue with `chalk drop` has been resolved. Now, `chalk drop` will allow you to reset a feature whose
-deletion has been deployed to the active deployment, which will allow you to re-deploy the feature. Previously,
-it was possible to get into a state that was impossible to recover from without support.
+  deletion has been deployed to the active deployment, which will allow you to re-deploy the feature. Previously,
+  it was possible to get into a state that was impossible to recover from without support.
 
 - `tags(...)` allows you to extract the `tags` of a `@features` class or a property (`Feature`) of that class.
 
 - `DataSet.to_polars()/to_pandas()` now raises an error if the dataset computation had errors. This
-prevents the user from accidentally using a dataset that was not computed correctly. If you wish to use the dataset
-anyway, you can use `DataSet.to_polars(ignore_errors=True)`.
+  prevents the user from accidentally using a dataset that was not computed correctly. If you wish to use the dataset
+  anyway, you can use `DataSet.to_polars(ignore_errors=True)`.
+
+---
 
 ## March 1, 2024
 
@@ -1823,6 +2088,8 @@ anyway, you can use `DataSet.to_polars(ignore_errors=True)`.
 You can now specify a custom SQL sampling query for offline queries. This allows you to use a native SQL query
 to compute the query's entity spine for offline queries. This is useful when you have a complicated sampling policy
 (i.e. class-based sampling). Additional non-primary key features can be provided as well.
+
+---
 
 ## January 22, 2024
 
@@ -1867,6 +2134,8 @@ dataset = ChalkClient().offline_query(
 )
 ```
 
+---
+
 ## October 24, 2023
 
 ### Support for Python 3.11
@@ -1891,7 +2160,7 @@ See [Python Version](/docs/docker#python-version) for more information.
 ### Quality of Life Improvements
 
 - `ChalkClient.query_bulk(...)` and `multi_query` no longer require that references features
-be defined as Python classes, and string names for inputs and outputs can now be used instead.
+  be defined as Python classes, and string names for inputs and outputs can now be used instead.
 
 ---
 
@@ -2141,6 +2410,8 @@ resolver = get_resolver('person') # get_resolver('person.chalk.sql') will also w
 result = resolver('my_id')
 ```
 
+---
+
 ## June 15, 2023
 
 ### Metrics Export Updates
@@ -2192,14 +2463,13 @@ a house to only the bedrooms:
 @features
 class Room:
     id: str
+    home_id: "Home.id"
     name: str
 
 @features
 class Home:
     id: str
-    rooms: DataFrame[Room] = has_many(
-        lambda: Room.home_id == Home.id
-    )
+    rooms: DataFrame[Room]
     num_bedrooms: int
 
 @online
@@ -2234,6 +2504,8 @@ include bedrooms.
 Also note that Chalk will automatically convert our argument
 to a `DataFrame` if it is not already one.
 
+---
+
 ## June 12, 2023
 
 ### Query Run Page
@@ -2247,6 +2519,8 @@ on the "queries" page.
 You can search the list of previously executed queries by date range, or by "query id". The query id is returned
 in the "online query" API [response object](/api-docs#ChalkClient.query).
 
+---
+
 ## May 15, 2023
 
 ### BigTable Online Storage
@@ -2254,6 +2528,8 @@ in the "online query" API [response object](/api-docs#ChalkClient.query).
 Chalk now supports BigTable as an online-storage implementation. BigTable is appropriate for customers with large
 working sets of online features, as is common with recommendation systems. We have successfully configured
 BigTable to serve 700,000 feature vectors per second at ~30ms p90 e2e latency.
+
+---
 
 ## May 10, 2023
 
@@ -2280,19 +2556,25 @@ When combined with Recompute Dataset and the enhancements to Offline Query, user
 4. Immediately view the results of adjusting features in the dataset
 5. When exploration is complete, features and resolvers can be directly added back to the Chalk project
 
+---
+
 ## May 5, 2023
 
 ### View Deployment Source Code
 
 Deployments now offer the ability to view their source code. By clicking the "View Source" button on the Deployment Detail page, users can view all files included in the deployed code.
 
+---
+
 ## April 21, 2023
 
 ### Improved Deployment Utilities
 
-Users can now "redeploy" any historical deployement with a UI button on the deployment details page. This enables useful workflows including rollbacks.
+Users can now "redeploy" any historical deployment with a UI button on the deployment details page. This enables useful workflows including rollbacks.
 The "download source" button downloads a tarball containing the deployed source to your local machine.
 ![Deploy UI Enhancements](/img/DeploymentButtons.png)
+
+---
 
 ## April 18, 2023
 
@@ -2301,6 +2583,8 @@ The "download source" button downloads a tarball containing the deployed source 
 When writing resolvers, incorrect typing can be a difficult to track.
 Now, if a resolver instantiates a feature of an incorrect type, the resolver error message
 will include the primary key value(s) of the query itself.
+
+---
 
 ## April 11, 2023
 
@@ -2320,6 +2604,8 @@ chalk query --in user.id --out user.transactions
 
 More functionality will be added to Online and Offline query APIs to support more advanced query patterns.
 
+---
+
 ## April 6, 2023
 
 ### Branch deployments
@@ -2330,6 +2616,8 @@ Chalk [clients](/api-docs#ChalkClient) can also be scoped to a branch by passing
 Branch deployments are many times faster than other flavors of `chalk apply`, frequently taking only a few seconds from beginning to end.
 Branch deployments replace preview deploys, which have been deprecated.
 
+---
+
 ## March 31, 2023
 
 ### Speed improvements for deployments
@@ -2337,6 +2625,8 @@ Branch deployments replace preview deploys, which have been deprecated.
 Deployments via `chalk apply` are now up to 50% faster in certain cases. If your project's PIP dependencies haven't changed, new deployments will build & become active significantly faster than before.
 
 ![Deploy Time Comparison:](/img/deploy_speedup.png)
+
+---
 
 ## March 17, 2023
 
@@ -2372,6 +2662,8 @@ class ClassWithValidations:
     )
 ```
 
+---
+
 ## March 7, 2023
 
 ### Datasets in Offline Query
@@ -2405,6 +2697,8 @@ pandas_df: pd.DataFrame = dataset.data_as_pandas
 
 Check out the [documentation ](/docs/datasets) here.
 
+---
+
 ## February 28, 2023
 
 ### Deployment Build Logs
@@ -2412,6 +2706,8 @@ Check out the [documentation ](/docs/datasets) here.
 Chalk now provides access to build and boot logs through the Deployments page in the dashboard.
 
 ![Build Logs](/img/BuildLogs.png)
+
+---
 
 ## February 16, 2023
 
@@ -2427,6 +2723,8 @@ Now you can set timeouts for resolvers!
 def resolve_australian_credit_score(driver_id: User.driver_id_aus) -> User.credit_score_aus:
     return experian_client.get_score(driver_id)
 ```
+
+---
 
 ## January 26, 2023
 
@@ -2452,6 +2750,8 @@ select email, full_name from user_table where id=${user.id}
 
 Check out the [documentation ](/docs/sql#sql-file-resolvers) here.
 
+---
+
 ## January 12, 2023
 
 ### Improved Logging
@@ -2461,6 +2761,8 @@ This view is available for resolvers and resolver runs.
 
 ![Logs Viewer](/img/Logs.png)
 
+---
+
 ## January 9, 2023
 
 ### Pretty Print Online Query Results
@@ -2469,6 +2771,8 @@ Online Query Response objects now support pretty-print in any iPython environmen
 
 ![Pretty Print Query Response](/img/PrettyPrintImg.png)
 
+---
+
 ## January 8, 2023
 
 ### Linux docker containers on M1 Macs
@@ -2476,6 +2780,8 @@ Online Query Response objects now support pretty-print in any iPython environmen
 `chalkpy` has always supported running in docker images using M1's native `arm64` architecture, and now
 `chalkpy==1.12.0` supports most functionality on M1 Macs when run with AMD64 (64 bit Linux) architecture docker images.
 This is helpful when testing images built for Linux servers that include `chalkpy`.
+
+---
 
 ## January 6, 2023
 
@@ -2489,6 +2795,8 @@ We've added docs search!
 
 Try it out by typing `cmd-K`, or clicking the search button at the top of the
 table of contents.
+
+---
 
 ## September 27, 2022
 
@@ -2521,6 +2829,8 @@ class RocketShip:
 ```
 
 Feel free to choose either mechanism!
+
+---
 
 ## July 28, 2022
 
@@ -2560,6 +2870,8 @@ class User:
     id: str
 ```
 
+---
+
 ## July 25, 2022
 
 ### DataFrame Expressions
@@ -2581,6 +2893,8 @@ Python experts will note that `or`, `and`, `is`, `is not`, `not in`, and `not`
 aren't overload-able.
 So how did we do this?
 The answer is AST parsing! A more detailed blog post to follow.
+
+---
 
 ## July 22, 2022
 
@@ -2634,6 +2948,8 @@ class User:
     flaky_api_result: str = feature(owner="devops@chalk.ai")
 ```
 
+---
+
 ## July 14, 2022
 
 ### Self-Serve Slack Integration
@@ -2645,6 +2961,8 @@ You can find the Slack integration tab in the settings page of your dashboard.
 
 Slack can be used as an alert channel or for build notifications.
 
+---
+
 ## July 13, 2022
 
 ### Python 3.8 Support
@@ -2655,6 +2973,8 @@ online and offline queries in a Python environment
 with version >= 3.8.
 Note that your features will still be computed on a runtime
 with Python version 3.10.
+
+---
 
 ## July 8, 2022
 
@@ -2676,6 +2996,8 @@ prefixed by the integration name (ie. `RISK_PGPORT`).
 The first integration of a given kind will also create the un-prefixed environment
 variable (ie. both `PGPORT` and `RISK_PGPORT`).
 
+---
+
 ## June 29, 2022
 
 ### SOC 2 Report
@@ -2686,6 +3008,8 @@ but we're always looking for more ways to improve our security posture, and to c
 This report is one step along our ongoing path of trust and security.
 
 If you're interested in reviewing this report, please contact [support@chalk.ai](mailto:support@chalk.ai) to request a copy.
+
+---
 
 ## June 3, 2022
 
