@@ -165,3 +165,10 @@ def fn(message: UserUpdateBody) -> Features[User.uid, User.favorite_color]:
         favorite_color=message.value.favorite_color
     )
 ```
+
+## Additional Configurations 
+
+For Kafka data sources, there are many [configuration values](https://kafka.apache.org/41/configuration/) that you may want to set 
+for your integration. You can set these configurations within your Kafka Data Source either by constructing a dict of 
+    `{"your.kafka.config": "config_value"}` and setting that under the `ADDITIONAL_ENGINE_ARGUMENTS` field, or by passing in the 
+    `KafkaSource(additional_kafka_args=...)` in your code-based data source configuration. 
