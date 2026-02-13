@@ -24,8 +24,8 @@ BigQuery, Chalk will use a table to temporarily hold the values against which to
 As such, we require `bigquery.tables.create` and `bigquery.jobs.create` permissions to
 create and use these temporary tables.
 
-The temporary project & dataset is used for scratch tables during unload operations and filter pushdown.
-It's recommended to configure the temporary table dataset with a TTL (Time To Live) on all tables,
+Chalk stores these temporary tables in a dedicated project and dataset that you configure for scratch usage, which is also used for unload operations.
+It's recommended to configure this dataset with a TTL (Time To Live) on all tables,
 such as 6 hours, which should be bounded by your maximum job lifetime to ensure automatic cleanup of
 temporary resources.
 
