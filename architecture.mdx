@@ -123,7 +123,7 @@ Users write simple Python decorators and SQL queries, while Velox handles the co
 We offer both a hosted model (“Chalk Cloud”) and a customer-hosted model (“Customer Cloud”).
 
 Most companies choose to run Chalk in their own cloud (VPC) for data residency and compliance.
-Chalk is deployed with Terraform and uses common cloud primitives, making it easy to integrate deployments with your existing infrastructure.
+Chalk is traditionally deployed as a Platform As a Service into an isolated account under the managent of the customer, with the core components (VPC, Kubernetes Cluster, Message Queues, etc) managed by Chalk.
 
 Compute nodes run on Kubernetes (typically EKS on AWS, GKE on GCP, and AKS on Azure).
 If you have custom needs, we are happy to customize the deployment to fit with your service architecture.
