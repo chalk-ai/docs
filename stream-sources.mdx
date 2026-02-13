@@ -166,9 +166,44 @@ def fn(message: UserUpdateBody) -> Features[User.uid, User.favorite_color]:
     )
 ```
 
-## Additional Configurations 
+## Additional Configurations
 
-For Kafka data sources, there are many [configuration values](https://kafka.apache.org/41/configuration/) that you may want to set 
-for your integration. You can set these configurations within your Kafka Data Source either by constructing a dict of 
-    `{"your.kafka.config": "config_value"}` and setting that under the `ADDITIONAL_ENGINE_ARGUMENTS` field, or by passing in the 
-    `KafkaSource(additional_kafka_args=...)` in your code-based data source configuration. 
+For Kafka data sources, Chalk supports the following [Kafka configuration values](https://kafka.apache.org/41/configuration/)
+for your integration. You can set these configurations within your Kafka Data Source either by constructing a dict of
+`{"your.kafka.config": "config_value"}` and setting that under the `ADDITIONAL_ENGINE_ARGUMENTS` field, or by passing in
+`KafkaSource(additional_kafka_args=...)` in your code-based data source configuration.
+
+### Supported Kafka Configurations
+
+**Fetch & Polling Configuration**
+- `fetch.min.bytes` - Minimum amount of data the server should return for a fetch request
+- `fetch.max.bytes` - Maximum amount of data the server should return for a fetch request
+- `fetch.max.wait.ms` - Maximum time the server will block before answering the fetch request
+- `max.partition.fetch.bytes` - Maximum amount of data per-partition the server will return
+- `max.poll.records` - Maximum number of records returned in a single call to poll()
+- `max.poll.interval.ms` - Maximum delay between invocations of poll()
+
+**Timeout Configuration**
+- `session.timeout.ms` - Timeout used to detect consumer failures
+- `heartbeat.interval.ms` - Expected time between heartbeats to the consumer coordinator
+- `request.timeout.ms` - Maximum amount of time the client will wait for the response of a request
+- `consumer.timeout.ms` - Timeout for consumer operations
+- `poll.timeout` - User-friendly alias for `consumer.timeout.ms`
+- `connections.max.idle.ms` - Close idle connections after this many milliseconds
+
+**Retry & Reliability**
+- `retry.backoff.ms` - Time to wait before attempting to retry a failed request
+- `reconnect.backoff.ms` - Base amount of time to wait before attempting to reconnect
+- `reconnect.backoff.max.ms` - Maximum amount of time to wait when reconnecting
+
+**Metadata & Discovery**
+- `metadata.max.age.ms` - Period of time before forcing a refresh of metadata
+
+**Message Processing**
+- `check.crcs` - Automatically check the CRC32 of the records consumed
+- `isolation.level` - Controls how to read messages written transactionally
+- `exclude.internal.topics` - Whether internal topics should be exposed to the consumer
+
+**Protocol Settings**
+- `receive.buffer.bytes` - Size of the TCP receive buffer (SO_RCVBUF)
+- `send.buffer.bytes` - Size of the TCP send buffer (SO_SNDBUF) 
