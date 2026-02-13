@@ -345,7 +345,8 @@ print("Model registered successfully!")
 Create a model resolver that connects your registered model to your feature class for real-time inference.
 
 ```python src/resolvers/model_inference.py
-from chalk.ml import ModelReference, make_model_resolver
+from chalk.ml import ModelReference
+from chalk import make_model_resolver
 from src.features import Event
 
 # Reference the registered model
