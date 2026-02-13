@@ -25,6 +25,11 @@ queries to optimize the amount of data read from your tables. For larger queries
 interpolating values directly in the SQL string for the query, which has length limits in
 BigQuery, Chalk will use a table to temporarily hold the values against which to query.
 
+Chalk stores these temporary tables in a dedicated project and dataset that you configure for scratch usage, which is also used for unload operations.
+It's recommended to configure this dataset with a TTL (Time To Live) on all tables,
+such as 6 hours, which should be bounded by your maximum job lifetime to ensure automatic cleanup of
+temporary resources.
+
 The service account that you register in the data source requires the following permissions to fully allow Chalk
 to integrate with BigQuery. Here, the "target dataset" is the temporary project and temporary dataset
 if they are specified within the data source. If not, the target dataset is just the project and dataset
@@ -49,9 +54,6 @@ Using BigQuery's predefined IAM roles, you can get these permissions by ensuring
 
 
 You can learn more about the various BigQuery IAM roles and permissions [here](https://docs.cloud.google.com/bigquery/docs/access-control).
-
-
----
 
 ## Integrations Setup
 
