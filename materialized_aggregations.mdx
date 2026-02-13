@@ -113,9 +113,10 @@ The following table lists the supported aggregations along with some notes.
 |`count` | |
 |`std` | Standard deviation. Requires at least 2 values. |
 |`var` | Variance. Same requirements as `std`. |
-|`approx_count_distinct` | An approximation of the cardinality of non-null data. |
+|`approx_count_distinct` | An approximation of the cardinality of non-null data. Uses [Apache DataSketches CPC](https://datasketches.apache.org/docs/CPC/CpcSketches.html). |
 |`approx_top_k` | An approximation of the most common values in a field. Takes in a required `k` parameter, such as `approx_top_k(k=5)` for the five approximately-most common values. Up to `k` values will be returned, sometimes fewer. |
 |`approx_percentile` | An approximation of the value a given percentage of your data falls below. Accepts `quantile` parameter, between `0` and `1`, such as `approx_percentile(quantile=.5)`. |
+
 
 These aggregations can be applied to DataFrame features that represent a [has-many](/docs/has-many) join relationship
 between two feature classes. Typically, these joins can be defined using a join key, like in our previous example:
@@ -203,6 +204,23 @@ class User:
 
 
 ```
+
+---
+
+## Approximate Count Distinct
+
+The `approx_count_distinct` aggregation provides an efficient way to estimate the number of unique values in your data
+using the [Compressed Probability Counting (CPC) sketch](https://datasketches.apache.org/docs/CPC/CpcSketches.html)
+algorithm from Apache DataSketches.
+
+### Why use approximate count distinct?
+
+Computing exact distinct counts for large datasets can be memory-intensive and slow, especially for materialized
+aggregations where you need to track uniqueness across many time buckets. The CPC sketch algorithm provides:
+
+- **Memory efficiency**: Uses significantly less memory than storing all unique values
+- **Mergeable sketches**: Partial aggregates from different buckets can be efficiently combined
+- **High accuracy**: Provides estimates with low relative error (typically < 2% for reasonable sketch sizes)
 
 ---
 
