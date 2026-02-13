@@ -133,8 +133,9 @@ To include models in your Chalk deployment, use `ModelReference` objects. `Model
 
 ```python
 from chalk.features import features, _
-from chalk.ml import ModelReference, make_model_resolver
+from chalk.ml import ModelReference
 from chalk import functions as F
+from chalk import make_model_resolver
 
 # Load a model into the deployment
 churn_risk = ModelReference.from_version(
@@ -171,6 +172,7 @@ Once models are registered and loaded into your deployment, you can run inferenc
 from chalk.features import feature, features, _
 from chalk.ml import ModelReference
 from chalk import functions as F
+from chalk import make_model_resolver
 
 # Load a model into the deployment using alias
 risk_model_latest = ModelReference.from_alias(
