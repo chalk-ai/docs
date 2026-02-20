@@ -35,20 +35,28 @@ As mentioned earlier, offline queries can be made through one of Chalk's API cli
 
 ```python
 from chalk.client import ChalkClient
-from datetime import datetime
 
 client = ChalkClient()
-client.offline_query(
-  input={'user.id': [1,2,3,4]},         # Input
-  output=['user.name'],                 # Output
-  # tags=['test'],                      # Environment
-  # branch='branch',
-  # recompute_features=True,            # Run Resolvers
-  # run_asynchronously=True,            # Run Configuration
-  # max_samples = 10,
-  # lower_bound=datetime(2024, 10, 12), # Bounds
-  # upper_bound=datetime(2024, 10, 20),
+dataset = client.offline_query(
+    input_sql='''
+      select
+          user_id as "user.id",
+          created_at as __ts__
+      from "datasources.postgres.fraud_events"
+      order by created_at desc
+      limit 30
+    ''',
+    output=[
+        User.name,
+        User.denylisted,
+        User.name_email_match_score,
+        User.domain_name,
+        User.email_username,
+        User.credit_report.percent_past_due,
+    ],
+    recompute_features=True,
 )
+df = dataset.to_pandas()
 ```
 
 In the Python client, offline queries return Chalk `Dataset`s, which we cover, in detail, in the
@@ -58,10 +66,13 @@ easy to use for downstream ML tasks.
 
 ### Input
 
-As [input](/api-docs#ChalkClient.offline_query.input), `offline_query` takes a
-[chalk.DataFrame](/docs/dataframe) or [pandas.DataFrame](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html)
-with one column for each known feature in the input.
-The primary key feature must be included among the inputs.
+As input, [offline_query](/api-docs#ChalkClient.offline_query) supports:
+
+- [input](/api-docs#ChalkClient.offline_query.input) with [chalk.DataFrame](/docs/dataframe) or [pandas.DataFrame](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html)
+- mappings from feature FQNs to value lists
+- [input_sql](/api-docs#ChalkClient.offline_query.input_sql) for Chalk SQL-driven inputs
+
+Regardless of input format, the primary key feature must be included.
 
 Alternatively, instead of a `DataFrame`, users can pass a mapping from features to a list of values for each feature.
 
