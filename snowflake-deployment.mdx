@@ -28,8 +28,19 @@ has `OWNER` on the database.
 
 ### Step 0: Generate Key Pair
 
-Follow the [Snowflake key-pair authentication guide](https://docs.snowflake.com/en/user-guide/key-pair-auth#generate-the-private-keys)
-to generate your private and public keys.
+Generate a private key in **PKCS#8 format without encryption**. Other key formats are not currently supported.
+
+```bash
+openssl genrsa 2048 | openssl pkcs8 -topk8 -inform PEM -out rsa_key.p8 -nocrypt
+```
+
+Then generate the corresponding public key:
+
+```bash
+openssl rsa -in rsa_key.p8 -pubout -out rsa_key.pub
+```
+
+For more details, see the [Snowflake key-pair authentication guide](https://docs.snowflake.com/en/user-guide/key-pair-auth#generate-the-private-keys).
 
 ### Step 1: Create Database Objects
 
