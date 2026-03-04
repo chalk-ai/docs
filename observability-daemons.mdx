@@ -1,0 +1,421 @@
+---
+title: Observability Daemons
+description: Deploy sidecar daemons that collect core dumps, system traces, and other diagnostics from engine nodes and upload them to cloud storage.
+published: true
+---
+
+import {
+    Attribute,
+    AttributeTable,
+} from '@/components/AttributeTable'
+
+---
+
+Chalk supports a set of observability daemons that run alongside your engine nodes and automatically
+collect diagnostics. All daemons are configured in the `observability_daemons` array of your
+[background persistence](/docs/background-persistence-installation) configuration.
+
+Available daemons:
+
+- **[Perf profiling](/docs/profiling)** — samples CPU activity using Linux `perf` and uploads results for flame graph analysis.
+- **[Perfetto tracing](#perfetto-tracing)** — captures system-wide traces correlated with Chalk Engine trace spans.
+- **[Core dump collection](#core-dump-collection)** — collects and uploads core dumps for post-mortem crash analysis.
+
+---
+
+## Prerequisites
+
+- A running Chalk deployment with background persistence configured. To install, please follow [this guide](/docs/background-persistence-installation).
+- An S3 or GCS bucket for storing collected data.
+- Write access from the background persistence service account to that bucket.
+
+### Cloud storage permissions
+
+**GCP**: The service account used by background persistence
+(configured via `service_account_name` in `common_persistence_specs`) needs write
+access to the target GCS bucket. You also need `google_cloud_project` set
+in `common_persistence_specs`.
+
+**AWS**: Background persistence pods obtain AWS credentials through
+[IAM Roles for Service Accounts (IRSA)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
+The default IAM role is provisioned with broad S3 access within your account,
+so any same-account bucket will work without additional configuration.
+To write to a bucket in a different AWS account, add a bucket policy on the
+destination bucket granting access to the background persistence IAM role ARN.
+
+---
+
+## Core dump collection
+
+The core dump collector watches for core dumps produced by Chalk processes on each node
+and uploads them to your cloud storage bucket. This enables post-mortem debugging of
+crashes and segfaults without needing direct node access.
+
+### Enabling core dump collection
+
+There are two ways to enable core dump collection—through the Chalk dashboard if you manage your
+background persistence deployments there, or using the Chalk CLI.
+
+#### Using the Chalk dashboard
+
+1. Navigate to **Settings > Shared Resources > Background Persistence**.
+2. Click **Edit JSON**.
+3. Add an `observability_daemons` array at the top level of the JSON,
+   alongside the existing `common_persistence_specs` and `writers`:
+
+```json
+"observability_daemons": [
+  {
+    "keep_running_when_suspended": true,
+    "core_dump_collector": {
+      "core_dump_bucket_uri": "s3://your-bucket-name/core-dumps"
+    }
+  }
+]
+```
+
+4. Replace `s3://your-bucket-name/core-dumps` with your bucket URI and desired path prefix. Use `gs://` for GCS.
+5. Save and apply.
+
+#### Using the Chalk CLI
+
+Export your current configuration, edit it, and re-apply:
+
+```bash
+chalk infra describe persistence --json > persistence.json
+```
+
+Open `persistence.json` and add an `observability_daemons` array at the top level,
+alongside the existing `common_persistence_specs` and `writers`:
+
+```json
+"observability_daemons": [
+  {
+    "keep_running_when_suspended": true,
+    "core_dump_collector": {
+      "core_dump_bucket_uri": "s3://your-bucket-name/core-dumps"
+    }
+  }
+]
+```
+
+Replace `s3://your-bucket-name/core-dumps` with your bucket URI and desired path prefix.
+Then apply:
+
+```bash
+chalk infra apply persistence -f persistence.json
+```
+
+The CLI will show a diff of the changes and prompt for confirmation.
+
+### Configuration reference
+
+<AttributeTable>
+<Attribute field={'core_dump_bucket_uri'} kind={'string'}>
+Bucket URI where core dumps are uploaded. Use <code>s3://bucket-name/path</code> for AWS
+or <code>gs://bucket-name/path</code> for GCS.
+</Attribute>
+</AttributeTable>
+
+### Sending core dumps to Chalk
+
+Once core dumps have been collected, download them from your bucket, compress them into an archive,
+and send them to your Chalk support contact.
+
+For AWS:
+```bash
+aws s3 sync s3://your-bucket-name/core-dumps/ ./core-dumps/
+tar czf core-dumps.tar.gz core-dumps/
+```
+
+For GCS:
+```bash
+gcloud storage rsync -r gs://your-bucket-name/core-dumps/ ./core-dumps/
+tar czf core-dumps.tar.gz core-dumps/
+```
+
+---
+
+## Perfetto tracing
+
+The Perfetto daemon captures system-wide traces on each node using [Perfetto](https://perfetto.dev/).
+Traces can be triggered on a fixed time interval or on-demand via an HTTP endpoint that the Chalk CLI
+can call. Trace files are in Perfetto's native proto format and can be opened directly in the
+[Perfetto UI](https://ui.perfetto.dev/).
+
+Perfetto offers a superset of the features that [perf profiling](/docs/profiling) offers, but at the
+cost of some performance overhead. With Perfetto, you can collect not only CPU profile information but
+also correlate those with traces emitted by the Chalk Engine.
+
+In addition to configuring the daemon here, you must enable trace outputs from your engine by setting
+the environment variable `LIBCHALK_ENABLE_PERFETTO_TRACING=true`.
+
+### Enabling Perfetto tracing
+
+There are two ways to enable Perfetto tracing—through the Chalk dashboard if you manage
+your background persistence deployments there, or using the Chalk CLI.
+
+#### Using the Chalk dashboard
+
+1. Navigate to **Settings > Shared Resources > Background Persistence**.
+2. Click **Edit JSON**.
+3. Add an `observability_daemons` array at the top level of the JSON,
+   alongside the existing `common_persistence_specs` and `writers`:
+
+```json
+"observability_daemons": [
+  {
+    "keep_running_when_suspended": true,
+    "perfetto_daemon": {
+      "trigger": "PERFETTO_TRIGGER_TIME_INTERVAL",
+      "interval": 60000,
+      "max_retained_runs": 3,
+      "bucket_subdirectory": "perfetto-traces",
+      "export_to": "s3://your-bucket-name",
+      "trigger_name": "chalk_traces",
+      "config_text": "buffers: {\n  size_kb: 102400\n  fill_policy: RING_BUFFER\n}\n\ndata_sources: {\n  config {\n    name: \"linux.perf\"\n    perf_event_config {\n      all_cpus: true\n      sampling_frequency: 100\n    }\n  }\n}\n\ntrigger_config {\n  trigger_mode: CLONE_SNAPSHOT\n  triggers {\n    name: \"chalk_traces\"\n    stop_delay_ms: 1000\n  }\n}\n"
+    }
+  }
+]
+```
+
+4. Replace `s3://your-bucket-name` with your bucket URI. Use `gs://` for GCS.
+   Replace the `config_text` value with a valid [Perfetto text proto config](#generating-perfetto-text-proto-config).
+5. Save and apply.
+
+#### Using the Chalk CLI
+
+Export your current configuration, edit it, and re-apply:
+
+```bash
+chalk infra describe persistence --json > persistence.json
+```
+
+Open `persistence.json` and add an `observability_daemons` array at the top level,
+alongside the existing `common_persistence_specs` and `writers`:
+
+```json
+"observability_daemons": [
+  {
+    "keep_running_when_suspended": true,
+    "perfetto_daemon": {
+      "trigger": "PERFETTO_TRIGGER_TIME_INTERVAL",
+      "interval": 60000,
+      "max_retained_runs": 3,
+      "bucket_subdirectory": "perfetto-traces",
+      "export_to": "s3://your-bucket-name",
+      "trigger_name": "chalk_traces",
+      "config_text": "buffers: {\n  size_kb: 102400\n  fill_policy: RING_BUFFER\n}\n\ndata_sources: {\n  config {\n    name: \"linux.perf\"\n    perf_event_config {\n      all_cpus: true\n      sampling_frequency: 100\n    }\n  }\n}\n\ntrigger_config {\n  trigger_mode: CLONE_SNAPSHOT\n  triggers {\n    name: \"chalk_traces\"\n    stop_delay_ms: 1000\n  }\n}\n"
+    }
+  }
+]
+```
+
+Replace `s3://your-bucket-name` with your bucket URI. Use `gs://` for GCS.
+Then apply:
+
+```bash
+chalk infra apply persistence -f persistence.json
+```
+
+The CLI will show a diff of the changes and prompt for confirmation.
+
+### Generating Perfetto text proto config
+
+The `config_text` field must contain a valid [Perfetto text proto config](https://perfetto.dev/docs/concepts/config).
+
+Regardless of which trigger mode you use, the config **must** include a `trigger_config` block with
+`trigger_mode: CLONE_SNAPSHOT` and a trigger whose `name` exactly matches the `trigger_name` field
+in your daemon config. This is how Perfetto knows when to snapshot the ring buffer and emit a trace.
+
+Write your config in a `.pbtxt` file. For example, a config that samples CPU at 99 Hz and snapshots
+on the trigger `"chalk_traces"` would look like:
+
+```
+buffers: {
+  size_kb: 102400
+  fill_policy: RING_BUFFER
+}
+
+data_sources: {
+  config {
+    name: "linux.perf"
+    perf_event_config {
+      all_cpus: true
+      sampling_frequency: 99
+    }
+  }
+}
+
+trigger_config {
+  trigger_mode: CLONE_SNAPSHOT
+  triggers {
+    name: "chalk_traces"
+    stop_delay_ms: 1000
+  }
+}
+```
+
+Because `config_text` is embedded as a JSON string, newlines and quotes must be escaped.
+Use `jq` to produce the correctly escaped value from your `.pbtxt` file:
+
+```bash
+jq -Rs '.' < perfetto.pbtxt
+```
+
+This prints the file contents as a quoted, escaped JSON string. Copy the output (including
+the surrounding quotes) and use it as the `config_text` value in your persistence config.
+
+### Trigger modes
+
+The Perfetto daemon supports two ways to initiate a trace capture:
+
+- **`PERFETTO_TRIGGER_TIME_INTERVAL`** — Traces are collected automatically on a fixed interval
+(controlled by the `interval` field). Use this for continuous background profiling.
+- **`PERFETTO_TRIGGER_HTTP`** — An HTTP endpoint is exposed on port 3565. The cluster manager
+can call this endpoint to trigger a trace on demand. Use this when you want to capture a trace
+at a specific moment, such as during a known slow request. At most one HTTP-triggered Perfetto
+daemon may be configured per environment.
+
+When `PERFETTO_TRIGGER_HTTP` is used, the cluster manager is automatically configured with the
+`CHALK_PERFETTO_DAEMON_PORT` and `CHALK_PERFETTO_DAEMON_NAMESPACE` environment variables.
+You can then trigger a snapshot with:
+
+```bash
+chalk profiling perfetto-snapshot
+```
+
+Regardless of the trigger mode you use for the daemon, the underlying Perfetto config needs to use `trigger_mode: CLONE_SNAPSHOT` for
+the system to work properly.
+
+#### On-demand tracing (HTTP trigger)
+
+To enable on-demand tracing via `chalk profiling perfetto-snapshot`, use
+`PERFETTO_TRIGGER_HTTP` as the trigger mode and set a `trigger_name`:
+
+```json
+"observability_daemons": [
+  {
+    "keep_running_when_suspended": true,
+    "perfetto_daemon": {
+      "trigger": "PERFETTO_TRIGGER_HTTP",
+      "trigger_name": "chalk_snapshot",
+      "max_retained_runs": 5,
+      "bucket_subdirectory": "perfetto-traces",
+      "export_to": "gs://your-bucket-name",
+      "config_text": "buffers: {\n  size_kb: 102400\n  fill_policy: RING_BUFFER\n}\n\ndata_sources: {\n  config {\n    name: \"linux.perf\"\n    perf_event_config {\n      all_cpus: true\n      sampling_frequency: 100\n    }\n  }\n}\n\ntrigger_config {\n  trigger_mode: CLONE_SNAPSHOT\n  triggers {\n    name: \"chalk_snapshot\"\n    stop_delay_ms: 1000\n  }\n}\n"
+    }
+  }
+]
+```
+
+Once deployed, trigger a trace capture with:
+
+```bash
+chalk profiling perfetto-snapshot
+```
+
+### Configuration reference
+
+<AttributeTable>
+<Attribute field={'config_text'} kind={'string'}>
+Perfetto tracing configuration in text proto format (<code>.pbtxt</code>). Required. See the{' '}
+<a href="https://perfetto.dev/docs/concepts/config">Perfetto config documentation</a> for available
+data sources and options.
+</Attribute>
+<Attribute field={'trigger'} kind={'string'}>
+How traces are initiated. Use <code>PERFETTO_TRIGGER_TIME_INTERVAL</code> for automatic periodic
+collection, or <code>PERFETTO_TRIGGER_HTTP</code> for on-demand collection via{' '}
+<code>chalk profiling perfetto-snapshot</code>.
+</Attribute>
+<Attribute field={'interval'} kind={'integer'}>
+Interval between traces in milliseconds. Also controls how frequently the system scans for new
+trace files to upload.
+</Attribute>
+<Attribute field={'trigger_name'} kind={'string'}>
+Perfetto trigger name. Required. Must exactly match the trigger <code>name</code> in the{' '}
+<code>trigger_config</code> block of <code>config_text</code>.
+</Attribute>
+<Attribute field={'max_retained_runs'} kind={'integer'}>
+Maximum number of trace files to keep on disk per node. Older files are uploaded and deleted. Recommended
+to set to <code>0</code> to start uploading immediately.
+</Attribute>
+<Attribute field={'export_to'} kind={'string'}>
+Bucket URI for uploads. Use <code>s3://bucket-name</code> for AWS, or <code>gs://bucket-name</code> for GCS.
+</Attribute>
+<Attribute field={'bucket_subdirectory'} kind={'string'}>
+Path prefix within the bucket. Files are organized as <code>{'bucket_subdirectory/node-name/'}</code>.
+</Attribute>
+</AttributeTable>
+
+### Where to find traces
+
+Traces appear in your bucket organized by node name:
+
+```
+BUCKET_SUBDIRECTORY/NODE_NAME/TIMESTAMP-perfetto-trace.pb
+```
+
+For example, with `bucket_subdirectory` set to `"perfetto-traces"` and a node named
+`ip-10-0-1-42.ec2.internal`:
+
+```
+s3://your-bucket-name/perfetto-traces/ip-10-0-1-42.ec2.internal/20260220T153012-perfetto-trace.pb
+```
+
+Open trace files directly in the [Perfetto UI](https://ui.perfetto.dev/).
+
+### Sending traces to Chalk
+
+For AWS:
+```bash
+aws s3 sync s3://your-bucket-name/perfetto-traces/ ./perfetto-traces/
+tar czf perfetto-traces.tar.gz perfetto-traces/
+```
+
+For GCS:
+```bash
+gcloud storage rsync -r gs://your-bucket-name/perfetto-traces/ ./perfetto-traces/
+tar czf perfetto-traces.tar.gz perfetto-traces/
+```
+
+---
+
+## Common configuration
+
+The following fields apply to all observability daemon entries (`core_dump_collector`, `perfetto_daemon`,
+and the `perf_collector` documented on the [profiling page](/docs/profiling)).
+
+<AttributeTable>
+<Attribute field={'keep_running_when_suspended'} kind={'boolean'}>
+Keep the daemon running when background persistence is suspended. Recommended to set to <code>true</code>
+for daemons that collect crash data.
+</Attribute>
+<Attribute field={'request'} kind={'object'}>
+Kubernetes resource requests (<code>cpu</code>, <code>memory</code>). Defaults to 25m CPU and 64Mi memory.
+</Attribute>
+<Attribute field={'limit'} kind={'object'}>
+Kubernetes resource limits (<code>cpu</code>, <code>memory</code>).
+</Attribute>
+<Attribute field={'image_override'} kind={'string'}>
+Custom container image. Omit to use the default.
+</Attribute>
+</AttributeTable>
+
+---
+
+## Disabling daemons
+
+To disable a daemon, remove its entry from the `observability_daemons` array in your background
+persistence configuration and re-apply. The corresponding daemonset will be removed automatically.
+
+In the dashboard, navigate to **Settings > Shared Resources > Background Persistence**,
+click **Edit JSON**, remove the daemon entry, and save.
+
+With the CLI:
+
+```bash
+chalk infra describe persistence --json > persistence.json
+# Remove the daemon entry from the observability_daemons array
+chalk infra apply persistence -f persistence.json
+```
