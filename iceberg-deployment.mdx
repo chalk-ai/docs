@@ -8,14 +8,14 @@ llms: hidden
 Chalk's feature platform enables
 machine learning teams to focus on building the unique products and models
 that make their business stand out. Chalk provides a feature store so that
-you can deploy production machine learning pipelines for real time data
+you can deploy production machine learning pipelines for real-time data
 in minutes.
 
 Chalk is both a framework and a platform — developers can write code
 using familiar Python packages, and deploy their feature and data pipeline definitions
-to Chalk’s platform. In the Customer Cloud deployment, Chalk runs &
-administers its platform on the customer’s cloud account. Chalk's managed
-infrastructure then executes the customer defined pipelines to compute
+to Chalk’s platform. In the Customer Cloud deployment, Chalk runs and
+administers its platform on the customer’s cloud account. Chalk’s managed
+infrastructure then executes the customer-defined pipelines to compute
 [feature](/docs/features)
 data for machine learning applications. Chalk then serves this data
 back to customer applications for online inference and to customer
@@ -28,24 +28,24 @@ data teams for training set generation.
 The Iceberg offline store leverages AWS Glue Catalog, a fully managed metadata
 catalog that simplifies data discovery and schema management for data lakes. This
 option gives you direct control over your AWS infrastructure and data storage,
-unlike managed solutions like Snowflake or Databricks where compute and storage are 
-abstracted away. Your data remains in your S3 buckets without vendor lock-in. 
+unlike managed solutions like Snowflake or Databricks where compute and storage are
+abstracted away. Your data remains in your S3 buckets without vendor lock-in.
 
 ### Required Information
 
-To set up the Iceberg offline store, please provide:
+To set up the Iceberg offline store, you will need:
 
-- **S3 bucket URI**: The location where your offline store data will be written. 
-Typically follows the pattern `s3://chalk-{organization}-data-bucket` (confirm with Chalk if different)
-- **AWS Account ID**: The AWS account where your Chalk environment is deployed
+- **S3 bucket name**: The S3 bucket where your offline store data will be written. You may reuse an existing
+bucket or create a new one specifically for offline store usage. This bucket should be in the same AWS region
+in which Chalk is deployed.
 
 ---
 
 ### Step 1: AWS Permissions
 
-You'll need to grant the following IAM permissions.
+You'll need to grant the following IAM permissions to the Chalk execution role.
 Note that many of these are base permissions you may have already configured. The key addition is Glue
-access for catalog operations, including table creation, schema evolution, and 
+access for catalog operations, including table creation, schema evolution, and
 metadata management:
 
 ```json
@@ -71,22 +71,37 @@ metadata management:
 
 ### Step 2: Creating the database in Glue Catalog
 
-Before Chalk can use Iceberg for your offline store, you must create an AWS Glue database
-configured with your S3 bucket URI. This catalog will serve as the metadata store for your
-Iceberg tables.
+Before Chalk can use Iceberg for your offline store, you must create an AWS Glue database for the offline store
+that will serve as the metadata store for your Iceberg tables. You can create the database in your default
+catalog for the region in which Chalk is deployed.
 
-When creating your Glue catalog, ensure it is configured to use the same S3 bucket URI
-that you provided in the Required Information section above (typically
-`s3://chalk-{organization}-data-bucket`). The database within the Glue catalog should 
-be named `offline-store`. This ensures that Chalk can properly write and
-manage your offline store data within your designated storage location.
+You may name the database whatever you like, although Chalk recommends a name such as "offline_store". Note the
+name down, as you will need it along with the bucket name above when configuring the offline store.
+
+---
+
+### Step 3: Creating and activating the offline store connection
+
+Once you have your S3 bucket and Glue database set up, you can configure the connection in the Chalk dashboard:
+
+1. In the dashboard, navigate to **Integrations** → **Offline Store**.
+2. Click **New Connection**.
+3. Select **Iceberg (Glue + S3)** as the provider.
+4. Fill in the following fields:
+   - **Connection Name**: A name to identify this connection (e.g. `Iceberg Offline Store`)
+   - **S3 Bucket Name**: The name of the S3 bucket from the Required Information section above
+   - **Glue Database Name**: The name of the Glue database you created in Step 2
+5. Optionally, click **Test Connection** to verify that Chalk can reach your S3 bucket and Glue catalog.
+6. Click **Create Connection**.
+
+After creating the connection, you'll be returned to the offline store connections list. Click **Activate** on
+your new connection to make it the active offline store for this environment.
 
 ---
 
 ## Querying against the Iceberg Offline Store
 
 The Iceberg offline store can be accessed using the Chalk SQL Interface. In the dashboard, you can
-navigate to the `SQL Explorer`, and run SQL queries directly against the historical feature value
+navigate to the **SQL Explorer** and run SQL queries directly against the historical feature value
 tables and the query values tables that Chalk maintains in the offline store. In the SDK,
 you can use the `ChalkGRPCClient.run_sql()` method to execute the same SQL queries programmatically.
-
