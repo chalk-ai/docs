@@ -127,6 +127,11 @@ Use service credentials to limit your application's access to specific data sour
 For data sources, you can provide an allowlist of tags when creating the service credential. Your service credential
 will only be allowed to access data sources whose tags match your allowlist.
 
+`AllowDownstream` is a feature permission and does not grant access to a data source. It can authorize feature
+outputs derived from an `AllowDownstream`-tagged feature, but every data source selected by the query plan must
+independently be permitted by a matching datasource tag with `Allow` access. In particular, `AllowInternal` and
+`AllowDownstream` do not authorize datasource access.
+
 ### Features
 
 For features, Chalk expects a blocklist or allowlist of tags. Features that are not permissible will be excluded from computation. We
